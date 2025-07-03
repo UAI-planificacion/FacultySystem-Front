@@ -1,8 +1,12 @@
-import './globals.css';
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 
-const inter = Inter({ subsets: ['latin'] });
+import './globals.css';
+
+import { QueryProvider }    from '@/app/query-provider';
+import Header               from '@/components/header/Header';
+import { ThemeProvider }    from '@/components/theme-provider';
+import { Toaster }          from '@/components/ui/sonner';
+
 
 export const metadata: Metadata = {
     title: 'Sistema de Facultades',
@@ -15,9 +19,23 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="es">
-            <body className={inter.className}>
-                {children}
+        <html lang="es" suppressHydrationWarning={true} >
+            <body>
+                <QueryProvider>
+                    <ThemeProvider
+                        attribute       = "class"
+                        defaultTheme    = "system"
+                        enableSystem 
+                    >
+                        <Header />
+
+                        <Toaster />
+
+                        <main className="flex-grow">
+                            {children}
+                        </main>
+                    </ThemeProvider>
+                </QueryProvider>
             </body>
         </html>
     );
