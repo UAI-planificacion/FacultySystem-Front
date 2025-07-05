@@ -10,6 +10,11 @@ const protectedRoutes = [
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
+    // Skip auth checks in development for non-API routes
+    if (process.env.NODE_ENV === 'development' && !pathname.startsWith('/api/')) {
+        return NextResponse.next();
+    }
+
     const isProtectedRoute = protectedRoutes.some(route => 
         pathname === route || pathname.startsWith(`${route}/`)
     )
