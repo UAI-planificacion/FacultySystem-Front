@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { Pencil, Trash2, Users, BookOpen, ChevronDown, ChevronUp } from "lucide-react";
+import { Pencil, Trash2, Users, BookOpen, ChevronDown, ChevronUp, Building, BookCopy } from "lucide-react";
 
 import {
     Card,
@@ -25,6 +25,7 @@ interface FacultyCardProps {
     onDelete            : ( id: string ) => void;
     onManageSubjects    : ( faculty: Faculty ) => void;
     onManagePersonnel   : ( faculty: Faculty ) => void;
+    onManageRequests    : ( faculty: Faculty ) => void;
 }
 
 
@@ -33,24 +34,22 @@ export function FacultyCard({
     onEdit,
     onDelete,
     onManageSubjects,
-    onManagePersonnel
+    onManagePersonnel,
+    onManageRequests
 }: FacultyCardProps) {
     const [expanded, setExpanded] = useState(false)
 
     return (
         <Card className={cn(
-            "w-full mb-4 transition-all duration-300",
+            "w-full transition-all duration-300",
             expanded ? "shadow-lg" : "shadow-md"
         )}>
             <CardHeader className="pb-2">
                 <div className="flex justify-between items-start">
                     <div>
-                        <CardTitle className="text-xl font-bold flex items-center">
+                        <CardTitle className="text-xl font-bold flex items-center gap-2">
+                            <Building className="h-5 w-5" /> 
                             {faculty.name}
-
-                            <Badge variant="outline" className="ml-2">
-                                {faculty.code}
-                            </Badge>
                         </CardTitle>
 
                         <CardDescription className="mt-1">
@@ -76,11 +75,11 @@ export function FacultyCard({
                             <h4 className="text-sm font-medium flex items-center mb-1">
                                 <BookOpen className="h-4 w-4 mr-1 text-primary" />
 
-                                Materias
+                                Asignaturas
                             </h4>
 
                             <p className="text-sm text-muted-foreground">
-                                {faculty.subjects.length} materias asignadas
+                                {faculty.subjects?.length || 0} asignaturas
                             </p>
                         </div>
 
@@ -91,7 +90,18 @@ export function FacultyCard({
                             </h4>
 
                             <p className="text-sm text-muted-foreground">
-                                {faculty.personnel.length} miembros del personal
+                                {faculty.personnel?.length || 0} miembros
+                            </p>
+                        </div>
+
+                        <div>
+                            <h4 className="text-sm font-medium flex items-center mb-1">
+                                <BookCopy className="h-4 w-4 mr-1 text-primary" />
+                                Solicitudes
+                            </h4>
+
+                            <p className="text-sm text-muted-foreground">
+                                {faculty.requests?.length || 0} solicitudes
                             </p>
                         </div>
                     </div>
@@ -109,7 +119,7 @@ export function FacultyCard({
                     className="flex items-center"
                 >
                     <BookOpen className="h-4 w-4 mr-1" />
-                    Materias
+                    Asignaturas
                 </Button>
 
                 <Button 
@@ -120,6 +130,16 @@ export function FacultyCard({
                 >
                     <Users className="h-4 w-4 mr-1" />
                     Personal
+                </Button>
+
+                <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => onManageRequests(faculty)}
+                    className="flex items-center"
+                >
+                    <BookCopy className="h-4 w-4 mr-1" />
+                    Solicitudes
                 </Button>
 
                 <div className="flex gap-2 ml-auto">
