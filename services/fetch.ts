@@ -1,21 +1,18 @@
+import { ENV } from "@/config/envs/env";
+
 export type Method = 'GET' | 'POST' | 'PATCH' | 'DELETE';
 
-export type ErrorApi = {
-    ok: boolean;
-    error: any;
+export interface ErrorApi {
+    ok: false;
+    error: string | object;
 }
 
-/**
- * Type guard to check if a value is an ErrorApi
- * @param value The value to check
- * @returns boolean indicating if the value is an ErrorApi
- */
 export function isErrorApi<T>( value: T | ErrorApi ): value is ErrorApi {
     return (
         value !== null &&
         typeof value === 'object' &&
         'ok' in value &&
-        'error' in value
+        value.ok === false
     );
 }
 
@@ -23,7 +20,7 @@ export async function fetchApi<T>(
     url     : string,
     method  : Method,
     body?   : object
-): Promise<T | ErrorApi> {
+): Promise<T> {
     const bodyRequest = method !== 'GET' ? body : undefined;
 
     try {
@@ -36,17 +33,25 @@ export async function fetchApi<T>(
         } );
 
         if ( !response.ok ) {
-            return {
-                ok: false,
-                error: "Error al hacer la petición"
-            };
+            const errorBody = await response.json();
+
+            throw new Error(errorBody.message || `API error: ${response.status} ${response.statusText}`);
         }
 
         return await response.json() as T;
     } catch ( error ) {
-        return {
-            ok: false,
-            error: error
-        };
+        if (error instanceof Error) {
+            throw error;
+        }
+
+        throw new Error('Network or unexpected error occurred.');
     }
+}
+
+
+export async function fetchData<T>( endpoint: string ): Promise<T> {
+    const API_URL   = `${ENV.REQUEST_BACK_URL}${endpoint}`;
+    const response  = await fetch( API_URL );
+
+    return response.json();
 }
