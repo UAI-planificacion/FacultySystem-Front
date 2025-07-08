@@ -1,104 +1,114 @@
 "use client"
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Building, Users, BookOpen, Plus, BookCopy } from "lucide-react";
 import { toast } from "sonner"
-
-import { Faculty, Person, Role, Subject } from "@/app/types";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle
-}                                                   from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FacultyForm }                              from "@/components/faculty/faculty-form";
-import { FacultyCard }                              from "@/components/faculty/faculty-card";
-import { SubjectsManagement }                       from "@/components/faculty/subjects-management";
-import { PersonnelManagement }                      from "@/components/faculty/personnel-management";
-import { Button }                                   from "@/components/ui/button";
-import { StatisticCard }                            from "@/components/ui/statistic-card";
-import { DeleteConfirmDialog }                      from "@/components/dialog/DeleteConfirmDialog";
-import { useData }                                  from "@/hooks/use-data";
+    CreateFacultyInput,
+    Faculty,
+    FacultyResponse,
+    UpdateFacultyInput
+} from "@/types/faculty.model";
+
+import { FacultyForm }          from "@/components/faculty/faculty-form";
+import { FacultyCard }          from "@/components/faculty/faculty-card";
+import { Button }               from "@/components/ui/button";
+import { StatisticCard }        from "@/components/ui/statistic-card";
+import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
+import { useData }              from "@/hooks/use-data";
+import { Input }                from "@/components/ui/input";
+
+
+import {
+    errorToast,
+    successToast
+}               from "@/config/toast/toast.config";
+import { ENV }  from "@/config/envs/env";
+
+import { fetchApi }     from "@/services/fetch";
+import LoaderMini       from "@/icons/LoaderMini";
+import { KEY_QUERYS }   from "@/consts/key-queries";
 
 
 export default function FacultiesPage() {
+    const queryClient = useQueryClient();
     const {
-        data: faculties,
+        data: facultyResponse,
         isLoading,
         isError,
-    } = useData<Faculty>( 'faculties', 'faculties' );
+    } = useData<FacultyResponse>([ KEY_QUERYS.FACULTIES ], 'faculties' );
+
+
+    const createFacultyApi = async ( newFacultyData: CreateFacultyInput ): Promise<Faculty>  =>
+        fetchApi<Faculty>( `${ENV.REQUEST_BACK_URL}faculties`, "POST", newFacultyData );
+
+
+    const updateFacultyApi = async ( updatedFacultyData: UpdateFacultyInput ): Promise<Faculty>  =>
+        fetchApi<Faculty>( `${ENV.REQUEST_BACK_URL}faculties/${updatedFacultyData.id}`, "PATCH", updatedFacultyData );
+
+
+    const deleteFacultyApi = async ( facultyId: string ): Promise<Faculty> =>
+        fetchApi<Faculty>( `${ENV.REQUEST_BACK_URL}faculties/${facultyId}`, "DELETE" );
+
+
+    const createFacultyMutation = useMutation<Faculty, Error, CreateFacultyInput>({
+        mutationFn: createFacultyApi,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.FACULTIES] });
+            setIsFormOpen(false);
+            setEditingFaculty(undefined);
+            toast('Facultad creada exitosamente', successToast );
+        },
+        onError: (mutationError) => {
+            toast(`Error al crear facultad: ${mutationError.message}`, errorToast );
+        },
+    });
+
+
+    const updateFacultyMutation = useMutation<Faculty, Error, UpdateFacultyInput>({
+        mutationFn: updateFacultyApi,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.FACULTIES] });
+            setIsFormOpen(false);
+            setEditingFaculty(undefined);
+            toast('Facultad actualizada exitosamente', successToast );
+        },
+        onError: (mutationError) => {
+            toast(`Error al actualizar facultad: ${mutationError.message}`, errorToast );
+        },
+    });
+
+
+    const deleteFacultyMutation = useMutation<Faculty, Error, string>({
+        mutationFn: deleteFacultyApi,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.FACULTIES] });
+            setIsDeleteDialogOpen(false);
+            toast('Facultad eliminada exitosamente', successToast );
+        },
+        onError: (mutationError) => {
+            toast(`Error al eliminar facultad: ${mutationError.message}`, errorToast );
+        },
+    });
+
+
+    const handleFormSubmit = (formData: CreateFacultyInput | UpdateFacultyInput ) => {
+        if (editingFaculty) {
+            updateFacultyMutation.mutate({ ...formData, id: editingFaculty.id });
+        } else {
+            createFacultyMutation.mutate( formData as CreateFacultyInput );
+        }
+    };
 
     // State
-    const [facultiesData, setFacultiesData]             = useState<Faculty[]>( [] );
     const [isFormOpen, setIsFormOpen]                   = useState( false );
     const [isDeleteDialogOpen, setIsDeleteDialogOpen]   = useState( false );
-    const [isManagementOpen, setIsManagementOpen]       = useState( false );
     const [editingFaculty, setEditingFaculty]           = useState<Faculty | undefined>( undefined );
-    const [managingFaculty, setManagingFaculty]         = useState<Faculty | undefined>( undefined );
     const [deletingFacultyId, setDeletingFacultyId]     = useState<string | undefined>( undefined );
-    const [activeManagementTab, setActiveManagementTab] = useState( "subjects" );
-
-
-    useEffect(() => {
-        if ( faculties ) {
-            setFacultiesData( faculties );
-        }
-    }, [faculties]);
-
-    // Handlers
-    const handleCreateFaculty = ( data: Faculty ) => {
-        setFacultiesData( [...facultiesData, data] );
-
-        setIsFormOpen(false)
-    }
-
-
-    const handleUpdateFaculty = ( data: Faculty ) => {
-        if ( !editingFaculty ) return;
-
-        const updatedFaculties = faculties.map( faculty => {
-            if ( faculty.id === editingFaculty.id ) {
-                return {
-                    ...faculty,
-                    name        : data.name,
-                    description : data.description,
-                }
-            }
-
-            return faculty;
-        })
-
-        setFacultiesData( updatedFaculties );
-        setEditingFaculty( undefined );
-        setIsFormOpen( false );
-    }
-
-
-    const handleDeleteFaculty = () => {
-        if ( !deletingFacultyId ) return;
-
-        const updatedFaculties = faculties.filter( faculty => faculty.id !== deletingFacultyId );
-        setFacultiesData( updatedFaculties );
-        setDeletingFacultyId( undefined );
-        setIsDeleteDialogOpen( false );
-        toast.success( "Faculty deleted successfully" );
-    }
-
-
-    const handleUpdateManagedFaculty = (updatedFaculty: Faculty) => {
-        const updatedFaculties = faculties.map( faculty => 
-            faculty.id === updatedFaculty.id ? updatedFaculty : faculty
-        )
-
-        // setFaculties( updatedFaculties );
-
-        // Also update the managing faculty state to reflect changes
-        setManagingFaculty( updatedFaculty );
-    }
+    const [filterText, setFilterText] = useState( "" );
 
 
     const openNewFacultyForm = () => {
@@ -118,107 +128,92 @@ export default function FacultiesPage() {
         setIsDeleteDialogOpen(true)
     }
 
-
-    const openManageSubjects = (faculty: Faculty) => {
-        setManagingFaculty(faculty)
-        setActiveManagementTab("subjects")
-        setIsManagementOpen(true)
-    }
-
-
-    const openManagePersonnel = (faculty: Faculty) => {
-        setManagingFaculty(faculty)
-        setActiveManagementTab("personnel")
-        setIsManagementOpen(true)
-    }
-
-    const openManageRequests = (faculty: Faculty) => {
-        setManagingFaculty(faculty)
-        setActiveManagementTab("requests")
-        setIsManagementOpen(true)
-    }
-
-    // Calculate statistics
-    const totalFaculties    = 0;
-    const totalSubjects     = 0;
-    const totalPersonnel    = 0;
-    const totalRequests     = 0;
     return (
         <div className="container mx-auto py-6 space-y-6">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Gestión de Facultades</h1>
-                    <p className="text-muted-foreground">
-                        Gestiona facultades, materias, centro de costos, y personal
-                    </p>
-                </div>
-
-                <Button onClick={openNewFacultyForm} className="flex items-center">
-                    <Plus className="h-4 w-4 mr-1" />
-                    Crear Facultad
-                </Button>
-            </div>
-
             {/* Statistics Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatisticCard
                     title   = "Total de Facultades"
-                    value   = { totalFaculties }
+                    value   = { facultyResponse?.faculties.length || 0 }
                     icon    = { <Building className="h-6 w-6" /> }
                 />
 
                 <StatisticCard
                     title   = "Total de Asignaturas"
-                    value   = { totalSubjects }
+                    value   = { facultyResponse?.totalSubjects || 0 }
                     icon    = { <BookOpen className="h-6 w-6" /> }
                 />
 
                 <StatisticCard
                     title   = "Total de Personal"
-                    value   = { totalPersonnel }
+                    value   = { facultyResponse?.totalPersonnel || 0 }
                     icon    = { <Users className="h-6 w-6" /> }
                 />
 
                 <StatisticCard
                     title   = "Total de Solicitudes"
-                    value   = { totalRequests }
+                    value   = { facultyResponse?.totalRequests || 0 }
                     icon    = { <BookCopy className="h-6 w-6" /> }
                 />
             </div>
 
             {/* Faculty List */}
             <div className="space-y-4">
-                <h2 className="text-xl font-semibold">Facultades</h2>
+                <div className="w-full flex items-center justify-between">
+                    <Input
+                        type        = "search"
+                        placeholder = "Buscar facultad por nombre..."
+                        value       = { filterText }
+                        onChange    = {( e ) => setFilterText( e.target.value )}
+                        className   = "w-full max-w-md"
+                    />
 
-                {facultiesData.length === 0 ? (
-                    <div className="text-center p-12 border rounded-lg border-dashed">
-                        <p className="text-muted-foreground">No se han creado facultades.</p>
+                    <Button onClick={openNewFacultyForm} className="flex items-center">
+                        <Plus className="h-4 w-4 mr-1" />
+                        Crear Facultad
+                    </Button>
+                </div>
 
-                        <Button onClick={openNewFacultyForm} variant="outline" className="mt-4">
-                            Crea tu primera facultad
-                        </Button>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {facultiesData.map( faculty => (
-                            <FacultyCard
-                                key                 = { faculty.id }
-                                faculty             = { faculty }
-                                onEdit              = { openEditFacultyForm }
-                                onDelete            = { openDeleteDialog }
-                                onManageSubjects    = { openManageSubjects }
-                                onManagePersonnel   = { openManagePersonnel }
-                                onManageRequests    = { openManageRequests }
-                            />
-                        ))}
-                    </div>
-                )}
+                {
+                    isLoading ? (
+                        <LoaderMini />
+                    ) : (
+                        facultyResponse!.faculties.filter(faculty => 
+                            faculty.name.toLowerCase().includes(filterText.toLowerCase())
+                        ).length > 0 && facultyResponse!.faculties?.filter(faculty => 
+                            faculty.name.toLowerCase().includes(filterText.toLowerCase())
+                        ).length === 0 ? (
+                            <div className="text-center p-12 border rounded-lg border-dashed">
+                                <p className="text-muted-foreground">No se han creado facultades.</p>
+
+                                <Button onClick={openNewFacultyForm} variant="outline" className="mt-4">
+                                    Crea tu primera facultad
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {facultyResponse!.faculties
+                                    .filter(faculty => 
+                                        faculty.name.toLowerCase().includes(filterText.toLowerCase())
+                                    )
+                                    .map((faculty) => (
+                                    <FacultyCard
+                                        key                 = { faculty.id }
+                                        faculty             = { faculty }
+                                        onEdit              = { openEditFacultyForm }
+                                        onDelete            = { openDeleteDialog }
+                                    />
+                                ))}
+                            </div>
+                        )
+                    )
+                }
             </div>
 
             {/* Faculty Form Dialog */}
             <FacultyForm
                 initialData = { editingFaculty }
-                onSubmit    = { editingFaculty ? handleUpdateFaculty : handleCreateFaculty }
+                onSubmit    = { handleFormSubmit }
                 isOpen      = { isFormOpen }
                 onClose     = { () => setIsFormOpen( false )}
             />
@@ -227,48 +222,10 @@ export default function FacultiesPage() {
             <DeleteConfirmDialog
                 isOpen      = { isDeleteDialogOpen }
                 onClose     = { () => setIsDeleteDialogOpen( false )}
-                onConfirm   = { handleDeleteFaculty }
+                onConfirm   = { () => deleteFacultyMutation.mutate(deletingFacultyId || '') }
                 name        = { deletingFacultyId || '' }
                 type        = "la Facultad"
             />
-
-            {/* Management Dialog */}
-            {managingFaculty && (
-                <Dialog open={isManagementOpen} onOpenChange={setIsManagementOpen}>
-                    <DialogContent className="sm:max-w-[800px]">
-                        <DialogHeader>
-                            <DialogTitle>
-                                Manage {managingFaculty.name}
-                            </DialogTitle>
-                            <DialogDescription>
-                                Configure subjects and personnel for this faculty
-                            </DialogDescription>
-                        </DialogHeader>
-
-                        <Tabs value={activeManagementTab} onValueChange={setActiveManagementTab} className="w-full">
-                            <TabsList className="grid grid-cols-2 mb-4">
-                                <TabsTrigger value="subjects">Subjects</TabsTrigger>
-
-                                <TabsTrigger value="personnel">Personnel</TabsTrigger>
-                            </TabsList>
-
-                            <TabsContent value="subjects">
-                                <SubjectsManagement 
-                                    faculty={managingFaculty}
-                                    onUpdate={handleUpdateManagedFaculty}
-                                />
-                            </TabsContent>
-
-                            <TabsContent value="personnel">
-                                <PersonnelManagement 
-                                    faculty={managingFaculty}
-                                    onUpdate={handleUpdateManagedFaculty}
-                                />
-                            </TabsContent>
-                        </Tabs>
-                    </DialogContent>
-                </Dialog>
-            )}
         </div>
     );
 }
