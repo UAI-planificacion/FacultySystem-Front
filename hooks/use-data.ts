@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ENV } from '@/config/envs/env';
 
 
-async function fetchData<T>( endpoint: string ): Promise<T[]> {
+async function fetchData<T>( endpoint: string ): Promise<T> {
     const API_URL   = `${ENV.REQUEST_BACK_URL}${endpoint}`;
     const response  = await fetch( API_URL );
 
@@ -14,7 +14,7 @@ async function fetchData<T>( endpoint: string ): Promise<T[]> {
 
 
 export interface UseDataResult<T> {
-    data        : T[];
+    data        : T | undefined;
     isLoading   : boolean;
     error       : Error | null;
     isError     : boolean;
@@ -22,15 +22,15 @@ export interface UseDataResult<T> {
 }
 
 
-export function useData<T>( key : string, endpoint: string ): UseDataResult<T> {
+export function useData<T>( key : string[], endpoint: string ): UseDataResult<T> {
     const {
-        data = [],
+        data,
         isLoading,
         error,
         isError,
         refetch
     } = useQuery({
-        queryKey    : [ key ],
+        queryKey    : [ ...key ],
         queryFn     : () => fetchData<T>( endpoint ),
     });
 
