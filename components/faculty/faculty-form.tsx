@@ -1,13 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 
 import { zodResolver }  from "@hookform/resolvers/zod";
 import { useForm }      from "react-hook-form";
 import * as z           from "zod";
-import { toast }        from "sonner";
-
-import { Faculty } from "@/app/types";
 
 import {
     Dialog,
@@ -28,19 +25,12 @@ import { Input }    from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button }   from "@/components/ui/button";
 
-import {
-    errorToast,
-    successToast
-}               from "@/config/toast/toast.config";
-import { ENV }  from "@/config/envs/env";
-
-import { ErrorApi, fetchApi, isErrorApi } from "@/services/fetch";
-import LoaderMini from "@/icons/LoaderMini";
+import { Faculty } from "@/types/faculty.model";
 
 
 interface FacultyFormProps {
     initialData?    : Faculty;
-    onSubmit        : ( data: Faculty ) => void;
+    onSubmit        : ( data: FacultyFormValues ) => void;
     isOpen          : boolean;
     onClose         : () => void;
 }
@@ -63,10 +53,6 @@ export function FacultyForm({
     isOpen,
     onClose
 }: FacultyFormProps ): JSX.Element {
-    console.log('🚀 ~ file: faculty-form.tsx:58 ~ initialData:', initialData)
-
-    const [loading, setLoading] = useState( false );
-
     const defaultValues: Partial<FacultyFormValues> = {
         name        : initialData?.name || "",
         description : initialData?.description || "",
@@ -85,50 +71,12 @@ export function FacultyForm({
             name        : initialData?.name         || '',
             description : initialData?.description  || '',
         });
-    }, [isOpen, initialData?.id]);
+    }, [ isOpen, initialData?.id, form ]);
 
 
     async function handleSubmit( data: FacultyFormValues ): Promise<void> {
-        console.log('🚀 ~ file: faculty-form.tsx:75 ~ onSubmit:', data)
-
-        setLoading( true );
-
-        const saved = initialData
-            ? await onUpdateFaculty( data )
-            : await onCreateFaculty( data );
-
-        if ( !saved ) {
-            toast( 'Ocurrió un problema al guardar la facultad', errorToast );
-            setLoading( false );
-            return;
-        }
-
-        setLoading( false );
-        onSubmit( saved );
-
-        toast( `Facultad ${!initialData ? "creada" : "actualizada"} exitosamente`, successToast );
+        onSubmit( data );
     }
-
-
-    async function onCreateFaculty( data: FacultyFormValues ): Promise<Faculty | null> {
-        const url   = `${ENV.REQUEST_BACK_URL}faculties`;
-        const saved = await fetchApi<Faculty | ErrorApi>( url, "POST", data );
-
-        if ( isErrorApi( saved )) return null;
-
-        return saved;
-    }
-
-
-    async function onUpdateFaculty( data: FacultyFormValues ): Promise<Faculty | null> {
-        const url   = `${ENV.REQUEST_BACK_URL}faculties/${initialData!.id}`;
-        const saved = await fetchApi<Faculty | ErrorApi>( url, "PATCH", data );
-
-        if ( isErrorApi( saved )) return null;
-
-        return saved;
-    }
-
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -192,22 +140,16 @@ export function FacultyForm({
                                 type        = "button"
                                 onClick     = { onClose }
                                 variant     = "outline"
-                                disabled    = { loading }
                                 className   = "flex items-center gap-2"
                             >
                                 Cancelar
-
-                                {loading && <LoaderMini />}
                             </Button>
 
                             <Button
                                 type        = "submit"
-                                disabled    = { loading }
                                 className   = "flex items-center gap-2"
                             >
                                 {initialData ? "Actualizar" : "Crear"}
-
-                                {loading && <LoaderMini />}
                             </Button>
                         </div>
                     </form>
