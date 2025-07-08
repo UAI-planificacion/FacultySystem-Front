@@ -13,19 +13,16 @@ import {
     CardTitle
 }                   from "@/components/ui/card";
 import { Button }   from "@/components/ui/button";
-import { Badge }    from "@/components/ui/badge";
 
-import { Faculty }  from "@/app/types";
 import { cn }       from "@/lib/utils";
+import { Faculty } from "@/types/faculty.model";
+import { useRouter } from 'next/navigation';
 
 
 interface FacultyCardProps {
-    faculty             : Faculty;
-    onEdit              : ( faculty: Faculty ) => void;
-    onDelete            : ( id: string ) => void;
-    onManageSubjects    : ( faculty: Faculty ) => void;
-    onManagePersonnel   : ( faculty: Faculty ) => void;
-    onManageRequests    : ( faculty: Faculty ) => void;
+    faculty     : Faculty;
+    onEdit      : ( faculty: Faculty ) => void;
+    onDelete    : ( id: string ) => void;
 }
 
 
@@ -33,10 +30,8 @@ export function FacultyCard({
     faculty,
     onEdit,
     onDelete,
-    onManageSubjects,
-    onManagePersonnel,
-    onManageRequests
 }: FacultyCardProps) {
+    const router = useRouter();
     const [expanded, setExpanded] = useState(false)
 
     return (
@@ -79,7 +74,7 @@ export function FacultyCard({
                             </h4>
 
                             <p className="text-sm text-muted-foreground">
-                                {faculty.subjects?.length || 0} asignaturas
+                                {faculty.totalSubjects || 0} asignaturas
                             </p>
                         </div>
 
@@ -90,7 +85,7 @@ export function FacultyCard({
                             </h4>
 
                             <p className="text-sm text-muted-foreground">
-                                {faculty.personnel?.length || 0} miembros
+                                {faculty.totalPersonnel || 0} miembros
                             </p>
                         </div>
 
@@ -101,7 +96,7 @@ export function FacultyCard({
                             </h4>
 
                             <p className="text-sm text-muted-foreground">
-                                {faculty.requests?.length || 0} solicitudes
+                                {faculty.totalRequests || 0} solicitudes
                             </p>
                         </div>
                     </div>
@@ -115,7 +110,7 @@ export function FacultyCard({
                 <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={() => onManageSubjects(faculty)}
+                    onClick={() => router.push(`/faculties/${faculty.id}?tab=subjects`)}
                     className="flex items-center"
                 >
                     <BookOpen className="h-4 w-4 mr-1" />
@@ -125,7 +120,7 @@ export function FacultyCard({
                 <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={() => onManagePersonnel(faculty)}
+                    onClick={() => router.push(`/faculties/${faculty.id}?tab=personnel`)}
                     className="flex items-center"
                 >
                     <Users className="h-4 w-4 mr-1" />
@@ -135,7 +130,7 @@ export function FacultyCard({
                 <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={() => onManageRequests(faculty)}
+                    onClick={() => router.push(`/faculties/${faculty.id}?tab=requests`)}
                     className="flex items-center"
                 >
                     <BookCopy className="h-4 w-4 mr-1" />
