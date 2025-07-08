@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { toast } from "sonner"
 
-import { Person, Role } from "@/app/types"
+import { Person, Role } from "@/types"
 
 import {
     Card,
