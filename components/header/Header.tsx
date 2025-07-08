@@ -27,7 +27,7 @@ export default function Header() {
         <>
             <header className="bg-black py-4 border-b border-gray-200 dark:border-gray-800 transition-colors">
                 <div className="flex justify-between items-center container mx-auto gap-2">
-                    <h1 className="text-xl xl:text-2xl font-bold text-white">Secciones Académicas</h1>
+                    <h1 className="text-xl xl:text-2xl font-bold text-white">Facultades académicas</h1>
 
                     <div className="flex items-center gap-2">
                         <Login />
