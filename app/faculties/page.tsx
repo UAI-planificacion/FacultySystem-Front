@@ -2,9 +2,19 @@
 
 import { useState } from "react";
 
-import { Building, Users, BookOpen, Plus, BookCopy } from "lucide-react";
-import { toast } from "sonner"
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+    Building,
+    Users,
+    BookOpen,
+    Plus,
+    BookCopy
+}                   from "lucide-react";
+import {
+    useMutation,
+    useQuery,
+    useQueryClient
+}                   from "@tanstack/react-query";
+import { toast }    from "sonner"
 
 import {
     CreateFacultyInput,
@@ -18,40 +28,40 @@ import { FacultyCard }          from "@/components/faculty/faculty-card";
 import { Button }               from "@/components/ui/button";
 import { StatisticCard }        from "@/components/ui/statistic-card";
 import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
-import { useData }              from "@/hooks/use-data";
 import { Input }                from "@/components/ui/input";
-
 
 import {
     errorToast,
     successToast
-}               from "@/config/toast/toast.config";
-import { ENV }  from "@/config/envs/env";
-
-import { fetchApi }     from "@/services/fetch";
-import LoaderMini       from "@/icons/LoaderMini";
-import { KEY_QUERYS }   from "@/consts/key-queries";
+}                           from "@/config/toast/toast.config";
+import { Method, fetchApi } from "@/services/fetch";
+import LoaderMini           from "@/icons/LoaderMini";
+import { KEY_QUERYS }       from "@/consts/key-queries";
 
 
 export default function FacultiesPage() {
     const queryClient = useQueryClient();
+
     const {
-        data: facultyResponse,
+        data,
         isLoading,
         isError,
-    } = useData<FacultyResponse>([ KEY_QUERYS.FACULTIES ], 'faculties' );
+    } = useQuery({
+        queryKey    : [ KEY_QUERYS.FACULTIES ],
+        queryFn     : () => fetchApi<FacultyResponse>( `faculties` ),
+    });
 
 
     const createFacultyApi = async ( newFacultyData: CreateFacultyInput ): Promise<Faculty>  =>
-        fetchApi<Faculty>( `${ENV.REQUEST_BACK_URL}faculties`, "POST", newFacultyData );
+        fetchApi<Faculty>( `faculties`, Method.POST, newFacultyData );
 
 
     const updateFacultyApi = async ( updatedFacultyData: UpdateFacultyInput ): Promise<Faculty>  =>
-        fetchApi<Faculty>( `${ENV.REQUEST_BACK_URL}faculties/${updatedFacultyData.id}`, "PATCH", updatedFacultyData );
+        fetchApi<Faculty>( `faculties/${updatedFacultyData.id}`, Method.PATCH, updatedFacultyData );
 
 
     const deleteFacultyApi = async ( facultyId: string ): Promise<Faculty> =>
-        fetchApi<Faculty>( `${ENV.REQUEST_BACK_URL}faculties/${facultyId}`, "DELETE" );
+        fetchApi<Faculty>( `faculties/${facultyId}`, Method.DELETE );
 
 
     const createFacultyMutation = useMutation<Faculty, Error, CreateFacultyInput>({
@@ -95,8 +105,8 @@ export default function FacultiesPage() {
     });
 
 
-    const handleFormSubmit = (formData: CreateFacultyInput | UpdateFacultyInput ) => {
-        if (editingFaculty) {
+    const handleFormSubmit = ( formData: CreateFacultyInput | UpdateFacultyInput ) => {
+        if ( editingFaculty ) {
             updateFacultyMutation.mutate({ ...formData, id: editingFaculty.id });
         } else {
             createFacultyMutation.mutate( formData as CreateFacultyInput );
@@ -108,7 +118,7 @@ export default function FacultiesPage() {
     const [isDeleteDialogOpen, setIsDeleteDialogOpen]   = useState( false );
     const [editingFaculty, setEditingFaculty]           = useState<Faculty | undefined>( undefined );
     const [deletingFacultyId, setDeletingFacultyId]     = useState<string | undefined>( undefined );
-    const [filterText, setFilterText] = useState( "" );
+    const [filterText, setFilterText]                   = useState( "" );
 
 
     const openNewFacultyForm = () => {
@@ -128,31 +138,39 @@ export default function FacultiesPage() {
         setIsDeleteDialogOpen(true)
     }
 
+    if ( isError ) {
+        return (
+            <div className="text-center p-8 text-muted-foreground">
+                Error al cargar las facultades.
+            </div>
+        );
+    }
+
     return (
         <div className="container mx-auto py-6 space-y-6">
             {/* Statistics Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatisticCard
                     title   = "Total de Facultades"
-                    value   = { facultyResponse?.faculties.length || 0 }
+                    value   = { data?.faculties.length || 0 }
                     icon    = { <Building className="h-6 w-6" /> }
                 />
 
                 <StatisticCard
                     title   = "Total de Asignaturas"
-                    value   = { facultyResponse?.totalSubjects || 0 }
+                    value   = { data?.totalSubjects || 0 }
                     icon    = { <BookOpen className="h-6 w-6" /> }
                 />
 
                 <StatisticCard
                     title   = "Total de Personal"
-                    value   = { facultyResponse?.totalPersonnel || 0 }
+                    value   = { data?.totalPersonnel || 0 }
                     icon    = { <Users className="h-6 w-6" /> }
                 />
 
                 <StatisticCard
                     title   = "Total de Solicitudes"
-                    value   = { facultyResponse?.totalRequests || 0 }
+                    value   = { data?.totalRequests || 0 }
                     icon    = { <BookCopy className="h-6 w-6" /> }
                 />
             </div>
@@ -178,9 +196,9 @@ export default function FacultiesPage() {
                     isLoading ? (
                         <LoaderMini />
                     ) : (
-                        facultyResponse!.faculties.filter(faculty => 
+                        data!.faculties.filter(faculty => 
                             faculty.name.toLowerCase().includes(filterText.toLowerCase())
-                        ).length > 0 && facultyResponse!.faculties?.filter(faculty => 
+                        ).length > 0 && data!.faculties?.filter(faculty => 
                             faculty.name.toLowerCase().includes(filterText.toLowerCase())
                         ).length === 0 ? (
                             <div className="text-center p-12 border rounded-lg border-dashed">
@@ -192,7 +210,7 @@ export default function FacultiesPage() {
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {facultyResponse!.faculties
+                                {data!.faculties
                                     .filter(faculty => 
                                         faculty.name.toLowerCase().includes(filterText.toLowerCase())
                                     )
