@@ -4,7 +4,7 @@ import { useState } from "react"
 
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { toast }                from "sonner";
-
+import { useQuery }     from "@tanstack/react-query";
 
 import {
     Card,
@@ -13,13 +13,7 @@ import {
     CardHeader,
     CardTitle
 }                       from "@/components/ui/card"
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle
-}                       from "@/components/ui/dialog"
+
 import {
     Table,
     TableBody,
@@ -29,24 +23,18 @@ import {
     TableRow
 }                       from "@/components/ui/table"
 import {
-    PersonnelForm,
-    PersonnelFormValues
+    StaffForm,
 }                       from "@/components/staff/staff-form"
 import { Button }       from "@/components/ui/button"
-import { Badge }        from "@/components/ui/badge"
 import { ScrollArea }   from "@/components/ui/scroll-area"
-import { Role, Staff } from "@/types/staff.model";
-import { useQuery } from "@tanstack/react-query";
-import { KEY_QUERYS } from "@/consts/key-queries";
-import { fetchData } from "@/services/fetch";
-import { Input } from "../ui/input";
+import { RoleBadge }    from "@/components/shared/role";
+import { ActionButton } from "@/components/shared/action";
+import { ActiveBadge }  from "@/components/shared/active";
+import { Input }        from "@/components/ui/input";
 
-
-enum BadgeVariant {
-    DEFAULT     = 'default',
-    SECONDARY   = 'secondary',
-    OUTLINE     = 'outline'
-}
+import { Staff }        from "@/types/staff.model";
+import { KEY_QUERYS }   from "@/consts/key-queries";
+import { fetchData }    from "@/services/fetch";
 
 
 interface StaffManagementProps {
@@ -68,7 +56,6 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
         queryFn     : () => fetchData<Staff[]>( `staff/all/${facultyId}` ),
         enabled
     });
-
 
 
     const [isFormOpen, setIsFormOpen] = useState(false)
@@ -148,13 +135,6 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
     }
 
 
-    const getRoleBadgeVariant = ( role: Role ): BadgeVariant => ({
-        admin   : BadgeVariant.DEFAULT,
-        editor  : BadgeVariant.SECONDARY,
-        viewer  : BadgeVariant.OUTLINE,
-    })[role] || BadgeVariant.OUTLINE
-
-
     return (
         <Card className="w-full">
             <CardHeader>
@@ -175,7 +155,7 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
             </CardHeader>
 
             <CardContent>
-                <ScrollArea className="h-[400px]">
+                <ScrollArea className="h-[calc(100vh-355px)]">
                     {
                         isLoading ? (
                             <div className="text-center p-8 text-muted-foreground">
@@ -192,11 +172,11 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
                                         <TableRow>
                                             <TableHead>Nombre</TableHead>
 
-                                            <TableHead>Cargo</TableHead>
-
-                                            <TableHead>Correo Electrónico</TableHead>
-
                                             <TableHead>Rol</TableHead>
+
+                                            <TableHead>Correo</TableHead>
+
+                                            <TableHead>Activo</TableHead>
 
                                             <TableHead className="text-right">Acciones</TableHead>
                                         </TableRow>
@@ -206,32 +186,23 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
                                         {data!.map((person) => (
                                             <TableRow key={person.id}>
                                                 <TableCell className="font-medium">{person.name}</TableCell>
-                                                <TableCell>{person.position}</TableCell>
-                                                <TableCell>{person.email}</TableCell>
+
                                                 <TableCell>
-                                                    <Badge variant={getRoleBadgeVariant(person.role)}>
-                                                        {person.role.charAt(0).toUpperCase() + person.role.slice(1)}
-                                                    </Badge>
+                                                    <RoleBadge role={person.role} />
+                                                </TableCell>
+
+                                                <TableCell>{person.email}</TableCell>
+
+                                                <TableCell>
+                                                    <ActiveBadge isActive={person.isActive} />
                                                 </TableCell>
 
                                                 <TableCell className="text-right">
-                                                    <div className="flex justify-end gap-2">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            onClick={() => openEditPersonForm(person)}
-                                                        >
-                                                            <Pencil className="h-4 w-4" />
-                                                        </Button>
-
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            // onClick={() => handleDeletePerson(person.id)}
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
+                                                    <ActionButton
+                                                        editItem    = { openEditPersonForm }
+                                                        deleteItem  = { () => {} }
+                                                        item        = { person }
+                                                    />
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -243,30 +214,16 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
                 </ScrollArea>
             </CardContent>
 
-            {/* Personnel Form Dialog */}
-            <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-                <DialogContent className="sm:max-w-[600px]">
-                    <DialogHeader>
-                        <DialogTitle>
-                            {editingPerson ? "Editar Personal" : "Agregar Nuevo Personal"}
-                        </DialogTitle>
-
-                        <DialogDescription>
-                            {editingPerson 
-                                ? "Actualice los datos del personal existente" 
-                                : "Agregue una nueva persona a esta facultad"
-                            }
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <PersonnelForm
-                        initialData = { editingPerson }
-                        // onSubmit    = { editingPerson ? handleEditPerson : handleAddPerson }
-                        onSubmit    = { () => {} }
-                        onCancel    = { () => setIsFormOpen( false )}
-                    />
-                </DialogContent>
-            </Dialog>
+            {/* Staff Form Dialog */}
+            <StaffForm
+                initialData         = { editingPerson }
+                onSubmit            = { () => {} }
+                onCancel            = { () => setIsFormOpen( false )}
+                isFormOpen          = { isFormOpen }
+                setIsFormOpen       = { setIsFormOpen }
+                editingPerson       = { editingPerson }
+                setEditingPerson    = { setEditingPerson }
+            />
         </Card>
     );
 }
