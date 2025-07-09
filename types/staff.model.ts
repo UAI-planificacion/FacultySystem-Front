@@ -1,9 +1,11 @@
-export type Role = 'admin' | 'editor' | 'viewer';
+export type Role = 'ADMIN' | 'EDITOR' | 'VIEWER';
 
 export interface Staff {
     id          : string;
     name        : string;
     email       : string;
-    position    : string;
+    isActive    : boolean;
     role        : Role;
+    createdAt   : Date;
+    updatedAt   : Date;
 }
