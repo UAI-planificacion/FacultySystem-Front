@@ -2,21 +2,18 @@
 
 import { useState } from "react"
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import * as z from "zod"
-import { toast } from "sonner"
-
-import { Person, Role } from "@/types"
+import { zodResolver }  from "@hookform/resolvers/zod";
+import { useForm }      from "react-hook-form";
+import * as z           from "zod";
+import { toast }        from "sonner";
 
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle
-}                   from "@/components/ui/card";
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle
+}                       from "@/components/ui/dialog"
 import {
     Form,
     FormControl,
@@ -36,13 +33,20 @@ import {
 import { Input }    from "@/components/ui/input";
 import { Button }   from "@/components/ui/button";
 
+import { Staff } from "@/types/staff.model"
+
+
 interface PersonnelFormProps {
-    initialData?: Person
-    onSubmit: (data: PersonnelFormValues) => void
-    onCancel: () => void
+    initialData?    : Staff
+    isFormOpen      : boolean
+    setIsFormOpen   : (open: boolean) => void
+    onSubmit        : (data: PersonnelFormValues) => void
+    onCancel        : () => void,
+    editingPerson   : Staff | undefined,
+    setEditingPerson: (person: Staff | undefined) => void,
 }
 
-// Form validation schema
+
 const formSchema = z.object({
     name: z.string().min(2, {
         message: "El nombre debe tener al menos 2 caracteres.",
@@ -50,25 +54,22 @@ const formSchema = z.object({
     email: z.string().email({
         message: "Por favor ingresa una dirección de correo válida.",
     }),
-    position: z.string().min(2, {
-        message: "El cargo debe tener al menos 2 caracteres.",
-    }),
-    role: z.enum(["admin", "editor", "viewer"] as const, {
+    role: z.enum(["ADMIN", "EDITOR", "VIEWER"] as const, {
         message: "Por favor selecciona un rol válido.",
     }),
 })
 
+
 export type PersonnelFormValues = z.infer<typeof formSchema>
 
-export function PersonnelForm({ initialData, onSubmit, onCancel }: PersonnelFormProps) {
+
+export function StaffForm({ initialData, isFormOpen, setIsFormOpen, onSubmit, onCancel, editingPerson, setEditingPerson }: PersonnelFormProps) {
     const [loading, setLoading] = useState(false)
-    
-    // Default form values
+
     const defaultValues: Partial<PersonnelFormValues> = {
         name        : initialData?.name || "",
         email       : initialData?.email || "",
-        position    : initialData?.position || "",
-        role        : initialData?.role || "viewer",
+        role        : initialData?.role || "VIEWER",
     }
 
     const form = useForm<PersonnelFormValues>({
@@ -90,18 +91,21 @@ export function PersonnelForm({ initialData, onSubmit, onCancel }: PersonnelForm
     }
 
     return (
-        <Card className="w-full">
-            <CardHeader>
-                <CardTitle className="text-xl font-bold">
-                    {initialData ? "Editar Personal" : "Agregar Nuevo Personal"}
-                </CardTitle>
+        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                    <DialogTitle>
+                        {editingPerson ? "Editar Personal" : "Agregar Nuevo Personal"}
+                    </DialogTitle>
 
-                <CardDescription>
-                    {initialData ? "Actualiza los detalles del personal existente" : "Agrega una nueva persona a esta facultad"}
-                </CardDescription>
-            </CardHeader>
+                    <DialogDescription>
+                        {editingPerson 
+                            ? "Actualice los datos del personal existente" 
+                            : "Agregue una nueva persona a esta facultad"
+                        }
+                    </DialogDescription>
+                </DialogHeader>
 
-            <CardContent>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                         <FormField
@@ -138,26 +142,6 @@ export function PersonnelForm({ initialData, onSubmit, onCancel }: PersonnelForm
 
                         <FormField
                             control={form.control}
-                            name="position"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Cargo</FormLabel>
-
-                                    <FormControl>
-                                        <Input placeholder="Decano" {...field} />
-                                    </FormControl>
-
-                                    <FormDescription>
-                                        El cargo o título de esta persona dentro de la facultad
-                                    </FormDescription>
-
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            control={form.control}
                             name="role"
                             render={({ field }) => (
                                 <FormItem>
@@ -171,9 +155,9 @@ export function PersonnelForm({ initialData, onSubmit, onCancel }: PersonnelForm
                                         </FormControl>
 
                                         <SelectContent>
-                                            <SelectItem value="admin">Administrador</SelectItem>
-                                            <SelectItem value="editor">Editor</SelectItem>
-                                            <SelectItem value="viewer">Visualizador</SelectItem>
+                                            <SelectItem value="ADMIN">Administrador</SelectItem>
+                                            <SelectItem value="EDITOR">Editor</SelectItem>
+                                            <SelectItem value="VIEWER">Visualizador</SelectItem>
                                         </SelectContent>
                                     </Select>
 
@@ -190,17 +174,17 @@ export function PersonnelForm({ initialData, onSubmit, onCancel }: PersonnelForm
                         />
                     </form>
                 </Form>
-            </CardContent>
 
-            <CardFooter className="flex justify-between">
-                <Button variant="outline" onClick={onCancel}>
-                    Cancelar
-                </Button>
+                <div className="flex justify-between">
+                    <Button variant="outline" onClick={onCancel}>
+                        Cancelar
+                    </Button>
 
-                <Button type="submit" disabled={loading} onClick={form.handleSubmit(handleSubmit)}>
-                    {initialData ? "Actualizar Personal" : "Agregar Personal"}
-                </Button>
-            </CardFooter>
-        </Card>
+                    <Button type="submit" disabled={loading} onClick={form.handleSubmit(handleSubmit)}>
+                        {initialData ? "Actualizar Personal" : "Agregar Personal"}
+                    </Button>
+                </div>
+            </DialogContent>
+        </Dialog>
     );
 }
