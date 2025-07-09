@@ -133,7 +133,7 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
             </CardHeader>
 
             <CardContent>
-                <ScrollArea className="h-[calc(100vh-350px)]">
+                <ScrollArea className="h-[calc(100vh-355px)]">
                     {
                         isLoading ? (
                             <div className="text-center p-8 text-muted-foreground">
@@ -171,9 +171,9 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
 
                                                 <TableCell>{subject.name}</TableCell>
 
-                                                <TableCell>{dateToString(subject.startDate)}</TableCell>
+                                                <TableCell>{new Date(subject.startDate || '')?.toLocaleDateString()}</TableCell>
 
-                                                <TableCell>{dateToString(subject.endDate)}</TableCell>
+                                                <TableCell>{new Date(subject.endDate || '')?.toLocaleDateString()}</TableCell>
 
                                                 <TableCell className="text-right">{subject.students}</TableCell>
 
