@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 import { Card, CardContent }    from "@/components/ui/card";
 import { RequestFilter }        from "@/components/request/request-filter";
 import { RequestCard }          from "@/components/request/request-card";
+import { RequestForm }          from "@/components/request/request-form";
 
 import { type Request, Status } from "@/types/request";
 
@@ -14,14 +15,20 @@ interface RequestListProps {
     onViewDetails: (request: Request) => void
 }
 
-export default function RequestList({ requests, onViewDetails }: RequestListProps) {
+export function RequestList({ requests, onViewDetails }: RequestListProps) {
+    const [isOpen, setIsOpen] = useState(false)
+    const [editinRequest, setEditinRequest] = useState<Request>( {id: 'test', subject: {id: 'test', name: 'test'}} as Request );
     const [searchId, setSearchId] = useState("")
     const [statusFilter, setStatusFilter] = useState<Status | "ALL">("ALL")
     const [consecutiveFilter, setConsecutiveFilter] = useState<"ALL" | "TRUE" | "FALSE">("ALL")
     const [sortBy, setSortBy] = useState<"status" | "staffCreate" | "staffUpdate" | "subjectId" | "createdAt">(
         "createdAt",
     )
-    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+
+    useEffect(() => {
+        setEditinRequest( requests[0] );
+    }, [requests]);
 
     const filteredAndSortedRequests = useMemo(() => {
         const filtered = requests.filter((request) => {
@@ -51,6 +58,17 @@ export default function RequestList({ requests, onViewDetails }: RequestListProp
         })
     }, [requests, searchId, statusFilter, consecutiveFilter, sortBy, sortOrder]);
 
+
+    function onEdit( request: Request ) {
+        setEditinRequest( request );
+        setIsOpen(true );
+    }
+
+    // function onDelete( request: Request ) {
+    //     setDeletingStaffId( request.id );
+    //     setIsDeleteDialogOpen(true );
+    // }
+
     return (
         <div className="space-y-4">
             {/* Filters */}
@@ -74,6 +92,8 @@ export default function RequestList({ requests, onViewDetails }: RequestListProp
                         request         = { request }
                         key             = { request.id }
                         onViewDetails   = { () => onViewDetails( request )}
+                        onEdit          = { () => onEdit( request )}
+                        onDelete        = { () => {}}
                     />
                 ))}
             </div>
@@ -85,6 +105,13 @@ export default function RequestList({ requests, onViewDetails }: RequestListProp
                     </CardContent>
                 </Card>
             )}
+
+            <RequestForm
+                isOpen      = { isOpen }
+                onClose     = { () => setIsOpen(false) }
+                onSubmit    = { () =>{} }
+                data        = { editinRequest }
+            />
         </div>
     );
 }
