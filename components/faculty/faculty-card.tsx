@@ -108,51 +108,51 @@ export function FacultyCard({
                 expanded ? "border-t" : ""
             )}>
                 <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => router.push(`/faculties/${faculty.id}?tab=subjects`)}
-                    className="flex items-center"
+                    variant     = "outline"
+                    size        = "sm"
+                    onClick     = {() => router.push(`/faculties/${faculty.id}?tab=requests`)}
+                    className   = "flex items-center"
                 >
-                    <BookOpen className="h-4 w-4 mr-1" />
-                    Asignaturas
+                    <BookCopy className="h-4 w-4 mr-1" />
+                    Solicitudes
                 </Button>
 
                 <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => router.push(`/faculties/${faculty.id}?tab=personnel`)}
-                    className="flex items-center"
+                    variant   = "outline"
+                    size      = "sm"
+                    onClick   = {() => router.push(`/faculties/${faculty.id}?tab=personnel`)}
+                    className = "flex items-center"
                 >
                     <Users className="h-4 w-4 mr-1" />
                     Personal
                 </Button>
 
                 <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => router.push(`/faculties/${faculty.id}?tab=requests`)}
-                    className="flex items-center"
+                    variant   = "outline"
+                    size      = "sm"
+                    onClick   = {() => router.push(`/faculties/${faculty.id}?tab=subjects`)}
+                    className = "flex items-center"
                 >
-                    <BookCopy className="h-4 w-4 mr-1" />
-                    Solicitudes
+                    <BookOpen className="h-4 w-4 mr-1" />
+                    Asignaturas
                 </Button>
 
                 <div className="flex gap-2 ml-auto">
                     <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => onEdit(faculty)}
-                        className="flex items-center"
+                        variant   = "outline"
+                        size      = "sm"
+                        onClick   = {() => onEdit( faculty )}
+                        className = "flex items-center"
                     >
                         <Pencil className="h-4 w-4 mr-1" />
                         Editar
                     </Button>
 
                     <Button 
-                        variant="destructive" 
-                        size="sm" 
-                        onClick={() => onDelete(faculty.id)}
-                        className="flex items-center"
+                        variant   = "destructive"
+                        size      = "sm"
+                        onClick   = {() => onDelete( faculty.id )}
+                        className = "flex items-center"
                     >
                         <Trash2 className="h-4 w-4 mr-1" />
                         Eliminar
