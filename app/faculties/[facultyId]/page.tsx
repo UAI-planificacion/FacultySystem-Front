@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 
+import { ArrowLeft } from "lucide-react";
+
 import {
     Tabs,
     TabsContent,
@@ -11,7 +13,8 @@ import {
 }                               from "@/components/ui/tabs";
 import { StaffManagement }      from "@/components/staff/staff-management";
 import { SubjectsManagement }   from "@/components/subject/subjects-management";
-import RequestsManagement       from "@/components/request/request";
+import { RequestsManagement }   from "@/components/request/request";
+import { Button }               from "@/components/ui/button";
 
 
 enum TabValue {
@@ -41,7 +44,15 @@ export default function FacultyDetailsPage(): JSX.Element {
 
     return (
         <div className="container mx-auto py-6 space-y-6">
-            <h1 className="text-2xl font-bold">Facultad {facultyId}</h1>
+            <div className="flex items-center gap-4">
+                <Button
+                    variant   = "secondary"
+                    onClick   = { () => router.back() }
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <h1 className="text-2xl font-bold">Facultad {facultyId}</h1>
+            </div>
 
             <Tabs
                 value           = { activeTab }
