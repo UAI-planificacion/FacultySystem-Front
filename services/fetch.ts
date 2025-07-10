@@ -1,6 +1,12 @@
 import { ENV } from "@/config/envs/env";
 
-export type Method = 'GET' | 'POST' | 'PATCH' | 'DELETE';
+export enum Method {
+    GET     = 'GET',
+    POST    = 'POST',
+    PATCH   = 'PATCH',
+    DELETE  = 'DELETE',
+}
+
 
 export interface ErrorApi {
     ok: false;
@@ -18,10 +24,13 @@ export function isErrorApi<T>( value: T | ErrorApi ): value is ErrorApi {
 
 export async function fetchApi<T>(
     url     : string,
-    method  : Method,
-    body?   : object
+    method  : Method = Method.GET,
+    body?   : object,
+    isApi   : boolean = true
 ): Promise<T> {
-    const bodyRequest = method !== 'GET' ? body : undefined;
+    if ( isApi ) url = `${ENV.REQUEST_BACK_URL}${url}`;
+
+    const bodyRequest = method !== Method.GET ? body : undefined;
 
     try {
         const response = await fetch( url, {
@@ -46,12 +55,4 @@ export async function fetchApi<T>(
 
         throw new Error('Network or unexpected error occurred.');
     }
-}
-
-
-export async function fetchData<T>( endpoint: string ): Promise<T> {
-    const API_URL   = `${ENV.REQUEST_BACK_URL}${endpoint}`;
-    const response  = await fetch( API_URL );
-
-    return response.json();
 }
