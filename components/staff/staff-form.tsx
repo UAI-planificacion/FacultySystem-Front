@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect } from "react"
 
 import { zodResolver }  from "@hookform/resolvers/zod";
 import { useForm }      from "react-hook-form";
@@ -13,7 +13,7 @@ import {
     DialogDescription,
     DialogHeader,
     DialogTitle
-}                       from "@/components/ui/dialog"
+}                   from "@/components/ui/dialog";
 import {
     Form,
     FormControl,
@@ -33,17 +33,17 @@ import {
 import { Input }    from "@/components/ui/input";
 import { Button }   from "@/components/ui/button";
 
-import { Staff } from "@/types/staff.model"
+import { Staff, Role } from "@/types/staff.model";
 
 
-interface PersonnelFormProps {
-    initialData?    : Staff
-    isFormOpen      : boolean
-    setIsFormOpen   : (open: boolean) => void
-    onSubmit        : (data: PersonnelFormValues) => void
-    onCancel        : () => void,
-    editingPerson   : Staff | undefined,
-    setEditingPerson: (person: Staff | undefined) => void,
+export type StaffFormValues = z.infer<typeof formSchema>;
+
+
+interface StaffFormProps {
+    initialData?    : Staff;
+    onSubmit        : ( data: StaffFormValues ) => void;
+    isOpen          : boolean;
+    onClose         : () => void;
 }
 
 
@@ -57,49 +57,57 @@ const formSchema = z.object({
     role: z.enum(["ADMIN", "EDITOR", "VIEWER"] as const, {
         message: "Por favor selecciona un rol válido.",
     }),
-})
+});
 
 
-export type PersonnelFormValues = z.infer<typeof formSchema>
+const emptyStaff = {
+    name    : "",
+    email   : "",
+    role    : Role.EDITOR,
+}
 
 
-export function StaffForm({ initialData, isFormOpen, setIsFormOpen, onSubmit, onCancel, editingPerson, setEditingPerson }: PersonnelFormProps) {
-    const [loading, setLoading] = useState(false)
+export function StaffForm({
+    initialData,
+    isOpen,
+    onSubmit,
+    onClose,
+}: StaffFormProps ): JSX.Element {
+    const defaultValues: Partial<StaffFormValues> = emptyStaff;
 
-    const defaultValues: Partial<PersonnelFormValues> = {
-        name        : initialData?.name || "",
-        email       : initialData?.email || "",
-        role        : initialData?.role || "VIEWER",
-    }
-
-    const form = useForm<PersonnelFormValues>({
+    const form = useForm<StaffFormValues>({
         resolver: zodResolver( formSchema ),
         defaultValues,
     })
 
-    const handleSubmit = async (data: PersonnelFormValues) => {
-        try {
-            setLoading(true)
-            onSubmit(data)
-            toast.success(`Personal ${initialData ? "actualizado" : "agregado"} exitosamente`)
-        } catch (error) {
-            toast.error("Algo salió mal")
-            console.error(error)
-        } finally {
-            setLoading(false)
-        }
+
+    useEffect(() => {
+        if ( !isOpen ) return;
+
+        form.reset({
+            name    : initialData?.name     || emptyStaff.name,
+            email   : initialData?.email    || emptyStaff.email,
+            role    : initialData?.role     || emptyStaff.role,
+        });
+    }, [ isOpen, initialData?.id, form ]);
+
+
+    const handleSubmit = async ( data: StaffFormValues ) => {
+        console.log('🚀 ~ file: staff-form.tsx:81 ~ data:', data)
+        onSubmit( data );
     }
 
+
     return (
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
                     <DialogTitle>
-                        {editingPerson ? "Editar Personal" : "Agregar Nuevo Personal"}
+                        {initialData ? "Editar Personal" : "Agregar Nuevo Personal"}
                     </DialogTitle>
 
                     <DialogDescription>
-                        {editingPerson 
+                        {initialData 
                             ? "Actualice los datos del personal existente" 
                             : "Agregue una nueva persona a esta facultad"
                         }
@@ -172,18 +180,22 @@ export function StaffForm({ initialData, isFormOpen, setIsFormOpen, onSubmit, on
                                 </FormItem>
                             )}
                         />
+
+                        <div className="flex justify-between">
+                            <Button
+                                type    = "button"
+                                variant = "outline"
+                                onClick = { onClose }
+                            >
+                                Cancelar
+                            </Button>
+
+                            <Button type="submit">
+                                {initialData ? "Actualizar" : "Agregar"}
+                            </Button>
+                        </div>
                     </form>
                 </Form>
-
-                <div className="flex justify-between">
-                    <Button variant="outline" onClick={onCancel}>
-                        Cancelar
-                    </Button>
-
-                    <Button type="submit" disabled={loading} onClick={form.handleSubmit(handleSubmit)}>
-                        {initialData ? "Actualizar Personal" : "Agregar Personal"}
-                    </Button>
-                </div>
             </DialogContent>
         </Dialog>
     );
