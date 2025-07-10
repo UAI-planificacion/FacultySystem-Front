@@ -28,6 +28,9 @@ import { Button }   from "@/components/ui/button";
 import { Faculty } from "@/types/faculty.model";
 
 
+export type FacultyFormValues = z.infer<typeof formSchema>;
+
+
 interface FacultyFormProps {
     initialData?    : Faculty;
     onSubmit        : ( data: FacultyFormValues ) => void;
@@ -42,9 +45,6 @@ const formSchema = z.object({
     }),
     description: z.string().optional(),
 })
-
-
-export type FacultyFormValues = z.infer<typeof formSchema>;
 
 
 export function FacultyForm({
@@ -140,15 +140,11 @@ export function FacultyForm({
                                 type        = "button"
                                 onClick     = { onClose }
                                 variant     = "outline"
-                                className   = "flex items-center gap-2"
                             >
                                 Cancelar
                             </Button>
 
-                            <Button
-                                type        = "submit"
-                                className   = "flex items-center gap-2"
-                            >
+                            <Button type="submit">
                                 {initialData ? "Actualizar" : "Crear"}
                             </Button>
                         </div>
