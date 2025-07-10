@@ -1,11 +1,32 @@
-export type Role = 'ADMIN' | 'EDITOR' | 'VIEWER';
+export enum Role {
+    ADMIN   = 'ADMIN',
+    EDITOR  = 'EDITOR',
+    VIEWER  = 'VIEWER',
+}
 
-export interface Staff {
-    id          : string;
+
+interface BaseStaff {
     name        : string;
     email       : string;
-    isActive    : boolean;
     role        : Role;
+}
+
+
+export interface Staff extends BaseStaff {
+    id          : string;
+    isActive    : boolean;
+    facultyId   : string;
     createdAt   : Date;
     updatedAt   : Date;
+}
+
+
+export interface CreateStaff extends BaseStaff {
+    facultyId   : string;
+    isActive?    : boolean;
+}
+
+
+export interface UpdateStaff extends Partial<BaseStaff> {
+    id : string;
 }
