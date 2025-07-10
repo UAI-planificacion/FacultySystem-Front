@@ -35,7 +35,7 @@ import {RequestInfoCard} from "@/components/request-detail/request-info-card";
 import { type Request, type RequestDetail, Status } from "@/types/request";
 import { useQuery } from "@tanstack/react-query";
 import { KEY_QUERYS } from "@/consts/key-queries";
-import { fetchData } from "@/services/fetch";
+import { fetchApi } from "@/services/fetch";
 import { RequestDetailCard } from "./request-detail-card";
 
 
@@ -46,7 +46,7 @@ interface RequestDetailViewProps {
 }
 
 
-export default function RequestDetailView({
+export function RequestDetailView({
     request,
     onBack,
     // onUpdateRequest
@@ -60,7 +60,7 @@ export default function RequestDetailView({
         refetch
     } = useQuery({
         queryKey    : [ KEY_QUERYS.REQUEST_DETAIL, request.id ],
-        queryFn     : () => fetchData<RequestDetail[]>( `request-details/request/${request.id}` ),
+        queryFn     : () => fetchApi<RequestDetail[]>( `request-details/request/${request.id}` ),
         // enabled,
     });
 
