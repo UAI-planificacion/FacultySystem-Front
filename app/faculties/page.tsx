@@ -240,7 +240,7 @@ export default function FacultiesPage() {
             <DeleteConfirmDialog
                 isOpen      = { isDeleteDialogOpen }
                 onClose     = { () => setIsDeleteDialogOpen( false )}
-                onConfirm   = { () => deleteFacultyMutation.mutate(deletingFacultyId || '') }
+                onConfirm   = { () => deleteFacultyMutation.mutate( deletingFacultyId || '' )}
                 name        = { deletingFacultyId || '' }
                 type        = "la Facultad"
             />
