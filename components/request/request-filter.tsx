@@ -20,8 +20,8 @@ import { Label }    from "@/components/ui/label";
 import { Status } from "@/types/request";
 
 export interface RequestFilter {
-    searchId                : string;
-    setSearchId             : ( searchId: string ) => void;
+    title                   : string;
+    setTitle                : ( title: string ) => void;
     statusFilter            : Status | "ALL";
     setStatusFilter         : ( statusFilter: Status | "ALL" ) => void;
     consecutiveFilter       : "ALL" | "TRUE" | "FALSE";
@@ -34,8 +34,8 @@ export interface RequestFilter {
 
 
 export function RequestFilter({
-    searchId,
-    setSearchId,
+    title,
+    setTitle,
     statusFilter,
     setStatusFilter,
     consecutiveFilter,
@@ -67,17 +67,17 @@ export function RequestFilter({
                 {/* <div className="flex justify-between items-center"> */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 items-end">
                         <div className="space-y-2">
-                            <Label htmlFor="search">Buscar por ID</Label>
+                            <Label htmlFor="search">Buscar por Título</Label>
 
                             <div className="relative">
                                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
 
                                 <Input
-                                    id="search"
-                                    placeholder="ID de solicitud..."
-                                    value={searchId}
-                                    onChange={(e) => setSearchId(e.target.value)}
-                                    className="pl-8"
+                                    id          = "search"
+                                    placeholder = "Título de solicitud..."
+                                    value       = { title }
+                                    onChange    = {( e ) => setTitle( e.target.value )}
+                                    className   = "pl-8"
                                 />
                             </div>
                         </div>
@@ -105,7 +105,7 @@ export function RequestFilter({
 
                             <Select
                                 value={consecutiveFilter}
-                                onValueChange={(value) => setConsecutiveFilter(value as "ALL" | "TRUE" | "FALSE")}
+                                onValueChange={( value ) => setConsecutiveFilter( value as "ALL" | "TRUE" | "FALSE" )}
                             >
                                 <SelectTrigger>
                                     <SelectValue />
