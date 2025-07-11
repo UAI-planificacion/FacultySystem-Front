@@ -103,3 +103,13 @@ export interface Request {
     subject         : SubjectRequest;
     totalDetails    : number;
 }
+
+
+export interface UpdateRequest {
+    id              : string;
+    title?          : string;
+    status?         : Status;
+    isConsecutive?  : boolean;
+    subjectId?      : string;
+    comment?        : string | null;
+}
