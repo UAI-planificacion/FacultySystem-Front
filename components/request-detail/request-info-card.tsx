@@ -15,7 +15,7 @@ import {
 import { Button }       from "@/components/ui/button";
 import { ShowStatus }   from "@/components/shared/status";
 import { ShowDate }     from "@/components/shared/date";
-import { Consecutive }  from "@/components/shared/consegutive";
+import { Consecutive }  from "@/components/shared/consecutive";
 
 import { type Request } from "@/types/request";
 
