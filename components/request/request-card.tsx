@@ -1,18 +1,19 @@
 'use client'
 
-import {  Eye, Calendar, User, BookOpen, Trash, Pencil } from "lucide-react";
+import {  Eye, User, BookOpen, Trash, Pencil } from "lucide-react";
 
 import {
     Card,
     CardContent,
     CardHeader,
     CardTitle
-}                   from "@/components/ui/card";
-import { Badge }    from "@/components/ui/badge";
-import { Button }   from "@/components/ui/button";
+}                       from "@/components/ui/card";
+import { Badge }        from "@/components/ui/badge";
+import { Button }       from "@/components/ui/button";
+import { ShowStatus }   from "@/components/shared/status";
+import { ShowDate }     from "@/components/shared/date";
 
-import { type Request }                 from "@/types/request";
-import { dateToString, getStatusColor } from "@/lib/utils";
+import { type Request } from "@/types/request";
 
 
 export interface RequestCardProps {
@@ -31,39 +32,36 @@ export function RequestCard({
     return (
         <Card className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                    <div className="">
-                        <CardTitle className="text-md font-medium line-clamp-1 truncate">{request.title}</CardTitle>
+                <div className="space-y-1.5">
+                    <CardTitle className="text-md font-medium max-w-full">{ request.title }</CardTitle>
 
-                        <p className="text-[11px] text-muted-foreground mb-2">{request.id}</p>
+                    <p className="text-[11px] text-muted-foreground">{ request.id }</p>
 
-                        <Badge className={getStatusColor(request.status)}>{request.status}</Badge>
+                    <div className="flex items-center gap-2">
+                        <ShowStatus status={ request.status } />
+
+                        {request.isConsecutive && (
+                            <Badge variant="outline" className="text-xs">
+                                Consecutivo
+                            </Badge>
+                        )}
                     </div>
-
-                    {request.isConsecutive && (
-                        <Badge variant="outline" className="text-xs">
-                            Consecutivo
-                        </Badge>
-                    )}
                 </div>
             </CardHeader>
 
             <CardContent className="space-y-3">
                 <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2">
-                        <BookOpen className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">{request.subject.name}</span>
+                        <BookOpen className="h-4 w-4" />
+                        <span className="font-medium max-w-full truncate overflow-hidden whitespace-nowrap">{request.subject.name}</span>
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        <span>{request.staffCreate.name}</span>
+                        <User className="h-4 w-4" />
+                        <span className="max-w-full truncate overflow-hidden whitespace-nowrap">{request.staffCreate.name}</span>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>{dateToString(request.createdAt)}</span>
-                    </div>
+                    <ShowDate date={request.createdAt} />
                 </div>
 
                 {request.description && (
