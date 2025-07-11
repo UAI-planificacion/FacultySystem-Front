@@ -4,20 +4,20 @@ import {
     ArrowLeft,
     User,
     BookOpen,
-    Ellipsis,
-} from "lucide-react"
+} from "lucide-react";
 
 import {
     Card,
     CardContent,
     CardHeader,
     CardTitle,
-}                   from "@/components/ui/card";
-import { Badge }    from "@/components/ui/badge";
-import { Button }   from "@/components/ui/button";
+}                       from "@/components/ui/card";
+import { Button }       from "@/components/ui/button";
+import { ShowStatus }   from "@/components/shared/status";
+import { ShowDate }     from "@/components/shared/date";
+import { Consecutive }  from "@/components/shared/consegutive";
 
-import { type Request }     from "@/types/request";
-import { getStatusColor }   from "@/lib/utils";
+import { type Request } from "@/types/request";
 
 
 interface RequestInfoCardProps {
@@ -25,88 +25,93 @@ interface RequestInfoCardProps {
     onBack  : () => void;
 }
 
-export function RequestInfoCard({ request, onBack }: RequestInfoCardProps) {
+export function RequestInfoCard({ request, onBack }: RequestInfoCardProps ): JSX.Element {
     return (
         <Card>
             <CardHeader>
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" onClick={onBack}>
+                    <div className="flex items-center gap-4">
+                        <Button
+                            variant = "secondary"
+                            size    = "sm"
+                            onClick = { onBack }
+                        >
                             <ArrowLeft className="h-4 w-4" />
                         </Button>
 
-                        <div className="flex flex-col">
+                        <div className="flex flex-col space-y-1">
                             <CardTitle>{request.title}</CardTitle>
                             <p className="text-[11px] text-muted-foreground">{request.id}</p>
                         </div>
                     </div>
 
-                    <Badge className={getStatusColor(request.status)}>{request.status}</Badge>
+                    <div className="grid gap-2 justify-end end-1">
+                        <ShowStatus status={request.status} />
+
+                        <Consecutive className="w-full" isConsecutive={request.isConsecutive} />
+                    </div>
                 </div>
             </CardHeader>
 
-            <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                    <div className="col-span-2 space-y-3">
+            <CardContent className="space-y-6">
+                {/* Metadata Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    {/* Created By */}
+                    <div className="space-y-1">
+                        <p className="text-sm font-medium text-muted-foreground">Creado por</p>
                         <div className="flex items-center gap-2">
                             <User className="h-4 w-4 text-muted-foreground" />
-
-                            <div>
-                                <p className="font-medium">Creado por</p>
-                                <p className="text-sm text-muted-foreground">{request.staffCreate.name}</p>
-                                <p className="text-sm text-muted-foreground">{new Date(request.createdAt).toDateString()}</p>
-                            </div>
+                            <p className="max-w-full truncate overflow-hidden whitespace-nowrap">{request.staffCreate.name}</p>
                         </div>
+                    </div>
 
-                        {request.staffUpdate && (
+                    <div className="space-y-1">
+                        <p className="text-sm font-medium text-muted-foreground">Creado el</p>
+                        <ShowDate date={request.createdAt} />
+                    </div>
+
+                    {/* Updated By */}
+                    {request.staffUpdate && (
+                        <div className="space-y-1">
+                            <p className="text-sm font-medium text-muted-foreground">Actualizado por</p>
                             <div className="flex items-center gap-2">
                                 <User className="h-4 w-4 text-muted-foreground" />
-
-                                <div>
-                                    <p className="font-medium">Actualizado por</p>
-                                    <p className="text-sm text-muted-foreground">{request.staffUpdate.name}</p>
-                                    <p className="text-sm text-muted-foreground">{request.updatedAt ? new Date(request.updatedAt).toDateString(): '-'}</p>
-                                </div>
-                            </div>
-                        )}
-
-                        <div className="flex items-center gap-2">
-                            <BookOpen className="h-4 w-4 text-muted-foreground" />
-
-                            <div>
-                                <p className="font-medium">Asignatura</p>
-                                <p className="text-sm text-muted-foreground">{request.subject.name}</p>
+                                <p>{request.staffUpdate.name}</p>
                             </div>
                         </div>
+                    )}
+
+                    <div className="space-y-1">
+                        <p className="text-sm font-medium text-muted-foreground">Actualizado el</p>
+                        <ShowDate date={request.updatedAt} />
                     </div>
+                </div>
 
-                    <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                            <Ellipsis className="h-4 w-4 text-muted-foreground" />
+                {/* Subject */}
+                <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Asignatura</p>
 
-                            <div>
-                                <p className="font-medium">Consecutivo</p>
+                    <div className="flex items-center gap-2">
+                        <BookOpen className="h-4 w-4 text-muted-foreground" />
+                        <p className="max-w-full truncate overflow-hidden whitespace-nowrap">{ request.subject.id }-{ request.subject.name }</p>
+                    </div>
+                </div>
 
-                                <Badge variant={request.isConsecutive ? "default" : "secondary"}>
-                                    {request.isConsecutive ? "Sí" : "No"}
-                                </Badge>
-                            </div>
+                {/* Description and Comments */}
+                <div className="space-y-4 pt-4 border-t">
+                    {request.description && (
+                        <div className="space-y-1">
+                            <p className="text-sm font-medium text-muted-foreground">Descripción</p>
+                            <p className="text-sm whitespace-pre-line">{request.description}</p>
                         </div>
+                    )}
 
-                        {request.description && (
-                            <div>
-                                <p className="font-medium">Descripción</p>
-                                <p className="text-sm text-muted-foreground">{request.description}</p>
-                            </div>
-                        )}
-
-                        {request.comment && (
-                            <div>
-                                <p className="font-medium">Comentario</p>
-                                <p className="text-sm text-muted-foreground">{request.comment}</p>
-                            </div>
-                        )}
-                    </div>
+                    {request.comment && (
+                        <div className="space-y-1">
+                            <p className="text-sm font-medium text-muted-foreground">Comentarios</p>
+                            <p className="text-sm text-muted-foreground whitespace-pre-line">{request.comment}</p>
+                        </div>
+                    )}
                 </div>
             </CardContent>
         </Card>
