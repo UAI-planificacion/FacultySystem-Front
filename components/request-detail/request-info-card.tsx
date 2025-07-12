@@ -53,12 +53,13 @@ export function RequestInfoCard({ request, onBack }: RequestInfoCardProps ): JSX
                 </div>
             </CardHeader>
 
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4">
                 {/* Metadata Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     {/* Created By */}
                     <div className="space-y-1">
                         <p className="text-sm font-medium text-muted-foreground">Creado por</p>
+
                         <div className="flex items-center gap-2">
                             <User className="h-4 w-4 text-muted-foreground" />
                             <p className="max-w-full truncate overflow-hidden whitespace-nowrap">{request.staffCreate.name}</p>
