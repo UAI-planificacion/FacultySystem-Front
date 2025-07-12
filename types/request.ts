@@ -31,7 +31,7 @@ export enum Size {
     XXL = "XXL",
 }
 
-export enum Nivel {
+export enum Level {
     PREGRADO        = "PREGRADO",
     FIRST_GRADE     = "FIRST_GRADE",
     SECOND_GRADE    = "SECOND_GRADE",
@@ -80,12 +80,30 @@ export interface RequestDetail {
     days            : string[];
     spaceId         : string | null;
     isPriority      : boolean;
-    nivel           : Nivel;
+    level           : Level;
     professor       : Professor | null;
     staffCreate     : StaffRequest;
     staffUpdate     : StaffRequest | null;
     createdAt       : Date;
     updatedAt       : Date;
+}
+
+export interface UpdateRequestDetail {
+    id              : string;
+    minimum?         : number | null;
+    maximum?         : number | null;
+    spaceType?       : SpaceType | null;
+    spaceSize?       : Size | null;
+    costCenterId?    : string | null;
+    inAfternoon?     : boolean;
+    building?        : Building | null;
+    comment?         : string | null;
+    moduleId?        : string | null;
+    days?            : string[];
+    spaceId?         : string | null;
+    isPriority?      : boolean;
+    level?           : Level;
+    professorId?     : string | null;
 }
 
 
