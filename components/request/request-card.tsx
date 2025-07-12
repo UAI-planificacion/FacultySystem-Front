@@ -12,6 +12,7 @@ import { Badge }        from "@/components/ui/badge";
 import { Button }       from "@/components/ui/button";
 import { ShowStatus }   from "@/components/shared/status";
 import { ShowDate }     from "@/components/shared/date";
+import { Consecutive }  from "@/components/shared/consecutive";
 
 import { type Request } from "@/types/request";
 
@@ -40,11 +41,7 @@ export function RequestCard({
                     <div className="flex items-center gap-2">
                         <ShowStatus status={ request.status } />
 
-                        {request.isConsecutive && (
-                            <Badge variant="outline" className="text-xs">
-                                Consecutivo
-                            </Badge>
-                        )}
+                        <Consecutive isConsecutive={ request.isConsecutive } />
                     </div>
                 </div>
             </CardHeader>
