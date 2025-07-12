@@ -1,112 +1,111 @@
 "use client"
 
-import { useState } from "react"
+import { JSX, useState } from "react"
 
-import {
-    ArrowLeft,
-    Plus,
-    Edit,
-    Trash2,
-    User,
-    Calendar,
-    MapPin,
-    Users,
-    Building2,
-} from "lucide-react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-}                           from "@/components/ui/dialog";
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-}                           from "@/components/ui/card";
-import { Badge }            from "@/components/ui/badge";
-import { Button }           from "@/components/ui/button";
-import RequestDetailForm    from "@/components/request-detail/request-detail-form";
-import {RequestInfoCard} from "@/components/request-detail/request-info-card";
+import { Card, CardContent }    from "@/components/ui/card";
+import { RequestDetailForm, RequestDetailFormValues }    from "@/components/request-detail/request-detail-form";
+import { RequestInfoCard }      from "@/components/request-detail/request-info-card";
+import { RequestDetailCard }    from "@/components/request-detail/request-detail-card";
 
-import { type Request, type RequestDetail, Status } from "@/types/request";
-import { useQuery } from "@tanstack/react-query";
-import { KEY_QUERYS } from "@/consts/key-queries";
-import { fetchApi } from "@/services/fetch";
-import { RequestDetailCard } from "./request-detail-card";
+import type {
+    Building,
+    Request,
+    RequestDetail,
+    Size,
+    SpaceType,
+    UpdateRequestDetail
+}                       from "@/types/request";
+import { KEY_QUERYS }   from "@/consts/key-queries";
+import { Method, fetchApi }     from "@/services/fetch";
+import { DeleteConfirmDialog } from "../dialog/DeleteConfirmDialog";
+import { toast } from "sonner";
+import { errorToast, successToast } from "@/config/toast/toast.config";
 
 
 interface RequestDetailViewProps {
     request : Request;
     onBack  : () => void;
-    // onUpdateRequest : (request: Request) => void
 }
+
+
+const initialRequestDetail = {} as RequestDetail
 
 
 export function RequestDetailView({
     request,
     onBack,
-    // onUpdateRequest
 }: RequestDetailViewProps ): JSX.Element {
+    const queryClient                               = useQueryClient();
 
     const {
         data,
         isLoading,
-        error,
         isError,
-        refetch
     } = useQuery({
         queryKey    : [ KEY_QUERYS.REQUEST_DETAIL, request.id ],
         queryFn     : () => fetchApi<RequestDetail[]>( `request-details/request/${request.id}` ),
-        // enabled,
+    });
+
+    const [selectedDetail, setSelectedDetail]   = useState<RequestDetail>( initialRequestDetail );
+    const [ isOpenEdit, setIsOpenEdit ]         = useState( false );
+    const [ isOpenDelete, setIsOpenDelete ]     = useState( false );
+
+
+
+    function onEditRequesDetail( detail: RequestDetail ) {
+        console.log('🚀 ~ file: request-detail.tsx:47 ~ detail:', detail)
+        setIsOpenEdit( true );
+        setSelectedDetail( detail );
+    }
+
+
+    const updateRequestDetailApi = async ( updatedRequestDetail: UpdateRequestDetail ): Promise<RequestDetail>  =>
+        fetchApi<RequestDetail>( `request-details/${updatedRequestDetail.id}`, Method.PATCH, updatedRequestDetail );
+
+
+    const deleteRequestDetailApi = async ( requestId: string ): Promise<Request> =>
+        fetchApi<Request>( `request-details/${requestId}`, Method.DELETE );
+
+
+    const updateRequestDetailMutation = useMutation<RequestDetail, Error, UpdateRequestDetail>({
+        mutationFn: updateRequestDetailApi,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.REQUEST_DETAIL, request.id] });
+            setIsOpenEdit( false );
+            setSelectedDetail( initialRequestDetail );
+            toast( 'Solicitud actualizada exitosamente', successToast );
+        },
+        onError: ( mutationError ) => toast( `Error al actualizar la solicitud: ${mutationError.message}`, errorToast )
     });
 
 
-    const [editingDetail, setEditingDetail] = useState<RequestDetail | null>(null)
-    const [isAddingDetail, setIsAddingDetail] = useState(false)
+    const deleteRequestDetailMutation = useMutation<Request, Error, string>({
+        mutationFn: deleteRequestDetailApi,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.REQUEST_DETAIL, request.id] });
+            setIsOpenDelete( false );
+            setSelectedDetail( initialRequestDetail );
+            toast( 'Solicitud eliminada exitosamente', successToast );
+        },
+        onError: ( mutationError ) => toast( `Error al eliminar solicitud: ${mutationError.message}`, errorToast )
+    });
 
-    // function handleAddDetail(
-    //     detail: Omit<RequestDetail, "id" | "requestId" | "createdAt" | "updatedAt">
-    // ): void {
-    //     const newDetail: RequestDetail = {
-    //         ...detail,
-    //         id: `temp_${Date.now()}`,
-    //         requestId: request.id,
-    //         createdAt: new Date(),
-    //         updatedAt: new Date(),
-    //     }
-
-    //     const updatedRequest = {
-    //         ...request,
-    //         details: [...request.details, newDetail],
-    //     }
-
-    //     onUpdateRequest( updatedRequest );
-    //     setIsAddingDetail( false );
-    // }
-
-    // function handleUpdateDetail( updatedDetail: RequestDetail ): void {
-    //     const updatedRequest = {
-    //         ...request,
-    //         details: request.details.map((detail) => (detail.id === updatedDetail.id ? updatedDetail : detail)),
-    //     }
-
-    //     onUpdateRequest( updatedRequest );
-    //     setEditingDetail( null );
-    // }
+    
+    function openDeleteDialog( requestDetail: RequestDetail ): void {
+        setSelectedDetail( requestDetail );
+        setIsOpenDelete( true );
+    }
 
 
-    // function handleDeleteDetail( detailId: string ): void {
-    //     const updatedRequest = {
-    //         ...request,
-    //         details: request.details.filter(( detail ) => detail.id !== detailId ),
-    //     }
-
-    //     onUpdateRequest( updatedRequest );
-    // }
+    const handleFormSubmit = ( formData: RequestDetailFormValues ): void => {
+        updateRequestDetailMutation.mutate({
+            ...formData,
+            id      : selectedDetail.id,
+            days    : formData.days.map( String ),
+        });
+    };
 
 
     return (
@@ -122,7 +121,7 @@ export function RequestDetailView({
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold">Detalles de la Solicitud ({data?.length ?? 0})</h2>
 
-                    <Dialog open={isAddingDetail} onOpenChange={setIsAddingDetail}>
+                    {/* <Dialog open={isAddingDetail} onOpenChange={setIsAddingDetail}>
                         <DialogTrigger asChild>
                             <Button>
                                 <Plus className="h-4 w-4 mr-2" />
@@ -130,22 +129,23 @@ export function RequestDetailView({
                             </Button>
                         </DialogTrigger>
 
-                        {/* <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                             <DialogHeader>
                                 <DialogTitle>Agregar Nuevo Detalle</DialogTitle>
                             </DialogHeader>
 
                             <RequestDetailForm onSubmit={handleAddDetail} onCancel={() => setIsAddingDetail(false)} />
-                        </DialogContent> */}
-                    </Dialog>
+                        </DialogContent>
+                    </Dialog> */}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {data?.map((detail) => (
+                    {data?.map( detail => (
                         <RequestDetailCard
-                            key={detail.id}
-                            detail={detail}
-                            setEditingDetail={setEditingDetail}
+                            key     = { detail.id }
+                            detail  = { detail }
+                            onEdit  = { onEditRequesDetail }
+                            onDelete = { openDeleteDialog }
                         />
                     ))}
                 </div>
@@ -155,13 +155,30 @@ export function RequestDetailView({
                         <CardContent className="text-center py-8">
                             <p className="text-muted-foreground">No hay detalles para esta solicitud.</p>
 
-                            <Button className="mt-4" onClick={() => setIsAddingDetail(true)}>
+                            {/* <Button className="mt-4" onClick={() => setIsAddingDetail(true)}>
                                 <Plus className="h-4 w-4 mr-2" />
                                 Agregar Primer Detalle
-                            </Button>
+                            </Button> */}
                         </CardContent>
                     </Card>
                 )}
+
+                <RequestDetailForm
+                    initialData = { selectedDetail }
+                    onSubmit    = { ( data) => handleFormSubmit( data ) }
+                    onCancel    = { () => setIsOpenEdit( false )}
+                    isOpen      = { isOpenEdit }
+                    onClose     = { () => setIsOpenEdit( false )}
+                />
+
+                {/* Delete Confirmation Dialog */}
+                <DeleteConfirmDialog
+                    isOpen      = { isOpenDelete }
+                    onClose     = { () => setIsOpenDelete( false )}
+                    onConfirm   = { () => deleteRequestDetailMutation.mutate( selectedDetail.id || '') }
+                    name        = { selectedDetail.id || '' }
+                    type        = "el Detalle"
+                />
             </div>
         </div>
     );
