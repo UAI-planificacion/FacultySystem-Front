@@ -30,10 +30,12 @@ import { type RequestDetail } from "@/types/request";
 
 export function RequestDetailCard({
     detail,
-    setEditingDetail
+    onEdit,
+    onDelete
 }: {
     detail: RequestDetail,
-    setEditingDetail: (detail: RequestDetail) => void
+    onEdit: (detail: RequestDetail) => void,
+    onDelete: (detail: RequestDetail) => void
 }) {
     return (
         <Card className="relative">
@@ -44,7 +46,7 @@ export function RequestDetailCard({
                     <div className="flex gap-1">
                         <Dialog>
                             <DialogTrigger asChild>
-                                <Button variant="outline" size="sm" onClick={() => setEditingDetail(detail)}>
+                                <Button variant="outline" size="sm" onClick={() => onEdit(detail)}>
                                     <Edit className="h-4 w-4" />
                                 </Button>
                             </DialogTrigger>
@@ -65,7 +67,7 @@ export function RequestDetailCard({
                         <Button
                             variant="outline"
                             size="sm"
-                            // onClick={() => handleDeleteDetail(detail.id)}
+                            onClick={() => onDelete(detail)}
                             className="text-red-600 hover:text-red-700"
                         >
                             <Trash2 className="h-4 w-4" />
@@ -112,7 +114,7 @@ export function RequestDetailCard({
                     </Badge>
 
                     <Badge variant="outline" className="text-xs">
-                        {detail.nivel}
+                        {detail.level}
                     </Badge>
 
                     {detail.inAfternoon && (
