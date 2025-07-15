@@ -48,20 +48,20 @@ export default function FacultiesPage() {
         isError,
     } = useQuery({
         queryKey    : [ KEY_QUERYS.FACULTIES ],
-        queryFn     : () => fetchApi<FacultyResponse>( `faculties` ),
+        queryFn     : () => fetchApi<FacultyResponse>({ url: `faculties` }),
     });
 
 
     const createFacultyApi = async ( newFacultyData: CreateFacultyInput ): Promise<Faculty>  =>
-        fetchApi<Faculty>( `faculties`, Method.POST, newFacultyData );
+        fetchApi<Faculty>({ url: `faculties`, method: Method.POST, body: newFacultyData });
 
 
     const updateFacultyApi = async ( updatedFacultyData: UpdateFacultyInput ): Promise<Faculty>  =>
-        fetchApi<Faculty>( `faculties/${updatedFacultyData.id}`, Method.PATCH, updatedFacultyData );
+        fetchApi<Faculty>({ url: `faculties/${updatedFacultyData.id}`, method: Method.PATCH, body: updatedFacultyData });
 
 
     const deleteFacultyApi = async ( facultyId: string ): Promise<Faculty> =>
-        fetchApi<Faculty>( `faculties/${facultyId}`, Method.DELETE );
+        fetchApi<Faculty>({ url: `faculties/${facultyId}`, method: Method.DELETE });
 
 
     const createFacultyMutation = useMutation<Faculty, Error, CreateFacultyInput>({
