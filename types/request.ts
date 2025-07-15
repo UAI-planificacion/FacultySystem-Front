@@ -31,6 +31,39 @@ export enum Size {
     XXL = "XXL",
 }
 
+
+export interface Module {
+    id          : number;
+    code        : string;
+    difference  : number | null;
+    startHour   : string;
+    endHour     : string;
+    isActive    : boolean;
+    createdAt   : string;
+    updatedAt   : string;
+    name        : string;
+    days        : number[];
+}
+
+
+export interface Day {
+    id          : number;
+    name        : string;
+    shortName   : string;
+    mediumName  : string;
+}
+
+
+export interface SizeResponse {
+    id          : string;
+    detail      : string;
+    min         : number | null;
+    max         : number | null;
+    lessThan    : number | null;
+    greaterThan : number | null;
+}
+
+
 export enum Level {
     PREGRADO        = "PREGRADO",
     FIRST_GRADE     = "FIRST_GRADE",
@@ -62,7 +95,9 @@ export interface Professor {
     id      : string;
     name    : string;
     email   : string;
+    isMock  : boolean;
 }
+
 
 export interface RequestDetail {
     id              : string;
@@ -81,7 +116,7 @@ export interface RequestDetail {
     spaceId         : string | null;
     isPriority      : boolean;
     level           : Level;
-    professor       : Professor | null;
+    professorId     : string | null;
     staffCreate     : StaffRequest;
     staffUpdate     : StaffRequest | null;
     createdAt       : Date;
