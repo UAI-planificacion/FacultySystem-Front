@@ -1,11 +1,12 @@
 "use client"
 
-import { JSX, useEffect } from "react";
+import { JSX, useEffect, useMemo } from "react";
 
 import { z }            from "zod";
 import { zodResolver }  from "@hookform/resolvers/zod";
 import { useForm }      from "react-hook-form";
 import { Loader2 }      from "lucide-react";
+import { useQuery }     from "@tanstack/react-query";
 
 import {
     Select,
@@ -13,7 +14,7 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-}                   from "@/components/ui/select";
+}                               from "@/components/ui/select";
 import {
     Dialog,
     DialogContent,
@@ -21,7 +22,7 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle
-}                   from "@/components/ui/dialog"
+}                               from "@/components/ui/dialog"
 import {
     Form,
     FormControl,
@@ -29,40 +30,33 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
-}                       from "@/components/ui/form";
-import { Button }       from "@/components/ui/button";
-import { Input }        from "@/components/ui/input";
-import { Textarea }     from "@/components/ui/textarea";
-import { Switch }       from "@/components/ui/switch";
-import { DaySelector }  from "@/components/shared/DaySelector";
+}                               from "@/components/ui/form";
+import { Button }               from "@/components/ui/button";
+import { Input }                from "@/components/ui/input";
+import { Textarea }             from "@/components/ui/textarea";
+import { Switch }               from "@/components/ui/switch";
+import { DaySelector }          from "@/components/shared/DaySelector";
+import { MultiSelectCombobox }  from "@/components/shared/Combobox";
 
 import {
     type RequestDetail,
     SpaceType,
     Size,
     Level,
-    Building
-}                           from "@/types/request";
-import { professorsMock }   from "@/data/professor";
-import { spacesMock } from "@/data/space";
-
-
-const getSpaceType = ( spaceType: SpaceType ) => ({
-    [SpaceType.ROOM]        : "Sala",
-    [SpaceType.AUDITORIUM]  : "Auditorio",
-    [SpaceType.COMMUNIC]    : "Comunicación",
-    [SpaceType.CORE]        : "Core",
-    [SpaceType.DIS]         : "Diseño",
-    [SpaceType.GARAGE]      : "Garage",
-    [SpaceType.LAB]         : "Laboratorio",
-    [SpaceType.LABPC]       : "Laboratorio de Computadoras",
-})[spaceType];
-
-const getLevelName = ( level: Level ) => ({
-    [Level.FIRST_GRADE]     : "Primer Grado",
-    [Level.SECOND_GRADE]    : "Segundo Grado",
-    [Level.PREGRADO]        : "Pregrado",
-})[level];
+    Building,
+    Professor,
+    SizeResponse,
+    Day,
+    Module,
+}                       from "@/types/request";
+import {
+    getLevelName,
+    getSpaceType
+}                       from "@/lib/utils";
+import { spacesMock }   from "@/data/space";
+import { KEY_QUERYS }   from "@/consts/key-queries";
+import { fetchApi }     from "@/services/fetch";
+import { ENV }          from "@/config/envs/env";
 
 
 const numberOrNull = z.union([
@@ -79,6 +73,7 @@ const numberOrNull = z.union([
     z.null(),
     z.undefined()
 ]).transform(val => val === undefined ? null : val);
+
 
 const formSchema = z.object({
     minimum         : numberOrNull,
@@ -118,6 +113,12 @@ interface RequestDetailFormProps {
     onCancel    : () => void;
     isOpen      : boolean;
     onClose     : () => void;
+    professors  : Professor[];
+    isLoadingProfessors: boolean;
+    isErrorProfessors: boolean;
+    modules : Module[];
+    isLoadingModules: boolean;
+    isErrorModules: boolean;
 }
 
 
@@ -134,7 +135,7 @@ const defaultRequestDetail = ( data: RequestDetail ) => ({
     days            : data.days?.map( day => Number( day )) ?? [],
     comment         : data.comment,
     level           : data.level,
-    professorId     : data.professor?.id,
+    professorId     : data.professorId,
     spaceId         : data.spaceId,
 });
 
@@ -143,11 +144,51 @@ export function RequestDetailForm({
     initialData, 
     onSubmit, 
     onClose,
-    isOpen
+    isOpen,
+    professors,
+    isLoadingProfessors,
+    isErrorProfessors,
+    modules,
+    isLoadingModules,
+    isErrorModules
 }: RequestDetailFormProps ): JSX.Element {
+    const {
+        data: sizes,
+        isLoading: isLoadingSizes,
+        isError: isErrorSizes,
+    } = useQuery({
+        queryKey    : [ KEY_QUERYS.SIZE ],
+        queryFn     : () => fetchApi<SizeResponse[]>({ url: `${ENV.ACADEMIC_SECTION}sizes`, isApi: false }),
+    });
+
+
+    const {
+        data: days,
+        isLoading: isLoadingDays,
+        isError: isErrorDays,
+    } = useQuery({
+        queryKey    : [ KEY_QUERYS.DAYS ],
+        queryFn     : () => fetchApi<Day[]>({ url: `${ENV.ACADEMIC_SECTION}days`, isApi: false }),
+    });
+
+
+    const memoizedProfessorOptions = useMemo(() => {
+        return professors?.map(professor => ({
+            id      : professor.id,
+            label   : `${professor.id}-${professor.name}`,
+            value   : professor.id,
+        })) ?? [];
+    }, [professors]);
+
+
+    const memoizedDays = useMemo(() => {
+        return days?.map( day =>  day.id - 1 ) ?? [];
+    }, [days]);
+
+
     const form = useForm<RequestDetailFormValues>({
-        resolver: zodResolver( formSchema ) as any,
-        defaultValues: defaultRequestDetail(initialData),
+        resolver        : zodResolver( formSchema ) as any,
+        defaultValues   : defaultRequestDetail( initialData ),
     });
 
 
@@ -240,29 +281,48 @@ export function RequestDetailForm({
                                     <FormItem>
                                         <FormLabel>Espacio</FormLabel>
 
+                                        <MultiSelectCombobox
+                                            multiple            = { false }
+                                            placeholder         = "Seleccionar espacio"
+                                            defaultValues       = { field.value || '' }
+                                            onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
+                                            options             = { spacesMock }
+                                        />
+
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            {/* Edificio */}
+                            <FormField
+                                control = { form.control }
+                                name    = "building"
+                                render  = {({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Edificio</FormLabel>
+
                                         <Select
-                                            onValueChange   = {(value: string) => {
-                                                field.onChange(value || null);
+                                            onValueChange={( value ) => {
+                                                field.onChange(value === "Sin especificar" ? undefined : value);
                                             }}
-                                            value = {field.value || ''}
+                                            defaultValue={field.value || 'Sin especificar'}
                                         >
                                             <FormControl>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Seleccionar tipo" />
+                                                    <SelectValue placeholder="Seleccionar edificio" />
                                                 </SelectTrigger>
                                             </FormControl>
 
                                             <SelectContent>
                                                 <SelectItem value="Sin especificar">Sin especificar</SelectItem>
-
-                                                {spacesMock.map((space) => (
-                                                    <SelectItem key={space.id} value={space.id}>
-                                                        {space.name}
+                                                {Object.values(Building).map((building) => (
+                                                    <SelectItem key={building} value={building}>
+                                                        Edificio {building}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
-
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -325,9 +385,9 @@ export function RequestDetailForm({
 
                                             <SelectContent>
                                                 <SelectItem value="Sin especificar">Sin especificar</SelectItem>
-                                                {Object.values(Size).map((size) => (
-                                                    <SelectItem key={size} value={size}>
-                                                        {size}
+                                                {sizes?.map((size) => (
+                                                    <SelectItem key={size.id} value={size.id}>
+                                                        {size.id} ({size.detail})
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
@@ -337,41 +397,7 @@ export function RequestDetailForm({
                                 )}
                             />
 
-                            {/* Edificio */}
-                            <FormField
-                                control = { form.control }
-                                name    = "building"
-                                render  = {({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Edificio</FormLabel>
-
-                                        <Select
-                                            onValueChange={( value ) => {
-                                                field.onChange(value === "Sin especificar" ? undefined : value);
-                                            }}
-                                            defaultValue={field.value || 'Sin especificar'}
-                                        >
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Seleccionar edificio" />
-                                                </SelectTrigger>
-                                            </FormControl>
-
-                                            <SelectContent>
-                                                <SelectItem value="Sin especificar">Sin especificar</SelectItem>
-                                                {Object.values(Building).map((building) => (
-                                                    <SelectItem key={building} value={building}>
-                                                        Edificio {building}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Nivel */}
+                            {/* Level */}
                             <FormField
                                 control = { form.control }
                                 name    = "level"
@@ -410,28 +436,20 @@ export function RequestDetailForm({
                                     <FormItem>
                                         <FormLabel>Profesor</FormLabel>
 
-                                        <Select 
-                                            onValueChange   = {( value ) => {
-                                                field.onChange( value === "Sin especificar" ? undefined : value );
-                                            }}
-                                            defaultValue    = { field.value || undefined }
-                                        >
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Seleccionar profesor" />
-                                                </SelectTrigger>
-                                            </FormControl>
-
-                                            <SelectContent>
-                                                <SelectItem value="Sin especificar">Sin especificar</SelectItem>
-
-                                                {professorsMock.map((professor) => (
-                                                    <SelectItem key={professor.id} value={professor.id}>
-                                                        {professor.id}-{professor.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                        {isLoadingProfessors ? (
+                                            <div className="flex items-center gap-2 border border-zinc-300 dark:border-zinc-800 p-2 rounded animate-spin">
+                                                <Loader2 className="h-4 w-4" />
+                                                Cargando profesores...
+                                            </div>
+                                        ) : (
+                                            <MultiSelectCombobox
+                                                multiple            = { false }
+                                                placeholder         = "Seleccionar profesor"
+                                                defaultValues       = { field.value || '' }
+                                                onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
+                                                options             = { memoizedProfessorOptions }
+                                            />
+                                        )}
 
                                         <FormMessage />
                                     </FormItem>
@@ -462,6 +480,7 @@ export function RequestDetailForm({
                                 )}
                             />
 
+                            {/* Prioridad */}
                             <FormField
                                 control = { form.control }
                                 name    = "isPriority"
@@ -485,6 +504,45 @@ export function RequestDetailForm({
                                 )}
                             />
 
+                            {/* Módulo */}
+                            <FormField
+                                control = { form.control }
+                                name    = "moduleId"
+                                render  = {({ field }) => (
+                                    <FormItem className="col-span-2">
+                                        <FormLabel>Módulo</FormLabel>
+
+                                        <Select
+                                            onValueChange={field.onChange}
+                                            defaultValue={field.value || '' }
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Seleccionar módulo" />
+                                                </SelectTrigger>
+                                            </FormControl>
+
+                                            {isLoadingModules ? (
+                                                <div className="flex items-center gap-2 border border-zinc-300 dark:border-zinc-800 p-2 rounded animate-spin">
+                                                    <Loader2 className="h-4 w-4" />
+                                                    Cargando módulos...
+                                                </div>
+                                            ) : (
+                                                <SelectContent>
+                                                    {modules?.map((module) => (
+                                                        <SelectItem key={module.id.toString()} value={module.id.toString()}>
+                                                            {module.name} {module.difference ? `-${module.difference}` : ''} {module.startHour}:{module.endHour}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            )}
+                                        </Select>
+
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
                             {/* Días */}
                             <FormField
                                 control = { form.control }
@@ -494,7 +552,7 @@ export function RequestDetailForm({
                                         <FormLabel>Días</FormLabel>
 
                                         <DaySelector
-                                            days        = {[ 0, 1, 2, 3, 4, 5, 6 ]}
+                                            days        = { memoizedDays }
                                             value       = { field.value?.map( day => Number( day )) || []}
                                             onChange    = { field.onChange }
                                         />
