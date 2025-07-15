@@ -60,15 +60,15 @@ interface SubjectsManagementProps {
 
 export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementProps) {
     const queryClient                                   = useQueryClient();
-    const [isFormOpen, setIsFormOpen]                   = useState(false)
-    const [editingSubject, setEditingSubject]           = useState<Subject | undefined>(undefined)
-    const [searchQuery, setSearchQuery]                 = useState('');
-    const [selectedCostCenter, setSelectedCostCenter]   = useState<string>('all');
+    const [isFormOpen, setIsFormOpen]                   = useState( false );
+    const [editingSubject, setEditingSubject]           = useState<Subject | undefined>( undefined );
+    const [searchQuery, setSearchQuery]                 = useState( '' );
+    const [selectedCostCenter, setSelectedCostCenter]   = useState<string>( 'all' );
     const [isDeleteDialogOpen, setIsDeleteDialogOpen]   = useState( false );
     const [deletingSubjectId, setDeletingSubjectId]     = useState<string | undefined>( undefined );
     const { data: subjects, isLoading }                 = useQuery<Subject[]>({
         queryKey: [KEY_QUERYS.SUBJECTS, facultyId],
-        queryFn: () => fetchApi(`subjects/all/${facultyId}`),
+        queryFn: () => fetchApi( { url: `subjects/all/${facultyId}` } ),
         enabled,
     });
 
@@ -93,15 +93,15 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
 
 
     const createSubjectApi = async ( newSubject: CreateSubject ): Promise<Subject>  =>
-        fetchApi<Subject>( `subjects`, Method.POST, newSubject );
+        fetchApi<Subject>( { url: `subjects`, method: Method.POST, body: newSubject } );
 
 
     const updateSubjectApi = async ( updatedSubject: UpdateSubject ): Promise<Subject>  =>
-        fetchApi<Subject>( `subjects/${updatedSubject.id}`, Method.PATCH, updatedSubject );
+        fetchApi<Subject>( { url: `subjects/${updatedSubject.id}`, method: Method.PATCH, body: updatedSubject } );
 
 
     const deleteSubjectApi = async ( subjectId: string ): Promise<Subject> =>
-        fetchApi<Subject>( `subjects/${subjectId}`, Method.DELETE );
+        fetchApi<Subject>( { url: `subjects/${subjectId}`, method: Method.DELETE } );
 
 
     function saveSuject( isCreated: boolean ): void {
@@ -130,21 +130,22 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
         mutationFn: deleteSubjectApi,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SUBJECTS, facultyId] });
-            setIsDeleteDialogOpen(false);
+            setIsDeleteDialogOpen( false );
             toast('Asignatura eliminada exitosamente', successToast );
         },
-        onError: ( mutationError ) => toast(`Error al eliminar asignatura: ${mutationError.message}`, errorToast ),
+        onError: ( mutationError ) => toast( `Error al eliminar asignatura: ${mutationError.message}`, errorToast ),
     });
 
 
     const openNewSubjectForm = () => {
-        setEditingSubject(undefined)
-        setIsFormOpen(true)
+        setEditingSubject( undefined );
+        setIsFormOpen( true );
     }
-    
-    const openEditSubjectForm = (subject: Subject) => {
-        setEditingSubject(subject)
-        setIsFormOpen(true)
+
+
+    const openEditSubjectForm = ( subject: Subject ) => {
+        setEditingSubject( subject );
+        setIsFormOpen( true );
     }
 
 
@@ -174,17 +175,18 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                 <div className="flex justify-between items-center">
                     <div className="flex gap-4 items-center">
                         <Input
-                            type="search"
-                            placeholder="Buscar por código o nombre..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full max-w-md"
+                            type        = "search"
+                            placeholder = "Buscar por código o nombre..."
+                            value       = { searchQuery }
+                            onChange    = {( e ) => setSearchQuery( e.target.value )}
+                            className   = "w-full max-w-md"
                         />
 
                         <Select value={selectedCostCenter} onValueChange={setSelectedCostCenter}>
                             <SelectTrigger className="w-[450px]">
                                 <SelectValue placeholder="Filtrar por centro de costos" />
                             </SelectTrigger>
+
                             <SelectContent>
                                 <SelectItem value="all">Todos los centros de costo</SelectItem>
                                 {costCenterData.map(cc => (
@@ -204,7 +206,7 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
             </CardHeader>
 
             <CardContent>
-                <ScrollArea className="h-[calc(100vh-355px)]">
+                <ScrollArea className="h-[calc(100vh-363px)]">
                     {
                         isLoading ? (
                             <div className="text-center p-8 text-muted-foreground">
