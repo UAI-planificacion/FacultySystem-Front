@@ -63,7 +63,7 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
     
     const { data: staffList, isLoading, isError }       = useQuery({
         queryKey    : [ KEY_QUERYS.STAFF, facultyId ],
-        queryFn     : () => fetchApi<Staff[]>( `staff/all/${facultyId}` ),
+        queryFn     : () => fetchApi<Staff[]>( { url: `staff/all/${facultyId}` } ),
         enabled
     });
 
@@ -103,15 +103,15 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
 
 
     const createStaffApi = async ( newStaff: CreateStaff ): Promise<Staff>  =>
-        fetchApi<Staff>( `staff`, Method.POST, newStaff );
+        fetchApi<Staff>( { url: `staff`, method: Method.POST, body: newStaff } );
 
 
     const updateStaffApi = async ( updatedStaff: UpdateStaff ): Promise<Staff>  =>
-        fetchApi<Staff>( `staff/${updatedStaff.id}`, Method.PATCH, updatedStaff );
+        fetchApi<Staff>( { url: `staff/${updatedStaff.id}`, method: Method.PATCH, body: updatedStaff } );
 
 
     const deleteStaffApi = async ( staffId: string ): Promise<Staff> =>
-        fetchApi<Staff>( `staff/${staffId}`, Method.DELETE );
+        fetchApi<Staff>( { url: `staff/${staffId}`, method: Method.DELETE } );
 
 
     const createStaffMutation = useMutation<Staff, Error, CreateStaff>({

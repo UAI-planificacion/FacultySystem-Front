@@ -22,7 +22,7 @@ export function RequestsManagement({ facultyId, enabled }: RequestsManagementPro
 
     const { data, isLoading, isError } = useQuery({
         queryKey    : [ KEY_QUERYS.REQUESTS, facultyId ],
-        queryFn     : () => fetchApi<Request[]>( `requests/faculty/${facultyId}` ),
+        queryFn     : () => fetchApi<Request[]>( { url: `requests/faculty/${facultyId}` } ),
         enabled,
     });
     const [selectedRequest, setSelectedRequest] = useState<Request | null>(null)

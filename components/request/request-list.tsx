@@ -58,11 +58,11 @@ export function RequestList({
 
 
     const updateRequestApi = async ( updatedRequest: UpdateRequest ): Promise<Request>  =>
-        fetchApi<Request>( `requests/${updatedRequest.id}`, Method.PATCH, updatedRequest );
+        fetchApi<Request>({ url: `requests/${updatedRequest.id}`, method: Method.PATCH, body: updatedRequest });
 
 
     const deleteRequestApi = async ( requestId: string ): Promise<Request> =>
-        fetchApi<Request>( `requests/${requestId}`, Method.DELETE );
+        fetchApi<Request>({ url: `requests/${requestId}`, method: Method.DELETE });
 
 
     const updateRequestMutation = useMutation<Request, Error, UpdateRequest>({
