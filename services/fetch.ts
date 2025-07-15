@@ -22,11 +22,16 @@ export function isErrorApi<T>( value: T | ErrorApi ): value is ErrorApi {
     );
 }
 
-export async function fetchApi<T>(
+export interface FetchApi<T> {
     url     : string,
-    method  : Method = Method.GET,
+    method? : Method
     body?   : object,
-    isApi   : boolean = true
+    isApi?  : boolean
+}
+
+
+export async function fetchApi<T>(
+    { url, method = Method.GET, body, isApi = true }: FetchApi<T>
 ): Promise<T> {
     if ( isApi ) url = `${ENV.REQUEST_BACK_URL}${url}`;
 
