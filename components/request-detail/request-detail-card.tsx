@@ -1,21 +1,19 @@
 'use client'
 
+import { JSX, useMemo } from "react";
+
 import {
     Edit,
     Trash2,
     User,
-    MapPin,
     Users,
     Building2,
+    Proportions,
+    Armchair,
+    Cuboid,
+    Clock,
 } from "lucide-react"
 
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-}                           from "@/components/ui/dialog";
 import {
     Card,
     CardContent,
@@ -25,44 +23,72 @@ import {
 import { Badge }    from "@/components/ui/badge";
 import { Button }   from "@/components/ui/button";
 
-import { type RequestDetail } from "@/types/request";
+import type {
+    Module,
+    Professor,
+    RequestDetail }                     from "@/types/request";
+import { getLevelName, getSpaceType }   from "@/lib/utils";
+
+
+export interface RequestDetailCardProps {
+    detail                  : RequestDetail;
+    onEdit                  : ( detail: RequestDetail ) => void;
+    onDelete                : ( detail: RequestDetail ) => void;
+    professors              : Professor[];
+    isLoadingProfessors     : boolean;
+    isErrorProfessors       : boolean;
+    modules                 : Module[];
+    isLoadingModules        : boolean;
+    isErrorModules          : boolean;
+}
+
+
+const daysName = [
+    '',
+    'Lunes',
+    'Martes',
+    'Miercoles',
+    'Jueves',
+    'Viernes',
+    'Sabado',
+    'Domingo'
+];
 
 
 export function RequestDetailCard({
     detail,
     onEdit,
-    onDelete
-}: {
-    detail: RequestDetail,
-    onEdit: (detail: RequestDetail) => void,
-    onDelete: (detail: RequestDetail) => void
-}) {
+    onDelete,
+    professors,
+    isLoadingProfessors,
+    isErrorProfessors,
+    modules,
+    isLoadingModules,
+    isErrorModules
+}: RequestDetailCardProps ): JSX.Element {
+    const memoizedProfessorName = useMemo(() => {
+        return professors
+            .find( professor => professor.id === detail.professorId )?.name;
+    }, [professors, detail.professorId]);
+
+    const memoizedModuleName = useMemo(() => {
+        const module = modules.find( module => module.id.toString() === detail.moduleId );
+
+        if ( !module ) return '';
+
+        return `${module.startHour}:${module.endHour}`;
+    }, [modules, detail.moduleId]);
+
     return (
         <Card className="relative">
             <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
-                    <CardTitle className="text-sm">Detalle {detail.id.slice(-8)}</CardTitle>
+                    <CardTitle className="text-sm">ID {detail.id}</CardTitle>
 
                     <div className="flex gap-1">
-                        <Dialog>
-                            <DialogTrigger asChild>
-                                <Button variant="outline" size="sm" onClick={() => onEdit(detail)}>
-                                    <Edit className="h-4 w-4" />
-                                </Button>
-                            </DialogTrigger>
-
-                            {/* <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                                <DialogHeader>
-                                    <DialogTitle>Editar Detalle</DialogTitle>
-                                </DialogHeader>
-
-                                <RequestDetailForm
-                                    initialData={detail}
-                                    onSubmit={(data) => handleUpdateDetail(data as RequestDetail)}
-                                    onCancel={() => setEditingDetail(null)}
-                                />
-                            </DialogContent> */}
-                        </Dialog>
+                        <Button variant="outline" size="sm" onClick={() => onEdit(detail)}>
+                            <Edit className="h-4 w-4" />
+                        </Button>
 
                         <Button
                             variant="outline"
@@ -77,48 +103,77 @@ export function RequestDetailCard({
             </CardHeader>
 
             <CardContent className="space-y-3">
-                <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="flex flex-wrap items-center gap-1.5 text-sm">
                     {detail.minimum && detail.maximum && (
                         <div className="flex items-center gap-1">
-                            <Users className="h-3 w-3 text-muted-foreground" />
+                            <Users className="h-4 w-4 text-muted-foreground" />
+
                             <span>
                                 {detail.minimum}-{detail.maximum}
                             </span>
                         </div>
                     )}
 
+                    {detail.spaceId && (
+                        <div className="flex items-center gap-1">
+                            <Cuboid className="h-4 w-4 text-muted-foreground" />
+
+                            <span>
+                                {detail.spaceId}
+                            </span>
+                        </div>
+                    )}
+
                     {detail.spaceType && (
                         <div className="flex items-center gap-1">
-                            <Building2 className="h-3 w-3 text-muted-foreground" />
-                            <span>{detail.spaceType}</span>
+                            <Armchair className="h-4 w-4 text-muted-foreground" />
+
+                            <span>{getSpaceType( detail.spaceType )}</span>
                         </div>
                     )}
 
                     {detail.building && (
                         <div className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3 text-muted-foreground" />
-                            <span>Edificio {detail.building}</span>
+                            <Building2 className="h-4 w-4 text-muted-foreground" />
+
+                            <span>{detail.building}</span>
                         </div>
                     )}
 
                     {detail.spaceSize && (
-                        <Badge variant="outline" className="text-xs w-fit">
-                            {detail.spaceSize}
-                        </Badge>
+                        <div className="flex items-center gap-1">
+                            <Proportions className="h-4 w-4 text-muted-foreground" />
+                            <span>{detail.spaceSize}</span>
+                        </div>
+                    )}
+
+                    {detail.professorId && (
+                        <div className="flex items-center gap-1 text-xs">
+                            <User className="h-4 w-4 text-muted-foreground" />
+                            <span>{memoizedProfessorName}</span>
+                        </div>
+                    )}
+
+                    {detail.moduleId && (
+                        <div className="flex items-center gap-1 text-xs">
+                            <Clock className="h-4 w-4 text-muted-foreground" />
+
+                            <span>{memoizedModuleName}</span>
+                        </div>
                     )}
                 </div>
 
-                <div className="flex flex-wrap gap-1">
-                    <Badge variant={detail.isPriority ? "default" : "secondary"} className="text-xs">
-                        {detail.isPriority ? "Prioridad" : "Normal"}
+                <div className="flex flex-wrap gap-2">
+                    <Badge variant={detail.isPriority ? "destructive" : "default"} className="text-xs">
+                        {detail.isPriority ? "Con Prioridad" : "Sin Prioridad"}
                     </Badge>
 
-                    <Badge variant="outline" className="text-xs">
-                        {detail.level}
+                    <Badge variant="default" className="text-xs">
+                        {getLevelName(detail.level)}
                     </Badge>
 
                     {detail.inAfternoon && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="default" className="text-xs">
                             Tarde
                         </Badge>
                     )}
@@ -131,7 +186,7 @@ export function RequestDetailCard({
                         <div className="flex flex-wrap gap-1 mt-1">
                             {detail.days.map((day, index) => (
                                 <Badge key={index} variant="outline" className="text-xs">
-                                    {day}
+                                    {daysName[Number(day)]}
                                 </Badge>
                             ))}
                         </div>
@@ -143,13 +198,6 @@ export function RequestDetailCard({
                         <p className="text-xs font-medium text-muted-foreground">Descripción:</p>
 
                         <p className="text-xs text-muted-foreground mt-1">{detail.description}</p>
-                    </div>
-                )}
-
-                {detail.professor && (
-                    <div className="flex items-center gap-1 text-xs">
-                        <User className="h-3 w-3 text-muted-foreground" />
-                        <span>{detail.professor.name}</span>
                     </div>
                 )}
             </CardContent>
