@@ -2,26 +2,37 @@
 
 import { JSX, useState } from "react"
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+    useMutation,
+    useQuery,
+    useQueryClient
+}                   from "@tanstack/react-query";
+import { toast }    from "sonner";
 
+import {
+    RequestDetailForm,
+    RequestDetailFormValues
+}                               from "@/components/request-detail/request-detail-form";
 import { Card, CardContent }    from "@/components/ui/card";
-import { RequestDetailForm, RequestDetailFormValues }    from "@/components/request-detail/request-detail-form";
 import { RequestInfoCard }      from "@/components/request-detail/request-info-card";
 import { RequestDetailCard }    from "@/components/request-detail/request-detail-card";
+import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
 
 import type {
-    Building,
+    Module,
+    Professor,
     Request,
     RequestDetail,
-    Size,
-    SpaceType,
     UpdateRequestDetail
-}                       from "@/types/request";
-import { KEY_QUERYS }   from "@/consts/key-queries";
-import { Method, fetchApi }     from "@/services/fetch";
-import { DeleteConfirmDialog } from "../dialog/DeleteConfirmDialog";
-import { toast } from "sonner";
-import { errorToast, successToast } from "@/config/toast/toast.config";
+}                           from "@/types/request";
+import { KEY_QUERYS }       from "@/consts/key-queries";
+import { Method, fetchApi } from "@/services/fetch";
+
+import {
+    errorToast,
+    successToast
+}               from "@/config/toast/toast.config";
+import { ENV }  from "@/config/envs/env";
 
 
 interface RequestDetailViewProps {
@@ -37,7 +48,25 @@ export function RequestDetailView({
     request,
     onBack,
 }: RequestDetailViewProps ): JSX.Element {
-    const queryClient                               = useQueryClient();
+    const queryClient = useQueryClient();
+
+    const {
+        data: modules,
+        isLoading: isLoadingModules,
+        isError: isErrorModules,
+    } = useQuery({
+        queryKey    : [ KEY_QUERYS.MODULES ],
+        queryFn     : () => fetchApi<Module[]>({ url: `${ENV.ACADEMIC_SECTION}modules/original`, isApi: false }),
+    });
+
+    const {
+        data: professors,
+        isLoading: isLoadingProfessors,
+        isError: isErrorProfessors,
+    } = useQuery({
+        queryKey    : [ KEY_QUERYS.PROFESSORS ],
+        queryFn     : () => fetchApi<Professor[]>({ url: `${ENV.ACADEMIC_SECTION}professors`, isApi: false }),
+    });
 
     const {
         data,
@@ -45,13 +74,12 @@ export function RequestDetailView({
         isError,
     } = useQuery({
         queryKey    : [ KEY_QUERYS.REQUEST_DETAIL, request.id ],
-        queryFn     : () => fetchApi<RequestDetail[]>( `request-details/request/${request.id}` ),
+        queryFn     : () => fetchApi<RequestDetail[]>({ url:`request-details/request/${request.id}` }),
     });
 
     const [selectedDetail, setSelectedDetail]   = useState<RequestDetail>( initialRequestDetail );
     const [ isOpenEdit, setIsOpenEdit ]         = useState( false );
     const [ isOpenDelete, setIsOpenDelete ]     = useState( false );
-
 
 
     function onEditRequesDetail( detail: RequestDetail ) {
@@ -62,11 +90,18 @@ export function RequestDetailView({
 
 
     const updateRequestDetailApi = async ( updatedRequestDetail: UpdateRequestDetail ): Promise<RequestDetail>  =>
-        fetchApi<RequestDetail>( `request-details/${updatedRequestDetail.id}`, Method.PATCH, updatedRequestDetail );
+        fetchApi<RequestDetail>({
+            url:`request-details/${updatedRequestDetail.id}`,
+            method: Method.PATCH ,
+            body: updatedRequestDetail
+        });
 
 
     const deleteRequestDetailApi = async ( requestId: string ): Promise<Request> =>
-        fetchApi<Request>( `request-details/${requestId}`, Method.DELETE );
+        fetchApi<Request>( {
+            url:`request-details/${requestId}`,
+            method: Method.DELETE
+        } );
 
 
     const updateRequestDetailMutation = useMutation<RequestDetail, Error, UpdateRequestDetail>({
@@ -139,13 +174,19 @@ export function RequestDetailView({
                     </Dialog> */}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {data?.map( detail => (
                         <RequestDetailCard
-                            key     = { detail.id }
-                            detail  = { detail }
-                            onEdit  = { onEditRequesDetail }
-                            onDelete = { openDeleteDialog }
+                            key                 = { detail.id }
+                            detail              = { detail }
+                            onEdit              = { onEditRequesDetail }
+                            onDelete            = { openDeleteDialog }
+                            professors          = { professors ?? [] }
+                            isLoadingProfessors = { isLoadingProfessors }
+                            isErrorProfessors   = { isErrorProfessors }
+                            modules             = { modules ?? [] }
+                            isLoadingModules    = { isLoadingModules }
+                            isErrorModules      = { isErrorModules }
                         />
                     ))}
                 </div>
@@ -164,11 +205,17 @@ export function RequestDetailView({
                 )}
 
                 <RequestDetailForm
-                    initialData = { selectedDetail }
-                    onSubmit    = { ( data) => handleFormSubmit( data ) }
-                    onCancel    = { () => setIsOpenEdit( false )}
-                    isOpen      = { isOpenEdit }
-                    onClose     = { () => setIsOpenEdit( false )}
+                    initialData         = { selectedDetail }
+                    onSubmit            = { ( data) => handleFormSubmit( data ) }
+                    onCancel            = { () => setIsOpenEdit( false )}
+                    isOpen              = { isOpenEdit }
+                    onClose             = { () => setIsOpenEdit( false )}
+                    professors          = { professors ?? [] }
+                    isLoadingProfessors = { isLoadingProfessors }
+                    isErrorProfessors   = { isErrorProfessors }
+                    modules             = { modules ?? [] }
+                    isLoadingModules    = { isLoadingModules }
+                    isErrorModules      = { isErrorModules }
                 />
 
                 {/* Delete Confirmation Dialog */}
