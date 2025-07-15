@@ -3,18 +3,18 @@
 import type React from "react"
 import { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect } from "react";
 
-import { Check, ChevronDown, X, Search }    from "lucide-react";
-import { FixedSizeList as List }            from "react-window";
+import { Check, ChevronDown, X, Search } from "lucide-react";
+import { FixedSizeList as List } from "react-window";
 
 import {
     Popover,
     PopoverContent,
     PopoverTrigger
-}                   from "@/components/ui/popover";
-import { Button }   from "@/components/ui/button";
-import { Input }    from "@/components/ui/input";
-import { Badge }    from "@/components/ui/badge";
-import { cn }       from "@/lib/utils";
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 
 export type Option = {
@@ -39,29 +39,30 @@ export function isGroupOption(item: ComboboxItem): item is GroupOption {
 
 
 interface ComboboxProps {
-    isOpen?             : boolean;
-    options             : ComboboxItem[];
-    defaultValues?      : string[] | string;
-    placeholder?        : string;
-    searchPlaceholder?  : string;
-    className?          : string;
-    onSelectionChange?  : ( selectedValues: string[] | string ) => void;
-    maxDisplayItems?    : number;
-    multiple?           : boolean;
+    isOpen?: boolean;
+    options: ComboboxItem[];
+    defaultValues?: string[] | string;
+    placeholder?: string;
+    searchPlaceholder?: string;
+    className?: string;
+    onSelectionChange?: (selectedValues: string[] | string | undefined) => void; // Puede ser undefined ahora
+    maxDisplayItems?: number;
+    multiple?: boolean;
+    required?: boolean;
 }
 
 interface FlattenedItem {
-    type            : "option" | "group";
-    option?         : Option;
-    group?          : GroupOption;
-    groupIndex?     : number;
-    isGroupHeader?  : boolean;
+    type: "option" | "group";
+    option?: Option;
+    group?: GroupOption;
+    groupIndex?: number;
+    isGroupHeader?: boolean;
 }
 
 const ITEM_HEIGHT = 40
 const MAX_HEIGHT = 300
 
-export default function MultiSelectCombobox({
+export function MultiSelectCombobox({
     isOpen = false,
     options,
     defaultValues = [],
@@ -71,17 +72,34 @@ export default function MultiSelectCombobox({
     onSelectionChange,
     maxDisplayItems = 1,
     multiple = true,
+    required = false,
 }: ComboboxProps) {
     const [open, setOpen] = useState(isOpen);
     const [searchValue, setSearchValue] = useState("")
-    
-    // Normalize defaultValues to always be an array
-    const normalizedDefaults = Array.isArray(defaultValues) ? defaultValues : [defaultValues].filter(Boolean);
-    const [selectedValues, setSelectedValues] = useState<Set<string>>(new Set(normalizedDefaults))
+
+    // Normalize defaultValues to a Set for efficient lookups
+    const initialSelectedValues = useMemo(() => {
+        if (multiple) {
+            return new Set(Array.isArray(defaultValues) ? defaultValues : []);
+        } else {
+            // For single select, if defaultValues is undefined/null/empty string, treat as no selection
+            const val = Array.isArray(defaultValues) ? defaultValues[0] : defaultValues;
+            return new Set(val ? [val] : []);
+        }
+    }, [defaultValues, multiple]);
+
+    const [selectedValues, setSelectedValues] = useState<Set<string>>(initialSelectedValues);
+
+    // Sync internal state with external defaultValues changes
+    useEffect(() => {
+        setSelectedValues(initialSelectedValues);
+    }, [initialSelectedValues]);
+
+
     const listRef = useRef<List>(null)
     const scrollContainerRef = useRef<HTMLDivElement>(null)
     const triggerRef = useRef<HTMLButtonElement>(null)
-    const [triggerWidth, setTriggerWidth] = useState<number>(0)
+    const [triggerWidth, setTriggerWidth] = useState<number>(0);
 
     useLayoutEffect(() => {
         if (triggerRef.current) {
@@ -89,21 +107,19 @@ export default function MultiSelectCombobox({
         }
     }, [open, triggerRef])
 
-    // Flatten options for virtualization
+    // Flatten options for virtualization (unchanged)
     const flattenedItems = useMemo(() => {
         const items: FlattenedItem[] = []
 
         options.forEach((item, groupIndex) => {
             if (isGroupOption(item)) {
-                // Add group header
                 items.push({
                     type: "group",
                     group: item,
                     groupIndex,
                     isGroupHeader: true,
                 })
-                // Add group options
-                item.options.forEach((option : Option) => {
+                item.options.forEach((option: Option) => {
                     items.push({
                         type: "option",
                         option,
@@ -112,18 +128,16 @@ export default function MultiSelectCombobox({
                     })
                 })
             } else {
-                // Add single option
                 items.push({
                     type: "option",
                     option: item,
                 })
             }
         })
-
         return items
     }, [options])
 
-    // Filter items based on search
+    // Filter items based on search (unchanged)
     const filteredItems = useMemo(() => {
         if (!searchValue) return flattenedItems
 
@@ -133,12 +147,11 @@ export default function MultiSelectCombobox({
         options.forEach((item, groupIndex) => {
             if (isGroupOption(item)) {
                 const matchingOptions = item.options.filter(
-                    (option : Option) =>
+                    (option: Option) =>
                         option.label.toLowerCase().includes(searchLower) || option.value.toLowerCase().includes(searchLower),
-                    )
+                )
 
                 if (matchingOptions.length > 0 || item.name.toLowerCase().includes(searchLower)) {
-                    // Add group header if group name matches or has matching options
                     filtered.push({
                         type: "group",
                         group: item,
@@ -146,14 +159,13 @@ export default function MultiSelectCombobox({
                         isGroupHeader: true,
                     })
 
-                    // Add matching options or all options if group name matches
                     const optionsToAdd = item.name.toLowerCase().includes(searchLower) ? item.options : matchingOptions
-                    optionsToAdd.forEach((option : Option) => {
+                    optionsToAdd.forEach((option: Option) => {
                         filtered.push({
-                        type: "option",
-                        option,
-                        group: item,
-                        groupIndex,
+                            type: "option",
+                            option,
+                            group: item,
+                            groupIndex,
                         })
                     })
                 }
@@ -174,11 +186,27 @@ export default function MultiSelectCombobox({
     const handleOptionToggle = useCallback(
         (value: string) => {
             if (!multiple) {
-                const newSelected = new Set([value])
-                setSelectedValues(newSelected)
-                onSelectionChange?.(value) 
-                setOpen(false) 
+                // Modo de selección única:
+                const newSelected = new Set<string>();
+                if (selectedValues.has(value)) {
+                    // Si el valor ya está seleccionado, intentar deseleccionar.
+                    // Si el campo es requerido, no permitir deseleccionar.
+                    if (required) {
+                        newSelected.add(value); // Si es requerido, se mantiene seleccionado
+                    } else {
+                        // Si no es requerido, se deselecciona (Set queda vacío)
+                        // Esto hará que onSelectionChange emita `undefined`
+                    }
+                } else {
+                    // Si no está seleccionado, seleccionar este valor (y deseleccionar cualquier otro)
+                    newSelected.add(value);
+                }
+                setSelectedValues(newSelected);
+                // Emitir `undefined` si no hay selección para campos no requeridos
+                onSelectionChange?.(newSelected.size === 0 ? undefined : Array.from(newSelected)[0]);
+                setOpen(false); // Cerrar después de seleccionar en modo single
             } else {
+                // Modo de selección múltiple (lógica actual, no cambia)
                 const newSelected = new Set(selectedValues)
                 if (newSelected.has(value)) {
                     newSelected.delete(value)
@@ -186,36 +214,33 @@ export default function MultiSelectCombobox({
                     newSelected.add(value)
                 }
                 setSelectedValues(newSelected)
-                onSelectionChange?.(Array.from(newSelected)) 
+                onSelectionChange?.(Array.from(newSelected))
             }
         },
-        [selectedValues, onSelectionChange, multiple],
+        [selectedValues, onSelectionChange, multiple, required],
     )
 
-    // Handle group selection
+    // Handle group selection (only relevant for multiple mode, no change needed for this spec)
     const handleGroupToggle = useCallback(
         (group: GroupOption) => {
-            const groupValues = group.options.map((opt : Option) => opt.value)
+            const groupValues = group.options.map((opt: Option) => opt.value)
             const newSelected = new Set(selectedValues)
 
-            // Check if all group options are selected
-            const allSelected = groupValues.every((value : string) => newSelected.has(value))
+            const allSelected = groupValues.every((value: string) => newSelected.has(value))
 
             if (allSelected) {
-                // Deselect all group options
-                groupValues.forEach((value : string) => newSelected.delete(value))
+                groupValues.forEach((value: string) => newSelected.delete(value))
             } else {
-                // Select all group options
-                groupValues.forEach((value : string) => newSelected.add(value))
+                groupValues.forEach((value: string) => newSelected.add(value))
             }
 
             setSelectedValues(newSelected)
-            onSelectionChange?.(Array.from(newSelected)) // Groups are only available in multiple mode
+            onSelectionChange?.(Array.from(newSelected))
         },
         [selectedValues, onSelectionChange],
     )
 
-    // Remove selected item
+    // Remove selected item (only relevant for multiple mode, no change needed for this spec)
     const handleRemoveItem = useCallback(
         (value: string) => {
             const newSelected = new Set(selectedValues)
@@ -231,10 +256,10 @@ export default function MultiSelectCombobox({
         const selected: Option[] = []
         options.forEach((item) => {
             if (isGroupOption(item)) {
-                item.options.forEach((option : Option) => {
-                if (selectedValues.has(option.value)) {
-                    selected.push(option)
-                }
+                item.options.forEach((option: Option) => {
+                    if (selectedValues.has(option.value)) {
+                        selected.push(option)
+                    }
                 })
             } else {
                 if (selectedValues.has(item.value)) {
@@ -245,24 +270,24 @@ export default function MultiSelectCombobox({
         return selected
     }, [options, selectedValues])
 
-    // Check if group is fully selected
+    // Check if group is fully selected (unchanged)
     const isGroupSelected = useCallback(
         (group: GroupOption) => {
-            return group.options.every((option : Option) => selectedValues.has(option.value))
+            return group.options.every((option: Option) => selectedValues.has(option.value))
         },
         [selectedValues],
     )
 
-    // Check if group is partially selected
+    // Check if group is partially selected (unchanged)
     const isGroupPartiallySelected = useCallback(
         (group: GroupOption) => {
-            const selectedCount = group.options.filter((option : Option) => selectedValues.has(option.value)).length
+            const selectedCount = group.options.filter((option: Option) => selectedValues.has(option.value)).length
             return selectedCount > 0 && selectedCount < group.options.length
         },
         [selectedValues],
     )
 
-    // Render virtualized item
+    // Render virtualized item (unchanged, as the logic for selection is in handleOptionToggle)
     const renderItem = useCallback(
         ({ index, style }: { index: number; style: React.CSSProperties }) => {
             const item = filteredItems[index]
@@ -274,33 +299,32 @@ export default function MultiSelectCombobox({
                 return (
                     <div style={style} className="px-1">
                         <div
-                        className={cn(
-                            "flex items-center px-3 py-2 text-sm font-medium cursor-pointer rounded-md hover:bg-accent transition-colors",
-                            isSelected && "bg-accent",
-                        )}
-                        onClick={() => handleGroupToggle(item.group!)}
-                        >
-                        <div
                             className={cn(
-                            "flex items-center justify-center w-4 h-4 mr-3 border rounded-sm flex-shrink-0",
-                            isSelected ? "bg-primary border-primary" : "border-input",
-                            isPartial && "bg-primary/50 border-primary",
+                                "flex items-center px-3 py-2 text-sm font-medium cursor-pointer rounded-md hover:bg-accent transition-colors",
+                                isSelected && "bg-accent",
                             )}
+                            onClick={() => handleGroupToggle(item.group!)}
                         >
-                            {(isSelected || isPartial) && <Check className="w-3 h-3 text-primary-foreground" />}
-                        </div>
-                        <span className="text-muted-foreground flex-1 truncate pr-2 leading-5" title={item.group.name}>{item.group.name}</span>
-                        <span className="text-xs text-muted-foreground flex-shrink-0">
-                            ({item.group.options.filter((opt : Option) => selectedValues.has(opt.value)).length}/{item.group.options.length})
-                        </span>
+                            <div
+                                className={cn(
+                                    "flex items-center justify-center w-4 h-4 mr-3 border rounded-sm flex-shrink-0",
+                                    isSelected ? "bg-primary border-primary" : "border-input",
+                                    isPartial && "bg-primary/50 border-primary",
+                                )}
+                            >
+                                {(isSelected || isPartial) && <Check className="w-3 h-3 text-primary-foreground" />}
+                            </div>
+                            <span className="text-muted-foreground flex-1 truncate pr-2 leading-5" title={item.group.name}>{item.group.name}</span>
+                            <span className="text-xs text-muted-foreground flex-shrink-0">
+                                ({item.group.options.filter((opt: Option) => selectedValues.has(opt.value)).length}/{item.group.options.length})
+                            </span>
                         </div>
                     </div>
                 )
             }
 
-            // Skip group headers in single selection mode
             if (item.isGroupHeader && !multiple) {
-                return null
+                return null // No show group headers in single selection mode
             }
 
             if (item.option) {
@@ -319,8 +343,8 @@ export default function MultiSelectCombobox({
                             {multiple && (
                                 <div
                                     className={cn(
-                                    "flex items-center justify-center w-4 h-4 mr-3 border rounded-sm flex-shrink-0",
-                                    isSelected ? "bg-primary border-primary" : "border-input",
+                                        "flex items-center justify-center w-4 h-4 mr-3 border rounded-sm flex-shrink-0",
+                                        isSelected ? "bg-primary border-primary" : "border-input",
                                     )}
                                 >
                                     {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
@@ -356,7 +380,7 @@ export default function MultiSelectCombobox({
     }, [scrollContainerRef]);
 
     return (
-        <Popover open={ isOpen ? true : open} onOpenChange={setOpen}>
+        <Popover open={isOpen ? true : open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
                 <Button
                     variant="outline"
@@ -366,11 +390,14 @@ export default function MultiSelectCombobox({
                     ref={triggerRef}
                 >
                     <div className="flex flex-wrap gap-1 flex-grow-0 min-w-0 mr-2">
+                        {/* Lógica de display para el botón */}
                         {selectedOptions.length === 0 ? (
                             <span className="truncate">{placeholder}</span>
                         ) : !multiple ? (
                             // Modo selección única: mostrar solo el texto de la opción seleccionada
-                            <span className="truncate flex-1 min-w-0">{selectedOptions[0]?.label}</span>
+                            <span className="truncate flex-1 min-w-0">
+                                {selectedOptions[0]?.label}
+                            </span>
                         ) : selectedOptions.length <= maxDisplayItems ? (
                             // Modo múltiple: mostrar badges con X para eliminar
                             selectedOptions.map((option) => (
@@ -379,16 +406,16 @@ export default function MultiSelectCombobox({
                                     <X
                                         className="ml-1 h-3 w-3 cursor-pointer"
                                         onClick={(e) => {
-                                        e.stopPropagation()
-                                        handleRemoveItem(option.value)
+                                            e.stopPropagation()
+                                            handleRemoveItem(option.value)
                                         }}
                                     />
                                 </Badge>
                             ))
                         ) : (
-                        <Badge variant="secondary" className="text-xs">
-                            {selectedOptions.length} seleccionados
-                        </Badge>
+                            <Badge variant="secondary" className="text-xs">
+                                {selectedOptions.length} seleccionados
+                            </Badge>
                         )}
                     </div>
 
@@ -396,44 +423,44 @@ export default function MultiSelectCombobox({
                 </Button>
             </PopoverTrigger>
 
-            <PopoverContent 
-                className           = "w-full p-0 -mr-1.5 z-[9999]" 
-                style               = {{ width: triggerWidth }}
-                align               = "start"
-                side                = "bottom"
-                sideOffset          = { 4 }
-                avoidCollisions     = { true }
-                onOpenAutoFocus     = {( e ) => e.preventDefault() }
-                onCloseAutoFocus    = {( e ) => e.preventDefault() }
-                onWheel             = {( e ) => e.stopPropagation() }
-                onPointerDownOutside= {( e ) => e.stopPropagation() }
+            <PopoverContent
+                className="w-full p-0 -mr-1.5 z-[9999]"
+                style={{ width: triggerWidth }}
+                align="start"
+                side="bottom"
+                sideOffset={4}
+                avoidCollisions={true}
+                onOpenAutoFocus={(e) => e.preventDefault()}
+                onCloseAutoFocus={(e) => e.preventDefault()}
+                onWheel={(e) => e.stopPropagation()}
+                onPointerDownOutside={(e) => e.stopPropagation()}
             >
                 <div className="flex items-center border-b px-3 py-2 w-full">
                     <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
 
                     <Input
-                        placeholder = { searchPlaceholder }
-                        value       = { searchValue }
-                        onChange    = {( e ) => setSearchValue( e.target.value )}
-                        className   = "border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-8"
-                        onWheel     = {( e ) => e.stopPropagation() }
+                        placeholder={searchPlaceholder}
+                        value={searchValue}
+                        onChange={(e) => setSearchValue(e.target.value)}
+                        className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-8"
+                        onWheel={(e) => e.stopPropagation()}
                     />
                 </div>
 
-                <div 
-                    ref         = { scrollContainerRef }
-                    className   = "max-h-[300px] overflow-x-hidden overflow-y-auto"
-                    onWheel     = {( e ) => e.stopPropagation() }
+                <div
+                    ref={scrollContainerRef}
+                    className="max-h-[300px] overflow-x-hidden overflow-y-auto"
+                    onWheel={(e) => e.stopPropagation()}
                 >
                     {filteredItems.length === 0 ? (
                         <div className="py-6 text-center text-sm text-muted-foreground">No se encontraron opciones.</div>
                     ) : (
                         <List
-                            ref         = { listRef }
-                            height      = { Math.min( filteredItems.length * ITEM_HEIGHT, MAX_HEIGHT )}
-                            itemCount   = { filteredItems.length }
-                            itemSize    = { ITEM_HEIGHT }
-                            width       = "100%"
+                            ref={listRef}
+                            height={Math.min(filteredItems.length * ITEM_HEIGHT, MAX_HEIGHT)}
+                            itemCount={filteredItems.length}
+                            itemSize={ITEM_HEIGHT}
+                            width="100%"
                         >
                             {renderItem}
                         </List>
