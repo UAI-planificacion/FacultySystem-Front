@@ -1,17 +1,18 @@
 interface SpaceMock {
     id: string;
-    name: string;
-  }
-  
-  export const spacesMock: SpaceMock[] = [
-    { id: "S001", name: "Aula Magna A" },
-    { id: "S002", name: "Laboratorio de Ciencias Exactas" },
-    { id: "S003", name: "Auditorio Principal" },
-    { id: "S004", name: "Sala de Seminarios 101" },
-    { id: "S005", name: "Oficina de Proyectos de Ingeniería" },
-    { id: "S006", name: "Gimnasio Cubierto" },
-    { id: "S007", name: "Sala de Reuniones B2" },
-    { id: "S008", name: "Cubiculo de Investigación 3" },
-    { id: "S009", name: "Estudio de Grabación Audiovisual" },
-    { id: "S010", name: "Sala de Prácticas de Enfermería" },
-  ];
+    value: string;
+    label: string;
+}
+
+export const spacesMock: SpaceMock[] = [
+    { id: "S001", value: "SALA-001-A", label: "SALA-001-A" },
+    { id: "S002", value: "SALA-002-A", label: "SALA-002-A" },
+    { id: "S003", value: "SALA-003-A", label: "SALA-003-A" },
+    { id: "S004", value: "SALA-004-A", label: "SALA-004-A" },
+    { id: "S005", value: "SALA-005-A", label: "SALA-005-A" },
+    { id: "S006", value: "SALA-006-A", label: "SALA-006-A" },
+    { id: "S007", value: "SALA-007-A", label: "SALA-007-A" },
+    { id: "S008", value: "SALA-008-A", label: "SALA-008-A" },
+    { id: "S009", value: "SALA-009-A", label: "SALA-009-A" },
+    { id: "S010", value: "SALA-010-A", label: "SALA-010-A" },
+];
