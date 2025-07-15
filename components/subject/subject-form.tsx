@@ -89,7 +89,10 @@ const emptySubject = ( initialData: Subject | undefined ) => ({
     costCenterId    : initialData?.costCenterId || '',
     startDate       : initialData?.startDate ? new Date(initialData.startDate) : undefined,
     endDate         : initialData?.endDate ? new Date(initialData.endDate) : undefined,
-})
+});
+
+
+const getDate = ( date: Date | undefined ) => date ? new Date(date) : undefined;
 
 
 export function SubjectForm({
@@ -98,8 +101,6 @@ export function SubjectForm({
     isOpen,
     onClose,
 }: SubjectFormProps) {
-    console.log('🚀 ~ file: subject-form.tsx:95 ~ initialData:', initialData)
-
     const defaultValues: Partial<SubjectFormValues> = emptySubject( initialData );
 
     const form = useForm<SubjectFormValues>({
@@ -118,12 +119,12 @@ export function SubjectForm({
     function handleSubmit( formData: SubjectFormValues ): void {
         const data = {
             ...formData,
-            startDate: formData.startDate ? new Date(formData.startDate) : undefined,
-            endDate: formData.endDate ? new Date(formData.endDate) : undefined,
+            startDate   : getDate( formData.startDate ),
+            endDate     : getDate( formData.endDate ),
         };
 
         console.log('🚀 ~ file: subject-form.tsx:64 ~ data:', data);
-        onSubmit(data);
+        onSubmit( data );
     }
 
     return (
@@ -278,7 +279,6 @@ export function SubjectForm({
                                                     selected    = { field.value }
                                                     onSelect    = { field.onChange }
                                                     disabled    = {( date ) => date < new Date() }
-                                                    initialFocus
                                                 />
                                             </PopoverContent>
                                         </Popover>
@@ -320,7 +320,6 @@ export function SubjectForm({
                                                     selected    = { field.value }
                                                     onSelect    = { field.onChange }
                                                     disabled    = {( date ) => date < ( form.getValues( 'startDate' ) || new Date() )}
-                                                    initialFocus
                                                 />
                                             </PopoverContent>
                                         </Popover>
@@ -332,8 +331,9 @@ export function SubjectForm({
 
                         <div className="flex justify-between">
                             <Button
-                                variant="outline"
-                                onClick={onClose}
+                                type    = "button"
+                                variant = "outline"
+                                onClick = { onClose }
                             >
                                 Cancelar
                             </Button>
