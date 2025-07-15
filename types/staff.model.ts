@@ -29,4 +29,6 @@ export interface CreateStaff extends BaseStaff {
 
 export interface UpdateStaff extends Partial<BaseStaff> {
     id : string;
+    isActive    : boolean;
+
 }
