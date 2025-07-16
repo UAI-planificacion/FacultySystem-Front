@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { JSX, useEffect } from "react"
 
 import {
     BadgeCheck,
@@ -11,6 +11,7 @@ import {
 import { z }            from "zod";
 import { zodResolver }  from "@hookform/resolvers/zod";
 import { useForm }      from "react-hook-form";
+import { useQuery }     from "@tanstack/react-query";
 
 import {
     Dialog,
@@ -42,13 +43,13 @@ import {
 import { Input }        from "@/components/ui/input";
 import { Button }       from "@/components/ui/button";
 import { Textarea }     from "@/components/ui/textarea";
-import { Switch }       from "@/components/ui/switch";
 import { ShowDateAt }   from "@/components/shared/date-at";
-import { Badge }        from "@/components/ui/badge";
 import { Consecutive }  from "@/components/shared/consecutive";
 
 import { Request, Status }  from "@/types/request";
-import { sampleSubjects }   from "@/data/sample-subjects";
+import { KEY_QUERYS }       from "@/consts/key-queries";
+import { Subject }          from "@/types/subject.model";
+import { fetchApi }         from "@/services/fetch";
 
 
 export type RequestFormValues = z.infer<typeof formSchema>;
@@ -59,6 +60,7 @@ interface RequestFormProps {
     onClose     : () => void;
     onSubmit    : ( data: RequestFormValues ) => void;
     data        : Request;
+    facultyId   : string;
 }
 
 
@@ -99,16 +101,28 @@ const defaultRequest = ( data : Request ) => ({
 });
 
 
-export function RequestForm({ isOpen, onClose, onSubmit, data }: RequestFormProps) {
+export function RequestForm({
+    isOpen,
+    onClose,
+    onSubmit,
+    data,
+    facultyId
+}: RequestFormProps ): JSX.Element {
+    const { data: subjects, isLoading } = useQuery<Subject[]>({
+        queryKey: [KEY_QUERYS.SUBJECTS, facultyId],
+        queryFn: () => fetchApi( { url: `subjects/all/${facultyId}` } ),
+    });
+
+
     const form = useForm<RequestFormValues>({
         resolver        : zodResolver( formSchema ),
         defaultValues   : defaultRequest( data )
-    })
+    });
 
 
     useEffect(() => {
         form.reset( defaultRequest( data ));
-    }, [data, form])
+    }, [data, isOpen]);
 
 
     const handleSubmit = ( data: RequestFormValues ) => {
@@ -134,8 +148,8 @@ export function RequestForm({ isOpen, onClose, onSubmit, data }: RequestFormProp
                 </DialogHeader>
 
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-                        <div className="grid grid-cols-1 gap-6">
+                    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+                        <div className="grid grid-cols-1 gap-4">
                             {/* Title */}
                             <FormField
                                 control = { form.control }
@@ -262,9 +276,9 @@ export function RequestForm({ isOpen, onClose, onSubmit, data }: RequestFormProp
                                                 </FormControl>
 
                                                 <SelectContent>
-                                                    {sampleSubjects.map((subject) => (
+                                                    {subjects?.map((subject) => (
                                                         <SelectItem key={subject.id} value={subject.id}>
-                                                            {subject.name} ({subject.code})
+                                                            {subject.id}-{subject.name}
                                                         </SelectItem>
                                                     ))}
                                                 </SelectContent>
@@ -350,5 +364,5 @@ export function RequestForm({ isOpen, onClose, onSubmit, data }: RequestFormProp
                 </Form>
             </DialogContent>
         </Dialog>
-    )
+    );
 }
