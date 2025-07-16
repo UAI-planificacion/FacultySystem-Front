@@ -44,7 +44,6 @@ export interface RequestDetailCardProps {
 
 
 const daysName = [
-    '',
     'Lunes',
     'Martes',
     'Miercoles',
@@ -71,6 +70,7 @@ export function RequestDetailCard({
             .find( professor => professor.id === detail.professorId )?.name;
     }, [professors, detail.professorId]);
 
+
     const memoizedModuleName = useMemo(() => {
         const module = modules.find( module => module.id.toString() === detail.moduleId );
 
@@ -78,6 +78,7 @@ export function RequestDetailCard({
 
         return `${module.startHour}:${module.endHour}`;
     }, [modules, detail.moduleId]);
+
 
     return (
         <Card className="relative">
@@ -186,7 +187,7 @@ export function RequestDetailCard({
                         <div className="flex flex-wrap gap-1 mt-1">
                             {detail.days.map((day, index) => (
                                 <Badge key={index} variant="outline" className="text-xs">
-                                    {daysName[Number(day)]}
+                                    {daysName[Number(day) - 1]}
                                 </Badge>
                             ))}
                         </div>
