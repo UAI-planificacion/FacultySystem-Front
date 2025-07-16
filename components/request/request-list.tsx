@@ -26,6 +26,7 @@ import { KEY_QUERYS }                           from "@/consts/key-queries";
 interface RequestListProps {
     requests        : Request[];
     onViewDetails   : ( request: Request ) => void;
+    facultyId       : string;
 }
 
 
@@ -39,7 +40,8 @@ const startRequest = {id: 'test', subject: {id: 'test', name: 'test'}} as Reques
 
 export function RequestList({
     requests,
-    onViewDetails
+    onViewDetails,
+    facultyId
 }: RequestListProps ): JSX.Element {
     const queryClient                               = useQueryClient();
     const [isOpen, setIsOpen]                       = useState( false );
@@ -179,6 +181,7 @@ export function RequestList({
                 onClose     = { () => setIsOpen( false )}
                 onSubmit    = { handleFormSubmit }
                 data        = { selectedRequest }
+                facultyId   = { facultyId }
             />
 
             {/* Delete Confirmation Dialog */}
