@@ -26,17 +26,23 @@ import {
 import {
     Form,
     FormControl,
+    FormDescription,
     FormField,
     FormItem,
     FormLabel,
     FormMessage,
 }                               from "@/components/ui/form";
+import {
+    ToggleGroup,
+    ToggleGroupItem
+}                               from "@/components/ui/toggle-group";
 import { Button }               from "@/components/ui/button";
 import { Input }                from "@/components/ui/input";
 import { Textarea }             from "@/components/ui/textarea";
 import { Switch }               from "@/components/ui/switch";
 import { DaySelector }          from "@/components/shared/DaySelector";
 import { MultiSelectCombobox }  from "@/components/shared/Combobox";
+import { Badge }                from "@/components/ui/badge";
 
 import {
     type RequestDetail,
@@ -49,10 +55,7 @@ import {
     Day,
     Module,
 }                       from "@/types/request";
-import {
-    getLevelName,
-    getSpaceType
-}                       from "@/lib/utils";
+import { getSpaceType } from "@/lib/utils";
 import { spacesMock }   from "@/data/space";
 import { KEY_QUERYS }   from "@/consts/key-queries";
 import { fetchApi }     from "@/services/fetch";
@@ -78,15 +81,15 @@ const numberOrNull = z.union([
 const formSchema = z.object({
     minimum         : numberOrNull,
     maximum         : numberOrNull,
-    spaceType       : z.nativeEnum(SpaceType).optional().nullable(),
-    spaceSize       : z.nativeEnum(Size).nullable().optional(),
-    building        : z.nativeEnum(Building).nullable().optional(),
+    spaceType       : z.nativeEnum( SpaceType ).optional().nullable(),
+    spaceSize       : z.nativeEnum( Size ).nullable().optional(),
+    building        : z.nativeEnum( Building ).nullable().optional(),
     costCenterId    : z.string().nullable().optional(),
-    inAfternoon     : z.boolean().default(false),
-    isPriority      : z.boolean().default(false),
+    inAfternoon     : z.boolean().default( false ),
+    isPriority      : z.boolean().default( false ),
     moduleId        : z.string().nullable().optional(),
-    days            : z.array(z.number()).default( [] ),
-    comment         : z.string().max(500, "El comentario no puede tener más de 500 caracteres").nullable().default(''),
+    days            : z.array( z.number() ).default( [] ),
+    comment         : z.string().max( 500, "El comentario no puede tener más de 500 caracteres" ).nullable().default(''),
     level           : z.nativeEnum(Level, { required_error: "Por favor selecciona un nivel" }),
     professorId     : z.string().nullable().optional(),
     spaceId         : z.string().nullable().default('')
@@ -108,17 +111,17 @@ export type RequestDetailFormValues = z.infer<typeof formSchema>;
 
 
 interface RequestDetailFormProps {
-    initialData : RequestDetail;
-    onSubmit    : ( data: RequestDetailFormValues ) => void;
-    onCancel    : () => void;
-    isOpen      : boolean;
-    onClose     : () => void;
-    professors  : Professor[];
-    isLoadingProfessors: boolean;
-    isErrorProfessors: boolean;
-    modules : Module[];
-    isLoadingModules: boolean;
-    isErrorModules: boolean;
+    initialData         : RequestDetail;
+    onSubmit            : ( data: RequestDetailFormValues ) => void;
+    onCancel            : () => void;
+    isOpen              : boolean;
+    onClose             : () => void;
+    professors          : Professor[];
+    isLoadingProfessors : boolean;
+    isErrorProfessors   : boolean;
+    modules             : Module[];
+    isLoadingModules    : boolean;
+    isErrorModules      : boolean;
 }
 
 
@@ -153,9 +156,9 @@ export function RequestDetailForm({
     isErrorModules
 }: RequestDetailFormProps ): JSX.Element {
     const {
-        data: sizes,
-        isLoading: isLoadingSizes,
-        isError: isErrorSizes,
+        data        : sizes,
+        isLoading   : isLoadingSizes,
+        isError     : isErrorSizes,
     } = useQuery({
         queryKey    : [ KEY_QUERYS.SIZE ],
         queryFn     : () => fetchApi<SizeResponse[]>({ url: `${ENV.ACADEMIC_SECTION}sizes`, isApi: false }),
@@ -163,9 +166,9 @@ export function RequestDetailForm({
 
 
     const {
-        data: days,
-        isLoading: isLoadingDays,
-        isError: isErrorDays,
+        data        : days,
+        isLoading   : isLoadingDays,
+        isError     : isErrorDays,
     } = useQuery({
         queryKey    : [ KEY_QUERYS.DAYS ],
         queryFn     : () => fetchApi<Day[]>({ url: `${ENV.ACADEMIC_SECTION}days`, isApi: false }),
@@ -173,7 +176,7 @@ export function RequestDetailForm({
 
 
     const memoizedProfessorOptions = useMemo(() => {
-        return professors?.map(professor => ({
+        return professors?.map( professor => ({
             id      : professor.id,
             label   : `${professor.id}-${professor.name}`,
             value   : professor.id,
@@ -194,12 +197,13 @@ export function RequestDetailForm({
 
     useEffect(() => {
         form.reset( defaultRequestDetail( initialData ));
-    }, [initialData, form]);
+    }, [initialData, isOpen]);
 
 
     function onSubmitForm( formData: RequestDetailFormValues ): void {
-        console.log('🚀 ~ file: request-detail-form.tsx:191 ~ formData:', formData)
-        onSubmit(formData);
+        console.log( '🚀 ~ file: request-detail-form.tsx:191 ~ formData:', formData );
+        formData.building = formData.spaceId?.split('-')[1] as Building;
+        onSubmit( formData );
     }
 
 
@@ -207,20 +211,31 @@ export function RequestDetailForm({
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>
-                        {initialData ? 'Editar Detalle' : 'Agregar Nuevo Detalle'}
-                    </DialogTitle>
+                    <div className=" flex justify-between items-center gap-2">
+                        <div>
+                            <DialogTitle>
+                                {initialData ? 'Editar Detalle' : 'Agregar Nuevo Detalle'}
+                            </DialogTitle>
 
-                    <DialogDescription>
-                        {initialData 
-                            ? 'Modifique los campos necesarios del detalle.' 
-                            : 'Complete los campos para agregar un nuevo detalle.'}
-                    </DialogDescription>
+                            <DialogDescription>
+                                {initialData 
+                                    ? 'Modifique los campos necesarios del detalle.' 
+                                    : 'Complete los campos para agregar un nuevo detalle.'}
+                            </DialogDescription>
+                        </div>
+
+                        <Badge
+                            className="mr-5"
+                            variant={initialData.isPriority ? 'destructive' : 'default'}
+                        >
+                            {initialData.isPriority ? 'Prioritario' : 'Sin Prioridad' }
+                        </Badge>
+                    </div>
                 </DialogHeader>
 
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmitForm)} className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <form onSubmit={form.handleSubmit( onSubmitForm )} className="space-y-4">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                             {/* Mínimo de estudiantes */}
                             <FormField
                                 control = { form.control }
@@ -273,130 +288,6 @@ export function RequestDetailForm({
                                 )}
                             />
 
-                            {/* Espacio */}
-                            <FormField
-                                control = { form.control }
-                                name    = "spaceId"
-                                render  = {({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Espacio</FormLabel>
-
-                                        <MultiSelectCombobox
-                                            multiple            = { false }
-                                            placeholder         = "Seleccionar espacio"
-                                            defaultValues       = { field.value || '' }
-                                            onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
-                                            options             = { spacesMock }
-                                        />
-
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Edificio */}
-                            <FormField
-                                control = { form.control }
-                                name    = "building"
-                                render  = {({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Edificio</FormLabel>
-
-                                        <Select
-                                            onValueChange={( value ) => {
-                                                field.onChange(value === "Sin especificar" ? undefined : value);
-                                            }}
-                                            defaultValue={field.value || 'Sin especificar'}
-                                        >
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Seleccionar edificio" />
-                                                </SelectTrigger>
-                                            </FormControl>
-
-                                            <SelectContent>
-                                                <SelectItem value="Sin especificar">Sin especificar</SelectItem>
-                                                {Object.values(Building).map((building) => (
-                                                    <SelectItem key={building} value={building}>
-                                                        Edificio {building}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Tipo de espacio */}
-                            <FormField
-                                control = { form.control }
-                                name    = "spaceType"
-                                render  = {({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Tipo de espacio</FormLabel>
-
-                                        <Select
-                                            defaultValue    = { field.value ?? 'Sin especificar' }
-                                            onValueChange   = {( value ) => {
-                                                field.onChange( value === "Sin especificar" ? undefined : value );
-                                            }}
-                                        >
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Seleccionar tipo" />
-                                                </SelectTrigger>
-                                            </FormControl>
-
-                                            <SelectContent>
-                                                <SelectItem value="Sin especificar">Sin especificar</SelectItem>
-
-                                                {Object.values(SpaceType).map((type) => (
-                                                    <SelectItem key={type} value={type}>
-                                                        { getSpaceType(type) }
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Tamaño del espacio */}
-                            <FormField
-                                control = { form.control }
-                                name    = "spaceSize"
-                                render  = {({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Tamaño del espacio</FormLabel>
-
-                                        <Select
-                                            onValueChange={( value ) => {
-                                                field.onChange(value === "Sin especificar" ? undefined : value);
-                                            }}
-                                            defaultValue={field.value || 'Sin especificar'}
-                                        >
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Seleccionar tamaño" />
-                                                </SelectTrigger>
-                                            </FormControl>
-
-                                            <SelectContent>
-                                                <SelectItem value="Sin especificar">Sin especificar</SelectItem>
-                                                {sizes?.map((size) => (
-                                                    <SelectItem key={size.id} value={size.id}>
-                                                        {size.id} ({size.detail})
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
                             {/* Level */}
                             <FormField
                                 control = { form.control }
@@ -405,7 +296,41 @@ export function RequestDetailForm({
                                     <FormItem>
                                         <FormLabel>Nivel</FormLabel>
 
-                                        <Select
+                                        <ToggleGroup
+                                            type            = "single"
+                                            value           = { field.value }
+                                            className       = "w-full"
+                                            defaultValue    = { field.value }
+                                            onValueChange   = {( value: string ) => {
+                                                if ( value ) field.onChange( value )
+                                            }}
+                                        >
+                                            <ToggleGroupItem
+                                                value       = "PREGRADO"
+                                                aria-label  = "Pregrado"
+                                                className   = "flex-1 rounded-tl-lg rounded-bl-lg rounded-tr-none rounded-br-none border-t border-l border-b border-zinc-200 dark:border-zinc-700 dark:data-[state=on]:text-black dark:data-[state=on]:bg-white data-[state=on]:text-white data-[state=on]:bg-black"
+                                            >
+                                                Pregrado
+                                            </ToggleGroupItem>
+
+                                            <ToggleGroupItem
+                                                value       = "FIRST_GRADE"
+                                                aria-label  = "1° Grado"
+                                                className   = "flex-1 rounded-none border-t border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:text-foreground dark:data-[state=on]:text-black dark:data-[state=on]:bg-white data-[state=on]:bg-black data-[state=on]:text-white"
+                                            >
+                                                1° Grado
+                                            </ToggleGroupItem>
+
+                                            <ToggleGroupItem
+                                                value       = "SECOND_GRADE"
+                                                aria-label  = "2° Grado"
+                                                className   = "flex-1 rounded-tl-none rounded-bl-none rounded-tr-lg rounded-br-lg border-t border-r border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:text-foreground dark:data-[state=on]:text-black dark:data-[state=on]:bg-white data-[state=on]:bg-black data-[state=on]:text-white"
+                                            >
+                                                2° Grado
+                                            </ToggleGroupItem>
+                                        </ToggleGroup>
+
+                                        {/* <Select
                                             onValueChange={field.onChange}
                                             defaultValue={field.value }
                                         >
@@ -422,7 +347,8 @@ export function RequestDetailForm({
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
-                                        </Select>
+                                        </Select> */}
+
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -455,106 +381,23 @@ export function RequestDetailForm({
                                     </FormItem>
                                 )}
                             />
+                        </div>
 
-                            {/* Tarde */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                            {/* Espacio */}
                             <FormField
                                 control = { form.control }
-                                name    = "inAfternoon"
+                                name    = "spaceId"
                                 render  = {({ field }) => (
-                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                                        <div className="space-y-0.5">
-                                            <FormLabel>Turno Tarde</FormLabel>
+                                    <FormItem>
+                                        <FormLabel>Espacio</FormLabel>
 
-                                            <p className="text-sm text-muted-foreground">
-                                                Indica si es en horario de tarde
-                                            </p>
-                                        </div>
-
-                                        <FormControl>
-                                            <Switch
-                                                checked         = { field.value }
-                                                onCheckedChange = { field.onChange }
-                                            />
-                                        </FormControl>
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Prioridad */}
-                            <FormField
-                                control = { form.control }
-                                name    = "isPriority"
-                                render  = {({ field }) => (
-                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                                        <div className="space-y-0.5">
-                                            <FormLabel>Es Prioridad</FormLabel>
-
-                                            <p className="text-sm text-muted-foreground">
-                                                Indica si es prioridad
-                                            </p>
-                                        </div>
-
-                                        <FormControl>
-                                            <Switch
-                                                checked         = { field.value }
-                                                onCheckedChange = { field.onChange }
-                                            />
-                                        </FormControl>
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Módulo */}
-                            <FormField
-                                control = { form.control }
-                                name    = "moduleId"
-                                render  = {({ field }) => (
-                                    <FormItem className="col-span-2">
-                                        <FormLabel>Módulo</FormLabel>
-
-                                        <Select
-                                            onValueChange={field.onChange}
-                                            defaultValue={field.value || '' }
-                                        >
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Seleccionar módulo" />
-                                                </SelectTrigger>
-                                            </FormControl>
-
-                                            {isLoadingModules ? (
-                                                <div className="flex items-center gap-2 border border-zinc-300 dark:border-zinc-800 p-2 rounded animate-spin">
-                                                    <Loader2 className="h-4 w-4" />
-                                                    Cargando módulos...
-                                                </div>
-                                            ) : (
-                                                <SelectContent>
-                                                    {modules?.map((module) => (
-                                                        <SelectItem key={module.id.toString()} value={module.id.toString()}>
-                                                            {module.name} {module.difference ? `-${module.difference}` : ''} {module.startHour}:{module.endHour}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            )}
-                                        </Select>
-
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Días */}
-                            <FormField
-                                control = { form.control }
-                                name    = "days"
-                                render  = {({ field }) => (
-                                    <FormItem className="col-span-2">
-                                        <FormLabel>Días</FormLabel>
-
-                                        <DaySelector
-                                            days        = { memoizedDays }
-                                            value       = { field.value?.map( day => Number( day )) || []}
-                                            onChange    = { field.onChange }
+                                        <MultiSelectCombobox
+                                            multiple            = { false }
+                                            placeholder         = "Seleccionar espacio"
+                                            defaultValues       = { field.value || '' }
+                                            onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
+                                            options             = { spacesMock }
                                         />
 
                                         <FormMessage />
@@ -562,33 +405,250 @@ export function RequestDetailForm({
                                 )}
                             />
 
-                            {/* Descripción */}
-                            <div className="col-span-2">
-                                <FormLabel>Descripción</FormLabel>
+                            {/* Edificio */}
+                            {/* <FormField
+                                control = { form.control }
+                                name    = "building"
+                                render  = {({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Edificio</FormLabel>
 
-                                <p>{initialData?.description || '-'}</p>
-                            </div>
+                                        <Select
+                                            onValueChange   = {( value ) => field.onChange( value === "Sin especificar" ? null : value )}
+                                            defaultValue    = { field.value || 'Sin especificar' }
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Seleccionar edificio" />
+                                                </SelectTrigger>
+                                            </FormControl>
 
-                            {/* Comentario */}
+                                            <SelectContent>
+                                                <SelectItem value="Sin especificar">Sin especificar</SelectItem>
+
+                                                {Object.values(Building).map((building) => (
+                                                    <SelectItem key={building} value={building}>
+                                                        Edificio {building}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            /> */}
+
+                            {/* Tipo de espacio */}
                             <FormField
                                 control = { form.control }
-                                name    = "comment"
+                                name    = "spaceType"
                                 render  = {({ field }) => (
-                                    <FormItem className="col-span-2">
-                                        <FormLabel>Comentario</FormLabel>
-                                        <FormControl>
-                                            <Textarea 
-                                                placeholder="Agregue un comentario opcional"
-                                                className="min-h-[100px]"
-                                                {...field}
-                                                value={field.value || ''}
-                                            />
-                                        </FormControl>
+                                    <FormItem>
+                                        <FormLabel>Tipo de espacio</FormLabel>
+
+                                        <Select
+                                            defaultValue    = { field.value ?? 'Sin especificar' }
+                                            onValueChange   = {( value ) => {
+                                                field.onChange( value === "Sin especificar" ? null : value );
+                                            }}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Seleccionar tipo" />
+                                                </SelectTrigger>
+                                            </FormControl>
+
+                                            <SelectContent>
+                                                <SelectItem value="Sin especificar">Sin especificar</SelectItem>
+
+                                                {Object.values( SpaceType ).map( type => (
+                                                    <SelectItem key={type} value={type}>
+                                                        { getSpaceType( type )}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            {/* Tamaño del espacio */}
+                            <FormField
+                                control = { form.control }
+                                name    = "spaceSize"
+                                render  = {({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Tamaño del espacio</FormLabel>
+
+                                        <Select
+                                            onValueChange   = {( value ) => field.onChange( value === "Sin especificar" ? null : value )}
+                                            defaultValue    = { field.value || 'Sin especificar' }
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Seleccionar tamaño" />
+                                                </SelectTrigger>
+                                            </FormControl>
+
+                                            <SelectContent>
+                                                <SelectItem value="Sin especificar">Sin especificar</SelectItem>
+
+                                                {sizes?.map( size => (
+                                                    <SelectItem key={size.id} value={size.id}>
+                                                        {size.id} ({size.detail})
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
                         </div>
+
+                        {/* Tarde */}
+                        <FormField
+                            control = { form.control }
+                            name    = "inAfternoon"
+                            render  = {({ field }) => (
+                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                    <div className="space-y-0.5">
+                                        <FormLabel>Turno Tarde</FormLabel>
+
+                                        <p className="text-sm text-muted-foreground">
+                                            Indica si es en horario de tarde
+                                        </p>
+                                    </div>
+
+                                    <FormControl>
+                                        <Switch
+                                            checked         = { field.value }
+                                            onCheckedChange = { field.onChange }
+                                        />
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                        />
+
+                        {/* Prioridad */}
+                        {/* <FormField
+                            control = { form.control }
+                            name    = "isPriority"
+                            render  = {({ field }) => (
+                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                    <div className="space-y-0.5">
+                                        <FormLabel>Es Prioridad</FormLabel>
+
+                                        <p className="text-sm text-muted-foreground">
+                                            Indica si es prioridad
+                                        </p>
+                                    </div>
+
+                                    <FormControl>
+                                        <Switch
+                                            checked         = { field.value }
+                                            onCheckedChange = { field.onChange }
+                                        />
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                        /> */}
+
+                        {/* Módulo */}
+                        <FormField
+                            control = { form.control }
+                            name    = "moduleId"
+                            render  = {({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Módulo</FormLabel>
+
+                                    <Select
+                                        onValueChange={( value ) => {
+                                            field.onChange(value === "Sin especificar" ? null : value);
+                                        }}
+                                        defaultValue    = { field.value || 'Sin especificar' }
+                                    >
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Seleccionar módulo" />
+                                            </SelectTrigger>
+                                        </FormControl>
+
+                                        {isLoadingModules ? (
+                                            <div className="flex items-center gap-2 border border-zinc-300 dark:border-zinc-800 p-2 rounded animate-spin">
+                                                <Loader2 className="h-4 w-4" />
+                                                Cargando módulos...
+                                            </div>
+                                        ) : (
+                                            <SelectContent>
+                                                <SelectItem value="Sin especificar">Sin especificar</SelectItem>
+
+                                                {modules?.map((module) => (
+                                                    <SelectItem key={module.id.toString()} value={module.id.toString()}>
+                                                        {module.name} {module.difference ? `-${module.difference}` : ''} {module.startHour}:{module.endHour}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        )}
+                                    </Select>
+
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        {/* Días */}
+                        <FormField
+                            control = { form.control }
+                            name    = "days"
+                            render  = {({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Días</FormLabel>
+
+                                    <DaySelector
+                                        days        = { memoizedDays }
+                                        value       = { field.value?.map( day => Number( day )) || []}
+                                        onChange    = { field.onChange }
+                                    />
+
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        {/* Descripción */}
+                        <div className="col-span-2">
+                            <FormLabel>Descripción</FormLabel>
+
+                            <p>{initialData?.description || '-'}</p>
+                        </div>
+
+                        {/* Comentario */}
+                        <FormField
+                            control = { form.control }
+                            name    = "comment"
+                            render  = {({ field }) => (
+                                <FormItem className="col-span-2">
+                                    <FormLabel>Comentario</FormLabel>
+                                    <FormControl>
+                                        <Textarea 
+                                            placeholder="Agregue un comentario opcional"
+                                            className="min-h-[100px] max-h-[250px]"
+                                            {...field}
+                                            value={field.value || ''}
+                                        />
+                                    </FormControl>
+                                    <FormDescription className="flex justify-end">
+                                        {field.value?.length || 0 } / 500
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
                         <DialogFooter className="mt-6 flex justify-between items-center">
                             <Button
