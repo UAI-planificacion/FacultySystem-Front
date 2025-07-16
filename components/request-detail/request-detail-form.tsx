@@ -1,11 +1,11 @@
 "use client"
 
-import { JSX, useEffect, useMemo } from "react";
+import { JSX, useEffect, useMemo, useState } from "react";
 
 import { z }            from "zod";
 import { zodResolver }  from "@hookform/resolvers/zod";
 import { useForm }      from "react-hook-form";
-import { Loader2 }      from "lucide-react";
+import { Loader2, Plus }      from "lucide-react";
 import { useQuery }     from "@tanstack/react-query";
 
 import {
@@ -43,6 +43,7 @@ import { Switch }               from "@/components/ui/switch";
 import { DaySelector }          from "@/components/shared/DaySelector";
 import { MultiSelectCombobox }  from "@/components/shared/Combobox";
 import { Badge }                from "@/components/ui/badge";
+import { ProfessorForm }        from "@/components/professor/professor-form";
 
 import {
     type RequestDetail,
@@ -155,6 +156,8 @@ export function RequestDetailForm({
     isLoadingModules,
     isErrorModules
 }: RequestDetailFormProps ): JSX.Element {
+
+    const [isOpenProfessor, setIsOpenProfessor ] = useState( false );
     const {
         data        : sizes,
         isLoading   : isLoadingSizes,
@@ -368,13 +371,24 @@ export function RequestDetailForm({
                                                 Cargando profesores...
                                             </div>
                                         ) : (
-                                            <MultiSelectCombobox
-                                                multiple            = { false }
-                                                placeholder         = "Seleccionar profesor"
-                                                defaultValues       = { field.value || '' }
-                                                onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
-                                                options             = { memoizedProfessorOptions }
-                                            />
+                                            <div className="flex gap-2 items-center">
+                                                <MultiSelectCombobox
+                                                    multiple            = { false }
+                                                    placeholder         = "Seleccionar profesor"
+                                                    defaultValues       = { field.value || '' }
+                                                    onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
+                                                    options             = { memoizedProfessorOptions }
+                                                />
+
+                                                <Button
+                                                    size    = {"icon"}
+                                                    type    = "button"
+                                                    variant = {"outline"}
+                                                    onClick = {() => setIsOpenProfessor( true )}
+                                                >
+                                                    <Plus className="w-5 h-5"/>
+                                                </Button>
+                                            </div>
                                         )}
 
                                         <FormMessage />
@@ -648,6 +662,13 @@ export function RequestDetailForm({
                                     <FormMessage />
                                 </FormItem>
                             )}
+                        />
+
+                        <ProfessorForm
+                            initialData = { undefined }
+                            isOpen      = { isOpenProfessor }
+                            onSubmit    = { () => {} }
+                            onClose     = { () => setIsOpenProfessor( false )}
                         />
 
                         <DialogFooter className="mt-6 flex justify-between items-center">
