@@ -26,7 +26,7 @@ import { Input }    from "@/components/ui/input";
 import { Button }   from "@/components/ui/button";
 import { Switch }   from "@/components/ui/switch";
 
-import { Professor } from "@/types/request"
+import { Professor } from "@/types/request";
 
 
 const formSchema = z.object({
@@ -47,10 +47,10 @@ export type ProfessorFormValues = z.infer<typeof formSchema>
 
 
 interface ProfessorFormProps {
-    initialData?    : Omit<Professor, 'oldId'>;
-    onSubmit        : (data: Omit<Professor, 'oldId'> & { oldId?: string }) => void;
-    isOpen          : boolean;
-    onClose         : () => void;
+    initialData?: Omit<Professor, 'oldId'>;
+    onSubmit: (data: Omit<Professor, 'oldId'> & { oldId?: string }) => void;
+    isOpen: boolean;
+    onClose: () => void;
 }
 
 
@@ -67,7 +67,7 @@ export function ProfessorForm({
     isOpen,
     onSubmit,
     onClose,
-}: ProfessorFormProps ): JSX.Element {
+}: ProfessorFormProps): JSX.Element {
     const defaultValues: Partial<ProfessorFormValues> = emptyProfessor;
     const oldId = useMemo(() => initialData?.id || "", [initialData?.id]);
 
@@ -80,13 +80,13 @@ export function ProfessorForm({
 
 
     useEffect(() => {
-        if ( !isOpen ) return;
+        if (!isOpen) return;
 
         form.reset({
-            id      : initialData?.id       || "",
-            name    : initialData?.name     || "",
-            email   : initialData?.email    || "",
-            isMock  : initialData?.isMock   || false,
+            id: initialData?.id || "",
+            name: initialData?.name || "",
+            email: initialData?.email || "",
+            isMock: initialData?.isMock || false,
         });
     }, [isOpen, initialData?.id, form]);
 
@@ -97,14 +97,27 @@ export function ProfessorForm({
     }
 
 
+    const normalizeForEmail = ( text: string ): string =>
+        text
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/ñ/g, 'n')
+        .replace(/Ñ/g, 'N')
+        .toLowerCase()
+        .split(' ')
+        .join('.');
+
+
     function generateTestProfessor(): void {
-        const firstName = faker.person.firstName()
-        const lastName  = faker.person.lastName()
-        const name      = `${firstName} ${lastName}`
-        const email     = `${firstName.toLowerCase()}.${lastName.toLowerCase()}@${faker.internet.domainName()}`
+        const firstName             = faker.person.firstName();
+        const lastName              = faker.person.lastName();
+        const name                  = `TEST-${firstName} ${lastName}`;
+        const normalizedFirstName   = normalizeForEmail( firstName );
+        const normalizedLastName    = normalizeForEmail( lastName );
+        const email                 = `test.${normalizedFirstName}.${normalizedLastName}@uai.cl`
 
         form.reset({
-            id: `P${Math.floor(1000 + Math.random() * 9000)}`,
+            id: `P${Math.floor(1000 + Math.random() * 900000)}`,
             name,
             email,
             isMock: true,
