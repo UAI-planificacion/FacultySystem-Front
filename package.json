@@ -9,6 +9,7 @@
         "lint": "next lint"
     },
     "dependencies": {
+        "@faker-js/faker": "^9.9.0",
         "@formkit/tempo": "^0.1.2",
         "@hookform/resolvers": "^5.1.1",
         "@next/swc-wasm-nodejs": "15.3.5",
