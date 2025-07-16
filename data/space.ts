@@ -5,14 +5,14 @@ interface SpaceMock {
 }
 
 export const spacesMock: SpaceMock[] = [
-    { id: "S001", value: "SALA-001-A", label: "SALA-001-A" },
-    { id: "S002", value: "SALA-002-A", label: "SALA-002-A" },
-    { id: "S003", value: "SALA-003-A", label: "SALA-003-A" },
-    { id: "S004", value: "SALA-004-A", label: "SALA-004-A" },
-    { id: "S005", value: "SALA-005-A", label: "SALA-005-A" },
-    { id: "S006", value: "SALA-006-A", label: "SALA-006-A" },
-    { id: "S007", value: "SALA-007-A", label: "SALA-007-A" },
-    { id: "S008", value: "SALA-008-A", label: "SALA-008-A" },
-    { id: "S009", value: "SALA-009-A", label: "SALA-009-A" },
-    { id: "S010", value: "SALA-010-A", label: "SALA-010-A" },
+    { id: "S001", value: "001-A", label: "001-A" },
+    { id: "S002", value: "002-A", label: "002-A" },
+    { id: "S003", value: "003-A", label: "003-A" },
+    { id: "S004", value: "004-A", label: "004-A" },
+    { id: "S005", value: "005-A", label: "005-A" },
+    { id: "S006", value: "006-A", label: "006-A" },
+    { id: "S007", value: "007-A", label: "007-A" },
+    { id: "S008", value: "008-A", label: "008-A" },
+    { id: "S009", value: "009-A", label: "009-A" },
+    { id: "S010", value: "010-A", label: "010-A" },
 ];
