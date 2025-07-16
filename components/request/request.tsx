@@ -48,6 +48,7 @@ export function RequestsManagement({ facultyId, enabled }: RequestsManagementPro
                 <RequestList
                     requests        = { data! }
                     onViewDetails   = { handleViewDetails }
+                    facultyId       = { facultyId }
                 />
             )
     )
