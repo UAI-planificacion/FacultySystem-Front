@@ -1,6 +1,6 @@
 "use client"
 
-import { JSX, useEffect } from "react"
+import { JSX, useEffect, useMemo } from "react"
 
 import {
     BadgeCheck,
@@ -19,7 +19,7 @@ import {
     DialogDescription,
     DialogHeader,
     DialogTitle
-}                       from "@/components/ui/dialog";
+}                               from "@/components/ui/dialog";
 import {
     Form,
     FormControl,
@@ -28,23 +28,24 @@ import {
     FormItem,
     FormLabel,
     FormMessage
-}                       from "@/components/ui/form";
+}                               from "@/components/ui/form";
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue
-}                       from "@/components/ui/select";
+}                               from "@/components/ui/select";
 import {
     ToggleGroup,
     ToggleGroupItem,
-}                       from "@/components/ui/toggle-group"
-import { Input }        from "@/components/ui/input";
-import { Button }       from "@/components/ui/button";
-import { Textarea }     from "@/components/ui/textarea";
-import { ShowDateAt }   from "@/components/shared/date-at";
-import { Consecutive }  from "@/components/shared/consecutive";
+}                               from "@/components/ui/toggle-group"
+import { Input }                from "@/components/ui/input";
+import { Button }               from "@/components/ui/button";
+import { Textarea }             from "@/components/ui/textarea";
+import { ShowDateAt }           from "@/components/shared/date-at";
+import { Consecutive }          from "@/components/shared/consecutive";
+import { MultiSelectCombobox }  from "@/components/shared/Combobox";
 
 import { Request, Status }  from "@/types/request";
 import { KEY_QUERYS }       from "@/consts/key-queries";
@@ -112,6 +113,15 @@ export function RequestForm({
         queryKey: [KEY_QUERYS.SUBJECTS, facultyId],
         queryFn: () => fetchApi( { url: `subjects/all/${facultyId}` } ),
     });
+
+
+    const memoizedSubject = useMemo(() => {
+        return subjects?.map( professor => ({
+            id      : professor.id,
+            label   : `${professor.id}-${professor.name}`,
+            value   : professor.id,
+        })) ?? [];
+    }, [subjects]);
 
 
     const form = useForm<RequestFormValues>({
@@ -262,27 +272,14 @@ export function RequestForm({
                                         <FormItem>
                                             <FormLabel>Asignatura</FormLabel>
 
-                                            <Select 
-                                                onValueChange={(value) => {
-                                                    field.onChange(value);
-                                                    form.setValue('subjectId', value);
-                                                }} 
-                                                value={field.value}
-                                            >
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Seleccione una asignatura" />
-                                                    </SelectTrigger>
-                                                </FormControl>
+                                            <MultiSelectCombobox
+                                                multiple            = { false }
+                                                placeholder         = "Seleccionar una asignatura"
+                                                defaultValues       = { field.value || '' }
+                                                onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
+                                                options             = { memoizedSubject }
+                                            />
 
-                                                <SelectContent>
-                                                    {subjects?.map((subject) => (
-                                                        <SelectItem key={subject.id} value={subject.id}>
-                                                            {subject.id}-{subject.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
                                             <FormMessage />
                                         </FormItem>
                                     );
