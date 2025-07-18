@@ -6,9 +6,9 @@ import {
     useMutation,
     useQuery,
     useQueryClient
-}                   from "@tanstack/react-query";
-import { Plus }     from "lucide-react";
-import { toast }    from "sonner";
+}                       from "@tanstack/react-query";
+import { Plus, Search } from "lucide-react";
+import { toast }        from "sonner";
 
 import {
     Select,
@@ -30,6 +30,7 @@ import {
     TableHeader,
     TableRow
 }                                       from "@/components/ui/table"
+import { DataPagination }               from "@/components/ui/data-pagination";
 import { StaffForm, StaffFormValues }   from "@/components/staff/staff-form"
 import { Button }                       from "@/components/ui/button"
 import { ScrollArea }                   from "@/components/ui/scroll-area"
@@ -38,11 +39,13 @@ import { ActionButton }                 from "@/components/shared/action";
 import { ActiveBadge }                  from "@/components/shared/active";
 import { Input }                        from "@/components/ui/input";
 import { DeleteConfirmDialog }          from "@/components/dialog/DeleteConfirmDialog";
+import { Label }                        from "@/components/ui/label";
 
 import { CreateStaff, Staff, UpdateStaff }  from "@/types/staff.model";
 import { KEY_QUERYS }                       from "@/consts/key-queries";
 import { Method, fetchApi }                 from "@/services/fetch";
 import { errorToast, successToast }         from "@/config/toast/toast.config";
+import { usePagination }                    from "@/hooks/use-pagination";
 
 
 interface StaffManagementProps {
@@ -53,14 +56,13 @@ interface StaffManagementProps {
 
 export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
     const queryClient                                   = useQueryClient();
-    const [searchQuery, setSearchQuery]                 = useState('');
-    const [roleFilter, setRoleFilter]                   = useState<string>('all');
-    const [statusFilter, setStatusFilter]               = useState<string>('all');
-    const [isFormOpen, setIsFormOpen]                   = useState(false)
-    const [editingStaff, setEditingStaff]               = useState<Staff | undefined>(undefined)
+    const [searchQuery, setSearchQuery]                 = useState( '' );
+    const [roleFilter, setRoleFilter]                   = useState<string>( 'all' );
+    const [statusFilter, setStatusFilter]               = useState<string>( 'all' );
+    const [isFormOpen, setIsFormOpen]                   = useState( false );
+    const [editingStaff, setEditingStaff]               = useState<Staff | undefined>( undefined );
     const [isDeleteDialogOpen, setIsDeleteDialogOpen]   = useState( false );
     const [deletingStaffId, setDeletingStaffId]         = useState<string | undefined>( undefined );
-    
     const { data: staffList, isLoading, isError }       = useQuery({
         queryKey    : [ KEY_QUERYS.STAFF, facultyId ],
         queryFn     : () => fetchApi<Staff[]>( { url: `staff/all/${facultyId}` } ),
@@ -73,21 +75,61 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
             staff.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             staff.email.toLowerCase().includes(searchQuery.toLowerCase());
 
-        const matchesRole = roleFilter === 'all' || 
-            (roleFilter === 'admin' && staff.role === 'ADMIN') ||
-            (roleFilter === 'editor' && staff.role === 'EDITOR') ||
-            (roleFilter === 'viewer' && staff.role === 'VIEWER');
+        const matchesRole = roleFilter === 'all'                    || 
+            ( roleFilter === 'admin' && staff.role === 'ADMIN' )    ||
+            ( roleFilter === 'editor' && staff.role === 'EDITOR' )  ||
+            ( roleFilter === 'viewer' && staff.role === 'VIEWER' );
 
         let matchesStatus = true;
 
-        if (statusFilter === 'active') {
+        if ( statusFilter === 'active' ) {
             matchesStatus = staff.isActive === true;
-        } else if (statusFilter === 'inactive') {
+        } else if ( statusFilter === 'inactive' ) {
             matchesStatus = staff.isActive === false;
         }
 
         return matchesSearch && matchesRole && matchesStatus;
     }) || [];
+
+
+    /**
+     * Hook de paginación
+     */
+    const {
+        currentPage,
+        itemsPerPage,
+        totalItems,
+        totalPages,
+        startIndex,
+        endIndex,
+        paginatedData: paginatedStaff,
+        setCurrentPage,
+        setItemsPerPage,
+        resetToFirstPage
+    } = usePagination({
+        data: filteredStaff,
+        initialItemsPerPage: 10
+    });
+
+
+    /**
+     * Resetea la página actual cuando cambian los filtros
+     */
+    const handleFilterChange = ( filterType: 'search' | 'role' | 'status', value: string ) => {
+        resetToFirstPage();
+
+        switch ( filterType ) {
+            case 'search':
+                setSearchQuery( value );
+                break;
+            case 'role':
+                setRoleFilter( value );
+                break;
+            case 'status':
+                setStatusFilter( value );
+                break;
+        }
+    };
 
 
     function openNewStaffForm(): void {
@@ -118,12 +160,12 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
         mutationFn: createStaffApi,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.STAFF, facultyId] });
-            setIsFormOpen(false);
-            setEditingStaff(undefined);
-            toast('Personal creado exitosamente', successToast );
+            setIsFormOpen( false );
+            setEditingStaff( undefined );
+            toast( 'Personal creado exitosamente', successToast );
         },
-        onError: (mutationError) => {
-            toast(`Error al crear personal: ${mutationError.message}`, errorToast );
+        onError: ( mutationError ) => {
+            toast( `Error al crear personal: ${mutationError.message}`, errorToast );
         },
     });
 
@@ -132,11 +174,11 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
         mutationFn: updateStaffApi,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.STAFF, facultyId] });
-            setIsFormOpen(false);
-            setEditingStaff(undefined);
-            toast('Personal actualizado exitosamente', successToast );
+            setIsFormOpen( false );
+            setEditingStaff( undefined );
+            toast( 'Personal actualizado exitosamente', successToast );
         },
-        onError: (mutationError) => {
+        onError: ( mutationError ) => {
             toast(`Error al actualizar personal: ${mutationError.message}`, errorToast );
         },
     });
@@ -146,8 +188,8 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
         mutationFn: deleteStaffApi,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.STAFF, facultyId] });
-            setIsDeleteDialogOpen(false);
-            toast('Personal eliminado exitosamente', successToast );
+            setIsDeleteDialogOpen( false );
+            toast( 'Personal eliminado exitosamente', successToast );
         },
         onError: (mutationError) => {
             toast(`Error al eliminar personal: ${mutationError.message}`, errorToast );
@@ -170,132 +212,170 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
     };
 
 
-    function onOpenDeleteStaff( staff: Staff ) {
-        setDeletingStaffId(staff.id);
-        setIsDeleteDialogOpen(true);
+    function onOpenDeleteStaff( staff: Staff ): void {
+        setDeletingStaffId( staff.id );
+        setIsDeleteDialogOpen( true );
     }
 
 
     return (
-        <Card className="w-full">
-            <CardHeader>
-                <div className="flex flex-col space-y-4">
+        <div className="grid gap-4">
+            <Card className="w-full">
+                <CardHeader>
                     <div className="flex justify-between items-center">
-                        <div className="flex items-center space-x-4 w-full max-w-4xl">
-                            <Input
-                                type        = "search"
-                                placeholder = "Buscar personal..."
-                                value       = {searchQuery}
-                                className   = "w-full max-w-md"
-                                onChange    = {(e) => setSearchQuery(e.target.value)}
-                            />
+                        <div className="flex items-end space-x-4 w-full max-w-4xl">
+                            <div className="w-full max-w-md space-y-2">
+                                <Label htmlFor="search">Buscar</Label>
 
-                            <Select value={roleFilter} onValueChange={setRoleFilter}>
-                                <SelectTrigger className="w-[180px]">
-                                    <SelectValue placeholder="Filtrar por rol" />
-                                </SelectTrigger>
+                                <div className="relative flex items-center">
+                                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
 
-                                <SelectContent>
-                                    <SelectItem value="all">Todos los roles</SelectItem>
-                                    <SelectItem value="admin">Administrador</SelectItem>
-                                    <SelectItem value="viewer">Visualizador</SelectItem>
-                                    <SelectItem value="editor">Editor</SelectItem>
-                                </SelectContent>
-                            </Select>
+                                    <Input
+                                        id          = "search"
+                                        type        = "search"
+                                        placeholder = "Buscar personal..."
+                                        value       = {searchQuery}
+                                        className   = "pl-8"
+                                        onChange    = {(e) => handleFilterChange( 'search', e.target.value )}
+                                    />
+                                </div>
+                            </div>
 
-                            <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                <SelectTrigger className="w-[180px]">
-                                    <SelectValue placeholder="Filtrar por estado" />
-                                </SelectTrigger>
+                            <div className=" max-w-md space-y-2 w-[180px]">
+                                <Label htmlFor="role">Role</Label>
 
-                                <SelectContent>
-                                    <SelectItem value="all">Todos los estados</SelectItem>
-                                    <SelectItem value="active">Activos</SelectItem>
-                                    <SelectItem value="inactive">Inactivos</SelectItem>
-                                </SelectContent>
-                            </Select>
+                                <Select value={roleFilter} onValueChange={(value) => handleFilterChange( 'role', value )}>
+                                    <SelectTrigger id="role" className="w-[180px]">
+                                        <SelectValue placeholder="Filtrar por rol" />
+                                    </SelectTrigger>
+
+                                    <SelectContent>
+                                        <SelectItem value="all">Roles</SelectItem>
+                                        <SelectItem value="admin">Administrador</SelectItem>
+                                        <SelectItem value="viewer">Visualizador</SelectItem>
+                                        <SelectItem value="editor">Editor</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="max-w-md space-y-2 w-[180px]">
+                                <Label htmlFor="role">Estados</Label>
+
+                                <Select value={statusFilter} onValueChange={(value) => handleFilterChange( 'status', value )}>
+                                    <SelectTrigger className="w-[180px]">
+                                        <SelectValue placeholder="Filtrar por estado" />
+                                    </SelectTrigger>
+
+                                    <SelectContent>
+                                        <SelectItem value="all">Estados</SelectItem>
+                                        <SelectItem value="active">Activos</SelectItem>
+                                        <SelectItem value="inactive">Inactivos</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
 
-                        <Button onClick={openNewStaffForm} className="flex items-center">
-                            <Plus className="h-4 w-4 mr-1" />
-                            Agregar Personal
+                        <Button
+                            onClick     = { openNewStaffForm }
+                            className   = "flex items-center gap-1"
+                        >
+                            <Plus className="h-4 w-4" />
+
+                            Crear Personal
                         </Button>
                     </div>
-                </div>
-            </CardHeader>
+                </CardHeader>
+            </Card>
 
-            <CardContent>
-                <ScrollArea className="h-[calc(100vh-363px)]">
-                    {
-                        isLoading ? (
+            <Card>
+                <CardContent className="mt-5">
+                    {isLoading ? (
+                        <div className="text-center p-8 text-muted-foreground">
+                            Cargando personal...
+                        </div>
+                    ) : (
+                        staffList?.length === 0 ? (
                             <div className="text-center p-8 text-muted-foreground">
-                                Cargando personal...
+                                Aún no se ha asignado personal a esta facultad.
                             </div>
                         ) : (
-                            staffList?.length === 0 ? (
-                                <div className="text-center p-8 text-muted-foreground">
-                                    Aún no se ha asignado personal a esta facultad.
-                                </div>
-                            ) : (
+                            <div>
                                 <Table>
-                                    <TableHeader>
+                                    <TableHeader className="sticky top-0 z-10 bg-background">
                                         <TableRow>
-                                            <TableHead>Nombre</TableHead>
+                                            <TableHead className="bg-background w-[250px]">Nombre</TableHead>
 
-                                            <TableHead>Rol</TableHead>
+                                            <TableHead className="bg-background w-[150px]">Rol</TableHead>
 
-                                            <TableHead>Correo</TableHead>
+                                            <TableHead className="bg-background w-[250px]">Correo</TableHead>
 
-                                            <TableHead>Activo</TableHead>
+                                            <TableHead className="bg-background w-[120px]">Activo</TableHead>
 
-                                            <TableHead className="text-right">Acciones</TableHead>
+                                            <TableHead className="text-right bg-background w-[120px]">Acciones</TableHead>
                                         </TableRow>
                                     </TableHeader>
-
-                                    <TableBody>
-                                        {filteredStaff.map((staff) => (
-                                            <TableRow key={staff.id}>
-                                                <TableCell className="font-medium">{staff.name}</TableCell>
-
-                                                <TableCell>
-                                                    <RoleBadge role={staff.role} />
-                                                </TableCell>
-
-                                                <TableCell>{staff.email}</TableCell>
-
-                                                <TableCell>
-                                                    <ActiveBadge isActive={staff.isActive} />
-                                                </TableCell>
-
-                                                <TableCell className="text-right">
-                                                    <ActionButton
-                                                        editItem    = { openEditStaffForm }
-                                                        deleteItem  = { () => onOpenDeleteStaff(staff) }
-                                                        item        = { staff }
-                                                    />
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                        {filteredStaff.length === 0 && searchQuery ? (
-                                            <TableRow>
-                                                <TableCell colSpan={5} className="h-24 text-center">
-                                                    No se encontraron resultados para "{searchQuery}"
-                                                </TableCell>
-                                            </TableRow>
-                                        ) : staffList?.length === 0 && !searchQuery ? (
-                                            <TableRow>
-                                                <TableCell colSpan={5} className="h-24 text-center">
-                                                    No hay personal registrado
-                                                </TableCell>
-                                            </TableRow>
-                                        ) : null}
-                                    </TableBody>
                                 </Table>
-                            )
+
+                                <ScrollArea className="h-[calc(100vh-600px)]">
+                                    <Table>
+                                        <TableBody>
+                                            {paginatedStaff.map((staff) => (
+                                                <TableRow key={staff.id}>
+                                                    <TableCell className="font-medium w-[250px]">{staff.name}</TableCell>
+
+                                                    <TableCell className="w-[150px]">
+                                                        <RoleBadge role={staff.role} />
+                                                    </TableCell>
+
+                                                    <TableCell className="w-[250px]">{staff.email}</TableCell>
+
+                                                    <TableCell className="w-[120px]">
+                                                        <ActiveBadge isActive={staff.isActive} />
+                                                    </TableCell>
+
+                                                    <TableCell className="text-right w-[120px]">
+                                                        <ActionButton
+                                                            editItem    = { openEditStaffForm }
+                                                            deleteItem  = { () => onOpenDeleteStaff(staff) }
+                                                            item        = { staff }
+                                                        />
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+
+                                            {filteredStaff.length === 0 && searchQuery ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={5} className="h-24 text-center">
+                                                        No se encontraron resultados para &quot;{searchQuery}&quot;
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : staffList?.length === 0 && !searchQuery ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={5} className="h-24 text-center">
+                                                        No hay personal registrado
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : null}
+                                        </TableBody>
+                                    </Table>
+                                </ScrollArea>
+                            </div>
                         )
-                    }
-                </ScrollArea>
-            </CardContent>
+                    )}
+                </CardContent>
+            </Card>
+
+            {/* Pagination */}
+            <DataPagination
+                currentPage             = { currentPage }
+                totalPages              = { totalPages }
+                totalItems              = { totalItems }
+                itemsPerPage            = { itemsPerPage }
+                onPageChange            = { setCurrentPage }
+                onItemsPerPageChange    = { setItemsPerPage }
+                startIndex              = { startIndex }
+                endIndex                = { endIndex }
+            />
 
             {/* Staff Form Dialog */}
             <StaffForm
@@ -313,6 +393,6 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
                 name        = { deletingStaffId! }
                 type        = "el Personal"
             />
-        </Card>
+        </div>
     );
 }
