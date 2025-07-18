@@ -1,5 +1,7 @@
 'use client'
 
+import { JSX } from "react";
+
 import { Search, Plus } from "lucide-react";
 
 import {
@@ -65,7 +67,7 @@ export function RequestFilter({
 
             <CardContent>
                 {/* <div className="flex justify-between items-center"> */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 items-end">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6 items-end">
                         <div className="space-y-2">
                             <Label htmlFor="search">Buscar por Título</Label>
 
