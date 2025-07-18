@@ -20,7 +20,6 @@ import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
 
 import type {
     Module,
-    Professor,
     Request,
     RequestDetail,
     UpdateRequestDetail
@@ -33,6 +32,8 @@ import {
     successToast
 }               from "@/config/toast/toast.config";
 import { ENV }  from "@/config/envs/env";
+
+import { Professor } from "@/types/professor";
 
 
 interface RequestDetailViewProps {
