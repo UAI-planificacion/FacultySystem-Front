@@ -25,9 +25,9 @@ import { Button }   from "@/components/ui/button";
 
 import type {
     Module,
-    Professor,
     RequestDetail }                     from "@/types/request";
 import { getLevelName, getSpaceType }   from "@/lib/utils";
+import { Professor }                    from "@/types/professor";
 
 
 export interface RequestDetailCardProps {
@@ -76,7 +76,7 @@ export function RequestDetailCard({
 
         if ( !module ) return '';
 
-        return `${module.startHour}:${module.endHour}`;
+        return `${module.startHour}-${module.endHour}`;
     }, [modules, detail.moduleId]);
 
 
