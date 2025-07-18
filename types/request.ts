@@ -91,13 +91,6 @@ export interface SubjectRequest {
     name    : string;
 }
 
-export interface Professor {
-    id      : string;
-    name    : string;
-    email   : string;
-    isMock  : boolean;
-}
-
 
 export interface RequestDetail {
     id              : string;
