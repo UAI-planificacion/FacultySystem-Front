@@ -1,5 +1,7 @@
 'use client'
 
+import { JSX } from "react";
+
 import {
     ArrowLeft,
     User,
