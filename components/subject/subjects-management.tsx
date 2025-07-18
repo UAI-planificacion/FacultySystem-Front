@@ -6,9 +6,9 @@ import {
     useMutation,
     useQuery,
     useQueryClient
-}                   from "@tanstack/react-query";
-import { Plus }     from "lucide-react";
-import { toast }    from "sonner";
+}                       from "@tanstack/react-query";
+import { Plus, Search } from "lucide-react";
+import { toast }        from "sonner";
 
 import {
     Table,
@@ -34,10 +34,12 @@ import {
     SelectTrigger,
     SelectValue
 }                               from "@/components/ui/select";
+import { DataPagination }       from "@/components/ui/data-pagination";
 import { Button }               from "@/components/ui/button";
 import { ScrollArea }           from "@/components/ui/scroll-area";
 import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
 import { Input }                from "@/components/ui/input";
+import { Label }                from "@/components/ui/label";
 import { ShowDate }             from "@/components/shared/date";
 import { ActionButton }         from "@/components/shared/action";
 
@@ -50,6 +52,7 @@ import { KEY_QUERYS }               from "@/consts/key-queries"
 import { Method, fetchApi }         from "@/services/fetch"
 import { errorToast, successToast } from "@/config/toast/toast.config"
 import { costCenterData }           from "@/data/cost-center";
+import { usePagination }            from "@/hooks/use-pagination";
 
 
 interface SubjectsManagementProps {
@@ -90,6 +93,43 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
             return matchesSearch && matchesCostCenter;
         });
     }, [subjects, searchQuery, selectedCostCenter]);
+
+
+    /**
+     * Hook de paginación
+     */
+    const {
+        currentPage,
+        itemsPerPage,
+        totalItems,
+        totalPages,
+        startIndex,
+        endIndex,
+        paginatedData: paginatedSubjects,
+        setCurrentPage,
+        setItemsPerPage,
+        resetToFirstPage
+    } = usePagination({
+        data: filteredSubjects,
+        initialItemsPerPage: 10
+    });
+
+
+    /**
+     * Resetea la página actual cuando cambian los filtros
+     */
+    const handleFilterChange = ( filterType: 'search' | 'costCenter', value: string ) => {
+        resetToFirstPage();
+        
+        switch ( filterType ) {
+            case 'search':
+                setSearchQuery( value );
+                break;
+            case 'costCenter':
+                setSelectedCostCenter( value );
+                break;
+        }
+    };
 
 
     const createSubjectApi = async ( newSubject: CreateSubject ): Promise<Subject>  =>
@@ -170,106 +210,140 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
 
 
     return (
-        <Card className="w-full">
-            <CardHeader>
-                <div className="flex justify-between items-center">
-                    <div className="flex gap-4 items-center">
-                        <Input
-                            type        = "search"
-                            placeholder = "Buscar por código o nombre..."
-                            value       = { searchQuery }
-                            onChange    = {( e ) => setSearchQuery( e.target.value )}
-                            className   = "w-full max-w-md"
-                        />
+        <div className="grid gap-4">
+            <Card className="w-full">
+                <CardHeader>
+                    <div className="flex justify-between items-center">
+                        <div className="flex items-end gap-4 w-full max-w-4xl">
+                            <div className="w-full max-w-md space-y-2">
+                                <Label htmlFor="search">Buscar</Label>
 
-                        <Select value={selectedCostCenter} onValueChange={setSelectedCostCenter}>
-                            <SelectTrigger className="w-[450px]">
-                                <SelectValue placeholder="Filtrar por centro de costos" />
-                            </SelectTrigger>
+                                <div className="relative flex items-center">
+                                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
 
-                            <SelectContent>
-                                <SelectItem value="all">Todos los centros de costo</SelectItem>
-                                {costCenterData.map(cc => (
-                                    <SelectItem key={cc.code} value={cc.code}>
-                                        {cc.name} ({cc.code})
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                                    <Input
+                                        id          = "search"
+                                        type        = "search"
+                                        placeholder = "Buscar por código o nombre..."
+                                        value       = { searchQuery }
+                                        className   = "pl-8"
+                                        onChange    = {( e ) => handleFilterChange( 'search', e.target.value )}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="max-w-md space-y-2 w-[450px]">
+                                <Label htmlFor="costCenter">Centro de Costos</Label>
+
+                                <Select value={selectedCostCenter} onValueChange={(value) => handleFilterChange( 'costCenter', value )}>
+                                    <SelectTrigger id="costCenter">
+                                        <SelectValue placeholder="Filtrar por centro de costos" />
+                                    </SelectTrigger>
+
+                                    <SelectContent>
+                                        <SelectItem value="all">Todos los centros de costo</SelectItem>
+                                        {costCenterData.map(cc => (
+                                            <SelectItem key={cc.code} value={cc.code}>
+                                                {cc.name} ({cc.code})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
+                        <Button
+                            onClick     = { openNewSubjectForm }
+                            className   = "flex items-center gap-1"
+                        >
+                            <Plus className="h-4 w-4" />
+                            Crear Asignatura
+                        </Button>
                     </div>
+                </CardHeader>
+            </Card>
 
-                    <Button onClick={openNewSubjectForm} className="flex items-center">
-                        <Plus className="h-4 w-4 mr-1" />
-                        Crear Asignatura
-                    </Button>
-                </div>
-            </CardHeader>
-
-            <CardContent>
-                <ScrollArea className="h-[calc(100vh-363px)]">
-                    {
-                        isLoading ? (
+            <Card>
+                <CardContent className="mt-5">
+                    {isLoading ? (
+                        <div className="text-center p-8 text-muted-foreground">
+                            Loading subjects...
+                        </div>
+                    ) : (
+                        filteredSubjects.length === 0 ? (
                             <div className="text-center p-8 text-muted-foreground">
-                                Loading subjects...
-                            </div>
+                            {searchQuery || selectedCostCenter !== 'all' 
+                                ? 'No se encontraron asignaturas que coincidan con los filtros.'
+                                : 'No se han agregado asignaturas a esta facultad.'}
+                        </div>
                         ) : (
-                            filteredSubjects.length === 0 ? (
-                                <div className="text-center p-8 text-muted-foreground">
-                                {searchQuery || selectedCostCenter !== 'all' 
-                                    ? 'No se encontraron asignaturas que coincidan con los filtros.'
-                                    : 'No se han agregado asignaturas a esta facultad.'}
-                            </div>
-                            ) : (
+                            <div>
                                 <Table>
-                                    <TableHeader>
+                                    <TableHeader className="sticky top-0 z-10 bg-background">
                                         <TableRow>
-                                            <TableHead>Código</TableHead>
+                                            <TableHead className="bg-background w-[120px]">Código</TableHead>
 
-                                            <TableHead>Nombre</TableHead>
+                                            <TableHead className="bg-background w-[250px]">Nombre</TableHead>
 
-                                            <TableHead>Fecha Inicio</TableHead>
+                                            <TableHead className="bg-background w-[140px]">Fecha Inicio</TableHead>
 
-                                            <TableHead>Fecha Fin</TableHead>
+                                            <TableHead className="bg-background w-[140px]">Fecha Fin</TableHead>
 
-                                            <TableHead className="text-right">Alumnos</TableHead>
+                                            <TableHead className="text-right bg-background w-[100px]">Alumnos</TableHead>
 
-                                            <TableHead>Centro de Costo</TableHead>
+                                            <TableHead className="bg-background w-[150px]">Centro de Costo</TableHead>
 
-                                            <TableHead className="text-right">Acciones</TableHead>
+                                            <TableHead className="text-right bg-background w-[120px]">Acciones</TableHead>
                                         </TableRow>
                                     </TableHeader>
-
-                                    <TableBody>
-                                        {filteredSubjects.map((subject) => (
-                                            <TableRow key={subject.id}>
-                                                <TableCell className="font-medium">{subject.id}</TableCell>
-
-                                                <TableCell>{subject.name}</TableCell>
-
-                                                <TableCell><ShowDate date={subject.startDate} /></TableCell>
-
-                                                <TableCell><ShowDate date={subject.endDate} /></TableCell>
-
-                                                <TableCell className="text-right">{subject.students}</TableCell>
-
-                                                <TableCell>{subject.costCenterId}</TableCell>
-
-                                                <TableCell className="text-right">
-                                                    <ActionButton
-                                                        editItem    = { openEditSubjectForm }
-                                                        deleteItem  = { () => onOpenDeleteSubject(subject) }
-                                                        item        = { subject }
-                                                    />
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
                                 </Table>
-                            )
+
+                                <ScrollArea className="h-[calc(100vh-600px)]">
+                                    <Table>
+                                        <TableBody>
+                                            {paginatedSubjects.map((subject) => (
+                                                <TableRow key={subject.id}>
+                                                    <TableCell className="font-medium w-[120px]">{subject.id}</TableCell>
+
+                                                    <TableCell className="w-[250px]">{subject.name}</TableCell>
+
+                                                    <TableCell className="w-[140px]"><ShowDate date={subject.startDate} /></TableCell>
+
+                                                    <TableCell className="w-[140px]"><ShowDate date={subject.endDate} /></TableCell>
+
+                                                    <TableCell className="text-right w-[100px]">{subject.students}</TableCell>
+
+                                                    <TableCell className="w-[150px]">{subject.costCenterId}</TableCell>
+
+                                                    <TableCell className="text-right w-[120px]">
+                                                        <ActionButton
+                                                            editItem    = { openEditSubjectForm }
+                                                            deleteItem  = { () => onOpenDeleteSubject(subject) }
+                                                            item        = { subject }
+                                                        />
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </ScrollArea>
+                            </div>
                         )
-                    }
-                </ScrollArea>
-            </CardContent>
+                    )}
+                </CardContent>
+            </Card>
+
+            {/* Paginación */}
+            <DataPagination
+                currentPage             = { currentPage }
+                totalPages              = { totalPages }
+                totalItems              = { totalItems }
+                itemsPerPage            = { itemsPerPage }
+                onPageChange            = { setCurrentPage }
+                onItemsPerPageChange    = { setItemsPerPage }
+                startIndex              = { startIndex }
+                endIndex                = { endIndex }
+            />
 
             {/* Subject Form Dialog */}
             <SubjectForm
@@ -286,6 +360,6 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                 name        = { deletingSubjectId! }
                 type        = "la Asignatura"
             />
-        </Card>
+        </div>
     );
 }
