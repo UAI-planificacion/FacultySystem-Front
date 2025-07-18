@@ -1,6 +1,7 @@
 "use client";
 
 import type React from 'react';
+
 import {
     AlertDialog,
     AlertDialogAction,
@@ -12,6 +13,7 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
+
 interface DeleteConfirmDialogProps {
     isOpen      : boolean;
     onClose     : () => void;
@@ -19,6 +21,7 @@ interface DeleteConfirmDialogProps {
     type        : string;
     name        : string;
 }
+
 
 export function DeleteConfirmDialog({
     isOpen,
