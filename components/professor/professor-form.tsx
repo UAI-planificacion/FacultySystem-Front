@@ -2,10 +2,13 @@
 
 import { JSX, useEffect, useMemo } from "react";
 
-import { zodResolver }              from "@hookform/resolvers/zod";
-import { faker }                    from '@faker-js/faker/locale/es';
-import { useForm, SubmitHandler }   from "react-hook-form";
-import * as z                       from "zod";
+import { zodResolver }                  from "@hookform/resolvers/zod";
+import { faker }                        from '@faker-js/faker/locale/es';
+import { useForm, SubmitHandler }       from "react-hook-form";
+import { useMutation, useQueryClient }  from "@tanstack/react-query";
+import { toast }                        from "sonner";
+import { Loader2 }                      from "lucide-react";
+import * as z                           from "zod";
 
 import {
     Dialog,
@@ -26,7 +29,14 @@ import { Input }    from "@/components/ui/input";
 import { Button }   from "@/components/ui/button";
 import { Switch }   from "@/components/ui/switch";
 
-import { Professor } from "@/types/request";
+import { Professor, CreateProfessor, UpdateProfessor }  from "@/types/professor";
+import { KEY_QUERYS }                                   from "@/consts/key-queries";
+import { Method, fetchApi }                             from "@/services/fetch";
+import { errorToast, successToast }                     from "@/config/toast/toast.config";
+import { ENV }                                          from "@/config/envs/env";
+
+
+const endpoint = 'professors';
 
 
 const formSchema = z.object({
@@ -36,40 +46,65 @@ const formSchema = z.object({
     name: z.string().min(2, {
         message: "El nombre debe tener al menos 2 caracteres.",
     }),
-    email: z.string().email({
-        message: "Por favor ingresa una dirección de correo válida.",
-    }),
-    isMock: z.boolean().default(false),
-})
+    email: z.string()
+        .transform(val => val === "" ? null : val)
+        .refine(val => val === null || z.string().email().safeParse(val).success, {
+            message: "Por favor ingresa una dirección de correo válida.",
+        }),
+    isMock: z.boolean().default( false ),
+});
 
 
-export type ProfessorFormValues = z.infer<typeof formSchema>
+export type ProfessorFormValues = z.infer<typeof formSchema>;
 
 
 interface ProfessorFormProps {
-    initialData?: Omit<Professor, 'oldId'>;
-    onSubmit: (data: Omit<Professor, 'oldId'> & { oldId?: string }) => void;
-    isOpen: boolean;
-    onClose: () => void;
+    initialData?    : Omit<Professor, 'oldId'>;
+    isOpen          : boolean;
+    onClose         : () => void;
 }
 
 
 const emptyProfessor: Professor = {
     id      : "",
     name    : "",
-    email   : "",
+    email   : null,
     isMock  : false,
 }
+
+
+/**
+ * API call para crear un nuevo profesor
+ */
+const createProfessorApi = async ( newProfessor: CreateProfessor ): Promise<Professor>  =>
+    fetchApi<Professor>({
+        isApi   : false,
+        url     : `${ENV.ACADEMIC_SECTION}${endpoint}`,
+        method  : Method.POST,
+        body    : newProfessor
+    });
+
+
+/**
+ * API call para actualizar un profesor existente
+ */
+const updateProfessorApi = async ( updatedProfessor: UpdateProfessor ): Promise<Professor>  =>
+    fetchApi<Professor>({
+        isApi   : false,
+        url     : `${ENV.ACADEMIC_SECTION}${endpoint}/${updatedProfessor.id}`,
+        method  : Method.PATCH,
+        body    : updatedProfessor
+    });
 
 
 export function ProfessorForm({
     initialData,
     isOpen,
-    onSubmit,
     onClose,
-}: ProfessorFormProps): JSX.Element {
+}: ProfessorFormProps ): JSX.Element {
+    const queryClient                               = useQueryClient();
     const defaultValues: Partial<ProfessorFormValues> = emptyProfessor;
-    const oldId = useMemo(() => initialData?.id || "", [initialData?.id]);
+    const oldId                                     = useMemo(() => initialData?.id || "", [initialData?.id]);
 
 
     const form = useForm<ProfessorFormValues>({
@@ -79,33 +114,78 @@ export function ProfessorForm({
     });
 
 
+    /**
+     * Mutación para crear un profesor
+     */
+    const createProfessorMutation = useMutation<Professor, Error, CreateProfessor>({
+        mutationFn: createProfessorApi,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.PROFESSORS ]});
+            onClose();
+            toast( 'Profesor creado exitosamente', successToast );
+        },
+        onError: ( mutationError ) => {
+            toast(`Error al crear profesor: ${mutationError.message}`, errorToast );
+        },
+    });
+
+
+    /**
+     * Mutación para actualizar un profesor
+     */
+    const updateProfessorMutation = useMutation<Professor, Error, UpdateProfessor>({
+        mutationFn: updateProfessorApi,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.PROFESSORS] });
+            onClose();
+            toast( 'Profesor actualizado exitosamente', successToast );
+        },
+        onError: ( mutationError ) => {
+            toast( `Error al actualizar profesor: ${mutationError.message}`, errorToast );
+        },
+    });
+
+
     useEffect(() => {
-        if (!isOpen) return;
+        if ( !isOpen ) return;
 
         form.reset({
-            id: initialData?.id || "",
-            name: initialData?.name || "",
-            email: initialData?.email || "",
-            isMock: initialData?.isMock || false,
+            id      : initialData?.id       || "",
+            name    : initialData?.name     || "",
+            email   : initialData?.email    || "",
+            isMock  : initialData?.isMock   || false,
         });
-    }, [isOpen, initialData?.id, form]);
+    }, [ isOpen, initialData, form ]);
 
 
+    /**
+     * Maneja el envío del formulario de profesor
+     */
     const handleSubmit: SubmitHandler<ProfessorFormValues> = (data) => {
         console.log('🚀 ~ file: professor-form.tsx:86 ~ data:', data)
-        onSubmit({ ...data, oldId })
+
+        if ( initialData ) {
+            updateProfessorMutation.mutate({
+                ...data,
+                id: data.id
+            } as UpdateProfessor );
+        } else {
+            createProfessorMutation.mutate({
+                ...data,
+            } as CreateProfessor );
+        }
     }
 
 
     const normalizeForEmail = ( text: string ): string =>
         text
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/ñ/g, 'n')
-        .replace(/Ñ/g, 'N')
+        .normalize( 'NFD' )
+        .replace( /[\u0300-\u036f]/g, '' )
+        .replace( /ñ/g, 'n' )
+        .replace( /Ñ/g, 'N' )
         .toLowerCase()
-        .split(' ')
-        .join('.');
+        .split( ' ' )
+        .join( '.' );
 
 
     function generateTestProfessor(): void {
@@ -124,6 +204,10 @@ export function ProfessorForm({
         });
     }
 
+
+    const isLoading = createProfessorMutation.isPending || updateProfessorMutation.isPending;
+
+
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[500px]">
@@ -131,6 +215,7 @@ export function ProfessorForm({
                     <DialogTitle>
                         {initialData ? "Editar Profesor" : "Agregar Nuevo Profesor"}
                     </DialogTitle>
+
                     <DialogDescription>
                         {initialData
                             ? "Actualice los datos del profesor"
@@ -141,9 +226,9 @@ export function ProfessorForm({
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                         <FormField
-                            control={form.control}
-                            name="id"
-                            render={({ field }) => (
+                            control = { form.control }
+                            name    = "id"
+                            render  = {({ field }) => (
                                 <FormItem>
                                     <FormLabel>ID del Profesor</FormLabel>
                                     <FormControl>
@@ -159,9 +244,9 @@ export function ProfessorForm({
                         />
 
                         <FormField
-                            control={form.control}
-                            name="name"
-                            render={({ field }) => (
+                            control = { form.control }
+                            name    = "name"
+                            render  = {({ field }) => (
                                 <FormItem>
                                     <FormLabel>Nombre Completo</FormLabel>
                                     <FormControl>
@@ -173,16 +258,17 @@ export function ProfessorForm({
                         />
 
                         <FormField
-                            control={form.control}
-                            name="email"
-                            render={({ field }) => (
+                            control = { form.control }
+                            name    = "email"
+                            render  = {({ field }) => (
                                 <FormItem>
                                     <FormLabel>Correo Electrónico</FormLabel>
                                     <FormControl>
                                         <Input
-                                            placeholder="juan.perez@universidad.edu"
+                                            placeholder="juan.perez@uai.cl"
                                             type="email"
                                             {...field}
+                                            value={field.value || ""}
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -192,9 +278,9 @@ export function ProfessorForm({
 
                         {initialData && (
                             <FormField
-                                control={form.control}
-                                name="isMock"
-                                render={({ field }) => (
+                                control = { form.control }
+                                name    = "isMock"
+                                render  = {({ field }) => (
                                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                                         <div className="space-y-0.5">
                                             <FormLabel className="text-base">
@@ -220,9 +306,9 @@ export function ProfessorForm({
                         <div className="flex justify-between pt-4">
                             {!initialData && (
                                 <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={generateTestProfessor}
+                                    type    = "button"
+                                    variant = "outline"
+                                    onClick = { generateTestProfessor }
                                 >
                                     Generar Profesor de Prueba
                                 </Button>
@@ -230,15 +316,22 @@ export function ProfessorForm({
 
                             <div className="flex gap-2 ml-auto">
                                 <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={onClose}
+                                    type    = "button"
+                                    variant = "outline"
+                                    onClick = { onClose }
                                 >
                                     Cancelar
                                 </Button>
 
-                                <Button type="submit" disabled={!form.formState.isValid}>
-                                    {initialData ? "Actualizar" : "Agregar"}
+                                <Button type="submit" disabled={!form.formState.isValid || isLoading}>
+                                    {isLoading ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            {initialData ? "Actualizando..." : "Creando..."}
+                                        </>
+                                    ) : (
+                                        initialData ? "Actualizar" : "Agregar"
+                                    )}
                                 </Button>
                             </div>
                         </div>
