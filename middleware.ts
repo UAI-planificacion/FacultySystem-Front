@@ -5,6 +5,7 @@ const BETTER_AUTH_SESSION_COOKIE_NAME = 'better-auth.session_token-faculty';
 
 const protectedRoutes = [
     '/faculties',
+    '/professors'
 ];
 
 export async function middleware(request: NextRequest) {
@@ -48,8 +49,4 @@ export async function middleware(request: NextRequest) {
     const loginUrl = new URL('/', request.url);
     loginUrl.searchParams.set('requireAuth', 'true');
     return NextResponse.redirect(loginUrl);
-}
-
-export const config = {
-    matcher: protectedRoutes
 }
