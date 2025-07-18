@@ -14,14 +14,7 @@ import {
     useQuery,
     useQueryClient
 }                   from "@tanstack/react-query";
-import { toast }    from "sonner"
-
-import {
-    CreateFacultyInput,
-    Faculty,
-    FacultyResponse,
-    UpdateFacultyInput
-} from "@/types/faculty.model";
+import { toast }    from "sonner";
 
 import { FacultyForm }          from "@/components/faculty/faculty-form";
 import { FacultyCard }          from "@/components/faculty/faculty-card";
@@ -30,6 +23,12 @@ import { StatisticCard }        from "@/components/ui/statistic-card";
 import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
 import { Input }                from "@/components/ui/input";
 
+import {
+    CreateFacultyInput,
+    Faculty,
+    FacultyResponse,
+    UpdateFacultyInput
+}                           from "@/types/faculty.model";
 import {
     errorToast,
     successToast
@@ -68,11 +67,11 @@ export default function FacultiesPage() {
         mutationFn: createFacultyApi,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.FACULTIES] });
-            setIsFormOpen(false);
-            setEditingFaculty(undefined);
+            setIsFormOpen( false );
+            setEditingFaculty( undefined );
             toast('Facultad creada exitosamente', successToast );
         },
-        onError: (mutationError) => {
+        onError: ( mutationError ) => {
             toast(`Error al crear facultad: ${mutationError.message}`, errorToast );
         },
     });
@@ -82,12 +81,12 @@ export default function FacultiesPage() {
         mutationFn: updateFacultyApi,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.FACULTIES] });
-            setIsFormOpen(false);
-            setEditingFaculty(undefined);
-            toast('Facultad actualizada exitosamente', successToast );
+            setIsFormOpen( false );
+            setEditingFaculty( undefined );
+            toast( 'Facultad actualizada exitosamente', successToast );
         },
         onError: (mutationError) => {
-            toast(`Error al actualizar facultad: ${mutationError.message}`, errorToast );
+            toast( `Error al actualizar facultad: ${mutationError.message}`, errorToast );
         },
     });
 
@@ -96,8 +95,8 @@ export default function FacultiesPage() {
         mutationFn: deleteFacultyApi,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.FACULTIES] });
-            setIsDeleteDialogOpen(false);
-            toast('Facultad eliminada exitosamente', successToast );
+            setIsDeleteDialogOpen( false );
+            toast( 'Facultad eliminada exitosamente', successToast );
         },
         onError: (mutationError) => {
             toast(`Error al eliminar facultad: ${mutationError.message}`, errorToast );
@@ -122,21 +121,22 @@ export default function FacultiesPage() {
 
 
     const openNewFacultyForm = () => {
-        setEditingFaculty(undefined)
-        setIsFormOpen(true)
+        setEditingFaculty( undefined );
+        setIsFormOpen( true );
     }
 
 
-    const openEditFacultyForm = (faculty: Faculty) => {
-        setEditingFaculty(faculty)
-        setIsFormOpen(true)
+    const openEditFacultyForm = ( faculty: Faculty ) => {
+        setEditingFaculty( faculty );
+        setIsFormOpen( true );
     }
 
 
-    const openDeleteDialog = (id: string) => {
-        setDeletingFacultyId(id)
-        setIsDeleteDialogOpen(true)
+    const openDeleteDialog = ( id: string ) => {
+        setDeletingFacultyId( id );
+        setIsDeleteDialogOpen( true );
     }
+
 
     if ( isError ) {
         return (
@@ -147,7 +147,7 @@ export default function FacultiesPage() {
     }
 
     return (
-        <div className="container mx-auto py-6 space-y-6">
+        <main className="container mx-auto py-6 px-2 sm:px-5 space-y-6">
             {/* Statistics Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatisticCard
@@ -177,7 +177,7 @@ export default function FacultiesPage() {
 
             {/* Faculty List */}
             <div className="space-y-4">
-                <div className="w-full flex items-center justify-between">
+                <div className="w-full flex items-center justify-between gap-2">
                     <Input
                         type        = "search"
                         placeholder = "Buscar facultad por nombre..."
@@ -192,40 +192,38 @@ export default function FacultiesPage() {
                     </Button>
                 </div>
 
-                {
-                    isLoading ? (
-                        <LoaderMini />
-                    ) : (
-                        data!.faculties.filter(faculty => 
-                            faculty.name.toLowerCase().includes(filterText.toLowerCase())
-                        ).length > 0 && data!.faculties?.filter(faculty => 
-                            faculty.name.toLowerCase().includes(filterText.toLowerCase())
-                        ).length === 0 ? (
-                            <div className="text-center p-12 border rounded-lg border-dashed">
-                                <p className="text-muted-foreground">No se han creado facultades.</p>
+                {isLoading ? (
+                    <LoaderMini />
+                ) : (
+                    data!.faculties.filter(faculty => 
+                        faculty.name.toLowerCase().includes(filterText.toLowerCase())
+                    ).length > 0 && data!.faculties?.filter(faculty => 
+                        faculty.name.toLowerCase().includes(filterText.toLowerCase())
+                    ).length === 0 ? (
+                        <div className="text-center p-12 border rounded-lg border-dashed">
+                            <p className="text-muted-foreground">No se han creado facultades.</p>
 
-                                <Button onClick={openNewFacultyForm} variant="outline" className="mt-4">
-                                    Crea tu primera facultad
-                                </Button>
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {data!.faculties
-                                    .filter(faculty => 
-                                        faculty.name.toLowerCase().includes(filterText.toLowerCase())
-                                    )
-                                    .map((faculty) => (
-                                    <FacultyCard
-                                        key                 = { faculty.id }
-                                        faculty             = { faculty }
-                                        onEdit              = { openEditFacultyForm }
-                                        onDelete            = { openDeleteDialog }
-                                    />
-                                ))}
-                            </div>
-                        )
+                            <Button onClick={openNewFacultyForm} variant="outline" className="mt-4">
+                                Crea tu primera facultad
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {data!.faculties
+                                .filter(faculty => 
+                                    faculty.name.toLowerCase().includes(filterText.toLowerCase())
+                                )
+                                .map((faculty) => (
+                                <FacultyCard
+                                    key                 = { faculty.id }
+                                    faculty             = { faculty }
+                                    onEdit              = { openEditFacultyForm }
+                                    onDelete            = { openDeleteDialog }
+                                />
+                            ))}
+                        </div>
                     )
-                }
+                )}
             </div>
 
             {/* Faculty Form Dialog */}
@@ -244,6 +242,6 @@ export default function FacultiesPage() {
                 name        = { deletingFacultyId || '' }
                 type        = "la Facultad"
             />
-        </div>
+        </main>
     );
 }
