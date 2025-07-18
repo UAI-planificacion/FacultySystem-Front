@@ -1,3 +1,5 @@
+import { JSX } from "react";
+
 export function AlertMessage({
     title,
     description,
@@ -6,7 +8,7 @@ export function AlertMessage({
     title: string;
     description?: string;
     onClose: () => void;
-}) {
+}): JSX.Element {
     return (
         <div 
             className="fixed bottom-12 left-1/2 transform -translate-x-1/2 z-50 max-w-3xl w-full mx-4 animate-in slide-in-from-bottom-2 duration-300"
