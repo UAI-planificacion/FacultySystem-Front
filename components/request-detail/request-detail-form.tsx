@@ -2,11 +2,11 @@
 
 import { JSX, useEffect, useMemo, useState } from "react";
 
-import { z }            from "zod";
-import { zodResolver }  from "@hookform/resolvers/zod";
-import { useForm }      from "react-hook-form";
-import { Loader2, Plus }      from "lucide-react";
-import { useQuery }     from "@tanstack/react-query";
+import { z }                from "zod";
+import { zodResolver }      from "@hookform/resolvers/zod";
+import { useForm }          from "react-hook-form";
+import { Loader2, Plus }    from "lucide-react";
+import { useQuery }         from "@tanstack/react-query";
 
 import {
     Select,
@@ -51,7 +51,6 @@ import {
     Size,
     Level,
     Building,
-    Professor,
     SizeResponse,
     Day,
     Module,
@@ -61,6 +60,7 @@ import { spacesMock }   from "@/data/space";
 import { KEY_QUERYS }   from "@/consts/key-queries";
 import { fetchApi }     from "@/services/fetch";
 import { ENV }          from "@/config/envs/env";
+import { Professor }    from "@/types/professor";
 
 
 const numberOrNull = z.union([
@@ -156,7 +156,6 @@ export function RequestDetailForm({
     isLoadingModules,
     isErrorModules
 }: RequestDetailFormProps ): JSX.Element {
-
     const [isOpenProfessor, setIsOpenProfessor ] = useState( false );
     const {
         data        : sizes,
@@ -372,18 +371,21 @@ export function RequestDetailForm({
                                             </div>
                                         ) : (
                                             <div className="flex gap-2 items-center">
-                                                <MultiSelectCombobox
-                                                    multiple            = { false }
-                                                    placeholder         = "Seleccionar profesor"
-                                                    defaultValues       = { field.value || '' }
-                                                    onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
-                                                    options             = { memoizedProfessorOptions }
-                                                />
+                                                <div className="flex-1 min-w-0">
+                                                    <MultiSelectCombobox
+                                                        multiple            = { false }
+                                                        placeholder         = "Seleccionar profesor"
+                                                        defaultValues       = { field.value || '' }
+                                                        onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
+                                                        options             = { memoizedProfessorOptions }
+                                                    />
+                                                </div>
 
                                                 <Button
                                                     size    = {"icon"}
                                                     type    = "button"
                                                     variant = {"outline"}
+                                                    className = "flex-shrink-0"
                                                     onClick = {() => setIsOpenProfessor( true )}
                                                 >
                                                     <Plus className="w-5 h-5"/>
@@ -463,9 +465,7 @@ export function RequestDetailForm({
 
                                         <Select
                                             defaultValue    = { field.value ?? 'Sin especificar' }
-                                            onValueChange   = {( value ) => {
-                                                field.onChange( value === "Sin especificar" ? null : value );
-                                            }}
+                                            onValueChange   = {( value ) => field.onChange( value === "Sin especificar" ? null : value )}
                                         >
                                             <FormControl>
                                                 <SelectTrigger>
@@ -664,13 +664,6 @@ export function RequestDetailForm({
                             )}
                         />
 
-                        <ProfessorForm
-                            initialData = { undefined }
-                            isOpen      = { isOpenProfessor }
-                            onSubmit    = { () => {} }
-                            onClose     = { () => setIsOpenProfessor( false )}
-                        />
-
                         <DialogFooter className="mt-6 flex justify-between items-center">
                             <Button
                                 type    = "button"
@@ -694,6 +687,12 @@ export function RequestDetailForm({
                         </DialogFooter>
                     </form>
                 </Form>
+
+                <ProfessorForm
+                    initialData = { undefined }
+                    isOpen      = { isOpenProfessor }
+                    onClose     = { () => setIsOpenProfessor( false )}
+                />
             </DialogContent>
         </Dialog>
     );
