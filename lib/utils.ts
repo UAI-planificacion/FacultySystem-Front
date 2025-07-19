@@ -22,7 +22,7 @@ export function dateToString( dateInput?: Date | string | undefined ): string {
 export function tempoFormat( dateInput: Date | string | undefined ) {
     if ( !dateInput ) return "-";
 
-    return format( dateInput, "D MMMM YYYY" );
+    return format( dateInput, "ddd DD MMMM YYYY" );
 }
 
 
