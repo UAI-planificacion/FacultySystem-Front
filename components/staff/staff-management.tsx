@@ -30,6 +30,10 @@ import {
     TableHeader,
     TableRow
 }                                       from "@/components/ui/table"
+import {
+    StaffTableSkeleton,
+    StaffErrorMessage
+}                                       from "@/components/staff/staff-table-skeleton"
 import { DataPagination }               from "@/components/ui/data-pagination";
 import { StaffForm, StaffFormValues }   from "@/components/staff/staff-form"
 import { Button }                       from "@/components/ui/button"
@@ -289,33 +293,33 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
 
             <Card>
                 <CardContent className="mt-5">
-                    {isLoading ? (
+                    {staffList?.length === 0 && !isLoading && !isError ? (
                         <div className="text-center p-8 text-muted-foreground">
-                            Cargando personal...
+                            Aún no se ha asignado personal a esta facultad.
                         </div>
                     ) : (
-                        staffList?.length === 0 ? (
-                            <div className="text-center p-8 text-muted-foreground">
-                                Aún no se ha asignado personal a esta facultad.
-                            </div>
-                        ) : (
-                            <div>
-                                <Table>
-                                    <TableHeader className="sticky top-0 z-10 bg-background">
-                                        <TableRow>
-                                            <TableHead className="bg-background w-[250px]">Nombre</TableHead>
+                        <div>
+                            <Table>
+                                <TableHeader className="sticky top-0 z-10 bg-background">
+                                    <TableRow>
+                                        <TableHead className="bg-background w-[250px]">Nombre</TableHead>
 
-                                            <TableHead className="bg-background w-[150px]">Rol</TableHead>
+                                        <TableHead className="bg-background w-[150px]">Rol</TableHead>
 
-                                            <TableHead className="bg-background w-[250px]">Correo</TableHead>
+                                        <TableHead className="bg-background w-[250px]">Correo</TableHead>
 
-                                            <TableHead className="bg-background w-[120px]">Activo</TableHead>
+                                        <TableHead className="bg-background w-[120px]">Activo</TableHead>
 
-                                            <TableHead className="text-right bg-background w-[120px]">Acciones</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                </Table>
+                                        <TableHead className="text-right bg-background w-[120px]">Acciones</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                            </Table>
 
+                            {isError ? (
+                                <StaffErrorMessage />
+                            ) : isLoading ? (
+                                <StaffTableSkeleton rows={10} />
+                            ) : (
                                 <ScrollArea className="h-[calc(100vh-600px)]">
                                     <Table>
                                         <TableBody>
@@ -359,8 +363,8 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
                                         </TableBody>
                                     </Table>
                                 </ScrollArea>
-                            </div>
-                        )
+                            )}
+                        </div>
                     )}
                 </CardContent>
             </Card>
