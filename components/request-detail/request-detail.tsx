@@ -13,10 +13,15 @@ import {
     RequestDetailForm,
     RequestDetailFormValues
 }                               from "@/components/request-detail/request-detail-form";
+
+import {
+    RequestDetailCardSkeleton,
+    RequestDetailErrorCard
+}                               from "@/components/request-detail/request-detail-card-skeleton";
+import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
 import { Card, CardContent }    from "@/components/ui/card";
 import { RequestInfoCard }      from "@/components/request-detail/request-info-card";
 import { RequestDetailCard }    from "@/components/request-detail/request-detail-card";
-import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
 
 import type {
     Module,
@@ -26,14 +31,13 @@ import type {
 }                           from "@/types/request";
 import { KEY_QUERYS }       from "@/consts/key-queries";
 import { Method, fetchApi } from "@/services/fetch";
+import { Professor }        from "@/types/professor";
 
 import {
     errorToast,
     successToast
 }               from "@/config/toast/toast.config";
 import { ENV }  from "@/config/envs/env";
-
-import { Professor } from "@/types/professor";
 
 
 interface RequestDetailViewProps {
@@ -52,18 +56,18 @@ export function RequestDetailView({
     const queryClient = useQueryClient();
 
     const {
-        data: modules,
-        isLoading: isLoadingModules,
-        isError: isErrorModules,
+        data        : modules,
+        isLoading   : isLoadingModules,
+        isError     : isErrorModules,
     } = useQuery({
         queryKey    : [ KEY_QUERYS.MODULES ],
         queryFn     : () => fetchApi<Module[]>({ url: `${ENV.ACADEMIC_SECTION}modules/original`, isApi: false }),
     });
 
     const {
-        data: professors,
-        isLoading: isLoadingProfessors,
-        isError: isErrorProfessors,
+        data        : professors,
+        isLoading   : isLoadingProfessors,
+        isError     : isErrorProfessors,
     } = useQuery({
         queryKey    : [ KEY_QUERYS.PROFESSORS ],
         queryFn     : () => fetchApi<Professor[]>({ url: `${ENV.ACADEMIC_SECTION}professors`, isApi: false }),
@@ -175,34 +179,47 @@ export function RequestDetailView({
                     </Dialog> */}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {data?.map( detail => (
-                        <RequestDetailCard
-                            key                 = { detail.id }
-                            detail              = { detail }
-                            onEdit              = { onEditRequesDetail }
-                            onDelete            = { openDeleteDialog }
-                            professors          = { professors ?? [] }
-                            isLoadingProfessors = { isLoadingProfessors }
-                            isErrorProfessors   = { isErrorProfessors }
-                            modules             = { modules ?? [] }
-                            isLoadingModules    = { isLoadingModules }
-                            isErrorModules      = { isErrorModules }
-                        />
-                    ))}
-                </div>
+                {isError ? (
+                    <RequestDetailErrorCard />
+                ) : (
+                    <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                            {isLoading ? (
+                                // Show skeleton cards during loading
+                                Array.from({ length: 3 }).map((_, index) => (
+                                    <RequestDetailCardSkeleton key={`skeleton-${index}`} />
+                                ))
+                            ): (
+                                data?.map( detail => (
+                                    <RequestDetailCard
+                                        key                 = { detail.id }
+                                        detail              = { detail }
+                                        onEdit              = { onEditRequesDetail }
+                                        onDelete            = { openDeleteDialog }
+                                        professors          = { professors ?? [] }
+                                        isLoadingProfessors = { isLoadingProfessors }
+                                        isErrorProfessors   = { isErrorProfessors }
+                                        modules             = { modules ?? [] }
+                                        isLoadingModules    = { isLoadingModules }
+                                        isErrorModules      = { isErrorModules }
+                                    />
+                                ))
+                            )}
+                        </div>
 
-                {data?.length === 0 && (
-                    <Card>
-                        <CardContent className="text-center py-8">
-                            <p className="text-muted-foreground">No hay detalles para esta solicitud.</p>
+                        {!isLoading && data?.length === 0 && (
+                            <Card>
+                                <CardContent className="text-center py-8">
+                                    <p className="text-muted-foreground">No hay detalles para esta solicitud.</p>
 
-                            {/* <Button className="mt-4" onClick={() => setIsAddingDetail(true)}>
-                                <Plus className="h-4 w-4 mr-2" />
-                                Agregar Primer Detalle
-                            </Button> */}
-                        </CardContent>
-                    </Card>
+                                    {/* <Button className="mt-4" onClick={() => setIsAddingDetail(true)}>
+                                        <Plus className="h-4 w-4 mr-2" />
+                                        Agregar Primer Detalle
+                                    </Button> */}
+                                </CardContent>
+                            </Card>
+                        )}
+                    </>
                 )}
 
                 <RequestDetailForm
