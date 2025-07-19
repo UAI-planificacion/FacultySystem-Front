@@ -33,6 +33,10 @@ import {
 	TableRow
 }                               from "@/components/ui/table";
 import { ProfessorForm }        from "@/components/professor/professor-form";
+import { 
+	ProfessorErrorMessage,
+    ProfessorTableSkeleton, 
+}                               from "@/components/professor/professor-table-skeleton";
 import { Button }               from "@/components/ui/button";
 import { ScrollArea }           from "@/components/ui/scroll-area"
 import { ActionButton }         from "@/components/shared/action";
@@ -164,8 +168,8 @@ export default function ProfessorsPage() {
 		mutationFn: deleteProfessorApi,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.PROFESSORS] });
-			setIsDeleteDialogOpen(false);
-			toast('Profesor eliminado exitosamente', successToast );
+			setIsDeleteDialogOpen( false );
+			toast( 'Profesor eliminado exitosamente', successToast );
 		},
 		onError: (mutationError) => {
 			toast(`Error al eliminar profesor: ${mutationError.message}`, errorToast );
@@ -177,8 +181,8 @@ export default function ProfessorsPage() {
 	 * Abre el diálogo de confirmación para eliminar un profesor
 	 */
 	function onOpenDeleteProfessor( professor: Professor ) {
-		setDeletingProfessorId(professor.id);
-		setIsDeleteDialogOpen(true);
+		setDeletingProfessorId( professor.id );
+		setIsDeleteDialogOpen( true );
 	}
 
 
@@ -250,53 +254,79 @@ export default function ProfessorsPage() {
             <div className="grid space-y-2">
                 <Card>
                     <CardContent className="mt-5">
-                        <Table>
-                            <TableHeader className="sticky top-0 z-10 bg-background">
-                                <TableRow>
-                                    <TableHead className="bg-background w-[100px]">ID</TableHead>
-                                    <TableHead className="bg-background w-[250px]">Nombre</TableHead>
-                                    <TableHead className="bg-background w-[250px]">Email</TableHead>
-                                    <TableHead className="bg-background w-[120px]">Tipo</TableHead>
-                                    <TableHead className="bg-background w-[120px] text-end">Acciones</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                        </Table>
-
-                        <ScrollArea className="h-[calc(100vh-590px)]">
-                            <Table>
-                                <TableBody>
-                                    { paginatedProfessors.map( professor => (
-                                        <TableRow key={ professor.id }>
-
-                                            <TableCell className="font-medium w-[100px]">{ professor.id }</TableCell>
-
-                                            <TableCell className="w-[250px]">{ professor.name }</TableCell>
-
-                                            <TableCell className="w-[250px]">{ professor.email || '-' }</TableCell>
-
-                                            <TableCell className="w-[120px]">
-                                                { renderMockBadge( professor.isMock ) }
-                                            </TableCell>
-                                            <TableCell className="w-[120px]">
-                                                <ActionButton
-                                                    editItem={ openEditProfessorForm }
-                                                    deleteItem={ () => onOpenDeleteProfessor(professor) }
-                                                    item={ professor }
-                                                />
-                                            </TableCell>
-                                        </TableRow>
-                                    ) ) }
-
-                                    { paginatedProfessors.length === 0 && (
+                        { professorList?.length === 0 && !isLoading && !isError ? (
+                            <div className="text-center p-8 text-muted-foreground">
+                                No se han agregado profesores.
+                            </div>
+                        ) : (
+                            <div>
+                                <Table>
+                                    <TableHeader className="sticky top-0 z-10 bg-background">
                                         <TableRow>
-                                            <TableCell colSpan={ 5 } className="text-center py-8 text-muted-foreground">
-                                                No se encontraron profesores
-                                            </TableCell>
+                                            <TableHead className="bg-background w-[100px]">ID</TableHead>
+                                            <TableHead className="bg-background w-[250px]">Nombre</TableHead>
+                                            <TableHead className="bg-background w-[250px]">Email</TableHead>
+                                            <TableHead className="bg-background w-[120px]">Tipo</TableHead>
+                                            <TableHead className="bg-background w-[120px] text-end">Acciones</TableHead>
                                         </TableRow>
-                                    ) }
-                                </TableBody>
-                            </Table>
-                        </ScrollArea>
+                                    </TableHeader>
+                                </Table>
+
+                                { isError ? (
+                                    <ProfessorErrorMessage />
+                                ) 
+                                : (
+                                    <ScrollArea className="h-[calc(100vh-590px)]">
+                                        <Table>
+                                            <TableBody>
+                                                {isLoading
+                                                ? (
+                                                    <ProfessorTableSkeleton rows={10} />
+                                                )
+                                                : (
+                                                    paginatedProfessors.map( professor => (
+                                                        <TableRow key={ professor.id }>
+
+                                                            <TableCell className="font-medium w-[100px]">{ professor.id }</TableCell>
+
+                                                            <TableCell className="w-[250px]">{ professor.name }</TableCell>
+
+                                                            <TableCell className="w-[250px]">{ professor.email || '-' }</TableCell>
+
+                                                            <TableCell className="w-[120px]">
+                                                                { renderMockBadge( professor.isMock ) }
+                                                            </TableCell>
+
+                                                            <TableCell className="w-[120px]">
+                                                                <ActionButton
+                                                                    editItem={ openEditProfessorForm }
+                                                                    deleteItem={ () => onOpenDeleteProfessor(professor) }
+                                                                    item={ professor }
+                                                                />
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))
+                                                )}
+
+                                                { filteredProfessors.length === 0 && searchQuery ? (
+                                                    <TableRow>
+                                                        <TableCell colSpan={ 5 } className="h-24 text-center">
+                                                            No se encontraron resultados para &quot;{ searchQuery }&quot;
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ) : professorList?.length === 0 && !searchQuery ? (
+                                                    <TableRow>
+                                                        <TableCell colSpan={ 5 } className="h-24 text-center">
+                                                            No hay profesores registrados
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ) : null }
+                                            </TableBody>
+                                        </Table>
+                                    </ScrollArea>
+                                ) }
+                            </div>
+                        ) }
                     </CardContent>
                 </Card>
 
