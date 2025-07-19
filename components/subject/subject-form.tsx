@@ -31,23 +31,19 @@ import {
     PopoverTrigger
 }                           from "@/components/ui/popover";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-}                           from "@/components/ui/select";
+    MultiSelectCombobox,
+    Option
+}                           from "@/components/shared/Combobox";
 import { Button }           from "@/components/ui/button";
 import { Input }            from "@/components/ui/input";
 import { Textarea }         from "@/components/ui/textarea";
 import { Calendar }         from "@/components/ui/calendar";
-import { costCenterData }   from "@/data/cost-center";
 
 import { Subject }          from "@/types/subject.model";
 import { cn, tempoFormat }  from "@/lib/utils";
 
 
-export type SubjectFormValues = z.infer<typeof formSchema>
+export type SubjectFormValues = z.infer<typeof formSchema>;
 
 
 interface SubjectFormProps {
@@ -55,6 +51,7 @@ interface SubjectFormProps {
     onSubmit        : ( data: SubjectFormValues ) => void;
     isOpen          : boolean;
     onClose         : () => void;
+    costCenter      : Option[];
 }
 
 
@@ -100,13 +97,14 @@ export function SubjectForm({
     onSubmit,
     isOpen,
     onClose,
+    costCenter
 }: SubjectFormProps) {
     const defaultValues: Partial<SubjectFormValues> = emptySubject( initialData );
 
     const form = useForm<SubjectFormValues>({
         resolver: zodResolver( formSchema ),
         defaultValues
-    })
+    });
 
 
     useEffect(() => {
@@ -139,7 +137,7 @@ export function SubjectForm({
                         {initialData 
                             ? "Actualizar los detalles de una asignatura existente" 
                             : "Agregar una nueva asignatura a esta facultad"
-                    }
+                        }
                     </DialogDescription>
                 </DialogHeader>
 
@@ -218,28 +216,24 @@ export function SubjectForm({
                             />
 
                             <FormField
-                                control={form.control}
-                                name="costCenterId"
-                                render={({ field }) => (
+                                control = { form.control }
+                                name    = "costCenterId"
+                                render  = {({ field }) => (
                                     <FormItem>
                                         <FormLabel className="font-medium">Centro de Costos</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Selecciona un centro de costos" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {costCenterData.map((center) => (
-                                                    <SelectItem key={center.code} value={center.code}>
-                                                        {center.code}-{center.name} 
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+
+                                        <MultiSelectCombobox
+                                            multiple            = { false }
+                                            placeholder         = "Seleccionar centro de costo"
+                                            defaultValues       = { field.value || '' }
+                                            onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
+                                            options             = { costCenter }
+                                        />
+
                                         <FormDescription>
                                             Selecciona el centro de costos asociado
                                         </FormDescription>
+
                                         <FormMessage />
                                     </FormItem>
                                 )}
