@@ -71,7 +71,6 @@ const formSchema = z.object({
         invalid_type_error: "El título debe ser un texto"
     }).min(1, { message: "El título no puede estar vacío" })
     .max(100, { message: "El título no puede tener más de 100 caracteres" }),
-    
     status: z.nativeEnum(Status, {
         required_error: "Debe seleccionar un estado",
         invalid_type_error: "Estado no válido"
@@ -109,7 +108,7 @@ export function RequestForm({
     data,
     facultyId
 }: RequestFormProps ): JSX.Element {
-    const { data: subjects, isLoading } = useQuery<Subject[]>({
+    const { data: subjects, isLoading, isError } = useQuery<Subject[]>({
         queryKey: [KEY_QUERYS.SUBJECTS, facultyId],
         queryFn: () => fetchApi( { url: `subjects/all/${facultyId}` } ),
     });
@@ -272,13 +271,30 @@ export function RequestForm({
                                         <FormItem>
                                             <FormLabel>Asignatura</FormLabel>
 
-                                            <MultiSelectCombobox
-                                                multiple            = { false }
-                                                placeholder         = "Seleccionar una asignatura"
-                                                defaultValues       = { field.value || '' }
-                                                onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
-                                                options             = { memoizedSubject }
-                                            />
+                                            <FormControl>
+                                                { isError ? (
+                                                    <>
+                                                        <Input
+                                                            placeholder="ID de la asignatura"
+                                                            value={field.value || ''}
+                                                            onChange={field.onChange}
+                                                        />
+
+                                                        <FormDescription>
+                                                            Error al cargar las asignaturas. Ingrese el ID manualmente.
+                                                        </FormDescription>
+                                                    </>
+                                                ) : (
+                                                    <MultiSelectCombobox
+                                                        multiple            = { false }
+                                                        placeholder         = "Seleccionar una asignatura"
+                                                        defaultValues       = { field.value || '' }
+                                                        onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
+                                                        options             = { memoizedSubject }
+                                                        isLoading           = { isLoading }
+                                                    />
+                                                )}
+                                            </FormControl>
 
                                             <FormMessage />
                                         </FormItem>
