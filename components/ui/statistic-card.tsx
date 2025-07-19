@@ -1,11 +1,12 @@
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
+import LoaderMini from "@/icons/LoaderMini";
 import { cn } from "@/lib/utils"
 
 interface StatisticCardProps {
     title       : string;
-    value       : string | number;
+    value?      : string | number;
     icon        : React.ReactNode;
     className?  : string;
 }
@@ -26,7 +27,11 @@ export function StatisticCard({
                     {title}
                 </div>
 
-                <div className="text-2xl font-bold">{value}</div>
+                {value === undefined
+                    ? <LoaderMini  />
+                    : <div className="text-2xl font-bold">{value}</div>
+                }
+
             </CardContent>
         </Card>
     );
