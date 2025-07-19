@@ -16,12 +16,13 @@ import {
 }                   from "@tanstack/react-query";
 import { toast }    from "sonner";
 
-import { FacultyForm }          from "@/components/faculty/faculty-form";
-import { FacultyCard }          from "@/components/faculty/faculty-card";
-import { Button }               from "@/components/ui/button";
-import { StatisticCard }        from "@/components/ui/statistic-card";
-import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
-import { Input }                from "@/components/ui/input";
+import { FacultyForm }              from "@/components/faculty/faculty-form";
+import { FacultyCard }              from "@/components/faculty/faculty-card";
+import { FacultyCardSkeletonGrid }  from "@/components/faculty/faculty-card-skeleton";
+import { Button }                   from "@/components/ui/button";
+import { StatisticCard }            from "@/components/ui/statistic-card";
+import { DeleteConfirmDialog }      from "@/components/dialog/DeleteConfirmDialog";
+import { Input }                    from "@/components/ui/input";
 
 import {
     CreateFacultyInput,
@@ -34,7 +35,6 @@ import {
     successToast
 }                           from "@/config/toast/toast.config";
 import { Method, fetchApi } from "@/services/fetch";
-import LoaderMini           from "@/icons/LoaderMini";
 import { KEY_QUERYS }       from "@/consts/key-queries";
 
 
@@ -152,25 +152,25 @@ export default function FacultiesPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatisticCard
                     title   = "Total de Facultades"
-                    value   = { data?.faculties.length || 0 }
+                    value   = { data?.faculties.length }
                     icon    = { <Building className="h-6 w-6" /> }
                 />
 
                 <StatisticCard
                     title   = "Total de Asignaturas"
-                    value   = { data?.totalSubjects || 0 }
+                    value   = { data?.totalSubjects }
                     icon    = { <BookOpen className="h-6 w-6" /> }
                 />
 
                 <StatisticCard
                     title   = "Total de Personal"
-                    value   = { data?.totalPersonnel || 0 }
+                    value   = { data?.totalPersonnel }
                     icon    = { <Users className="h-6 w-6" /> }
                 />
 
                 <StatisticCard
                     title   = "Total de Solicitudes"
-                    value   = { data?.totalRequests || 0 }
+                    value   = { data?.totalRequests }
                     icon    = { <BookCopy className="h-6 w-6" /> }
                 />
             </div>
@@ -193,7 +193,7 @@ export default function FacultiesPage() {
                 </div>
 
                 {isLoading ? (
-                    <LoaderMini />
+                    <FacultyCardSkeletonGrid count={12} />
                 ) : (
                     data!.faculties.filter(faculty => 
                         faculty.name.toLowerCase().includes(filterText.toLowerCase())
@@ -209,16 +209,14 @@ export default function FacultiesPage() {
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {data!.faculties
-                                .filter(faculty => 
-                                    faculty.name.toLowerCase().includes(filterText.toLowerCase())
-                                )
-                                .map((faculty) => (
+                            {data!.faculties.filter( faculty =>
+                                faculty.name.toLowerCase().includes( filterText.toLowerCase() )
+                            ).map( faculty => (
                                 <FacultyCard
-                                    key                 = { faculty.id }
-                                    faculty             = { faculty }
-                                    onEdit              = { openEditFacultyForm }
-                                    onDelete            = { openDeleteDialog }
+                                    key         = { faculty.id }
+                                    faculty     = { faculty }
+                                    onEdit      = { openEditFacultyForm }
+                                    onDelete    = { openDeleteDialog }
                                 />
                             ))}
                         </div>
