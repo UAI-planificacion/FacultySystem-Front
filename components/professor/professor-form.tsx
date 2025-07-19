@@ -10,6 +10,7 @@ import { toast }                        from "sonner";
 import { Loader2 }                      from "lucide-react";
 import * as z                           from "zod";
 
+
 import {
     Dialog,
     DialogContent,
@@ -29,11 +30,16 @@ import { Input }    from "@/components/ui/input";
 import { Button }   from "@/components/ui/button";
 import { Switch }   from "@/components/ui/switch";
 
-import { Professor, CreateProfessor, UpdateProfessor }  from "@/types/professor";
-import { KEY_QUERYS }                                   from "@/consts/key-queries";
-import { Method, fetchApi }                             from "@/services/fetch";
-import { errorToast, successToast }                     from "@/config/toast/toast.config";
-import { ENV }                                          from "@/config/envs/env";
+import {
+    Professor,
+    CreateProfessor,
+    UpdateProfessor
+}                                   from "@/types/professor";
+import { KEY_QUERYS }               from "@/consts/key-queries";
+import { Method, fetchApi }         from "@/services/fetch";
+import { errorToast, successToast } from "@/config/toast/toast.config";
+import { ENV }                      from "@/config/envs/env";
+import { cn }                       from "@/lib/utils";
 
 
 const endpoint = 'professors';
@@ -303,7 +309,10 @@ export function ProfessorForm({
                             />
                         )}
 
-                        <div className="flex justify-between pt-4">
+                        <div className={cn(
+                            "flex pt-2 gap-2",
+                            initialData ? "justify-end" : "justify-between"
+                        )}>
                             {!initialData && (
                                 <Button
                                     type    = "button"
@@ -314,7 +323,10 @@ export function ProfessorForm({
                                 </Button>
                             )}
 
-                            <div className="flex gap-2 ml-auto">
+                            <div className={cn(
+                                "flex gap-2 items-center",
+                                initialData ? "justify-between w-full" : ""
+                            )}>
                                 <Button
                                     type    = "button"
                                     variant = "outline"
