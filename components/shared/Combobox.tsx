@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import LoaderMini from "@/icons/LoaderMini";
 
 
 export type Option = {
@@ -49,6 +50,7 @@ interface ComboboxProps {
     maxDisplayItems?: number;
     multiple?: boolean;
     required?: boolean;
+    isLoading?: boolean;
 }
 
 interface FlattenedItem {
@@ -73,9 +75,10 @@ export function MultiSelectCombobox({
     maxDisplayItems = 1,
     multiple = true,
     required = false,
+    isLoading = false,
 }: ComboboxProps) {
-    const [open, setOpen] = useState(isOpen);
-    const [searchValue, setSearchValue] = useState("")
+    const [open, setOpen] = useState( isOpen );
+    const [searchValue, setSearchValue] = useState( "" );
 
     // Normalize defaultValues to a Set for efficient lookups
     const initialSelectedValues = useMemo(() => {
@@ -446,13 +449,17 @@ export function MultiSelectCombobox({
                         onWheel={(e) => e.stopPropagation()}
                     />
                 </div>
-
                 <div
                     ref={scrollContainerRef}
-                    className="max-h-[300px] overflow-x-hidden overflow-y-auto"
+                    className="max-h-[300px] overflow-x-hidden overflow-y-auto mt-1"
                     onWheel={(e) => e.stopPropagation()}
                 >
-                    {filteredItems.length === 0 ? (
+                    {isLoading ? (
+                        <div className="py-6 px-4 flex flex-col items-center justify-center space-y-3">
+                            <LoaderMini />
+                            <span className="text-sm text-muted-foreground">Cargando información...</span>
+                        </div>
+                    ) : filteredItems.length === 0 ? (
                         <div className="py-6 text-center text-sm text-muted-foreground">No se encontraron opciones.</div>
                     ) : (
                         <List
