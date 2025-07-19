@@ -8,26 +8,26 @@ import {
     PaginationLink,
     PaginationNext,
     PaginationPrevious,
-} from "@/components/ui/pagination";
+}                   from "@/components/ui/pagination";
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+}                   from "@/components/ui/select";
+import { Label }    from "@/components/ui/label";
 
 interface DataPaginationProps {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-    itemsPerPage: number;
-    onPageChange: (page: number) => void;
-    onItemsPerPageChange: (itemsPerPage: number) => void;
-    startIndex: number;
-    endIndex: number;
-    className?: string;
+    currentPage             : number;
+    totalPages              : number;
+    totalItems              : number;
+    itemsPerPage            : number;
+    onPageChange            : ( page: number ) => void;
+    onItemsPerPageChange    : ( itemsPerPage: number ) => void;
+    startIndex              : number;
+    endIndex                : number;
+    className?              : string;
 }
 
 export function DataPagination({
@@ -43,7 +43,7 @@ export function DataPagination({
 }: DataPaginationProps) {
     const itemsPerPageOptions = [10, 15, 30, 50];
 
-    if (totalItems === 0) return null;
+    if ( totalItems === 0 ) return null;
 
     return (
         <div className={`space-y-4 ${className}`}>
@@ -53,6 +53,7 @@ export function DataPagination({
                     <Label htmlFor="items-per-page" className="text-sm font-medium">
                         Elementos por página:
                     </Label>
+
                     <Select
                         value={itemsPerPage.toString()}
                         onValueChange={(value) => onItemsPerPageChange(Number(value))}
@@ -60,6 +61,7 @@ export function DataPagination({
                         <SelectTrigger id="items-per-page" className="w-20">
                             <SelectValue />
                         </SelectTrigger>
+
                         <SelectContent>
                             {itemsPerPageOptions.map((option) => (
                                 <SelectItem key={option} value={option.toString()}>
