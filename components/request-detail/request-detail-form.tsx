@@ -378,6 +378,7 @@ export function RequestDetailForm({
                                                         defaultValues       = { field.value || '' }
                                                         onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
                                                         options             = { memoizedProfessorOptions }
+                                                        isLoading           = { isLoadingProfessors }
                                                     />
                                                 </div>
 
@@ -414,6 +415,7 @@ export function RequestDetailForm({
                                             defaultValues       = { field.value || '' }
                                             onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
                                             options             = { spacesMock }
+                                            isLoading           = { isLoadingModules }
                                         />
 
                                         <FormMessage />
@@ -497,26 +499,43 @@ export function RequestDetailForm({
                                     <FormItem>
                                         <FormLabel>Tamaño del espacio</FormLabel>
 
-                                        <Select
-                                            onValueChange   = {( value ) => field.onChange( value === "Sin especificar" ? null : value )}
-                                            defaultValue    = { field.value || 'Sin especificar' }
-                                        >
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Seleccionar tamaño" />
-                                                </SelectTrigger>
-                                            </FormControl>
+                                        {isErrorSizes ? (
+                                            <>
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder = "Ej: XS (< 30)"
+                                                        value       = { field.value || '' }
+                                                        onChange    = {( e ) => field.onChange( e.target.value || null )}
+                                                    />
+                                                </FormControl>
 
-                                            <SelectContent>
-                                                <SelectItem value="Sin especificar">Sin especificar</SelectItem>
+                                                <FormDescription>
+                                                    Error al cargar los tamaños. Ingrese el tamaño manualmente.
+                                                </FormDescription>
+                                            </>
+                                        ) : (
+                                            <Select
+                                                onValueChange   = {( value ) => field.onChange( value === "Sin especificar" ? null : value )}
+                                                defaultValue    = { field.value || 'Sin especificar' }
+                                                disabled        = { isLoadingSizes }
+                                            >
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Seleccionar tamaño" />
+                                                    </SelectTrigger>
+                                                </FormControl>
 
-                                                {sizes?.map( size => (
-                                                    <SelectItem key={size.id} value={size.id}>
-                                                        {size.id} ({size.detail})
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                                <SelectContent>
+                                                    <SelectItem value="Sin especificar">Sin especificar</SelectItem>
+
+                                                    {sizes?.map( size => (
+                                                        <SelectItem key={size.id} value={size.id}>
+                                                            {size.id} ({size.detail})
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        )}
 
                                         <FormMessage />
                                     </FormItem>
@@ -581,10 +600,11 @@ export function RequestDetailForm({
                                     <FormLabel>Módulo</FormLabel>
 
                                     <Select
-                                        onValueChange={( value ) => {
+                                        defaultValue    = { field.value || 'Sin especificar' }
+                                        disabled        = { isLoadingModules }
+                                        onValueChange   = {( value ) => {
                                             field.onChange(value === "Sin especificar" ? null : value);
                                         }}
-                                        defaultValue    = { field.value || 'Sin especificar' }
                                     >
                                         <FormControl>
                                             <SelectTrigger>
@@ -623,11 +643,31 @@ export function RequestDetailForm({
                                 <FormItem>
                                     <FormLabel>Días</FormLabel>
 
-                                    <DaySelector
-                                        days        = { memoizedDays }
-                                        value       = { field.value?.map( day => Number( day )) || []}
-                                        onChange    = { field.onChange }
-                                    />
+                                    {isLoadingDays ? (
+                                        <div className="flex flex-wrap gap-2">
+                                            {Array.from({ length: 7 }).map((_, index) => (
+                                                <div
+                                                    key={index}
+                                                    className="h-8 w-16 bg-muted rounded-md animate-pulse"
+                                                />
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <FormControl>
+                                                <DaySelector
+                                                    days        = { isErrorDays ? [0, 1, 2, 3, 4, 5, 6] : memoizedDays }
+                                                    value       = { field.value?.map( day => Number( day )) || []}
+                                                    onChange    = { field.onChange }
+                                                />
+                                            </FormControl>
+                                            {isErrorDays && (
+                                                <FormDescription className="text-destructive">
+                                                    Error al obtener los días. Se muestran todos los días disponibles.
+                                                </FormDescription>
+                                            )}
+                                        </>
+                                    )}
 
                                     <FormMessage />
                                 </FormItem>
