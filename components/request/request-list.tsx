@@ -12,10 +12,15 @@ import {
     RequestForm,
     RequestFormValues
 }                               from "@/components/request/request-form";
+
+import { 
+    RequestCardSkeletonGrid,
+    RequestErrorCard 
+}                               from "@/components/request/request-card-skeleton";
+import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
 import { Card, CardContent }    from "@/components/ui/card";
 import { RequestFilter }        from "@/components/request/request-filter";
 import { RequestCard }          from "@/components/request/request-card";
-import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
 
 import { type Request, Status, UpdateRequest }  from "@/types/request";
 import { Method, fetchApi }                     from "@/services/fetch";
@@ -27,6 +32,8 @@ interface RequestListProps {
     requests        : Request[];
     onViewDetails   : ( request: Request ) => void;
     facultyId       : string;
+    isLoading       : boolean;
+    isError         : boolean;
 }
 
 
@@ -41,7 +48,9 @@ const startRequest = {id: 'test', subject: {id: 'test', name: 'test'}} as Reques
 export function RequestList({
     requests,
     onViewDetails,
-    facultyId
+    facultyId,
+    isLoading,
+    isError
 }: RequestListProps ): JSX.Element {
     const queryClient                               = useQueryClient();
     const [isOpen, setIsOpen]                       = useState( false );
@@ -55,7 +64,7 @@ export function RequestList({
 
 
     useEffect(() => {
-        setSelectedRequest( requests[0] );
+        setSelectedRequest( requests[0] || startRequest  );
     }, [requests]);
 
 
@@ -156,24 +165,32 @@ export function RequestList({
             />
 
             {/* Results */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredAndSortedRequests.map( request => (
-                    <RequestCard
-                        request         = { request }
-                        key             = { request.id }
-                        onViewDetails   = { () => onViewDetails( request )}
-                        onEdit          = { () => onEdit( request )}
-                        onDelete        = { () => openDeleteDialog( request.id )}
-                    />
-                ))}
-            </div>
+            {isLoading ? (
+                <RequestCardSkeletonGrid count={6} />
+            ) : isError ? (
+                <RequestErrorCard />
+            ) : (
+                <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {filteredAndSortedRequests.map( request => (
+                            <RequestCard
+                                request         = { request }
+                                key             = { request.id }
+                                onViewDetails   = { () => onViewDetails( request )}
+                                onEdit          = { () => onEdit( request )}
+                                onDelete        = { () => openDeleteDialog( request.id )}
+                            />
+                        ))}
+                    </div>
 
-            {filteredAndSortedRequests.length === 0 && (
-                <Card>
-                    <CardContent className="text-center py-8">
-                        <p className="text-muted-foreground">No se encontraron solicitudes que coincidan con los filtros.</p>
-                    </CardContent>
-                </Card>
+                    {filteredAndSortedRequests.length === 0 && (
+                        <Card>
+                            <CardContent className="text-center py-8">
+                                <p className="text-muted-foreground">No se encontraron solicitudes.</p>
+                            </CardContent>
+                        </Card>
+                    )}
+                </>
             )}
 
             <RequestForm
@@ -189,7 +206,7 @@ export function RequestList({
                 isOpen      = { isDeleteDialogOpen }
                 onClose     = { () => setIsDeleteDialogOpen( false )}
                 onConfirm   = { () => deleteRequestMutation.mutate( selectedRequest.id || '') }
-                name        = { selectedRequest.title || '' }
+                name        = { selectedRequest?.title || '' }
                 type        = "la Solicitud (y todos sus detalles relacionados)"
             />
         </div>
