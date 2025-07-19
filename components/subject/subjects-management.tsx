@@ -27,13 +27,6 @@ import {
     CardContent,
     CardHeader
 }                               from "@/components/ui/card";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue
-}                               from "@/components/ui/select";
 import { DataPagination }       from "@/components/ui/data-pagination";
 import { Button }               from "@/components/ui/button";
 import { ScrollArea }           from "@/components/ui/scroll-area";
@@ -42,6 +35,11 @@ import { Input }                from "@/components/ui/input";
 import { Label }                from "@/components/ui/label";
 import { ShowDate }             from "@/components/shared/date";
 import { ActionButton }         from "@/components/shared/action";
+import { MultiSelectCombobox }  from "@/components/shared/Combobox";
+import { 
+    SubjectTableSkeleton, 
+    SubjectErrorMessage 
+}                               from "@/components/subject/subject-table-skeleton";
 
 import {
     CreateSubject,
@@ -56,8 +54,8 @@ import { usePagination }            from "@/hooks/use-pagination";
 
 
 interface SubjectsManagementProps {
-    facultyId: string;
-    enabled: boolean;
+    facultyId   : string;
+    enabled     : boolean;
 }
 
 
@@ -69,11 +67,20 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
     const [selectedCostCenter, setSelectedCostCenter]   = useState<string>( 'all' );
     const [isDeleteDialogOpen, setIsDeleteDialogOpen]   = useState( false );
     const [deletingSubjectId, setDeletingSubjectId]     = useState<string | undefined>( undefined );
-    const { data: subjects, isLoading }                 = useQuery<Subject[]>({
+    const { data: subjects, isLoading, isError }        = useQuery<Subject[]>({
         queryKey: [KEY_QUERYS.SUBJECTS, facultyId],
-        queryFn: () => fetchApi( { url: `subjects/all/${facultyId}` } ),
+        queryFn : () => fetchApi({ url: `subjects/all/${facultyId}` }),
         enabled,
     });
+
+
+    const memoizedCostCenter = useMemo(() => {
+        return costCenterData?.map( costCenter => ({
+            id      : costCenter.code,
+            label   : `${costCenter.code}-${costCenter.name}`,
+            value   : costCenter.code,
+        })) ?? [];
+    }, [subjects]);
 
 
     const filteredSubjects = useMemo(() => {
@@ -118,9 +125,9 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
     /**
      * Resetea la página actual cuando cambian los filtros
      */
-    const handleFilterChange = ( filterType: 'search' | 'costCenter', value: string ) => {
+    const handleFilterChange = ( filterType: 'search' | 'costCenter', value: string = 'all' ) => {
         resetToFirstPage();
-        
+
         switch ( filterType ) {
             case 'search':
                 setSearchQuery( value );
@@ -171,7 +178,7 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SUBJECTS, facultyId] });
             setIsDeleteDialogOpen( false );
-            toast('Asignatura eliminada exitosamente', successToast );
+            toast( 'Asignatura eliminada exitosamente', successToast );
         },
         onError: ( mutationError ) => toast( `Error al eliminar asignatura: ${mutationError.message}`, errorToast ),
     });
@@ -235,20 +242,13 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                             <div className="max-w-md space-y-2 w-[450px]">
                                 <Label htmlFor="costCenter">Centro de Costos</Label>
 
-                                <Select value={selectedCostCenter} onValueChange={(value) => handleFilterChange( 'costCenter', value )}>
-                                    <SelectTrigger id="costCenter">
-                                        <SelectValue placeholder="Filtrar por centro de costos" />
-                                    </SelectTrigger>
-
-                                    <SelectContent>
-                                        <SelectItem value="all">Todos los centros de costo</SelectItem>
-                                        {costCenterData.map(cc => (
-                                            <SelectItem key={cc.code} value={cc.code}>
-                                                {cc.name} ({cc.code})
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <MultiSelectCombobox
+                                    multiple            = { false }
+                                    placeholder         = "Seleccionar centro de costo"
+                                    defaultValues       = { '' }
+                                    onSelectionChange   = {( value ) => handleFilterChange( 'costCenter', value as string )}
+                                    options             = { memoizedCostCenter }
+                                />
                             </div>
                         </div>
 
@@ -265,39 +265,37 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
 
             <Card>
                 <CardContent className="mt-5">
-                    {isLoading ? (
+                    {subjects?.length === 0 && !isLoading && !isError ? (
                         <div className="text-center p-8 text-muted-foreground">
-                            Loading subjects...
+                            No se han agregado asignaturas a esta facultad.
                         </div>
                     ) : (
-                        filteredSubjects.length === 0 ? (
-                            <div className="text-center p-8 text-muted-foreground">
-                            {searchQuery || selectedCostCenter !== 'all' 
-                                ? 'No se encontraron asignaturas que coincidan con los filtros.'
-                                : 'No se han agregado asignaturas a esta facultad.'}
-                        </div>
-                        ) : (
-                            <div>
-                                <Table>
-                                    <TableHeader className="sticky top-0 z-10 bg-background">
-                                        <TableRow>
-                                            <TableHead className="bg-background w-[120px]">Código</TableHead>
+                        <div>
+                            <Table>
+                                <TableHeader className="sticky top-0 z-10 bg-background">
+                                    <TableRow>
+                                        <TableHead className="bg-background w-[120px]">Código</TableHead>
 
-                                            <TableHead className="bg-background w-[250px]">Nombre</TableHead>
+                                        <TableHead className="bg-background w-[250px]">Nombre</TableHead>
 
-                                            <TableHead className="bg-background w-[140px]">Fecha Inicio</TableHead>
+                                        <TableHead className="bg-background w-[140px]">Fecha Inicio</TableHead>
 
-                                            <TableHead className="bg-background w-[140px]">Fecha Fin</TableHead>
+                                        <TableHead className="bg-background w-[140px]">Fecha Fin</TableHead>
 
-                                            <TableHead className="text-right bg-background w-[100px]">Alumnos</TableHead>
+                                        <TableHead className="text-right bg-background w-[100px]">Alumnos</TableHead>
 
-                                            <TableHead className="bg-background w-[150px]">Centro de Costo</TableHead>
+                                        <TableHead className="bg-background w-[150px]">Centro de Costo</TableHead>
 
-                                            <TableHead className="text-right bg-background w-[120px]">Acciones</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                </Table>
+                                        <TableHead className="text-right bg-background w-[120px]">Acciones</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                            </Table>
 
+                            {isError ? (
+                                <SubjectErrorMessage />
+                            ) : isLoading ? (
+                                <SubjectTableSkeleton rows={10} />
+                            ) : (
                                 <ScrollArea className="h-[calc(100vh-600px)]">
                                     <Table>
                                         <TableBody>
@@ -318,17 +316,31 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                                                     <TableCell className="text-right w-[120px]">
                                                         <ActionButton
                                                             editItem    = { openEditSubjectForm }
-                                                            deleteItem  = { () => onOpenDeleteSubject(subject) }
+                                                            deleteItem  = { () => onOpenDeleteSubject( subject )}
                                                             item        = { subject }
                                                         />
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
+
+                                            {filteredSubjects.length === 0 && searchQuery ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={7} className="h-24 text-center">
+                                                        No se encontraron resultados para &quot;{searchQuery}&quot;
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : subjects?.length === 0 && !searchQuery ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={7} className="h-24 text-center">
+                                                        No hay asignaturas registradas
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : null}
                                         </TableBody>
                                     </Table>
                                 </ScrollArea>
-                            </div>
-                        )
+                            )}
+                        </div>
                     )}
                 </CardContent>
             </Card>
@@ -351,6 +363,7 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                 onSubmit    = { handleFormSubmit }
                 onClose     = { () => setIsFormOpen( false )}
                 isOpen      = { isFormOpen }
+                costCenter  = { memoizedCostCenter }
             />
 
             <DeleteConfirmDialog
