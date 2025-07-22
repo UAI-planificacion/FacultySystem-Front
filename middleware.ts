@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextResponse }     from 'next/server';
+import type { NextRequest } from 'next/server';
 
 const BETTER_AUTH_SESSION_COOKIE_NAME = 'better-auth.session_token-faculty';
 
@@ -8,17 +8,16 @@ const protectedRoutes = [
     '/professors'
 ];
 
-export async function middleware(request: NextRequest) {
+export async function middleware( request: NextRequest ): Promise<NextResponse> {
     const { pathname } = request.nextUrl;
 
     // Skip auth checks in development for non-API routes
-    if (process.env.NODE_ENV === 'development' && !pathname.startsWith('/api/')) {
+    if ( process.env.NODE_ENV === 'development' && !pathname.startsWith( '/api/' )) {
         return NextResponse.next();
     }
 
-    const isProtectedRoute = protectedRoutes.some(route => 
-        pathname === route || pathname.startsWith(`${route}/`)
-    )
+    const isProtectedRoute = protectedRoutes
+        .some( route => pathname === route || pathname.startsWith( `${route}/` ));
 
     if ( !isProtectedRoute ) return NextResponse.next();
 
@@ -26,11 +25,11 @@ export async function middleware(request: NextRequest) {
 
     if ( !isAuthenticated ) {
         try {
-            const sessionResponse = await fetch(`${request.nextUrl.origin}/api/auth/get-session`, {
-                credentials: 'include', 
-                headers: {
-                    'Cookie': request.cookies.toString(),
-                    'Cache-Control': 'no-cache'
+            const sessionResponse = await fetch( `${request.nextUrl.origin}/api/auth/get-session`, {
+                credentials : 'include', 
+                headers     : {
+                    'Cookie'        : request.cookies.toString(),
+                    'Cache-Control' : 'no-cache'
                 }
             });
 
@@ -46,7 +45,7 @@ export async function middleware(request: NextRequest) {
         }
     }
 
-    const loginUrl = new URL('/', request.url);
-    loginUrl.searchParams.set('requireAuth', 'true');
-    return NextResponse.redirect(loginUrl);
+    const loginUrl = new URL( '/', request.url );
+    loginUrl.searchParams.set( 'requireAuth', 'true' );
+    return NextResponse.redirect( loginUrl );
 }
