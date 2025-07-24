@@ -147,7 +147,7 @@ export default function FacultiesPage() {
     }
 
     return (
-        <main className="container mx-auto py-6 px-2 sm:px-5 space-y-6">
+        <main className="container mx-auto py-6 px-4 sm:px-5 space-y-6">
             {/* Statistics Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatisticCard
