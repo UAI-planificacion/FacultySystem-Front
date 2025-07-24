@@ -251,6 +251,8 @@ export function RequestDetailForm({
                                                 {...field}
                                                 type        = "number"
                                                 min         = "1"
+                                                max         = "999999"
+                                                placeholder = "Ej: 10"
                                                 value       = { field.value || '' }
                                                 onChange    = {( e: React.ChangeEvent<HTMLInputElement> ) => {
                                                     const value = e.target.value === '' ? undefined : Number( e.target.value );
@@ -277,6 +279,7 @@ export function RequestDetailForm({
                                                 {...field}
                                                 type        = "number"
                                                 min         = "1"
+                                                max         = "999999"
                                                 placeholder = "Ej: 30"
                                                 value       = { field.value || '' }
                                                 onChange    = {( e: React.ChangeEvent<HTMLInputElement> ) => {
@@ -364,12 +367,22 @@ export function RequestDetailForm({
                                     <FormItem>
                                         <FormLabel>Profesor</FormLabel>
 
-                                        {isLoadingProfessors ? (
-                                            <div className="flex items-center gap-2 border border-zinc-300 dark:border-zinc-800 p-2 rounded animate-spin">
-                                                <Loader2 className="h-4 w-4" />
-                                                Cargando profesores...
-                                            </div>
-                                        ) : (
+                                        { isErrorProfessors && !isLoadingProfessors
+                                            ? <>
+                                            <FormControl>
+                                                <Input
+                                                    {...field}
+                                                    placeholder = "Ej: Juan Pérez"
+                                                    value       = { field.value || '' }
+                                                    onChange    = {( e: React.ChangeEvent<HTMLInputElement> ) => field.onChange( e.target.value )}
+                                                />
+                                            </FormControl>
+
+                                            <FormDescription>
+                                                Error al cargar los profesores. Ingrese el tamaño manualmente.
+                                            </FormDescription>
+                                        </>
+                                        : (
                                             <div className="flex gap-2 items-center">
                                                 <div className="flex-1 min-w-0">
                                                     <MultiSelectCombobox
@@ -599,25 +612,34 @@ export function RequestDetailForm({
                                 <FormItem>
                                     <FormLabel>Módulo</FormLabel>
 
-                                    <Select
-                                        defaultValue    = { field.value || 'Sin especificar' }
-                                        disabled        = { isLoadingModules }
-                                        onValueChange   = {( value ) => {
-                                            field.onChange(value === "Sin especificar" ? null : value);
-                                        }}
-                                    >
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccionar módulo" />
-                                            </SelectTrigger>
-                                        </FormControl>
+                                    { isErrorModules
+                                        ? <>
+                                            <FormControl>
+                                                <Input
+                                                    {... field}
+                                                    placeholder="Ingrese el módulo"
+                                                    value = { field.value || '' }
+                                                    onChange    = {( e: React.ChangeEvent<HTMLInputElement> ) => field.onChange( e.target.value )}
+                                                />
+                                            </FormControl>
 
-                                        {isLoadingModules ? (
-                                            <div className="flex items-center gap-2 border border-zinc-300 dark:border-zinc-800 p-2 rounded animate-spin">
-                                                <Loader2 className="h-4 w-4" />
-                                                Cargando módulos...
-                                            </div>
-                                        ) : (
+                                            <FormDescription>
+                                                Error al cargar los módulos. Ingrese manualmente.
+                                            </FormDescription>
+                                        </>
+                                        :  <Select
+                                            defaultValue    = { field.value || 'Sin especificar' }
+                                            disabled        = { isLoadingModules }
+                                            onValueChange   = {( value ) => {
+                                                field.onChange(value === "Sin especificar" ? null : value);
+                                            }}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Seleccionar módulo" />
+                                                </SelectTrigger>
+                                            </FormControl>
+
                                             <SelectContent>
                                                 <SelectItem value="Sin especificar">Sin especificar</SelectItem>
 
@@ -627,8 +649,8 @@ export function RequestDetailForm({
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
-                                        )}
-                                    </Select>
+                                        </Select>
+                                    }
 
                                     <FormMessage />
                                 </FormItem>
