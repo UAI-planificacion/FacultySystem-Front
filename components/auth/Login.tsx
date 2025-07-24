@@ -62,7 +62,10 @@ export function Login(): JSX.Element {
                 session?.user ? (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline">
+                            <Button
+                                variant     = "outline"
+                                className   = "gap-2 bg-black text-white border-zinc-700"
+                            >
                                 <Image
                                     src     = { session?.user?.image }
                                     alt     = { session?.user?.name }
@@ -72,7 +75,7 @@ export function Login(): JSX.Element {
                                     className="rounded-full mr-2"
                                 />
 
-                                {session?.user?.name}
+                                <span className="hidden md:flex">{session?.user?.name}</span>
                             </Button>
                         </DropdownMenuTrigger>
 
