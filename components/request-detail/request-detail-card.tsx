@@ -28,6 +28,7 @@ import type {
     RequestDetail }                     from "@/types/request";
 import { getLevelName, getSpaceType }   from "@/lib/utils";
 import { Professor }                    from "@/types/professor";
+import LoaderMini                       from "@/icons/LoaderMini";
 
 
 export interface RequestDetailCardProps {
@@ -148,20 +149,24 @@ export function RequestDetailCard({
                         </div>
                     )}
 
-                    {detail.professorId && (
-                        <div className="flex items-center gap-1 text-xs">
-                            <User className="h-4 w-4 text-muted-foreground" />
-                            <span>{memoizedProfessorName}</span>
-                        </div>
-                    )}
+                    { isLoadingProfessors && !isErrorProfessors
+                        ? <LoaderMini />
+                        : detail.professorId &&
+                            <div className="flex items-center gap-1 text-xs">
+                                <User className="h-4 w-4 text-muted-foreground" />
+                                <span>{memoizedProfessorName}</span>
+                            </div>
+                    }
 
-                    {detail.moduleId && (
-                        <div className="flex items-center gap-1 text-xs">
-                            <Clock className="h-4 w-4 text-muted-foreground" />
+                    { isLoadingModules && !isErrorModules
+                        ? <LoaderMini />
+                        : detail.moduleId &&
+                            <div className="flex items-center gap-1 text-xs">
+                                <Clock className="h-4 w-4 text-muted-foreground" />
 
-                            <span>{memoizedModuleName}</span>
-                        </div>
-                    )}
+                                <span>{memoizedModuleName}</span>
+                            </div>
+                    }
                 </div>
 
                 <div className="flex flex-wrap gap-2">
