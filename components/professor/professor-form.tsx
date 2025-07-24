@@ -167,9 +167,7 @@ export function ProfessorForm({
     /**
      * Maneja el envío del formulario de profesor
      */
-    const handleSubmit: SubmitHandler<ProfessorFormValues> = (data) => {
-        console.log('🚀 ~ file: professor-form.tsx:86 ~ data:', data)
-
+    const handleSubmit: SubmitHandler<ProfessorFormValues> = ( data ) => {
         if ( initialData ) {
             updateProfessorMutation.mutate({
                 ...data,
