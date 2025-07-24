@@ -37,7 +37,6 @@ export default function FacultyDetailsPage(): JSX.Element {
     const initialTab                = searchParams.get( 'tab' ) as TabValue || TabValue.SUBJECTS;
     const [activeTab, setActiveTab] = useState<TabValue>( initialTab );
 
-
     /**
      * Obtiene el nombre de la facultad desde la caché de TanStack Query
      */
@@ -47,7 +46,6 @@ export default function FacultyDetailsPage(): JSX.Element {
         return faculty?.name || facultyId;
     }, [ queryClient, facultyId ]);
 
-
     useEffect(() => {
         if ( !facultyId ) return;
 
@@ -56,9 +54,8 @@ export default function FacultyDetailsPage(): JSX.Element {
         router.replace( `?${currentParams.toString()}`, { scroll: false });
     }, [ activeTab, facultyId, router, searchParams ]);
 
-
     return (
-        <main className="container mx-auto py-6 space-y-4">
+        <main className="container mx-auto py-6 space-y-4 px-4">
             <div className="flex items-center gap-4">
                 <Button
                     variant   = "secondary"
