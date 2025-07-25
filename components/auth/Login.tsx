@@ -16,36 +16,16 @@ import { Button }   from "@/components/ui/button";
 import { MicrosoftIcon }    from "@/icons/microsoft";
 import LoaderMini           from "@/icons/LoaderMini";
 
-import { getSession, signIn, signOut } from "@/config/better-auth/auth-client";
+import {
+    getSession,
+    signIn,
+    signOut
+}                       from "@/config/better-auth/auth-client";
+import { useSession }   from "@/hooks/use-session";
 
 
 export function Login(): JSX.Element {
-    const [session, setSession]     = useState<any>( null );
-    const [isLoading, setIsLoading] = useState( true );
-
-
-    useEffect(() => {
-        const loadSession = async () => {
-            try {
-                setIsLoading( true );
-                const sessionData = await getSession();
-                setSession( sessionData?.data || null );
-            } catch (error) {
-                console.error( 'Error al cargar sesión:', error );
-                setSession( null );
-            } finally {
-                setIsLoading( false );
-            }
-        };
-
-        loadSession();
-    }, []);
-
-
-    useEffect(() => {
-        console.log( session );
-    }, [session]);
-
+    const { session, isLoading } = useSession();
 
     return (
         <>
