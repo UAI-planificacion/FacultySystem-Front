@@ -197,7 +197,7 @@ export function RequestList({
                 isOpen      = { isOpen }
                 onClose     = { () => setIsOpen( false )}
                 onSubmit    = { handleFormSubmit }
-                data        = { selectedRequest }
+                request     = { selectedRequest }
                 facultyId   = { facultyId }
             />
 
