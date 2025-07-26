@@ -103,7 +103,6 @@ export interface RequestDetail {
     inAfternoon     : boolean;
     building        : Building | null;
     description     : string | null;
-    comment         : string | null;
     moduleId        : string | null;
     days            : string[];
     spaceId         : string | null;
@@ -125,7 +124,6 @@ export interface UpdateRequestDetail {
     costCenterId?    : string | null;
     inAfternoon?     : boolean;
     building?        : Building | null;
-    comment?         : string | null;
     moduleId?        : string | null;
     days?            : string[];
     spaceId?         : string | null;
@@ -141,7 +139,6 @@ export interface Request {
     status          : Status;
     isConsecutive   : boolean;
     description     : string | null;
-    comment         : string | null;
     updatedAt       : Date;
     createdAt       : Date;
     staffCreate     : StaffRequest;
@@ -157,5 +154,4 @@ export interface UpdateRequest {
     status?         : Status;
     isConsecutive?  : boolean;
     subjectId?      : string;
-    comment?        : string | null;
 }
