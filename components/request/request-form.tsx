@@ -1,6 +1,6 @@
 "use client"
 
-import { JSX, useEffect, useMemo } from "react"
+import { JSX, useEffect, useMemo, useState } from "react"
 
 import {
     BadgeCheck,
@@ -50,7 +50,6 @@ import { CommentSection }       from "@/components/comment/comment-section";
 import { Request, Status }  from "@/types/request";
 import { KEY_QUERYS }       from "@/consts/key-queries";
 import { Subject }          from "@/types/subject.model";
-import { Comment }          from "@/types/comment.model";
 import { fetchApi }         from "@/services/fetch";
 
 
@@ -58,11 +57,11 @@ export type RequestFormValues = z.infer<typeof formSchema>;
 
 
 interface RequestFormProps {
-    isOpen          : boolean;
-    onClose         : () => void;
-    onSubmit        : ( data: RequestFormValues ) => void;
-    data            : Request;
-    facultyId       : string;
+    isOpen      : boolean;
+    onClose     : () => void;
+    onSubmit    : ( data: RequestFormValues ) => void;
+    request     : Request;
+    facultyId   : string;
 }
 
 
@@ -81,10 +80,6 @@ const formSchema = z.object({
     //     .max(500, { message: "La descripción no puede tener más de 500 caracteres" })
     //     .nullable()
     //     .transform(val => val === "" ? null : val),
-    comment: z.string()
-        .max(500, { message: "El comentario no puede tener más de 500 caracteres" })
-        .nullable()
-        .transform(val => val === "" ? null : val),
     subjectId: z.string({
         required_error: "Debe seleccionar una asignatura",
         invalid_type_error: "Asignatura no válida"
@@ -97,19 +92,28 @@ const defaultRequest = ( data : Request ) => ({
     status          : data.status,
     // isConsecutive   : data.isConsecutive,
     // description     : data.description,
-    comment         : data.comment,
     subjectId       : data.subject.id,
 });
+
+
+type Tab = 'form' | 'comments';
 
 
 export function RequestForm({
     isOpen,
     onClose,
     onSubmit,
-    data,
+    request,
     facultyId,
 }: RequestFormProps ): JSX.Element {
-    const { data: subjects, isLoading, isError } = useQuery<Subject[]>({
+    const [tab, setTab] = useState<Tab>( 'form' );
+
+
+    const {
+        data: subjects,
+        isLoading,
+        isError
+    } = useQuery<Subject[]>({
         queryKey: [KEY_QUERYS.SUBJECTS, facultyId],
         queryFn: () => fetchApi( { url: `subjects/all/${facultyId}` } ),
     });
@@ -126,13 +130,14 @@ export function RequestForm({
 
     const form = useForm<RequestFormValues>({
         resolver        : zodResolver( formSchema ),
-        defaultValues   : defaultRequest( data )
+        defaultValues   : defaultRequest( request )
     });
 
 
     useEffect(() => {
-        form.reset( defaultRequest( data ));
-    }, [data, isOpen]);
+        form.reset( defaultRequest( request ));
+        setTab( 'form' );
+    }, [request, isOpen]);
 
 
     const handleSubmit = ( data: RequestFormValues ) => {
@@ -153,11 +158,11 @@ export function RequestForm({
                             </DialogDescription>
                         </div>
 
-                        <Consecutive isConsecutive={data.isConsecutive} />
+                        <Consecutive isConsecutive={request.isConsecutive} />
                     </div>
                 </DialogHeader>
 
-                <Tabs defaultValue="form" className="w-full">
+                <Tabs defaultValue={tab} onValueChange={( value ) => setTab( value as Tab )} className="w-full">
                     <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="form">Información</TabsTrigger>
                         <TabsTrigger value="comments">
@@ -292,34 +297,8 @@ export function RequestForm({
                                     {/* Description */}
                                     <div className="flex flex-col space-y-1">
                                         <label>Descripción</label>
-                                        <p>{data.description}</p>
+                                        <p>{request.description}</p>
                                     </div>
-
-                                    {/* Comment */}
-                                    <FormField
-                                        control = { form.control }
-                                        name    = "comment"
-                                        render  = {({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Comentario</FormLabel>
-
-                                                <FormControl>
-                                                    <Textarea
-                                                        placeholder="Agregue un comentario (opcional)"
-                                                        className="min-h-[100px] max-h-[200px]"
-                                                        {...field}
-                                                        value={field.value || ''}
-                                                    />
-                                                </FormControl>
-
-                                                <FormDescription className="text-xs flex justify-end">
-                                                    {field.value?.length || 0} / 500
-                                                </FormDescription>
-
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
 
                                     {/* Staff Create - Readonly */}
                                     <div className="grid grid-cols-2 gap-4">
@@ -327,7 +306,7 @@ export function RequestForm({
                                             <FormLabel>Creado por</FormLabel>
 
                                             <Input 
-                                                value = { data.staffCreate?.name || '-' }
+                                                value = { request.staffCreate?.name || '-' }
                                                 readOnly 
                                                 disabled 
                                             />
@@ -338,7 +317,7 @@ export function RequestForm({
                                             <FormLabel>Última actualización por</FormLabel>
 
                                             <Input 
-                                                value = { data.staffUpdate?.name || '-' }
+                                                value = { request.staffUpdate?.name || '-' }
                                                 readOnly 
                                                 disabled 
                                             />
@@ -346,8 +325,8 @@ export function RequestForm({
                                     </div>
 
                                     <ShowDateAt
-                                        createdAt = { data.createdAt }
-                                        updatedAt = { data.updatedAt }
+                                        createdAt = { request.createdAt }
+                                        updatedAt = { request.updatedAt }
                                     />
                                 </div>
 
@@ -366,7 +345,10 @@ export function RequestForm({
 
                     <TabsContent value="comments" className="mt-4">
                         <div className="max-h-[60vh] overflow-y-auto">
-                            <CommentSection requestId={ '1' } />
+                            <CommentSection
+                                requestId   = { request.id }
+                                enabled     = { tab === 'comments' }
+                            />
                         </div>
                     </TabsContent>
                 </Tabs>
