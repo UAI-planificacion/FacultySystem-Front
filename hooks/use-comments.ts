@@ -1,276 +1,172 @@
 'use client'
 
-import { useState, useEffect } from "react";
+import {
+    useQuery,
+    useMutation,
+    useQueryClient,
+    UseMutationResult
+}                   from '@tanstack/react-query';
+import { toast }    from "sonner";
 
-import { toast } from "sonner";
-
-import { Comment } from "@/types/comment.model";
+import {
+    Comment,
+    CreateComment,
+    UpdateComment
+}                                   from "@/types/comment.model";
+import { KEY_QUERYS }               from "@/consts/key-queries";
+import { fetchApi, Method }         from '@/services/fetch';
+import { errorToast, successToast } from '@/config/toast/toast.config';
 
 
 interface UseCommentsReturn {
 	comments            : Comment[];
 	isLoading           : boolean;
-	isCreating          : boolean;
 	isError             : boolean;
 	error               : string | null;
-	handleAddComment    : ( content: string ) => void;
-	handleEditComment   : ( commentId: string, content: string ) => void;
-	handleDeleteComment : ( commentId: string ) => void;
 	retryLoadComments   : () => void;
+    createComment       : UseMutationResult<Comment, Error, CreateComment, unknown>;
+    updateComment       : UseMutationResult<Comment, Error, UpdateComment, unknown>;
+    deleteComment       : UseMutationResult<Comment, Error, string, unknown>;
+    isCreating          : boolean;
+	isUpdating          : boolean;
+	isDeleting          : boolean;
+}
+
+
+export enum CommentType {
+    REQUEST = "request",
+    DETAIL = 'request-detail'
+}
+
+
+interface CommentsProps {
+    requestId?          : string;
+	requestDetailId?    : string;
+    enabled             : boolean;
 }
 
 
 /**
- * Custom hook to manage comments for a request or request detail
+ * Custom hook to manage comments for a request or request detail using TanStack Query
  * @param requestId - The ID of the request
  * @param requestDetailId - Optional ID of the request detail
  * @returns Object containing comments data and management functions
  */
-export function useComments( requestId: string, requestDetailId?: string ): UseCommentsReturn {
-	const [comments, setComments]       = useState<Comment[]>( [] );
-	const [isLoading, setIsLoading]     = useState( true );
-	const [isCreating, setIsCreating]   = useState( false );
-	const [isError, setIsError]         = useState( false );
-	const [error, setError]             = useState<string | null>( null );
+export function useComments({
+    requestId,
+    requestDetailId,
+    enabled = true,
+}: CommentsProps ): UseCommentsReturn {
+	const queryClient = useQueryClient();
+    const id = requestId || requestDetailId;
+
+    if ( !id ) throw new Error ( 'Id is required' );
+
+    const type = requestId ? CommentType.REQUEST : CommentType.DETAIL;
+    const endpoint = 'comments';
+
+	const {
+		data: comments = [],
+		isLoading,
+		isError,
+		error,
+		refetch
+	} = useQuery( {
+		queryKey: [ KEY_QUERYS.COMMENTS, id, type ],
+        queryFn : () => fetchApi<Comment[]>({ url: `comments/${type}/${id}` }),
+		enabled,
+	} );
+
+    const createCommentApi = async ( newComment: CreateComment ): Promise<Comment>  =>
+        fetchApi<Comment>({
+            url     : endpoint,
+            method  : Method.POST,
+            body    : newComment
+        });
+
+    const deleteCommentApi = async ( commentId: string ): Promise<Comment> =>
+		fetchApi<Comment>({
+            url     : `${endpoint}/${commentId}`,
+            method  : Method.DELETE
+        });
 
 
-	// Mock comments data for testing
-	const mockComments: Comment[] = [
-		{
-			id              : "1",
-			content         : "Este es un comentario de prueba del staff.",
-			parentCommentId : null,
-			request         : {
-				id      : "req1",
-				name    : "Solicitud de Prueba"
-			},
-			requestDetail   : null,
-			staff           : {
-				id      : "staff1",
-				name    : "Juan Pérez",
-				email   : "kevin.candia@uai.cl"
-			},
-			adminName       : null,
-			adminEmail      : null,
-			createdAt       : new Date( "2024-01-15T10:30:00" ),
-			updatedAt       : new Date( "2024-01-15T10:30:00" )
-		},
-		{
-			id              : "2",
-			content         : "Comentario del administrador del sistema.",
-			parentCommentId : null,
-			request         : {
-				id              : "req1",
-				name            : "Solicitud de Prueba"
-			},
-			requestDetail   : null,
-			staff           : null,
-			adminName       : "Admin Principal",
-			adminEmail      : "admin@example.com",
-			createdAt       : new Date( "2024-01-15T11:00:00" ),
-			updatedAt       : new Date( "2024-01-15T11:00:00" )
-		},
-		{
-			id              : "3",
-			content         : "Otro comentario de prueba para verificar la funcionalidad.",
-			parentCommentId : null,
-			request         : {
-				id      : "req1",
-				name    : "Solicitud de Prueba"
-			},
-			requestDetail   : null,
-			staff           : {
-				id      : "staff2",
-				name    : "María García",
-				email   : "maria@example.com"
-			},
-			adminName       : null,
-			adminEmail      : null,
-			createdAt       : new Date( "2024-01-15T12:00:00" ),
-			updatedAt       : new Date( "2024-01-15T12:00:00" )
-		},
-		{
-			id              : "4",
-			content         : "Comentario editable del usuario de prueba.",
-			parentCommentId : null,
-			request         : {
-				id      : "req1",
-				name    : "Solicitud de Prueba"
-			},
-			requestDetail   : null,
-			staff           : {
-				id      : "staff3",
-				name    : "Usuario de Prueba",
-				email   : "test@example.com"
-			},
-			adminName       : null,
-			adminEmail      : null,
-			createdAt       : new Date( "2024-01-15T13:00:00" ),
-			updatedAt       : new Date( "2024-01-15T13:00:00" )
-		},
-		{
-			id              : "5",
-			content         : "Comentario del admin que también se puede editar.",
-			parentCommentId : null,
-			request         : {
-				id      : "req1",
-				name    : "Solicitud de Prueba"
-			},
-			requestDetail   : null,
-			staff           : null,
-			adminName       : "Admin de Prueba",
-			adminEmail      : "admin@example.com",
-			createdAt       : new Date( "2024-01-15T14:00:00" ),
-			updatedAt       : new Date( "2024-01-15T14:00:00" )
-		}
-	];
+
+    const updateCommentApi = async ( updateComment: UpdateComment ): Promise<Comment>  =>
+        fetchApi<Comment>({
+            url     : `comments/${updateComment.id}`,
+            method  : Method.PATCH,
+            body    : { content: updateComment.content }
+        });
 
 
 	/**
-	 * Load comments for the given request
+	 * Mutation to create a new comment
 	 */
-	const loadComments = async () => {
-		try {
-			setIsLoading( true );
-			setIsError( false );
-			setError( null );
-			
-			// Simulate API call delay
-			await new Promise( resolve => setTimeout( resolve, 1000 ) );
-			
-			// Simulate random error for testing (remove in production)
-			if ( Math.random() < 0.3 ) {
-				throw new Error( 'Error simulado de red' );
-			}
-			
-			// Filter comments by requestId if needed (for now, return all mock comments)
-			setComments( mockComments );
-			
-		} catch ( error ) {
-			console.error( 'Error loading comments:', error );
-			setIsError( true );
-			setError( error instanceof Error ? error.message : 'Error desconocido al cargar comentarios' );
-			toast.error( 'Error al cargar los comentarios' );
-		} finally {
-			setIsLoading( false );
-		}
-	};
-
-
-	/**
-	 * Retry loading comments
-	 */
-	const retryLoadComments = () => {
-		if ( requestId ) {
-			loadComments();
-		}
-	};
-
-
-	/**
-	 * Load comments on mount and when dependencies change
-	 */
-	useEffect(() => {
-		if ( requestId ) {
-			loadComments();
-		}
-	}, [requestId, requestDetailId]);
-
-
-	/**
-	 * Add a new comment
-	 */
-	const handleAddComment = async ( content: string ) => {
-		try {
-			setIsCreating( true );
-
-			await new Promise( resolve => setTimeout( resolve, 1500 ) );
-
-			const newComment: Comment = {
-				id              : `new-${Date.now()}`,
-				content         : content,
-				parentCommentId : null,
-				request         : {
-					id      : requestId,
-					name    : "Solicitud Actual"
-				},
-				requestDetail   : requestDetailId ? {
-					id      : requestDetailId
-				} : null,
-				staff           : {
-					id      : "current-user",
-					name    : "Usuario Actual",
-					email   : "test@example.com"
-				},
-				adminName       : null,
-				adminEmail      : null,
-				createdAt       : new Date(),
-				updatedAt       : new Date()
-			};
-
-			setComments( prev => [newComment, ...prev] );
-			toast.success( 'Comentario agregado exitosamente' );
-		} catch ( error ) {
+	const createCommentMutation = useMutation({
+		mutationFn  : createCommentApi,
+		onSuccess   : () => {
+            queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.COMMENTS, id, type ]});
+			toast( 'Comentario creado exitosamente', successToast );
+		},
+		onError     : ( error ) => {
 			console.error( 'Error adding comment:', error );
-			toast.error( 'Error al agregar el comentario' );
-		} finally {
-			setIsCreating( false );
+			toast( 'Error al agregar el comentario', errorToast );
 		}
-	};
+	});
 
 
-	/**
-	 * Edit an existing comment
-	 */
-	const handleEditComment = async ( commentId: string, content: string ) => {
-		try {
-			setIsLoading( true );
-			await new Promise( resolve => setTimeout( resolve, 1000 ) );
-			setComments( prev => 
-				prev.map( comment => 
-					comment.id === commentId 
-						? { ...comment, content, updatedAt: new Date() }
-						: comment
-				)
-			);
-
-			toast.success( 'Comentario editado exitosamente' );
-		} catch ( error ) {
+	// /**
+	//  * Mutation to update an existing comment
+	//  */
+	const updateCommentMutation = useMutation( {
+		mutationFn  : updateCommentApi,
+		onSuccess   : () => {
+			queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.COMMENTS, id, type] });
+			toast( 'Comentario editado exitosamente', successToast );
+		},
+		onError     : ( error ) => {
 			console.error( 'Error editing comment:', error );
-			toast.error( 'Error al editar el comentario' );
-		} finally {
-			setIsLoading( false );
+			toast( 'Error al editar el comentario', errorToast );
 		}
-	};
+	} );
 
 
-	/**
-	 * Delete a comment
-	 */
-	const handleDeleteComment = async ( commentId: string ) => {
-		try {
-			setIsLoading( true );
-			await new Promise( resolve => setTimeout( resolve, 1000 ) );
-			setComments( prev => prev.filter( comment => comment.id !== commentId ) );
-			toast.success( 'Comentario eliminado exitosamente' );
-		} catch ( error ) {
+	// /**
+	//  * Mutation to delete a comment
+	//  */
+	const deleteCommentMutation = useMutation( {
+		mutationFn  : deleteCommentApi,
+		onSuccess   : ( _, commentId ) => {
+			queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.COMMENTS, id, type] });
+			toast( 'Comentario eliminado exitosamente', successToast );
+		},
+		onError     : ( error ) => {
 			console.error( 'Error deleting comment:', error );
-			toast.error( 'Error al eliminar el comentario' );
-		} finally {
-			setIsLoading( false );
+			toast( 'Error al eliminar el comentario', errorToast );
 		}
+	} );
+
+
+	// /**
+	//  * Retry loading comments
+	//  */
+	const retryLoadComments = () => {
+		refetch();
 	};
 
 
 	return {
 		comments,
 		isLoading,
-		isCreating,
 		isError,
-		error,
-		handleAddComment,
-		handleEditComment,
-		handleDeleteComment,
-		retryLoadComments
+		error: error?.message || null,
+		retryLoadComments,
+        createComment   : createCommentMutation,
+        updateComment   : updateCommentMutation,
+        deleteComment   : deleteCommentMutation,
+        isCreating      : createCommentMutation.isPending,
+		isUpdating      : updateCommentMutation.isPending,
+		isDeleting      : deleteCommentMutation.isPending,
 	};
 }
