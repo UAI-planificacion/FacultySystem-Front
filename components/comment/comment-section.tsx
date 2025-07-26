@@ -1,7 +1,16 @@
 "use client"
 
 import { JSX, useState } from "react";
-import { MessageCircle, Send, User, Edit2, Trash2, Check, X } from "lucide-react";
+
+import {
+    MessageCircle,
+    Send,
+    User,
+    Edit2,
+    Trash2,
+    Check,
+    X
+} from "lucide-react";
 
 import { Button }               from "@/components/ui/button";
 import { Textarea }             from "@/components/ui/textarea";
@@ -9,6 +18,8 @@ import { Card }                 from "@/components/ui/card";
 import { ScrollArea }           from "@/components/ui/scroll-area";
 import { CommentsSkeleton }     from "@/components/comment/comment-card-skeleton";
 import { CommentErrorCard }     from "@/components/comment/comment-error-card";
+import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
+import { ShowDate }             from "@/components/shared/date";
 
 import { Comment }              from "@/types/comment.model";
 import { useSession }           from "@/hooks/use-session";
@@ -16,42 +27,84 @@ import { useComments }          from "@/hooks/use-comments";
 
 
 interface CommentSectionProps {
-	requestId       : string;
-	requestDetailId?: string;
+	requestId?          : string;
+	requestDetailId?    : string;
+    enabled             : boolean;
 }
-
 
 /**
  * Component for displaying and managing comments in a request
  */
 export function CommentSection( { 
 	requestId,
-	requestDetailId
+	requestDetailId,
+    enabled
 }: CommentSectionProps ): JSX.Element {
-	const [newComment, setNewComment] = useState( "" );
-	const { session } = useSession();
+	const [newComment, setNewComment]                   = useState( "" );
+	const [isDeleteDialogOpen, setIsDeleteDialogOpen]   = useState( false );
+	const [deletingCommentId, setDeletingCommentId]     = useState<string | undefined>( undefined );
+	const [deletingCommentContent, setDeletingCommentContent] = useState<string>( "" );
 	
-	// Use the comments hook to manage all comment-related logic
+	const { session } = useSession();
+
 	const {
 		comments,
 		isLoading,
-		isCreating,
 		isError,
-		error,
-		handleAddComment,
-		handleEditComment,
-		handleDeleteComment,
-		retryLoadComments
-	} = useComments( requestId, requestDetailId );
+		retryLoadComments,
+        createComment,
+        updateComment,
+        deleteComment,
+        isCreating
+	} = useComments({ requestId, requestDetailId, enabled });
 
 
 	/**
 	 * Handle submitting a new comment
 	 */
 	const handleSubmitComment = () => {
-		if ( newComment.trim() ) {
-			handleAddComment( newComment.trim() );
-			setNewComment( "" );
+        const content = newComment.trim();
+
+        if ( !content ) return;
+
+        createComment.mutate({
+            content,
+            adminName   : session?.user?.name,
+            adminEmail  : session?.user?.email,
+            ...(requestId && { requestId }),
+            ...(requestDetailId && { requestDetailId }),
+        });
+
+        setNewComment( '' );
+	};
+
+    function handleEditComment( id: string, content: string ) {
+        updateComment.mutate({
+            id,
+            content
+        })
+    }
+
+
+	/**
+	 * Handle opening delete confirmation dialog
+	 */
+	const onOpenDeleteComment = ( commentId: string, commentContent: string ) => {
+		setDeletingCommentId( commentId );
+		setDeletingCommentContent( commentContent );
+		setIsDeleteDialogOpen( true );
+	};
+
+
+	/**
+	 * Handle confirming comment deletion
+	 */
+	const onConfirmDeleteComment = () => {
+		if ( deletingCommentId ) {
+			deleteComment.mutate( deletingCommentId );
+			setIsDeleteDialogOpen( false );
+			setDeletingCommentId( undefined );
+			setDeletingCommentContent( "" );
 		}
 	};
 
@@ -105,12 +158,12 @@ export function CommentSection( {
 						<div className="space-y-3 pr-4">
 							{comments.map( ( comment ) => (
 								<CommentItem 
-									key             = { comment.id } 
-									comment         = { comment }
-									currentUserEmail = { session?.user?.email || "" }
-									onEdit          = { handleEditComment }
-									onDelete        = { handleDeleteComment }
-									isLoading       = { isLoading }
+									key                 = { comment.id } 
+									comment             = { comment }
+									currentUserEmail    = { session?.user?.email || "" }
+									onEdit              = { handleEditComment }
+									onDelete            = { onOpenDeleteComment }
+									isLoading           = { isLoading }
 								/>
 							))}
 						</div>
@@ -122,15 +175,15 @@ export function CommentSection( {
 			<Card className="p-4">
 				<div className="space-y-3">
 					<h4 className="text-sm font-medium">Agregar comentario</h4>
-					
+
 					<Textarea
 						placeholder     = "Escribe tu comentario aquí... (Ctrl+Enter para enviar)"
 						value           = { newComment }
 						onChange        = { ( e ) => setNewComment( e.target.value ) }
 						onKeyDown       = { handleKeyPress }
-						className       = "min-h-[100px] max-h-[200px] resize-none"
+						className       = "min-h-[100px] max-h-[200px]"
 						maxLength       = { 500 }
-						disabled        = { isError } // Disable commenting when there's an error
+						disabled        = { isError }
 					/>
 
 					<div className="flex justify-between items-center">
@@ -156,6 +209,18 @@ export function CommentSection( {
 					)}
 				</div>
 			</Card>
+
+			{/* Delete Confirmation Dialog */}
+			<DeleteConfirmDialog
+				isOpen      = { isDeleteDialogOpen }
+				onClose     = { () => setIsDeleteDialogOpen( false ) }
+				onConfirm   = { onConfirmDeleteComment }
+				name        = { deletingCommentContent.length > 50 
+					? `${deletingCommentContent.substring(0, 50)}...` 
+					: deletingCommentContent 
+				}
+				type        = "el comentario"
+			/>
 		</div>
 	);
 }
@@ -165,7 +230,7 @@ interface CommentItemProps {
 	comment         : Comment;
 	currentUserEmail : string;
 	onEdit          : ( commentId: string, content: string ) => void;
-	onDelete        : ( commentId: string ) => void;
+	onDelete        : ( commentId: string, commentContent: string ) => void;
 	isLoading       : boolean;
 }
 
@@ -189,13 +254,10 @@ function CommentItem( {
 	 */
 	const canEditComment = () => {
 		if ( !currentUserEmail ) return false;
-		
-		// Check if user is the staff author
+
 		if ( comment.staff?.email === currentUserEmail ) return true;
-		
-		// Check if user is the admin author
 		if ( comment.adminEmail === currentUserEmail ) return true;
-		
+
 		return false;
 	};
 
@@ -208,6 +270,14 @@ function CommentItem( {
 			onEdit( comment.id, editContent.trim() );
 		}
 		setIsEditing( false );
+	};
+
+
+    const handleKeyPress = ( e: React.KeyboardEvent ) => {
+		if ( e.key === "Enter" && e.ctrlKey ) {
+			e.preventDefault();
+			handleSaveEdit();
+		}
 	};
 
 
@@ -224,11 +294,11 @@ function CommentItem( {
 	 * Handle deleting comment
 	 */
 	const handleDelete = () => {
-		if ( window.confirm( "¿Estás seguro de que quieres eliminar este comentario?" ) ) {
-			onDelete( comment.id );
-		}
+		onDelete( comment.id, comment.content );
 	};
-	/**
+
+
+    /**
 	 * Get the author information from comment
 	 */
 	const getAuthorInfo = () => {
@@ -239,7 +309,7 @@ function CommentItem( {
 				type    : "staff" as const
 			};
 		}
-		
+
 		if ( comment.adminName && comment.adminEmail ) {
 			return {
 				name    : comment.adminName,
@@ -253,20 +323,6 @@ function CommentItem( {
 			email   : "",
 			type    : "unknown" as const
 		};
-	};
-
-
-	/**
-	 * Format date to readable string
-	 */
-	const formatDate = ( date: Date | string ) => {
-		return new Intl.DateTimeFormat( "es-ES", {
-			year    : "numeric",
-			month   : "short",
-			day     : "numeric",
-			hour    : "2-digit",
-			minute  : "2-digit"
-		}).format( new Date( date ) );
 	};
 
 
@@ -286,10 +342,10 @@ function CommentItem( {
 
 					<div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                            <div>
+                            <div className="grid space-y-1">
                                 <div className="flex items-center gap-2">
                                     <h5 className="text-sm font-medium truncate">
-                                        {author.name}
+                                        { author.name }
                                     </h5>
 
                                     {author.type === "admin" && (
@@ -297,74 +353,58 @@ function CommentItem( {
                                             Admin
                                         </span>
                                     )}
-
-                                    {author.type === "staff" && (
-                                        <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
-                                            Staff
-                                        </span>
-                                    )}
                                 </div>
 
                                 {author.email && (
-                                    <p className="text-xs text-muted-foreground truncate">
-                                        {author.email}
-                                    </p>
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-xs text-muted-foreground truncate">
+                                            { author.email }
+                                        </p>
+
+                                        <ShowDate
+                                            date        = { comment.createdAt }
+                                            className   = "text-xs text-muted-foreground"
+                                            size        = "h-3 w-3"
+                                        />
+                                    </div>
                                 )}
                             </div>
 
                             <div className="flex items-center gap-2">
-								<p className="text-xs text-muted-foreground">
-									{formatDate( comment.createdAt )}
-								</p>
-
 								{/* Edit/Delete buttons for comment owner */}
 								{canEditComment() && !isEditing && (
 									<div className="flex gap-1">
 										<Button
 											variant     = "ghost"
-											size        = "sm"
-											onClick     = { () => setIsEditing( true ) }
+											size        = "icon"
+											onClick     = { () => setIsEditing( true )}
 											disabled    = { isLoading }
-											className   = "h-6 w-6 p-0"
 										>
-											<Edit2 className="h-3 w-3" />
+											<Edit2 className="h-4 w-4" />
 										</Button>
 
 										<Button
 											variant     = "ghost"
-											size        = "sm"
+											size        = "icon"
 											onClick     = { handleDelete }
 											disabled    = { isLoading }
-											className   = "h-6 w-6 p-0 text-destructive hover:text-destructive"
+											className   = "text-destructive hover:text-destructive"
 										>
-											<Trash2 className="h-3 w-3" />
+											<Trash2 className="h-5 w-5" />
 										</Button>
 									</div>
 								)}
 
 								{/* Save/Cancel buttons when editing */}
 								{isEditing && (
-									<div className="flex gap-1">
-										<Button
+                                    <Button
 											variant     = "ghost"
-											size        = "sm"
-											onClick     = { handleSaveEdit }
-											disabled    = { isLoading || !editContent.trim() }
-											className   = "h-6 w-6 p-0 text-green-600 hover:text-green-700"
-										>
-											<Check className="h-3 w-3" />
-										</Button>
-
-										<Button
-											variant     = "ghost"
-											size        = "sm"
+											size        = "icon"
 											onClick     = { handleCancelEdit }
 											disabled    = { isLoading }
-											className   = "h-6 w-6 p-0"
 										>
-											<X className="h-3 w-3" />
+											<X className="h-5 w-5" />
 										</Button>
-									</div>
 								)}
 							</div>
                         </div>
@@ -374,17 +414,55 @@ function CommentItem( {
 				{/* Comment Content */}
 				<div className="pl-11">
 					{isEditing ? (
-						<Textarea
-							value       = { editContent }
-							onChange    = { ( e ) => setEditContent( e.target.value ) }
-							className   = "min-h-[80px] max-h-[200px] resize-none"
-							maxLength   = { 500 }
-							placeholder = "Edita tu comentario..."
-						/>
+                        <div className="grid space-y-4">
+                            <Textarea
+                                value       = { editContent }
+                                onChange    = { ( e ) => setEditContent( e.target.value ) }
+                                className   = "min-h-[100px] max-h-[200px]"
+                                maxLength   = { 500 }
+                                onKeyDown   = { handleKeyPress }
+                                placeholder = "Edita tu comentario..."
+                            />
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <Button
+                                    variant     = "outline"
+                                    onClick     = { handleCancelEdit }
+                                    disabled    = { isLoading }
+                                    className   = "gap-2"
+                                >
+                                    <X className="h-5 w-5" />
+                                    Cancelar
+                                </Button>
+
+                                <Button
+                                    onClick     = { handleSaveEdit }
+                                    disabled    = { isLoading || !editContent.trim() }
+                                    className   = "gap-2"
+                                >
+                                    <Send className="h-4 w-4" />
+                                    Enviar
+                                </Button>
+                            </div>
+                        </div>
 					) : (
-						<p className="text-sm text-foreground whitespace-pre-wrap">
-							{comment.content}
-						</p>
+                        <>
+                            <p className="text-sm text-foreground whitespace-pre-wrap">
+                                { comment.content }
+                            </p>
+
+                            { comment.createdAt !== comment.updatedAt && (
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-xs text-muted-foreground">Actualizado: </span>
+
+                                    <ShowDate
+                                        date        = { comment.updatedAt }
+                                        className   = "text-xs text-muted-foreground"
+                                        size        = "h-3 w-3"
+                                    />
+                                </div>
+                            )}
+                        </>
 					)}
 				</div>
 			</div>
