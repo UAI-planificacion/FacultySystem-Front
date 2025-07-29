@@ -8,7 +8,6 @@ import {
     User,
     Edit2,
     Trash2,
-    Check,
     X
 } from "lucide-react";
 
@@ -21,15 +20,16 @@ import { CommentErrorCard }     from "@/components/comment/comment-error-card";
 import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
 import { ShowDate }             from "@/components/shared/date";
 
-import { Comment }              from "@/types/comment.model";
-import { useSession }           from "@/hooks/use-session";
-import { useComments }          from "@/hooks/use-comments";
+import { Comment }      from "@/types/comment.model";
+import { useSession }   from "@/hooks/use-session";
+import { useComments }  from "@/hooks/use-comments";
 
 
 interface CommentSectionProps {
 	requestId?          : string;
 	requestDetailId?    : string;
     enabled             : boolean;
+    size?               : string;
 }
 
 /**
@@ -38,14 +38,14 @@ interface CommentSectionProps {
 export function CommentSection( { 
 	requestId,
 	requestDetailId,
-    enabled
+    enabled,
+    size = 'h-[450px]'
 }: CommentSectionProps ): JSX.Element {
-	const [newComment, setNewComment]                   = useState( "" );
-	const [isDeleteDialogOpen, setIsDeleteDialogOpen]   = useState( false );
-	const [deletingCommentId, setDeletingCommentId]     = useState<string | undefined>( undefined );
-	const [deletingCommentContent, setDeletingCommentContent] = useState<string>( "" );
-	
-	const { session } = useSession();
+	const [newComment, setNewComment]                           = useState( '' );
+	const [isDeleteDialogOpen, setIsDeleteDialogOpen]           = useState( false );
+	const [deletingCommentId, setDeletingCommentId]             = useState<string | undefined>( undefined );
+	const [deletingCommentContent, setDeletingCommentContent]   = useState<string>( '' );
+	const { session }                                           = useSession();
 
 	const {
 		comments,
@@ -126,6 +126,7 @@ export function CommentSection( {
 			<div className="space-y-2">
 				<div className="flex items-center gap-2">
 					<MessageCircle className="h-4 w-4" />
+
 					<h3 className="text-sm font-medium">
 						Comentarios ({isLoading ? "..." : comments.length})
 					</h3>
@@ -154,11 +155,11 @@ export function CommentSection( {
 
 				{/* Comments List */}
 				{!isLoading && !isError && comments.length > 0 && (
-					<ScrollArea className="h-[450px] w-full">
+					<ScrollArea className={`${size} w-full`}>
 						<div className="space-y-3 pr-4">
-							{comments.map( ( comment ) => (
-								<CommentItem 
-									key                 = { comment.id } 
+							{comments.map( comment => (
+								<CommentItem
+									key                 = { comment.id }
 									comment             = { comment }
 									currentUserEmail    = { session?.user?.email || "" }
 									onEdit              = { handleEditComment }
@@ -227,11 +228,11 @@ export function CommentSection( {
 
 
 interface CommentItemProps {
-	comment         : Comment;
-	currentUserEmail : string;
-	onEdit          : ( commentId: string, content: string ) => void;
-	onDelete        : ( commentId: string, commentContent: string ) => void;
-	isLoading       : boolean;
+	comment             : Comment;
+	currentUserEmail    : string;
+	onEdit              : ( commentId: string, content: string ) => void;
+	onDelete            : ( commentId: string, commentContent: string ) => void;
+	isLoading           : boolean;
 }
 
 
