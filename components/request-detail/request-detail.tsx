@@ -223,7 +223,7 @@ export function RequestDetailView({
                 )}
 
                 <RequestDetailForm
-                    initialData         = { selectedDetail }
+                    requestDetail       = { selectedDetail }
                     onSubmit            = { ( data) => handleFormSubmit( data ) }
                     onCancel            = { () => setIsOpenEdit( false )}
                     isOpen              = { isOpenEdit }
