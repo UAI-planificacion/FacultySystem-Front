@@ -41,7 +41,6 @@ import {
 }                               from "@/components/ui/tabs";
 import { Input }                from "@/components/ui/input";
 import { Button }               from "@/components/ui/button";
-import { Textarea }             from "@/components/ui/textarea";
 import { ShowDateAt }           from "@/components/shared/date-at";
 import { Consecutive }          from "@/components/shared/consecutive";
 import { MultiSelectCombobox }  from "@/components/shared/Combobox";
@@ -147,7 +146,7 @@ export function RequestForm({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[700px] max-h-[90vh]">
+            <DialogContent className="sm:max-w-[700px] max-h-[80vh]">
                 <DialogHeader>
                     <div className="flex justify-between items-center">
                         <div className="space-y-1">
@@ -167,7 +166,6 @@ export function RequestForm({
                         <TabsTrigger value="form">Información</TabsTrigger>
                         <TabsTrigger value="comments">
                             Comentarios 
-                            {/* ({comments.length}) */}
                         </TabsTrigger>
                     </TabsList>
 
@@ -344,12 +342,10 @@ export function RequestForm({
                     </TabsContent>
 
                     <TabsContent value="comments" className="mt-4">
-                        <div className="max-h-[60vh] overflow-y-auto">
-                            <CommentSection
-                                requestId   = { request.id }
-                                enabled     = { tab === 'comments' }
-                            />
-                        </div>
+                        <CommentSection
+                            requestId   = { request.id }
+                            enabled     = { tab === 'comments' }
+                        />
                     </TabsContent>
                 </Tabs>
             </DialogContent>
