@@ -7,13 +7,17 @@ import {
     Menubar,
     MenubarMenu,
     MenubarTrigger,
-}                       from "@/components/ui/menubar";
-import { Theme }        from "@/components/header/Theme";
-import { Login }        from "@/components/auth/Login";
-import { AlertMessage } from "@/components/dialog/Alert";
+}                                       from "@/components/ui/menubar";
+import { Theme }                        from "@/components/header/Theme";
+import { Login }                        from "@/components/auth/Login";
+import { AlertMessage }                 from "@/components/dialog/Alert";
+import { Notifications }                from "@/components/header/Notifications";
+import { NotificationDialogManager }    from "@/components/header/NotificationDialogManager";
+import { useSSE }                       from "@/hooks/use-sse";
 
 
 export default function Header() {
+    useSSE();
     const router = useRouter();
     const [showAuthMessage, setShowAuthMessage] = useState( false );
 
@@ -59,6 +63,15 @@ export default function Header() {
                         </Menubar>
 
                         <Login />
+
+                        <NotificationDialogManager>
+                            {({ onRequestClick, onRequestDetailClick }) => (
+                                <Notifications
+                                    onRequestClick={onRequestClick}
+                                    onRequestDetailClick={onRequestDetailClick}
+                                />
+                            )}
+                        </NotificationDialogManager>
 
                         <Theme />
                     </div>
