@@ -10,11 +10,6 @@ import {
 import { toast }    from "sonner";
 
 import {
-    RequestDetailForm,
-    RequestDetailFormValues
-}                               from "@/components/request-detail/request-detail-form";
-
-import {
     RequestDetailCardSkeleton,
     RequestDetailErrorCard
 }                               from "@/components/request-detail/request-detail-card-skeleton";
@@ -22,12 +17,12 @@ import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
 import { Card, CardContent }    from "@/components/ui/card";
 import { RequestInfoCard }      from "@/components/request-detail/request-info-card";
 import { RequestDetailCard }    from "@/components/request-detail/request-detail-card";
+import { RequestDetailForm }    from "@/components/request-detail/request-detail-form";
 
 import type {
     Module,
     Request,
-    RequestDetail,
-    UpdateRequestDetail
+    RequestDetail
 }                           from "@/types/request";
 import { KEY_QUERYS }       from "@/consts/key-queries";
 import { Method, fetchApi } from "@/services/fetch";
@@ -94,31 +89,11 @@ export function RequestDetailView({
     }
 
 
-    const updateRequestDetailApi = async ( updatedRequestDetail: UpdateRequestDetail ): Promise<RequestDetail>  =>
-        fetchApi<RequestDetail>({
-            url:`request-details/${updatedRequestDetail.id}`,
-            method: Method.PATCH ,
-            body: updatedRequestDetail
-        });
-
-
     const deleteRequestDetailApi = async ( requestId: string ): Promise<Request> =>
         fetchApi<Request>( {
             url:`request-details/${requestId}`,
             method: Method.DELETE
         } );
-
-
-    const updateRequestDetailMutation = useMutation<RequestDetail, Error, UpdateRequestDetail>({
-        mutationFn: updateRequestDetailApi,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.REQUEST_DETAIL, request.id] });
-            setIsOpenEdit( false );
-            setSelectedDetail( initialRequestDetail );
-            toast( 'Solicitud actualizada exitosamente', successToast );
-        },
-        onError: ( mutationError ) => toast( `Error al actualizar la solicitud: ${mutationError.message}`, errorToast )
-    });
 
 
     const deleteRequestDetailMutation = useMutation<Request, Error, string>({
@@ -138,13 +113,9 @@ export function RequestDetailView({
         setIsOpenDelete( true );
     }
 
-
-    const handleFormSubmit = ( formData: RequestDetailFormValues ): void => {
-        updateRequestDetailMutation.mutate({
-            ...formData,
-            id      : selectedDetail.id,
-            days    : formData.days.map( String ),
-        });
+    const onSuccess = (): void => {
+        setIsOpenEdit( false );
+        setSelectedDetail( initialRequestDetail );
     };
 
 
@@ -224,10 +195,11 @@ export function RequestDetailView({
 
                 <RequestDetailForm
                     requestDetail       = { selectedDetail }
-                    onSubmit            = { ( data) => handleFormSubmit( data ) }
+                    onSuccess           = { onSuccess }
                     onCancel            = { () => setIsOpenEdit( false )}
                     isOpen              = { isOpenEdit }
                     onClose             = { () => setIsOpenEdit( false )}
+                    requestId           = { request.id }
                     professors          = { professors ?? [] }
                     isLoadingProfessors = { isLoadingProfessors }
                     isErrorProfessors   = { isErrorProfessors }
