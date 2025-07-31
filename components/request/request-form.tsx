@@ -3,6 +3,12 @@
 import { JSX, useEffect, useMemo, useState } from "react"
 
 import {
+    useMutation,
+    useQuery,
+    useQueryClient
+}                       from "@tanstack/react-query";
+import { toast }        from "sonner";
+import {
     BadgeCheck,
     CircleDashed,
     Eye,
@@ -11,7 +17,6 @@ import {
 import { z }            from "zod";
 import { zodResolver }  from "@hookform/resolvers/zod";
 import { useForm }      from "react-hook-form";
-import { useQuery }     from "@tanstack/react-query";
 
 import {
     Dialog,
@@ -46,10 +51,11 @@ import { Consecutive }          from "@/components/shared/consecutive";
 import { MultiSelectCombobox }  from "@/components/shared/Combobox";
 import { CommentSection }       from "@/components/comment/comment-section";
 
-import { Request, Status }  from "@/types/request";
-import { KEY_QUERYS }       from "@/consts/key-queries";
-import { Subject }          from "@/types/subject.model";
-import { fetchApi }         from "@/services/fetch";
+import { Request, Status, UpdateRequest }   from "@/types/request";
+import { KEY_QUERYS }                       from "@/consts/key-queries";
+import { Subject }                          from "@/types/subject.model";
+import { Method, fetchApi }                 from "@/services/fetch";
+import { errorToast, successToast }         from "@/config/toast/toast.config";
 
 
 export type RequestFormValues = z.infer<typeof formSchema>;
@@ -58,7 +64,7 @@ export type RequestFormValues = z.infer<typeof formSchema>;
 interface RequestFormProps {
     isOpen      : boolean;
     onClose     : () => void;
-    onSubmit    : ( data: RequestFormValues ) => void;
+    onSuccess?  : () => void;
     request     : Request;
     facultyId   : string;
 }
@@ -101,11 +107,29 @@ type Tab = 'form' | 'comments';
 export function RequestForm({
     isOpen,
     onClose,
-    onSubmit,
+    onSuccess,
     request,
     facultyId,
 }: RequestFormProps ): JSX.Element {
+    const queryClient   = useQueryClient();
     const [tab, setTab] = useState<Tab>( 'form' );
+
+    // API function to update request
+    const updateRequestApi = async ( updatedRequest: UpdateRequest ): Promise<Request>  =>
+        fetchApi<Request>({ url: `requests/${updatedRequest.id}`, method: Method.PATCH, body: updatedRequest });
+
+
+    // Mutation for updating request
+    const updateRequestMutation = useMutation<Request, Error, UpdateRequest>({
+        mutationFn: updateRequestApi,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.REQUESTS] });
+            onClose();
+            toast( 'Solicitud actualizada exitosamente', successToast );
+            onSuccess?.();
+        },
+        onError: ( mutationError ) => toast( `Error al actualizar la solicitud: ${mutationError.message}`, errorToast )
+    });
 
 
     const {
@@ -139,10 +163,14 @@ export function RequestForm({
     }, [request, isOpen]);
 
 
-    const handleSubmit = ( data: RequestFormValues ) => {
+    function handleSubmit( data: RequestFormValues ): void {
         console.log('🚀 ~ file: request-form.tsx:71 ~ data:', data)
-        onSubmit( data );
+        updateRequestMutation.mutate({
+            ...data,
+            id: request.id
+        });
     }
+
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -333,8 +361,11 @@ export function RequestForm({
                                         Cancelar
                                     </Button>
 
-                                    <Button type="submit">
-                                        Guardar cambios
+                                    <Button 
+                                        type        = "submit"
+                                        disabled    = { updateRequestMutation.isPending }
+                                    >
+                                        { updateRequestMutation.isPending ? 'Guardando...' : 'Guardar cambios' }
                                     </Button>
                                 </div>
                             </form>
