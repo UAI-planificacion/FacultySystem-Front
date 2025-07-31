@@ -159,9 +159,14 @@ export const useSSE = () => {
         eventSource.onmessage = ( event: MessageEvent ) => {
             try {
                 const emitEvent: EmitEvent = JSON.parse( event.data );
-                const { message, action, type } = emitEvent;
+                const { message, action, type, origin } = emitEvent;
 
-                console.log(`********SSE Event Received: Type=${type}, Action=${action}`, message);
+                console.log(`********SSE Event Received: Type=${type}, Action=${action}, Origin=${origin}`,message);
+
+                if ( origin === window.origin ) {
+                    console.log("🚀 origin same:", window.origin);
+                    return;
+                }
 
                 if ( !( message as Request | RequestDetail ).id ) {
                     console.error( 'Request received via SSE is missing id, cannot update specific query cache.' );
@@ -177,18 +182,18 @@ export const useSSE = () => {
                         handleRequest( action, message as Request );
                     break;
                 }
-            } catch (error) {
-                console.error('Error parsing SSE event data:', error);
+            } catch ( error ) {
+                console.error( 'Error parsing SSE event data:', error );
             }
         };
 
-        eventSource.onerror = (error) => {
-            console.error('EventSource failed:', error);
+        eventSource.onerror = ( error ) => {
+            console.error( 'EventSource failed:', error );
             toast( 'Ocurrió un error con las notificaciones:', errorToast );
         };
 
         return () => {
-            console.log('Closing EventSource connection...');
+            console.log( 'Closing EventSource connection...' );
             eventSource.close();
         };
     }, []);
