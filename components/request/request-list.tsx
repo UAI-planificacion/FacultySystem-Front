@@ -9,23 +9,19 @@ import {
 import { toast }    from "sonner";
 
 import {
-    RequestForm,
-    RequestFormValues
-}                               from "@/components/request/request-form";
-
-import { 
     RequestCardSkeletonGrid,
-    RequestErrorCard 
+    RequestErrorCard
 }                               from "@/components/request/request-card-skeleton";
 import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
 import { Card, CardContent }    from "@/components/ui/card";
 import { RequestFilter }        from "@/components/request/request-filter";
 import { RequestCard }          from "@/components/request/request-card";
+import { RequestForm }          from "@/components/request/request-form";
 
-import { type Request, Status, UpdateRequest }  from "@/types/request";
-import { Method, fetchApi }                     from "@/services/fetch";
-import { errorToast, successToast }             from "@/config/toast/toast.config";
-import { KEY_QUERYS }                           from "@/consts/key-queries";
+import { type Request, Status }     from "@/types/request";
+import { Method, fetchApi }         from "@/services/fetch";
+import { errorToast, successToast } from "@/config/toast/toast.config";
+import { KEY_QUERYS }               from "@/consts/key-queries";
 
 
 interface RequestListProps {
@@ -52,14 +48,14 @@ export function RequestList({
     isLoading,
     isError
 }: RequestListProps ): JSX.Element {
-    const queryClient                               = useQueryClient();
-    const [isOpen, setIsOpen]                       = useState( false );
-    const [selectedRequest, setSelectedRequest]     = useState<Request>( startRequest );
-    const [title, setTitle]                         = useState( "" );
-    const [statusFilter, setStatusFilter]           = useState<Status | "ALL">( "ALL" );
-    const [consecutiveFilter, setConsecutiveFilter] = useState<ConsecutiveFilter>( "ALL" );
-    const [sortBy, setSortBy]                       = useState<SortBy>( "createdAt" );
-    const [sortOrder, setSortOrder]                 = useState<SortOrder>( "desc" );
+    const queryClient                                   = useQueryClient();
+    const [isOpen, setIsOpen]                           = useState( false );
+    const [selectedRequest, setSelectedRequest]         = useState<Request>( startRequest );
+    const [title, setTitle]                             = useState( "" );
+    const [statusFilter, setStatusFilter]               = useState<Status | "ALL">( "ALL" );
+    const [consecutiveFilter, setConsecutiveFilter]     = useState<ConsecutiveFilter>( "ALL" );
+    const [sortBy, setSortBy]                           = useState<SortBy>( "createdAt" );
+    const [sortOrder, setSortOrder]                     = useState<SortOrder>( "desc" );
     const [isDeleteDialogOpen, setIsDeleteDialogOpen]   = useState( false );
 
 
@@ -68,30 +64,14 @@ export function RequestList({
     }, [requests]);
 
 
-    const updateRequestApi = async ( updatedRequest: UpdateRequest ): Promise<Request>  =>
-        fetchApi<Request>({ url: `requests/${updatedRequest.id}`, method: Method.PATCH, body: updatedRequest });
-
-
     const deleteRequestApi = async ( requestId: string ): Promise<Request> =>
         fetchApi<Request>({ url: `requests/${requestId}`, method: Method.DELETE });
-
-
-    const updateRequestMutation = useMutation<Request, Error, UpdateRequest>({
-        mutationFn: updateRequestApi,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.REQUESTS] });
-            setIsOpen( false );
-            setSelectedRequest( startRequest );
-            toast( 'Solicitud actualizada exitosamente', successToast );
-        },
-        onError: ( mutationError ) => toast( `Error al actualizar la solicitud: ${mutationError.message}`, errorToast )
-    });
 
 
     const deleteRequestMutation = useMutation<Request, Error, string>({
         mutationFn: deleteRequestApi,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.REQUESTS] });
+            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.REQUESTS, facultyId] });
             setIsDeleteDialogOpen( false );
             toast( 'Solicitud eliminada exitosamente', successToast );
         },
@@ -128,17 +108,15 @@ export function RequestList({
     }, [requests, title, statusFilter, consecutiveFilter, sortBy, sortOrder]);
 
 
-    const handleFormSubmit = ( formData: RequestFormValues ): void => {
-        updateRequestMutation.mutate({
-            ...formData,
-            id: selectedRequest.id
-        });
-    };
-
-
     function onEdit( request: Request ): void {
         setSelectedRequest( request );
-        setIsOpen(true );
+        setIsOpen( true );
+    }
+
+
+    function onSuccess(): void {
+        setIsOpen( false );
+        setSelectedRequest( startRequest );
     }
 
 
@@ -196,7 +174,7 @@ export function RequestList({
             <RequestForm
                 isOpen      = { isOpen }
                 onClose     = { () => setIsOpen( false )}
-                onSubmit    = { handleFormSubmit }
+                onSuccess   = { onSuccess }
                 request     = { selectedRequest }
                 facultyId   = { facultyId }
             />
