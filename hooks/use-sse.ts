@@ -8,7 +8,7 @@ import { toast }    from 'sonner';
 
 import { Request, RequestDetail }           from '@/types/request';
 import { EmitEvent, EnumAction, Type }      from '@/types/emit-event';
-import { Notification, NotificationState } from '@/types/notification';
+import { Notification, NotificationState }  from '@/types/notification';
 import { KEY_QUERYS }                       from '@/consts/key-queries';
 import { errorToast, successToast }         from '@/config/toast/toast.config';
 import { ENV }                              from '@/config/envs/env';
@@ -32,7 +32,7 @@ function addNotification(
         [KEY_QUERYS.NOTIFICATIONS],
         ( oldState: NotificationState | undefined ) => {
             const currentState = oldState || { notifications: [], unreadCount: 0 };
-            
+
             return {
                 notifications   : [newNotification, ...currentState.notifications],
                 unreadCount     : currentState.unreadCount + 1,
@@ -170,11 +170,11 @@ export const useSSE = () => {
 
                 switch ( type ) {
                     case Type.DETAIL:
-                        handleRequestDetailUpdate( action, message as RequestDetail )
+                        handleRequestDetail( action, message as RequestDetail );
                     break;
 
                     case Type.REQUEST:
-                        handleRequestUpdate( action, message as Request )
+                        handleRequest( action, message as Request );
                     break;
                 }
             } catch (error) {
@@ -184,7 +184,7 @@ export const useSSE = () => {
 
         eventSource.onerror = (error) => {
             console.error('EventSource failed:', error);
-            toast( 'EventSource failed:', errorToast );
+            toast( 'Ocurrió un error con las notificaciones:', errorToast );
         };
 
         return () => {
@@ -198,7 +198,7 @@ export const useSSE = () => {
      * @param action El tipo de acción (CREATE, UPDATE, DELETE)
      * @param request La entidad Request recibida
      */
-    function handleRequestUpdate( action: EnumAction, request: Request ) {
+    function handleRequest( action: EnumAction, request: Request ) {
         const queryKey = [KEY_QUERYS.REQUESTS, request.facultyId];
 
         switch ( action ) {
@@ -249,7 +249,7 @@ export const useSSE = () => {
      * @param action El tipo de acción (CREATE, UPDATE, DELETE)
      * @param detail La entidad RequestDetail recibida
      */
-    function handleRequestDetailUpdate( action: EnumAction, detail: RequestDetail ): void {
+    function handleRequestDetail( action: EnumAction, detail: RequestDetail ): void {
         const queryKey = [KEY_QUERYS.REQUEST_DETAIL, detail.requestId]; 
 
         switch ( action ) {
