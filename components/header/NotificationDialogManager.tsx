@@ -4,13 +4,18 @@ import { JSX, useState } from 'react';
 
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 
-import { RequestForm }      from '@/components/request/request-form';
-import { RequestDetailForm } from '@/components/request-detail/request-detail-form';
+import { RequestForm }          from '@/components/request/request-form';
+import { RequestDetailForm }    from '@/components/request-detail/request-detail-form';
 
-import { KEY_QUERYS }       from '@/consts/key-queries';
-import { fetchApi }         from '@/services/fetch';
-import { Request, RequestDetail } from '@/types/request';
-import { Professor }                from '@/types/professor';
+import {
+    Module,
+    Request,
+    RequestDetail
+}                       from '@/types/request';
+import { KEY_QUERYS }   from '@/consts/key-queries';
+import { Professor }    from '@/types/professor';
+import { fetchApi }     from '@/services/fetch';
+import { ENV } from '@/config/envs/env';
 
 
 interface NotificationDialogManagerProps {
@@ -24,9 +29,11 @@ interface NotificationDialogManagerProps {
 /**
  * Manager component for handling notification-triggered dialogs
  */
-export function NotificationDialogManager({ children }: NotificationDialogManagerProps ) {
+export function NotificationDialogManager({
+    children
+}: NotificationDialogManagerProps ): JSX.Element {
 	const queryClient = useQueryClient();
-	
+
 	const [requestDialog, setRequestDialog] = useState<{
 		isOpen      : boolean;
 		request     : Request | null;
@@ -52,7 +59,7 @@ export function NotificationDialogManager({ children }: NotificationDialogManage
 		isError     : isErrorProfessors,
 	} = useQuery<Professor[]>({
 		queryKey    : [KEY_QUERYS.PROFESSORS],
-		queryFn     : () => fetchApi({ url: 'professors' }),
+        queryFn     : () => fetchApi<Professor[]>({ url: `${ENV.ACADEMIC_SECTION}professors`, isApi: false }),
 		enabled     : requestDetailDialog.isOpen,
 	});
 
@@ -63,29 +70,30 @@ export function NotificationDialogManager({ children }: NotificationDialogManage
 		isError     : isErrorModules,
 	} = useQuery({
 		queryKey    : [KEY_QUERYS.MODULES],
-		queryFn     : () => fetchApi({ url: 'modules' }),
+        queryFn     : () => fetchApi<Module[]>({ url: `${ENV.ACADEMIC_SECTION}modules/original`, isApi: false }),
 		enabled     : requestDetailDialog.isOpen,
 	});
 
 	const handleRequestClick = ( requestId: string ): void => {
 		console.log( 'handleRequestClick called with requestId:', requestId );
-		
+	
 		// Find request in cache from any faculty
 		const allQueries = queryClient.getQueriesData({ queryKey: [KEY_QUERYS.REQUESTS] });
 		console.log( 'All queries found:', allQueries );
-		
+
 		let foundRequest: Request | undefined;
-		
+
 		for ( const [, requests] of allQueries ) {
 			if ( Array.isArray( requests )) {
 				foundRequest = requests.find( r => r.id === requestId );
-				if ( foundRequest ) {
+
+                if ( foundRequest ) {
 					console.log( 'Found request in cache:', foundRequest );
 					break;
 				}
 			}
 		}
-		
+
 		if ( foundRequest ) {
 			console.log( 'Opening request dialog for:', foundRequest );
 			setRequestDialog({
@@ -95,7 +103,7 @@ export function NotificationDialogManager({ children }: NotificationDialogManage
 		} else {
 			console.log( 'Request not found in cache for ID:', requestId );
 			console.log( 'Attempting to fetch request directly...' );
-			
+
 			// If not found in cache, try to fetch the specific request
 			fetchApi<Request>({ url: `requests/${requestId}` })
 				.then( ( request ) => {
@@ -113,16 +121,16 @@ export function NotificationDialogManager({ children }: NotificationDialogManage
 
 	const handleRequestDetailClick = ( requestId: string, detailId: string ): void => {
 		console.log( 'handleRequestDetailClick called with requestId:', requestId, 'detailId:', detailId );
-		
+
 		// First check if request details are in cache
 		const cachedRequestDetails = queryClient.getQueryData<RequestDetail[]>([KEY_QUERYS.REQUEST_DETAIL, requestId]);
 		console.log( 'Request details found in cache:', cachedRequestDetails );
-		
+
 		if ( cachedRequestDetails ) {
 			// If in cache, find the specific detail
 			const requestDetail = cachedRequestDetails.find( rd => rd.id === detailId );
 			console.log( 'Found request detail in cache:', requestDetail );
-			
+
 			if ( requestDetail ) {
 				console.log( 'Opening request detail dialog for:', requestDetail );
 				setRequestDetailDialog({
@@ -133,7 +141,7 @@ export function NotificationDialogManager({ children }: NotificationDialogManage
 				return;
 			}
 		}
-		
+
 		// If not in cache, fetch the request details
 		console.log( 'Request details not in cache, fetching...' );
 		queryClient.fetchQuery({
@@ -143,7 +151,7 @@ export function NotificationDialogManager({ children }: NotificationDialogManage
 			console.log( 'Fetched request details:', requestDetails );
 			const requestDetail = requestDetails?.find( rd => rd.id === detailId );
 			console.log( 'Found request detail after fetch:', requestDetail );
-			
+
 			if ( requestDetail ) {
 				console.log( 'Opening request detail dialog after fetch:', requestDetail );
 				setRequestDetailDialog({
@@ -185,29 +193,27 @@ export function NotificationDialogManager({ children }: NotificationDialogManage
 			{/* Request Dialog */}
 			{requestDialog.request && (
 				<RequestForm
-					isOpen      = {requestDialog.isOpen}
-					onClose     = {() => setRequestDialog( prev => ({ ...prev, isOpen: false }))}
-					onSubmit    = {handleRequestSubmit}
-					request     = {requestDialog.request}
-					facultyId   = {requestDialog.request.facultyId}
+					isOpen      = { requestDialog.isOpen }
+					onClose     = { () => setRequestDialog( prev => ({ ...prev, isOpen: false }))}
+					request     = { requestDialog.request }
+					facultyId   = { requestDialog.request.facultyId }
 				/>
 			)}
 
 			{/* Request Detail Dialog */}
 			{requestDetailDialog.requestDetail && (
 				<RequestDetailForm
-					isOpen              = {requestDetailDialog.isOpen}
+					isOpen              = { requestDetailDialog.isOpen }
 					onClose             = {() => setRequestDetailDialog( prev => ({ ...prev, isOpen: false }))}
-					onSubmit            = {handleRequestDetailSubmit}
 					onCancel            = {() => setRequestDetailDialog( prev => ({ ...prev, isOpen: false }))}
-					requestDetail       = {requestDetailDialog.requestDetail}
-					professors          = {professors}
-					isLoadingProfessors = {isLoadingProfessors}
-					isErrorProfessors   = {isErrorProfessors}
-					// modules             = {modules}
-					modules             = {[]}
-					isLoadingModules    = {isLoadingModules}
-					isErrorModules      = {isErrorModules}
+					requestDetail       = { requestDetailDialog.requestDetail }
+					professors          = { professors }
+					isLoadingProfessors = { isLoadingProfessors }
+					isErrorProfessors   = { isErrorProfessors }
+					modules             = { modules }
+                    requestId           = { requestDetailDialog.requestDetail.requestId }
+					isLoadingModules    = { isLoadingModules }
+					isErrorModules      = { isErrorModules }
 				/>
 			)}
 		</>
