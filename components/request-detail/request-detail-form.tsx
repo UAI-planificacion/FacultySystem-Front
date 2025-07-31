@@ -6,7 +6,12 @@ import { z }                from "zod";
 import { zodResolver }      from "@hookform/resolvers/zod";
 import { useForm }          from "react-hook-form";
 import { Loader2, Plus }    from "lucide-react";
-import { useQuery }         from "@tanstack/react-query";
+import { 
+    useMutation,
+    useQuery,
+    useQueryClient
+}                           from "@tanstack/react-query";
+import { toast }            from "sonner";
 
 import {
     Tabs,
@@ -53,6 +58,7 @@ import { CommentSection }       from "@/components/comment/comment-section";
 
 import {
     type RequestDetail,
+    UpdateRequestDetail,
     SpaceType,
     Size,
     Level,
@@ -64,9 +70,13 @@ import {
 import { getSpaceType } from "@/lib/utils";
 import { spacesMock }   from "@/data/space";
 import { KEY_QUERYS }   from "@/consts/key-queries";
-import { fetchApi }     from "@/services/fetch";
+import { Method, fetchApi }     from "@/services/fetch";
 import { ENV }          from "@/config/envs/env";
 import { Professor }    from "@/types/professor";
+import {
+    errorToast,
+    successToast
+}                       from "@/config/toast/toast.config";
 
 
 const numberOrNull = z.union([
@@ -118,10 +128,11 @@ export type RequestDetailFormValues = z.infer<typeof formSchema>;
 
 interface RequestDetailFormProps {
     requestDetail       : RequestDetail;
-    onSubmit            : ( data: RequestDetailFormValues ) => void;
+    onSuccess?          : () => void;
     onCancel            : () => void;
     isOpen              : boolean;
     onClose             : () => void;
+    requestId           : string;
     professors          : Professor[];
     isLoadingProfessors : boolean;
     isErrorProfessors   : boolean;
@@ -152,9 +163,10 @@ type Tab = 'form' | 'comments';
 
 export function RequestDetailForm({ 
     requestDetail, 
-    onSubmit, 
+    onSuccess,
     onClose,
     isOpen,
+    requestId,
     professors,
     isLoadingProfessors,
     isErrorProfessors,
@@ -163,8 +175,29 @@ export function RequestDetailForm({
     isErrorModules
 }: RequestDetailFormProps ): JSX.Element {
     const [tab, setTab] = useState<Tab>( 'form' );
+    const queryClient = useQueryClient();
 
     const [isOpenProfessor, setIsOpenProfessor ] = useState( false );
+
+    // API function for updating request detail
+    const updateRequestDetailApi = async ( updatedRequestDetail: UpdateRequestDetail ): Promise<RequestDetail>  =>
+        fetchApi<RequestDetail>({
+            url:`request-details/${updatedRequestDetail.id}`,
+            method: Method.PATCH ,
+            body: updatedRequestDetail
+        });
+
+    // Mutation for updating request detail
+    const updateRequestDetailMutation = useMutation<RequestDetail, Error, UpdateRequestDetail>({
+        mutationFn: updateRequestDetailApi,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.REQUEST_DETAIL, requestId] });
+            onClose();
+            onSuccess?.();
+            toast( 'Detalle actualizado exitosamente', successToast );
+        },
+        onError: ( mutationError ) => toast( `Error al actualizar el detalle: ${mutationError.message}`, errorToast )
+    });
     const {
         data        : sizes,
         isLoading   : isLoadingSizes,
@@ -214,7 +247,12 @@ export function RequestDetailForm({
     function onSubmitForm( formData: RequestDetailFormValues ): void {
         console.log( '🚀 ~ file: request-detail-form.tsx:191 ~ formData:', formData );
         formData.building = formData.spaceId?.split('-')[1] as Building;
-        onSubmit( formData );
+        
+        updateRequestDetailMutation.mutate({
+            ...formData,
+            id      : requestDetail.id,
+            days    : formData.days.map( String ),
+        });
     }
 
 
@@ -679,12 +717,12 @@ export function RequestDetailForm({
 
                                     <Button
                                         type        = "submit"
-                                        disabled    = { form.formState.isSubmitting }
+                                        disabled    = { updateRequestDetailMutation.isPending }
                                     >
-                                        {form.formState.isSubmitting ? (
+                                        {updateRequestDetailMutation.isPending ? (
                                             <>
                                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                Procesando...
+                                                Guardando...
                                             </>
                                         ) : requestDetail ? 'Actualizar' : 'Crear'}
                                     </Button>
