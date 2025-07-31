@@ -13,7 +13,8 @@ import { Login }                        from "@/components/auth/Login";
 import { AlertMessage }                 from "@/components/dialog/Alert";
 import { Notifications }                from "@/components/header/Notifications";
 import { NotificationDialogManager }    from "@/components/header/NotificationDialogManager";
-import { useSSE }                       from "@/hooks/use-sse";
+
+import { useSSE } from "@/hooks/use-sse";
 
 
 export default function Header() {
@@ -45,8 +46,8 @@ export default function Header() {
                         <Menubar className="hidden md:flex bg-black text-white border-zinc-700">
                             <MenubarMenu>
                                 <MenubarTrigger
-                                    onClick={() => router.push('/faculties')}
-                                    id="faculty"
+                                    onClick = {() => router.push( '/faculties' )}
+                                    id      = "faculty"
                                 >
                                     <span className="hidden xl:block">Facultades</span>
                                 </MenubarTrigger>
@@ -54,8 +55,8 @@ export default function Header() {
 
                             <MenubarMenu>
                                 <MenubarTrigger
-                                    onClick={() => router.push('/professors')}
-                                    id="professor"
+                                    onClick = {() => router.push( '/professors' )}
+                                    id      = "professor"
                                 >
                                     <span className="hidden xl:block">Profesores</span>
                                 </MenubarTrigger>
@@ -67,8 +68,8 @@ export default function Header() {
                         <NotificationDialogManager>
                             {({ onRequestClick, onRequestDetailClick }) => (
                                 <Notifications
-                                    onRequestClick={onRequestClick}
-                                    onRequestDetailClick={onRequestDetailClick}
+                                    onRequestClick          = { onRequestClick }
+                                    onRequestDetailClick    = { onRequestDetailClick }
                                 />
                             )}
                         </NotificationDialogManager>
