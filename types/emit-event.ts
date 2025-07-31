@@ -15,4 +15,5 @@ export interface EmitEvent<T = any> {
     message : T;
     action  : EnumAction;
     type    : Type;
+    origin? : string | undefined;
 }
