@@ -22,10 +22,10 @@ interface RequestsManagementProps {
 export function RequestsManagement({ facultyId, enabled }: RequestsManagementProps ) {
     const router        = useRouter();
     const searchParams  = useSearchParams();
-    
+
     const { data, isLoading, isError } = useQuery({
         queryKey    : [ KEY_QUERYS.REQUESTS, facultyId ],
-        queryFn     : () => fetchApi<Request[]>( { url: `requests/faculty/${facultyId}` } ),
+        queryFn     : () => fetchApi<Request[]>({ url: `requests/faculty/${facultyId}` }),
         enabled,
     });
 
@@ -59,7 +59,7 @@ export function RequestsManagement({ facultyId, enabled }: RequestsManagementPro
      */
     const updateUrlParams = ( requestId: string | null ): void => {
         const params = new URLSearchParams( searchParams.toString() );
-        
+
         if ( requestId ) {
             params.set( 'detail', requestId );
         } else {
