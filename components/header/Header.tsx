@@ -14,12 +14,14 @@ import { AlertMessage }                 from "@/components/dialog/Alert";
 import { Notifications }                from "@/components/header/Notifications";
 import { NotificationDialogManager }    from "@/components/header/NotificationDialogManager";
 
-import { useSSE } from "@/hooks/use-sse";
+import { useSSE }       from "@/hooks/use-sse";
+import { useSession }   from "@/hooks/use-session";
 
 
 export default function Header() {
     useSSE();
-    const router = useRouter();
+    const router                                = useRouter();
+    const session                               = useSession();
     const [showAuthMessage, setShowAuthMessage] = useState( false );
 
     useEffect(() => {
@@ -42,39 +44,40 @@ export default function Header() {
                     <h1 className="text-xl xl:text-2xl font-bold text-white">Facultades académicas</h1>
 
                     <div className="flex items-center gap-2">
-                        {/* *Hay que validar que el usuario esté autenticado */}
-                        <Menubar className="hidden md:flex bg-black text-white border-zinc-700">
-                            <MenubarMenu>
-                                <MenubarTrigger
-                                    onClick = {() => router.push( '/faculties' )}
-                                    id      = "faculty"
-                                >
-                                    <span className="hidden xl:block">Facultades</span>
-                                </MenubarTrigger>
-                            </MenubarMenu>
+                        {session.session && (<>
+                            <Menubar className="hidden md:flex bg-black text-white border-zinc-700">
+                                <MenubarMenu>
+                                    <MenubarTrigger
+                                        onClick = {() => router.push( '/faculties' )}
+                                        id      = "faculty"
+                                    >
+                                        <span className="hidden xl:block">Facultades</span>
+                                    </MenubarTrigger>
+                                </MenubarMenu>
 
-                            <MenubarMenu>
-                                <MenubarTrigger
-                                    onClick = {() => router.push( '/professors' )}
-                                    id      = "professor"
-                                >
-                                    <span className="hidden xl:block">Profesores</span>
-                                </MenubarTrigger>
-                            </MenubarMenu>
-                        </Menubar>
+                                <MenubarMenu>
+                                    <MenubarTrigger
+                                        onClick = {() => router.push( '/professors' )}
+                                        id      = "professor"
+                                    >
+                                        <span className="hidden xl:block">Profesores</span>
+                                    </MenubarTrigger>
+                                </MenubarMenu>
+                            </Menubar>
 
-                        <Login />
-
-                        <NotificationDialogManager>
-                            {({ onRequestClick, onRequestDetailClick }) => (
-                                <Notifications
-                                    onRequestClick          = { onRequestClick }
-                                    onRequestDetailClick    = { onRequestDetailClick }
-                                />
-                            )}
-                        </NotificationDialogManager>
+                            <NotificationDialogManager>
+                                {({ onRequestClick, onRequestDetailClick }) => (
+                                    <Notifications
+                                        onRequestClick          = { onRequestClick }
+                                        onRequestDetailClick    = { onRequestDetailClick }
+                                    />
+                                )}
+                            </NotificationDialogManager>
+                        </>)}
 
                         <Theme />
+
+                        <Login />
                     </div>
                 </div>
             </header>
