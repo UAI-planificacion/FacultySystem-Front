@@ -7,6 +7,7 @@ import { KEY_QUERYS }       from "@/consts/key-queries";
 import { fetchApi }         from "@/services/fetch";
 import { Space }            from "@/types/space.model";
 import { mockFetchSpaces }  from "@/data/space.data";
+import { ENV }              from "@/config/envs/env";
 
 
 // Function to transform cost center data to options format
@@ -24,7 +25,6 @@ export const memoizedSpaceData = (
 // Interface for hook parameters
 interface UseSpaceParams {
 	enabled? : boolean;
-    useMockData?: boolean;
 }
 
 
@@ -45,7 +45,8 @@ interface UseSpaceReturn {
 export const useSpace = ( 
 	params : UseSpaceParams = {} 
 ): UseSpaceReturn => {
-	const { enabled = true, useMockData = true } = params;
+	const { enabled = true } = params;
+    const useMockData = ENV.NODE_ENV === 'development';
 
 	const {
 		data: spaces = [],
@@ -57,9 +58,10 @@ export const useSpace = (
 		// queryFn		: () => fetchApi({ isApi: false, url: `cost-centers/all` }),
         queryFn: useMockData 
             ? mockFetchSpaces
-            : () => fetchApi({ isApi: false, url: `cost-centers/all` }),
+            : () => fetchApi({ isApi: false, url: `${ENV.ROOM_SYSTEM_URL}${ENV.ROOM_ENDPOINT}` }),
 		enabled,
 	});
+
 
 	// Transform the data using memoized function
 	const spaceOptions = memoizedSpaceData( spaces );
