@@ -2,11 +2,12 @@ import { useMemo } from "react";
 
 import { useQuery } from "@tanstack/react-query";
 
-import { CostCenter }   from "@/types/cost-center.model";
-import { Option }       from "@/components/shared/Combobox";
-import { KEY_QUERYS }   from "@/consts/key-queries";
-import { fetchApi }     from "@/services/fetch";
+import { CostCenter }           from "@/types/cost-center.model";
+import { Option }               from "@/components/shared/Combobox";
+import { KEY_QUERYS }           from "@/consts/key-queries";
+import { fetchApi }             from "@/services/fetch";
 import { mockFetchCostCenters } from "@/data/cost-center.data";
+import { ENV }                  from "@/config/envs/env";
 
 
 // Function to transform cost center data to options format
@@ -24,7 +25,6 @@ export const memoizedCostCenterData = (
 // Interface for hook parameters
 interface UseCostCenterParams {
 	enabled? : boolean;
-    useMockData?: boolean;
 }
 
 
@@ -45,7 +45,8 @@ interface UseCostCenterReturn {
 export const useCostCenter = ( 
 	params : UseCostCenterParams = {} 
 ): UseCostCenterReturn => {
-	const { enabled = true, useMockData = true } = params;
+	const { enabled = true } = params;
+    const useMockData = ENV.NODE_ENV === 'development';
 
 	const {
 		data		: costCenterData,
@@ -54,10 +55,9 @@ export const useCostCenter = (
 		error		: errorCostCenter
 	} = useQuery<CostCenter[]>({
 		queryKey	: [KEY_QUERYS.COST_CENTERS],
-		// queryFn		: () => fetchApi({ isApi: false, url: `cost-centers/all` }),
         queryFn: useMockData 
             ? mockFetchCostCenters
-            : () => fetchApi({ isApi: false, url: `cost-centers/all` }),
+            : () => fetchApi({ isApi: false, url: `${ENV.URL_WEBAPI_UAI}${ENV.COST_CENTER}` }),
 		enabled,
 	});
 
