@@ -66,17 +66,18 @@ import {
     SizeResponse,
     Day,
     Module,
-}                       from "@/types/request";
-import { getSpaceType } from "@/lib/utils";
-import { spacesMock }   from "@/data/space";
-import { KEY_QUERYS }   from "@/consts/key-queries";
-import { Method, fetchApi }     from "@/services/fetch";
-import { ENV }          from "@/config/envs/env";
-import { Professor }    from "@/types/professor";
+}                           from "@/types/request";
+import { useCostCenter }    from "@/hooks/use-cost-center";
+import { getSpaceType }     from "@/lib/utils";
+import { KEY_QUERYS }       from "@/consts/key-queries";
+import { Method, fetchApi } from "@/services/fetch";
+import { ENV }              from "@/config/envs/env";
+import { Professor }        from "@/types/professor";
 import {
     errorToast,
     successToast
-}                       from "@/config/toast/toast.config";
+}                           from "@/config/toast/toast.config";
+import { useSpace }         from "@/hooks/use-space";
 
 
 const numberOrNull = z.union([
@@ -179,6 +180,17 @@ export function RequestDetailForm({
 
     const [isOpenProfessor, setIsOpenProfessor ] = useState( false );
 
+    const {
+        costCenter,
+        isLoading: isLoadingCostCenter,
+        isError: isErrorCostCenter
+    } = useCostCenter({ enabled: true });
+
+
+    const {
+        spaces,
+    } = useSpace({ enabled: true });
+
     // API function for updating request detail
     const updateRequestDetailApi = async ( updatedRequestDetail: UpdateRequestDetail ): Promise<RequestDetail>  =>
         fetchApi<RequestDetail>({
@@ -198,6 +210,8 @@ export function RequestDetailForm({
         },
         onError: ( mutationError ) => toast( `Error al actualizar el detalle: ${mutationError.message}`, errorToast )
     });
+
+
     const {
         data        : sizes,
         isLoading   : isLoadingSizes,
@@ -464,7 +478,7 @@ export function RequestDetailForm({
                                                     placeholder         = "Seleccionar espacio"
                                                     defaultValues       = { field.value || '' }
                                                     onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
-                                                    options             = { spacesMock }
+                                                    options             = { spaces }
                                                     isLoading           = { isLoadingModules }
                                                 />
 
@@ -579,6 +593,30 @@ export function RequestDetailForm({
                                                     onCheckedChange = { field.onChange }
                                                 />
                                             </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control = { form.control }
+                                    name    = "costCenterId"
+                                    render  = {({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="font-medium">Centro de Costos</FormLabel>
+
+                                            <MultiSelectCombobox
+                                                multiple            = { false }
+                                                placeholder         = "Seleccionar centro de costo"
+                                                defaultValues       = { field.value || '' }
+                                                onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
+                                                options             = { costCenter }
+                                            />
+
+                                            <FormDescription>
+                                                Selecciona el centro de costos asociado
+                                            </FormDescription>
+
+                                            <FormMessage />
                                         </FormItem>
                                     )}
                                 />
