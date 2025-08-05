@@ -189,6 +189,7 @@ export function RequestDetailForm({
 
     const {
         spaces,
+        isLoading: isLoadingSpaces,
     } = useSpace({ enabled: true });
 
     // API function for updating request detail
@@ -479,7 +480,7 @@ export function RequestDetailForm({
                                                     defaultValues       = { field.value || '' }
                                                     onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
                                                     options             = { spaces }
-                                                    isLoading           = { isLoadingModules }
+                                                    isLoading           = { isLoadingSpaces }
                                                 />
 
                                                 <FormMessage />
@@ -610,6 +611,7 @@ export function RequestDetailForm({
                                                 defaultValues       = { field.value || '' }
                                                 onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
                                                 options             = { costCenter }
+                                                isLoading           = { isLoadingCostCenter }
                                             />
 
                                             <FormDescription>
