@@ -49,8 +49,8 @@ import {
 import { KEY_QUERYS }               from "@/consts/key-queries"
 import { Method, fetchApi }         from "@/services/fetch"
 import { errorToast, successToast } from "@/config/toast/toast.config"
-import { costCenterData }           from "@/data/cost-center";
 import { usePagination }            from "@/hooks/use-pagination";
+import { useCostCenter }            from "@/hooks/use-cost-center";
 
 
 interface SubjectsManagementProps {
@@ -67,20 +67,24 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
     const [selectedCostCenter, setSelectedCostCenter]   = useState<string>( 'all' );
     const [isDeleteDialogOpen, setIsDeleteDialogOpen]   = useState( false );
     const [deletingSubjectId, setDeletingSubjectId]     = useState<string | undefined>( undefined );
-    const { data: subjects, isLoading, isError }        = useQuery<Subject[]>({
+
+
+    const {
+        data: subjects,
+        isLoading,
+        isError
+    } = useQuery<Subject[]>({
         queryKey: [KEY_QUERYS.SUBJECTS, facultyId],
         queryFn : () => fetchApi({ url: `subjects/all/${facultyId}` }),
         enabled,
     });
 
 
-    const memoizedCostCenter = useMemo(() => {
-        return costCenterData?.map( costCenter => ({
-            id      : costCenter.code,
-            label   : `${costCenter.code}-${costCenter.name}`,
-            value   : costCenter.code,
-        })) ?? [];
-    }, [subjects]);
+    const {
+        costCenter,
+        isLoading: isLoadingCostCenter,
+        isError: isErrorCostCenter
+    } = useCostCenter({ enabled });
 
 
     const filteredSubjects = useMemo(() => {
@@ -247,7 +251,7 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                                     placeholder         = "Seleccionar centro de costo"
                                     defaultValues       = { '' }
                                     onSelectionChange   = {( value ) => handleFilterChange( 'costCenter', value as string )}
-                                    options             = { memoizedCostCenter }
+                                    options             = { costCenter }
                                 />
                             </div>
                         </div>
@@ -363,7 +367,7 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                 onSubmit    = { handleFormSubmit }
                 onClose     = { () => setIsFormOpen( false )}
                 isOpen      = { isFormOpen }
-                costCenter  = { memoizedCostCenter }
+                costCenter  = { costCenter }
             />
 
             <DeleteConfirmDialog
