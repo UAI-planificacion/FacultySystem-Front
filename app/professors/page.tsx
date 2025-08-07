@@ -201,15 +201,15 @@ export default function ProfessorsPage() {
 		);
 	}
 	return (
-		<div className="container mx-auto p-6 space-y-6">
-			<div className="flex justify-between items-center">
+		<main className="container mx-auto p-6 space-y-6 min-h-[calc(100vh-74px)]">
+			<header className="flex justify-between items-center">
 				<h1 className="text-3xl font-bold">Gestión de Profesores</h1>
 
 				<Button onClick={ openNewProfessorForm }>
 					<Plus className="mr-2 h-4 w-4" />
 					Crear Profesor
 				</Button>
-			</div>
+			</header>
 
 			{/* Filtros */}
 			<Card>
@@ -358,6 +358,6 @@ export default function ProfessorsPage() {
 				name        = { deletingProfessorId! }
 				type        = "el Profesor"
 			/>
-		</div>
+		</main>
 	);
 }
