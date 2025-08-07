@@ -125,13 +125,13 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
         switch ( filterType ) {
             case 'search':
                 setSearchQuery( value );
-                break;
+            break;
             case 'role':
                 setRoleFilter( value );
-                break;
+            break;
             case 'status':
                 setStatusFilter( value );
-                break;
+            break;
         }
     };
 
