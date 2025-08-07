@@ -6,6 +6,7 @@ import { QueryProvider }    from '@/app/query-provider';
 import Header               from '@/components/header/Header';
 import { ThemeProvider }    from '@/components/theme-provider';
 import { Toaster }          from '@/components/ui/sonner';
+import { Footer }           from '@/components/footer';
 
 
 export const metadata: Metadata = {
@@ -34,6 +35,8 @@ export default function RootLayout({
                         <main className="flex-grow">
                             {children}
                         </main>
+
+                        <Footer />
                     </ThemeProvider>
                 </QueryProvider>
             </body>
