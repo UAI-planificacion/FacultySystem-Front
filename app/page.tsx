@@ -1,19 +1,11 @@
-import Link from 'next/link';
-
 import { Building2, BookOpen, Users } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
+import { Login } from '@/components/auth/Login';
 
 
 export default function Home() {
     return (
-        <main className="flex flex-col min-h-screen">
-            <header className="border-b border-border">
-                <div className="container mx-auto py-6 flex justify-between items-center">
-                    <h1 className="text-2xl font-bold">Sistema de Gestión de Facultades</h1>
-                </div>
-            </header>
-
+        <main className="flex flex-col min-h-[calc(100vh-74px)]">
             <section className="flex-1 container mx-auto py-12">
                 <div className="max-w-4xl mx-auto text-center space-y-6">
                     <h2 className="text-4xl font-bold tracking-tight">
@@ -24,14 +16,7 @@ export default function Home() {
                         Gestiona eficientemente las facultades, materias, centros de costos y personal de tu institución educativa en un solo lugar.
                     </p>
 
-                    <Button
-                        asChild
-                        size="lg"
-                    >
-                        <Link href="/faculties">
-                            Comenzar
-                        </Link>
-                    </Button>
+                    <Login />
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-16">
                         <div className="bg-card p-6 rounded-lg border border-border flex flex-col items-center text-center">
@@ -72,12 +57,6 @@ export default function Home() {
                     </div>
                 </div>
             </section>
-
-            <footer className="border-t border-border py-6">
-                <div className="container mx-auto text-center text-muted-foreground">
-                    <p>© 2025 Sistema de Gestión de Facultades. Todos los derechos reservados.</p>
-                </div>
-            </footer>
         </main>
     );
 }
