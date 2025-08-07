@@ -55,7 +55,7 @@ export default function FacultyDetailsPage(): JSX.Element {
     }, [ activeTab, facultyId, router, searchParams ]);
 
     return (
-        <main className="container mx-auto py-6 space-y-4 px-4">
+        <main className="container mx-auto py-6 space-y-4 px-4 min-h-[calc(100vh-74px)]">
             <div className="flex items-center gap-4">
                 <Button
                     variant   = "secondary"
