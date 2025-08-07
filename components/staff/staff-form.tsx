@@ -51,13 +51,15 @@ const formSchema = z.object({
     name: z.string().min(2, {
         message: "El nombre debe tener al menos 2 caracteres.",
     }),
-    email: z.string().email({
-        message: "Por favor ingresa una dirección de correo válida.",
+    email: z.string().min(1, {
+        message: "El email es requerido.",
+    }).regex(/^[a-zA-Z0-9._-]+$/, {
+        message: "El email solo puede contener letras, números, puntos, guiones y guiones bajos.",
     }),
     role: z.enum(["ADMIN", "EDITOR", "VIEWER"] as const, {
         message: "Por favor selecciona un rol válido.",
     }),
-    isActive: z.boolean(),
+    isActive: z.boolean().default(true),
 });
 
 
@@ -96,7 +98,7 @@ export function StaffForm({
 
 
     const handleSubmit = async ( data: StaffFormValues ) => {
-        console.log('🚀 ~ file: staff-form.tsx:81 ~ data:', data)
+        data.email = data.email.toLowerCase() + "@uai.cl";
         onSubmit( data );
     }
 
@@ -143,7 +145,18 @@ export function StaffForm({
                                     <FormLabel>Correo Electrónico</FormLabel>
 
                                     <FormControl>
-                                        <Input placeholder="juan.perez@universidad.edu" type="email" {...field} />
+                                        <div className="flex items-center">
+                                            <Input
+                                                placeholder = "Ej: juan.perez, sin @uai.cl"
+                                                type        = "text"
+                                                className   = "rounded-none rounded-l-md z-10"
+                                                {...field}
+                                            />
+
+                                            <div className="size-5 border border-zinc-300 dark:border-zinc-800 rounded-r-md py-[0.45rem] px-3">
+                                                @uai.cl
+                                            </div>
+                                        </div>
                                     </FormControl>
 
                                     <FormMessage />
