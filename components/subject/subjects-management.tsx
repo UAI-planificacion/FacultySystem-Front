@@ -221,12 +221,12 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
 
 
     return (
-        <div className="grid gap-4">
+        <div className="space-y-4">
             <Card className="w-full">
                 <CardHeader>
-                    <div className="flex justify-between items-center">
-                        <div className="flex items-end gap-4 w-full max-w-4xl">
-                            <div className="w-full max-w-md space-y-2">
+                    <div className="lg:flex justify-between items-end gap-4 space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-4xl items-center">
+                            <div className="grid space-y-2">
                                 <Label htmlFor="search">Buscar</Label>
 
                                 <div className="relative flex items-center">
@@ -243,7 +243,7 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                                 </div>
                             </div>
 
-                            <div className="max-w-md space-y-2 w-[450px]">
+                            <div className="grid space-y-2">
                                 <Label htmlFor="costCenter">Centro de Costos</Label>
 
                                 <MultiSelectCombobox
@@ -258,7 +258,7 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
 
                         <Button
                             onClick     = { openNewSubjectForm }
-                            className   = "flex items-center gap-1"
+                            className   = "flex items-center gap-1 w-full lg:w-40"
                         >
                             <Plus className="h-4 w-4" />
                             Crear Asignatura
