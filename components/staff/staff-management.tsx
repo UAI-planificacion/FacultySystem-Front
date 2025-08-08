@@ -223,12 +223,12 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
 
 
     return (
-        <div className="grid gap-4">
-            <Card className="w-full">
+        <div className="space-y-4">
+            <Card>
                 <CardHeader>
-                    <div className="flex justify-between items-center">
-                        <div className="flex items-end space-x-4 w-full max-w-4xl">
-                            <div className="w-full max-w-md space-y-2">
+                    <div className="lg:flex lg:justify-between items-end gap-4 space-y-4">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full max-w-4xl items-center">
+                            <div className="grid space-y-2">
                                 <Label htmlFor="search">Buscar</Label>
 
                                 <div className="relative flex items-center">
@@ -245,11 +245,11 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
                                 </div>
                             </div>
 
-                            <div className=" max-w-md space-y-2 w-[180px]">
+                            <div className="grid space-y-2">
                                 <Label htmlFor="role">Role</Label>
 
                                 <Select value={roleFilter} onValueChange={(value) => handleFilterChange( 'role', value )}>
-                                    <SelectTrigger id="role" className="w-[180px]">
+                                    <SelectTrigger id="role">
                                         <SelectValue placeholder="Filtrar por rol" />
                                     </SelectTrigger>
 
@@ -262,11 +262,11 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
                                 </Select>
                             </div>
 
-                            <div className="max-w-md space-y-2 w-[180px]">
+                            <div className="grid space-y-2">
                                 <Label htmlFor="role">Estados</Label>
 
                                 <Select value={statusFilter} onValueChange={(value) => handleFilterChange( 'status', value )}>
-                                    <SelectTrigger className="w-[180px]">
+                                    <SelectTrigger>
                                         <SelectValue placeholder="Filtrar por estado" />
                                     </SelectTrigger>
 
@@ -281,7 +281,7 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
 
                         <Button
                             onClick     = { openNewStaffForm }
-                            className   = "flex items-center gap-1"
+                            className   = "flex items-center gap-1 w-full lg:w-40"
                         >
                             <Plus className="h-4 w-4" />
 
