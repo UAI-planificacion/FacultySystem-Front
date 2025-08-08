@@ -48,10 +48,10 @@ export function DataPagination({
     return (
         <div className={`space-y-4 ${className}`}>
             {/* Selector de elementos por página */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                    <Label htmlFor="items-per-page" className="text-sm font-medium">
-                        Elementos por página:
+            <div className="w-full flex items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                    <Label htmlFor="items-per-page" className="text-sm font-medium hidden sm:inline">
+                        Elementos por página
                     </Label>
 
                     <Select
@@ -73,7 +73,7 @@ export function DataPagination({
                 </div>
 
                 {/* Información de paginación */}
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm text-muted-foreground text-end">
                     Mostrando {startIndex + 1} a {Math.min(endIndex, totalItems)} de {totalItems} resultados
                 </div>
             </div>
