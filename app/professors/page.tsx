@@ -251,7 +251,7 @@ export default function ProfessorsPage() {
 			</Card>
 
 			{/* Tabla de profesores */}
-            <div className="grid space-y-2">
+            <div className="space-y-2">
                 <Card>
                     <CardContent className="mt-5">
                         { professorList?.length === 0 && !isLoading && !isError ? (
