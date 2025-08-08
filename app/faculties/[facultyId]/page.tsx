@@ -3,8 +3,13 @@
 import { JSX, useEffect, useState, useMemo }        from "react";
 import { useParams, useRouter, useSearchParams }    from 'next/navigation';
 
-import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft } from "lucide-react";
+import {
+    ArrowLeft,
+    BookCopy,
+    BookOpen,
+    Users
+}                           from "lucide-react";
+import { useQueryClient }   from '@tanstack/react-query';
 
 import {
     Tabs,
@@ -65,22 +70,48 @@ export default function FacultyDetailsPage(): JSX.Element {
                 </Button>
 
                 <div className="grid">
-                    <h1 className="text-2xl font-bold">Facultad {facultyName}</h1>
-                    <span className="text-[11px] text-muted-foreground">{facultyId}</span>
+                    <h1 className="text-lg sm:text-xl md:text-2xl font-bold">
+                        Facultad { facultyName }
+                    </h1>
+
+                    <span className="text-[11px] text-muted-foreground">
+                        { facultyId }
+                    </span>
                 </div>
             </div>
 
             <Tabs
                 value           = { activeTab }
-                onValueChange   = { ( value: string ) => setActiveTab( value as TabValue ) }
+                onValueChange   = {( value: string ) => setActiveTab( value as TabValue )}
                 className       = "w-full"
             >
                 <TabsList className="grid grid-cols-3 mb-4 h-12">
-                    <TabsTrigger value={TabValue.REQUESTS} className="h-10 text-md">Solicitudes</TabsTrigger>
+                    <TabsTrigger
+                        value       = { TabValue.REQUESTS }
+                        className   = "h-10 text-md gap-2"
+                    >
+                        <BookCopy className="h-5 w-5" />
 
-                    <TabsTrigger value={TabValue.PERSONNEL} className="h-10 text-md">Personal</TabsTrigger>
+                        <span className="hidden sm:block">Solicitudes</span>
+                    </TabsTrigger>
 
-                    <TabsTrigger value={TabValue.SUBJECTS} className="h-10 text-md">Asignaturas</TabsTrigger>
+                    <TabsTrigger
+                        value       = { TabValue.PERSONNEL }
+                        className   = "h-10 text-md gap-2"
+                    >
+                        <Users className="h-5 w-5" />
+
+                        <span className="hidden sm:block">Personal</span>
+                    </TabsTrigger>
+
+                    <TabsTrigger
+                        value       = { TabValue.SUBJECTS }
+                        className   = "h-10 text-md gap-2"
+                    >
+                        <BookOpen className="h-5 w-5" />
+
+                        <span className="hidden sm:block">Asignaturas</span>
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value={TabValue.REQUESTS}>
