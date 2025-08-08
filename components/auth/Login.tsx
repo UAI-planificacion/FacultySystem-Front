@@ -1,7 +1,8 @@
 'use client'
 
-import { JSX, useEffect, useState } from "react";
-import Image from "next/image";
+import { JSX }          from "react";
+import Image            from "next/image";
+import { useRouter }    from "next/navigation";
 
 import {
     DropdownMenu,
@@ -17,7 +18,6 @@ import { MicrosoftIcon }    from "@/icons/microsoft";
 import LoaderMini           from "@/icons/LoaderMini";
 
 import {
-    getSession,
     signIn,
     signOut
 }                       from "@/config/better-auth/auth-client";
@@ -25,13 +25,14 @@ import { useSession }   from "@/hooks/use-session";
 
 
 export function Login(): JSX.Element {
-    const { session, isLoading } = useSession();
+    const router                    = useRouter();
+    const { session, isLoading }    = useSession();
 
     return (
         <>
             {isLoading ? (
                 <Button
-                    className   = "bg-black text-white border-zinc-700 hover:bg-zinc-900 hover:text-white"
+                    className   = "bg-black text-white border-zinc-700 hover:bg-zinc-900 hover:text-white gap-1.5"
                     variant     = "outline"
                     disabled    = { true }
                 >
@@ -44,24 +45,53 @@ export function Login(): JSX.Element {
                         <DropdownMenuTrigger asChild>
                             <Button
                                 variant     = "outline"
-                                className   = "gap-2 bg-black text-white border-zinc-700"
+                                className   = "px-1 md:px-3 gap-2 bg-black text-white border-zinc-700"
                             >
                                 <Image
-                                    src     = { session?.user?.image }
-                                    alt     = { session?.user?.name }
-                                    width   = { 30 }
-                                    height  = { 30 }
-                                    loading = "lazy"
-                                    className="rounded-full mr-2"
+                                    src         = { session?.user?.image }
+                                    alt         = { session?.user?.name }
+                                    width       = { 30 }
+                                    height      = { 30 }
+                                    loading     = "lazy"
+                                    className   = "rounded-full"
                                 />
 
                                 <span className="hidden md:flex">{session?.user?.name}</span>
                             </Button>
                         </DropdownMenuTrigger>
 
-                        <DropdownMenuContent className="w-56" align="start">
-                            <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
+                        <DropdownMenuContent className="w-64" align="end">
+                            {/* Routes */}
+                            <DropdownMenuItem className="p-0">
+                                <Button
+                                    size        = "sm"
+                                    type        = "button"
+                                    variant     = "ghost"
+                                    onClick     = {() => router.push( '/faculties' )}
+                                    className   = "w-full flex justify-start lg:hidden"
+                                >
+                                    Facultades
+                                </Button>
+                            </DropdownMenuItem>
 
+                            <DropdownMenuSeparator className="lg:hidden" />
+
+                            <DropdownMenuItem className="p-0">
+                                <Button
+                                    size        = "sm"
+                                    type        = "button"
+                                    variant     = "ghost"
+                                    onClick     = {() => router.push( '/professors' )}
+                                    className   = "w-full flex justify-start lg:hidden"
+                                >
+                                    Profesores
+                                </Button>
+                            </DropdownMenuItem>
+
+                            <DropdownMenuSeparator className="lg:hidden" />
+
+                            {/* Profile */}
+                            <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuLabel>{session?.user?.name}</DropdownMenuLabel>
                             <DropdownMenuSeparator />
