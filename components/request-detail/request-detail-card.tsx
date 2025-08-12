@@ -72,13 +72,13 @@ export function RequestDetailCard({
     }, [professors, detail.professorId]);
 
 
-    const memoizedModuleName = useMemo(() => {
-        const module = modules.find( module => module.id.toString() === detail.moduleId );
+    // const memoizedModuleName = useMemo(() => {
+    //     const module = modules.find( module => module.id.toString() === detail.moduleId );
 
-        if ( !module ) return '';
+    //     if ( !module ) return '';
 
-        return `${module.startHour}-${module.endHour}`;
-    }, [modules, detail.moduleId]);
+    //     return `${module.startHour}-${module.endHour}`;
+    // }, [modules, detail.moduleId]);
 
 
     return (
@@ -158,7 +158,7 @@ export function RequestDetailCard({
                             </div>
                     }
 
-                    { isLoadingModules && !isErrorModules
+                    {/* { isLoadingModules && !isErrorModules
                         ? <LoaderMini />
                         : detail.moduleId &&
                             <div className="flex items-center gap-1 text-xs">
@@ -166,12 +166,12 @@ export function RequestDetailCard({
 
                                 <span>{memoizedModuleName}</span>
                             </div>
-                    }
+                    } */}
                 </div>
 
                 <div className="flex flex-wrap gap-2">
                     <Badge variant={detail.isPriority ? "destructive" : "default"} className="text-xs">
-                        {detail.isPriority ? "Con Prioridad" : "Sin Prioridad"}
+                        {detail.isPriority ? "Restrictivo" : "No Restrictivo"}
                     </Badge>
 
                     <Badge variant="default" className="text-xs">
@@ -191,7 +191,7 @@ export function RequestDetailCard({
                     )}
                 </div>
 
-                {detail.days.length > 0 && (
+                {/* {detail.days.length > 0 && (
                     <div className="flex items-center gap-2">
                         <p className="text-xs font-medium text-muted-foreground">Días:</p>
 
@@ -203,7 +203,7 @@ export function RequestDetailCard({
                             ))}
                         </div>
                     </div>
-                )}
+                )} */}
 
                 {detail.description && (
                     <div>
