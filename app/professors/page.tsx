@@ -345,7 +345,7 @@ export default function ProfessorsPage() {
 
 			{/* Professor Form Dialog */}
 			<ProfessorForm
-				initialData = { editingProfessor }
+				professors = { editingProfessor }
 				onClose     = { () => setIsFormOpen( false )}
 				isOpen      = { isFormOpen }
 			/>
