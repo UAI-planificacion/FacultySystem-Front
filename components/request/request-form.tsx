@@ -80,6 +80,10 @@ const formSchema = z.object({
         required_error: "Debe seleccionar un estado",
         invalid_type_error: "Estado no válido"
     }),
+    periodId: z.string({
+        required_error: "Debe seleccionar un período",
+        invalid_type_error: "Período no válido"
+    }),
     // isConsecutive: z.boolean(),
     // description: z.string()
     //     .max(500, { message: "La descripción no puede tener más de 500 caracteres" })
@@ -174,7 +178,7 @@ export function RequestForm({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[700px] max-h-[80vh]">
+            <DialogContent className="sm:max-w-[700px] max-h-[80vh] transition-all duration-800">
                 <DialogHeader>
                     <div className="flex justify-between items-center">
                         <div className="space-y-1">
@@ -200,7 +204,7 @@ export function RequestForm({
                     <TabsContent value="form" className="space-y-4 mt-4">
                         <Form {...form}>
                             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-                                <div className="grid grid-cols-1 gap-4 max-h-[60vh] overflow-y-auto pr-2">
+                                <div className="grid grid-cols-1 gap-4 max-h-[60vh]">
                                     {/* Title */}
                                     <FormField
                                         control = { form.control }
@@ -280,45 +284,87 @@ export function RequestForm({
                                         )}
                                     />
 
-                                    {/* Subject */}
-                                    <FormField
-                                        control = { form.control }
-                                        name    = "subjectId"
-                                        render  = {({ field }) => {
-                                            return (
-                                                <FormItem>
-                                                    <FormLabel>Asignatura</FormLabel>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        {/* Period */}
+                                        <FormField
+                                            control = { form.control }
+                                            name    = "periodId"
+                                            render  = {({ field }) => {
+                                                return (
+                                                    <FormItem>
+                                                        <FormLabel>Período</FormLabel>
 
-                                                    <FormControl>
-                                                        { isError ? (
-                                                            <>
-                                                                <Input
-                                                                    placeholder="ID de la asignatura"
-                                                                    value={field.value || ''}
-                                                                    onChange={field.onChange}
+                                                        <FormControl>
+                                                            { isError ? (
+                                                                <>
+                                                                    <Input
+                                                                        placeholder="ID del período"
+                                                                        value={field.value || ''}
+                                                                        onChange={field.onChange}
+                                                                    />
+
+                                                                    <FormDescription>
+                                                                        Error al cargar los períodos. Ingrese el ID manualmente.
+                                                                    </FormDescription>
+                                                                </>
+                                                            ) : (
+                                                                <MultiSelectCombobox
+                                                                    multiple            = { false }
+                                                                    placeholder         = "Seleccionar un período"
+                                                                    defaultValues       = { field.value || '' }
+                                                                    onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
+                                                                    options             = { memoizedSubject }
+                                                                    isLoading           = { isLoading }
                                                                 />
+                                                            )}
+                                                        </FormControl>
 
-                                                                <FormDescription>
-                                                                    Error al cargar las asignaturas. Ingrese el ID manualmente.
-                                                                </FormDescription>
-                                                            </>
-                                                        ) : (
-                                                            <MultiSelectCombobox
-                                                                multiple            = { false }
-                                                                placeholder         = "Seleccionar una asignatura"
-                                                                defaultValues       = { field.value || '' }
-                                                                onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
-                                                                options             = { memoizedSubject }
-                                                                isLoading           = { isLoading }
-                                                            />
-                                                        )}
-                                                    </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                );
+                                            }}
+                                        />
 
-                                                    <FormMessage />
-                                                </FormItem>
-                                            );
-                                        }}
-                                    />
+                                        {/* Subject */}
+                                        <FormField
+                                            control = { form.control }
+                                            name    = "subjectId"
+                                            render  = {({ field }) => {
+                                                return (
+                                                    <FormItem>
+                                                        <FormLabel>Asignatura</FormLabel>
+
+                                                        <FormControl>
+                                                            { isError ? (
+                                                                <>
+                                                                    <Input
+                                                                        placeholder="ID de la asignatura"
+                                                                        value={field.value || ''}
+                                                                        onChange={field.onChange}
+                                                                    />
+
+                                                                    <FormDescription>
+                                                                        Error al cargar las asignaturas. Ingrese el ID manualmente.
+                                                                    </FormDescription>
+                                                                </>
+                                                            ) : (
+                                                                <MultiSelectCombobox
+                                                                    multiple            = { false }
+                                                                    placeholder         = "Seleccionar una asignatura"
+                                                                    defaultValues       = { field.value || '' }
+                                                                    onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
+                                                                    options             = { memoizedSubject }
+                                                                    isLoading           = { isLoading }
+                                                                />
+                                                            )}
+                                                        </FormControl>
+
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                );
+                                            }}
+                                        />
+                                    </div>
 
                                     {/* Description */}
                                     <div className="flex flex-col space-y-1">
@@ -327,7 +373,7 @@ export function RequestForm({
                                     </div>
 
                                     {/* Staff Create - Readonly */}
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <FormLabel>Creado por</FormLabel>
 
