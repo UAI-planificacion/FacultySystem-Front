@@ -55,7 +55,8 @@ import { MultiSelectCombobox }  from "@/components/shared/Combobox";
 import { Badge }                from "@/components/ui/badge";
 import { ProfessorForm }        from "@/components/professor/professor-form";
 import { CommentSection }       from "@/components/comment/comment-section";
-
+import { RequestDetailTable }   from "@/components/request-detail/request-detail-table";
+import { Checkbox }             from "@/components/ui/checkbox";
 import {
     type RequestDetail,
     UpdateRequestDetail,
@@ -105,11 +106,14 @@ const formSchema = z.object({
     costCenterId    : z.string().nullable().optional(),
     inAfternoon     : z.boolean().default( false ),
     isPriority      : z.boolean().default( false ),
-    moduleId        : z.string().nullable().optional(),
-    days            : z.array( z.number() ).default( [] ),
     level           : z.nativeEnum(Level, { required_error: "Por favor selecciona un nivel" }),
     professorId     : z.string().nullable().optional(),
-    spaceId         : z.string().nullable().default('')
+    spaceId         : z.string().nullable().default(''),
+    moduleDays      : z.array(z.object({
+        id          : z.string(),
+        day         : z.string(),
+        moduleId    : z.string()
+    })).default([])
 }).superRefine(( data, ctx ) => {
     const minimum = data.minimum;
     const maximum = data.maximum;
@@ -125,6 +129,8 @@ const formSchema = z.object({
 
 
 export type RequestDetailFormValues = z.infer<typeof formSchema>;
+
+
 
 
 interface RequestDetailFormProps {
@@ -152,12 +158,12 @@ const defaultRequestDetail = ( data: RequestDetail ) => ({
     costCenterId    : data.costCenterId,
     inAfternoon     : data.inAfternoon,
     isPriority      : data.isPriority,
-    moduleId        : data.moduleId,
-    days            : data.days?.map( day => Number( day )) ?? [],
     level           : data.level,
     professorId     : data.professorId,
     spaceId         : data.spaceId,
+    moduleDays      : data.moduleDays || [],
 });
+
 
 type Tab = 'form' | 'comments';
 
@@ -175,10 +181,10 @@ export function RequestDetailForm({
     isLoadingModules,
     isErrorModules
 }: RequestDetailFormProps ): JSX.Element {
-    const [tab, setTab] = useState<Tab>( 'form' );
-    const queryClient = useQueryClient();
-
-    const [isOpenProfessor, setIsOpenProfessor ] = useState( false );
+    const [tab, setTab]                             = useState<Tab>( 'form' );
+    const queryClient                               = useQueryClient();
+    const [typeSpace, setTypeSpace]                 = useState<boolean[]>( [ false, false, false ] );
+    const [isOpenProfessor, setIsOpenProfessor ]    = useState( false );
 
     const {
         costCenter,
@@ -259,14 +265,60 @@ export function RequestDetailForm({
     }, [requestDetail, isOpen]);
 
 
+    const handleModuleToggle = ( day: string, moduleId: string, isChecked: boolean ): void => {
+        const currentModuleDays = form.getValues( 'moduleDays' );
+
+        if ( isChecked ) {
+            const exists = currentModuleDays.some( 
+                item => item.day === day && item.moduleId === moduleId 
+            );
+
+            if ( !exists ) {
+                const newModuleDay = {
+                    id          : `${Date.now()}-${Math.random()}`,
+                    day         : day,
+                    moduleId    : moduleId
+                };
+                form.setValue( 'moduleDays', [...currentModuleDays, newModuleDay] );
+            }
+        } else {
+            const updatedModuleDays = currentModuleDays.filter( 
+                item => !(item.day === day && item.moduleId === moduleId)
+            );
+
+            form.setValue( 'moduleDays', updatedModuleDays );
+        }
+    };
+
+
     function onSubmitForm( formData: RequestDetailFormValues ): void {
         console.log( '🚀 ~ file: request-detail-form.tsx:191 ~ formData:', formData );
-        formData.building = formData.spaceId?.split('-')[1] as Building;
-        
+        formData.building = ( formData.spaceId?.split('-')[1] as Building || 'A' );
+
+        if ( typeSpace.some( item => item ) ) {
+            formData.spaceType  = undefined;
+            formData.spaceSize  = undefined;
+            formData.spaceId    = null;
+        }
+
+        if ( typeSpace[0] ) {
+            formData.spaceType = undefined;
+            formData.spaceSize = undefined;
+        }
+
+        if ( typeSpace[1] ) {
+            formData.spaceId    = null;
+            formData.spaceSize  = undefined;
+        }
+
+        if ( typeSpace[2] ) {
+            formData.spaceId    = null;
+            formData.spaceType  = undefined;
+        }
+
         updateRequestDetailMutation.mutate({
             ...formData,
-            id      : requestDetail.id,
-            days    : formData.days.map( String ),
+            id: requestDetail.id,
         });
     }
 
@@ -465,7 +517,7 @@ export function RequestDetailForm({
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                                     {/* Espacio */}
                                     <FormField
                                         control = { form.control }
@@ -474,14 +526,23 @@ export function RequestDetailForm({
                                             <FormItem>
                                                 <FormLabel>Espacio</FormLabel>
 
-                                                <MultiSelectCombobox
-                                                    multiple            = { false }
-                                                    placeholder         = "Seleccionar espacio"
-                                                    defaultValues       = { field.value || '' }
-                                                    onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
-                                                    options             = { spaces }
-                                                    isLoading           = { isLoadingSpaces }
-                                                />
+                                                <div className="flex gap-2 items-center">
+                                                    <Checkbox
+                                                        className		= "cursor-default rounded-full p-[0.6rem] flex justify-center items-center"
+                                                        checked			= {typeSpace[0]}
+                                                        onCheckedChange	= {( checked ) => setTypeSpace( [ checked as boolean, false, false ] )}
+                                                    />
+
+                                                    <MultiSelectCombobox
+                                                        multiple            = { false }
+                                                        placeholder         = "Seleccionar"
+                                                        defaultValues       = { field.value || '' }
+                                                        onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
+                                                        options             = { spaces }
+                                                        isLoading           = { isLoadingSpaces }
+                                                        disabled            = { !typeSpace[0] }
+                                                    />
+                                                </div>
 
                                                 <FormMessage />
                                             </FormItem>
@@ -496,26 +557,35 @@ export function RequestDetailForm({
                                             <FormItem>
                                                 <FormLabel>Tipo de espacio</FormLabel>
 
-                                                <Select
-                                                    defaultValue    = { field.value ?? 'Sin especificar' }
-                                                    onValueChange   = {( value ) => field.onChange( value === "Sin especificar" ? null : value )}
-                                                >
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Seleccionar tipo" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
+                                                <div className="flex gap-2 items-center">
+                                                    <Checkbox
+                                                        className		= "cursor-default rounded-full p-[0.6rem] flex justify-center items-center"
+                                                        checked			= {typeSpace[1]}
+                                                        onCheckedChange	= {( checked ) => setTypeSpace( [ false, checked as boolean, false ] )}
+                                                    />
 
-                                                    <SelectContent>
-                                                        <SelectItem value="Sin especificar">Sin especificar</SelectItem>
+                                                    <Select
+                                                        defaultValue    = { field.value ?? 'Sin especificar' }
+                                                        onValueChange   = {( value ) => field.onChange( value === "Sin especificar" ? null : value )}
+                                                        disabled        = { !typeSpace[1] }
+                                                    >
+                                                        <FormControl>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Seleccionar tipo" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
 
-                                                        {Object.values( SpaceType ).map( type => (
-                                                            <SelectItem key={type} value={type}>
-                                                                { getSpaceType( type )}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
+                                                        <SelectContent>
+                                                            <SelectItem value="Sin especificar">Sin especificar</SelectItem>
+
+                                                            {Object.values( SpaceType ).map( type => (
+                                                                <SelectItem key={type} value={type}>
+                                                                    { getSpaceType( type )}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
 
                                                 <FormMessage />
                                             </FormItem>
@@ -545,27 +615,35 @@ export function RequestDetailForm({
                                                         </FormDescription>
                                                     </>
                                                 ) : (
-                                                    <Select
-                                                        onValueChange   = {( value ) => field.onChange( value === "Sin especificar" ? null : value )}
-                                                        defaultValue    = { field.value || 'Sin especificar' }
-                                                        disabled        = { isLoadingSizes }
-                                                    >
-                                                        <FormControl>
-                                                            <SelectTrigger>
-                                                                <SelectValue placeholder="Seleccionar tamaño" />
-                                                            </SelectTrigger>
-                                                        </FormControl>
+                                                    <div className="flex gap-2 items-center">
+                                                        <Checkbox
+                                                            className		= "cursor-default rounded-full p-[0.6rem] flex justify-center items-center"
+                                                            checked			= {typeSpace[2]}
+                                                            onCheckedChange	= {( checked ) => setTypeSpace([ false, false, checked as boolean ])}
+                                                        />
 
-                                                        <SelectContent>
-                                                            <SelectItem value="Sin especificar">Sin especificar</SelectItem>
+                                                        <Select
+                                                            onValueChange   = {( value ) => field.onChange( value === "Sin especificar" ? null : value )}
+                                                            defaultValue    = { field.value || 'Sin especificar' }
+                                                            disabled        = { isLoadingSizes || !typeSpace[2] }
+                                                        >
+                                                            <FormControl>
+                                                                <SelectTrigger>
+                                                                    <SelectValue placeholder="Seleccionar tamaño" />
+                                                                </SelectTrigger>
+                                                            </FormControl>
 
-                                                            {sizes?.map( size => (
-                                                                <SelectItem key={size.id} value={size.id}>
-                                                                    {size.id} ({size.detail})
-                                                                </SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
+                                                            <SelectContent>
+                                                                <SelectItem value="Sin especificar">Sin especificar</SelectItem>
+
+                                                                {sizes?.map( size => (
+                                                                    <SelectItem key={size.id} value={size.id}>
+                                                                        {size.id} ({size.detail})
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
                                                 )}
 
                                                 <FormMessage />
@@ -614,10 +692,6 @@ export function RequestDetailForm({
                                                 isLoading           = { isLoadingCostCenter }
                                             />
 
-                                            <FormDescription>
-                                                Selecciona el centro de costos asociado
-                                            </FormDescription>
-
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -647,100 +721,16 @@ export function RequestDetailForm({
                                     )}
                                 /> */}
 
-                                {/* Módulo */}
-                                <FormField
-                                    control = { form.control }
-                                    name    = "moduleId"
-                                    render  = {({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Módulo</FormLabel>
-
-                                            { isErrorModules
-                                                ? <>
-                                                    <FormControl>
-                                                        <Input
-                                                            {... field}
-                                                            placeholder="Ingrese el módulo"
-                                                            value = { field.value || '' }
-                                                            onChange    = {( e: React.ChangeEvent<HTMLInputElement> ) => field.onChange( e.target.value )}
-                                                        />
-                                                    </FormControl>
-
-                                                    <FormDescription>
-                                                        Error al cargar los módulos. Ingrese manualmente.
-                                                    </FormDescription>
-                                                </>
-                                                :  <Select
-                                                    defaultValue    = { field.value || 'Sin especificar' }
-                                                    disabled        = { isLoadingModules }
-                                                    onValueChange   = {( value ) => {
-                                                        field.onChange(value === "Sin especificar" ? null : value);
-                                                    }}
-                                                >
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Seleccionar módulo" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-
-                                                    <SelectContent>
-                                                        <SelectItem value="Sin especificar">Sin especificar</SelectItem>
-
-                                                        {modules?.map((module) => (
-                                                            <SelectItem key={module.id.toString()} value={module.id.toString()}>
-                                                                {module.name} {module.difference ? `-${module.difference}` : ''} {module.startHour}:{module.endHour}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            }
-
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                {/* Días */}
-                                <FormField
-                                    control = { form.control }
-                                    name    = "days"
-                                    render  = {({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Días</FormLabel>
-
-                                            {isLoadingDays ? (
-                                                <div className="flex flex-wrap gap-2">
-                                                    {Array.from({ length: 7 }).map((_, index) => (
-                                                        <div
-                                                            key={index}
-                                                            className="h-8 w-16 bg-muted rounded-md animate-pulse"
-                                                        />
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    <FormControl>
-                                                        <DaySelector
-                                                            days        = { isErrorDays ? [0, 1, 2, 3, 4, 5, 6] : memoizedDays }
-                                                            value       = { field.value?.map( day => Number( day )) || []}
-                                                            onChange    = { field.onChange }
-                                                        />
-                                                    </FormControl>
-                                                    {isErrorDays && (
-                                                        <FormDescription className="text-destructive">
-                                                            Error al obtener los días. Se muestran todos los días disponibles.
-                                                        </FormDescription>
-                                                    )}
-                                                </>
-                                            )}
-
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
+                                {/* Tabla de módulos */}
+                                <RequestDetailTable
+                                    requestDetailModule = { form.watch( 'moduleDays' ) }
+                                    days                = { days || [] }
+                                    modules             = { modules }
+                                    onModuleToggle      = { handleModuleToggle }
                                 />
 
                                 {/* Descripción */}
-                                <div className="col-span-2">
+                                <div className="w-full">
                                     <FormLabel>Descripción</FormLabel>
 
                                     <p>{requestDetail?.description || '-'}</p>
@@ -781,7 +771,7 @@ export function RequestDetailForm({
                 </Tabs>
 
                 <ProfessorForm
-                    initialData = { undefined }
+                    professors = { undefined }
                     isOpen      = { isOpenProfessor }
                     onClose     = { () => setIsOpenProfessor( false )}
                 />
