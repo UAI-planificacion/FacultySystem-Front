@@ -19,6 +19,7 @@ export enum SpaceType {
     CORE        = "CORE",
 }
 
+
 export enum Size {
     XS  = "XS",
     XE  = "XE",
@@ -70,6 +71,7 @@ export enum Level {
     SECOND_GRADE    = "SECOND_GRADE",
 }
 
+
 export enum Building {
     A = "A",
     B = "B",
@@ -79,6 +81,7 @@ export enum Building {
     F = "F",
 }
 
+
 export interface StaffRequest {
     id      : string;
     name    : string;
@@ -86,9 +89,17 @@ export interface StaffRequest {
     role    : Role;
 }
 
+
 export interface SubjectRequest {
     id      : string;
     name    : string;
+}
+
+
+export interface ModuleDay {
+    id          : string;
+    day         : string;
+    moduleId    : string;
 }
 
 
@@ -103,8 +114,6 @@ export interface RequestDetail {
     inAfternoon     : boolean;
     building        : Building | null;
     description     : string | null;
-    moduleId        : string | null;
-    days            : string[];
     spaceId         : string | null;
     isPriority      : boolean;
     level           : Level;
@@ -113,7 +122,9 @@ export interface RequestDetail {
     staffUpdate     : StaffRequest | null;
     createdAt       : Date;
     updatedAt       : Date;
+    moduleDays      : ModuleDay[];
 }
+
 
 export interface UpdateRequestDetail {
     id              : string;
@@ -130,6 +141,7 @@ export interface UpdateRequestDetail {
     isPriority?      : boolean;
     level?           : Level;
     professorId?     : string | null;
+    moduleDays?      : ModuleDay[];
 }
 
 
@@ -139,6 +151,7 @@ export interface Request {
     status          : Status;
     isConsecutive   : boolean;
     description     : string | null;
+    periodId        : string;
     updatedAt       : Date;
     createdAt       : Date;
     staffCreate     : StaffRequest;
