@@ -51,6 +51,7 @@ interface ComboboxProps {
     multiple?: boolean;
     required?: boolean;
     isLoading?: boolean;
+    disabled?: boolean;
 }
 
 interface FlattenedItem {
@@ -76,6 +77,7 @@ export function MultiSelectCombobox({
     multiple = true,
     required = false,
     isLoading = false,
+    disabled = false,
 }: ComboboxProps) {
     const [open, setOpen] = useState( isOpen );
     const [searchValue, setSearchValue] = useState( "" );
@@ -391,6 +393,7 @@ export function MultiSelectCombobox({
                     aria-expanded={open}
                     className={cn("w-full justify-between min-h-10", className)}
                     ref={triggerRef}
+                    disabled={ disabled }
                 >
                     <div className="flex flex-wrap gap-1 flex-grow-0 min-w-0 mr-2">
                         {/* Lógica de display para el botón */}
