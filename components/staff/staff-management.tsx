@@ -383,7 +383,7 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
 
             {/* Staff Form Dialog */}
             <StaffForm
-                initialData = { editingStaff }
+                staff       = { editingStaff }
                 onSubmit    = { handleFormSubmit }
                 onClose     = { () => setIsFormOpen( false )}
                 isOpen      = { isFormOpen }
