@@ -2,9 +2,13 @@
 
 import { JSX, useEffect, useMemo } from "react";
 
+import {
+    useForm,
+    SubmitHandler,
+    ControllerRenderProps
+}                                       from "react-hook-form";
 import { zodResolver }                  from "@hookform/resolvers/zod";
 import { faker }                        from '@faker-js/faker/locale/es';
-import { useForm, SubmitHandler }       from "react-hook-form";
 import { useMutation, useQueryClient }  from "@tanstack/react-query";
 import { toast }                        from "sonner";
 import { Loader2 }                      from "lucide-react";
@@ -45,6 +49,12 @@ import { cn }                       from "@/lib/utils";
 const endpoint = 'professors';
 
 
+const TEST = {
+    name : 'TEST-',
+    email : 'test.'
+}
+
+
 const formSchema = z.object({
     id: z.string().min(1, {
         message: "El ID es requerido.",
@@ -53,10 +63,15 @@ const formSchema = z.object({
         message: "El nombre debe tener al menos 2 caracteres.",
     }),
     email: z.string()
-        .transform(val => val === "" ? null : val)
-        .refine(val => val === null || z.string().email().safeParse(val).success, {
-            message: "Por favor ingresa una dirección de correo válida.",
-        }),
+    .regex(/^[a-zA-Z0-9._-]+$/, {
+        message: "El email solo puede contener letras, números, puntos, guiones y guiones bajos.",
+    })
+    .nullable(),
+    // email: z.string()
+    //     .transform(val => val === "" ? null : val)
+    //     .refine(val => val === null || z.string().email().safeParse(val).success, {
+    //         message: "Por favor ingresa una dirección de correo válida.",
+    //     }),
     isMock: z.boolean().default( false ),
 });
 
@@ -65,9 +80,9 @@ export type ProfessorFormValues = z.infer<typeof formSchema>;
 
 
 interface ProfessorFormProps {
-    initialData?    : Omit<Professor, 'oldId'>;
-    isOpen          : boolean;
-    onClose         : () => void;
+    professors? : Omit<Professor, 'oldId'>;
+    isOpen      : boolean;
+    onClose     : () => void;
 }
 
 
@@ -104,13 +119,18 @@ const updateProfessorApi = async ( updatedProfessor: UpdateProfessor ): Promise<
 
 
 export function ProfessorForm({
-    initialData,
+    professors,
     isOpen,
     onClose,
 }: ProfessorFormProps ): JSX.Element {
     const queryClient                               = useQueryClient();
     const defaultValues: Partial<ProfessorFormValues> = emptyProfessor;
-    const oldId                                     = useMemo(() => initialData?.id || "", [initialData?.id]);
+    const oldId                                     = useMemo(() => professors?.id || "", [professors?.id]);
+
+
+    if ( professors?.email ) {
+        professors.email = professors.email?.replace( '@uai.cl', '' )
+    }
 
 
     const form = useForm<ProfessorFormValues>({
@@ -156,19 +176,23 @@ export function ProfessorForm({
         if ( !isOpen ) return;
 
         form.reset({
-            id      : initialData?.id       || "",
-            name    : initialData?.name     || "",
-            email   : initialData?.email    || "",
-            isMock  : initialData?.isMock   || false,
+            id      : professors?.id       || "",
+            name    : professors?.name     || "",
+            email   : professors?.email    || "",
+            isMock  : professors?.isMock   || false,
         });
-    }, [ isOpen, initialData, form ]);
+    }, [ isOpen, professors, form ]);
 
 
     /**
      * Maneja el envío del formulario de profesor
      */
     const handleSubmit: SubmitHandler<ProfessorFormValues> = ( data ) => {
-        if ( initialData ) {
+        if ( data.email ) {
+            data.email = data.email + '@uai.cl';
+        }
+
+        if ( professors ) {
             updateProfessorMutation.mutate({
                 ...data,
                 id: data.id
@@ -195,10 +219,10 @@ export function ProfessorForm({
     function generateTestProfessor(): void {
         const firstName             = faker.person.firstName();
         const lastName              = faker.person.lastName();
-        const name                  = `TEST-${firstName} ${lastName}`;
+        const name                  = `${TEST.name}${firstName} ${lastName}`;
         const normalizedFirstName   = normalizeForEmail( firstName );
         const normalizedLastName    = normalizeForEmail( lastName );
-        const email                 = `test.${normalizedFirstName}.${normalizedLastName}@uai.cl`
+        const email                 = `${TEST.email}${normalizedFirstName}.${normalizedLastName}`
 
         form.reset({
             id: `P${Math.floor(1000 + Math.random() * 900000)}`,
@@ -212,16 +236,32 @@ export function ProfessorForm({
     const isLoading = createProfessorMutation.isPending || updateProfessorMutation.isPending;
 
 
+    function onChangeTest( check : boolean, field: ControllerRenderProps<Professor> ) {
+        const testName      = check ? TEST.name     : '';
+        const testEmail     = check ? TEST.email    : '';
+        const nameValue     = ( form.getValues().name || "" ).replace( TEST.name, '' );
+        const emailValue    = form.getValues().email;
+
+        if ( emailValue ) {
+            const email = emailValue.replace( TEST.email, '' );
+            form.setValue('email', `${testEmail}${email}`);
+        }
+
+        form.setValue('name', `${testName}${nameValue}`);
+        field.onChange( check );
+    }
+
+
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
                     <DialogTitle>
-                        {initialData ? "Editar Profesor" : "Agregar Nuevo Profesor"}
+                        {professors ? "Editar Profesor" : "Agregar Nuevo Profesor"}
                     </DialogTitle>
 
                     <DialogDescription>
-                        {initialData
+                        {professors
                             ? "Actualice los datos del profesor"
                             : "Complete los datos del nuevo profesor"}
                     </DialogDescription>
@@ -239,7 +279,7 @@ export function ProfessorForm({
                                         <Input
                                             placeholder="Ej: P1234"
                                             {...field}
-                                            disabled={!!initialData}
+                                            disabled={!!professors}
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -268,19 +308,26 @@ export function ProfessorForm({
                                 <FormItem>
                                     <FormLabel>Correo Electrónico</FormLabel>
                                     <FormControl>
-                                        <Input
-                                            placeholder="juan.perez@uai.cl"
-                                            type="email"
-                                            {...field}
-                                            value={field.value || ""}
-                                        />
+                                        <div className="flex items-center">
+                                            <Input
+                                                placeholder = "Ej: juan.perez, sin @uai.cl"
+                                                type        = "text"
+                                                className   = "rounded-none rounded-l-md z-10"
+                                                {...field}
+                                                value = { field.value || "" }
+                                            />
+
+                                            <div className="size-5 border border-zinc-300 dark:border-zinc-800 rounded-r-md py-[0.45rem] px-3">
+                                                @uai.cl
+                                            </div>
+                                        </div>
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
 
-                        {initialData && (
+                        {professors && (
                             <FormField
                                 control = { form.control }
                                 name    = "isMock"
@@ -299,7 +346,7 @@ export function ProfessorForm({
                                         <FormControl>
                                             <Switch
                                                 checked={field.value}
-                                                onCheckedChange={field.onChange}
+                                                onCheckedChange={( value ) => onChangeTest( value, field )}
                                             />
                                         </FormControl>
                                     </FormItem>
@@ -309,9 +356,9 @@ export function ProfessorForm({
 
                         <div className={cn(
                             "flex pt-2 gap-2",
-                            initialData ? "justify-end" : "justify-between"
+                            professors ? "justify-end" : "justify-between"
                         )}>
-                            {!initialData && (
+                            {!professors && (
                                 <Button
                                     type    = "button"
                                     variant = "outline"
@@ -323,7 +370,7 @@ export function ProfessorForm({
 
                             <div className={cn(
                                 "flex gap-2 items-center",
-                                initialData ? "justify-between w-full" : ""
+                                professors ? "justify-between w-full" : ""
                             )}>
                                 <Button
                                     type    = "button"
@@ -337,10 +384,10 @@ export function ProfessorForm({
                                     {isLoading ? (
                                         <>
                                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            {initialData ? "Actualizando..." : "Creando..."}
+                                            {professors ? "Actualizando..." : "Creando..."}
                                         </>
                                     ) : (
-                                        initialData ? "Actualizar" : "Agregar"
+                                        professors ? "Actualizar" : "Agregar"
                                     )}
                                 </Button>
                             </div>
