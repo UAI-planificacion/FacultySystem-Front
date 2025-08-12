@@ -40,10 +40,10 @@ export type StaffFormValues = z.infer<typeof formSchema>;
 
 
 interface StaffFormProps {
-    initialData?    : Staff;
-    onSubmit        : ( data: StaffFormValues ) => void;
-    isOpen          : boolean;
-    onClose         : () => void;
+    staff?      : Staff;
+    onSubmit    : ( data: StaffFormValues ) => void;
+    isOpen      : boolean;
+    onClose     : () => void;
 }
 
 
@@ -72,12 +72,16 @@ const emptyStaff = {
 
 
 export function StaffForm({
-    initialData,
+    staff,
     isOpen,
     onSubmit,
     onClose,
 }: StaffFormProps ): JSX.Element {
     const defaultValues: Partial<StaffFormValues> = emptyStaff;
+
+    if ( staff ) {
+        staff.email = staff.email.replace( '@uai.cl', '' );
+    }
 
     const form = useForm<StaffFormValues>({
         resolver: zodResolver( formSchema ),
@@ -89,12 +93,12 @@ export function StaffForm({
         if ( !isOpen ) return;
 
         form.reset({
-            name    : initialData?.name     || emptyStaff.name,
-            email   : initialData?.email    || emptyStaff.email,
-            role    : initialData?.role     || emptyStaff.role,
-            isActive: initialData?.isActive!,
+            name    : staff?.name     || emptyStaff.name,
+            email   : staff?.email    || emptyStaff.email,
+            role    : staff?.role     || emptyStaff.role,
+            isActive: staff?.isActive!,
         });
-    }, [ isOpen, initialData?.id, form ]);
+    }, [ isOpen, staff?.id, form ]);
 
 
     const handleSubmit = async ( data: StaffFormValues ) => {
@@ -108,11 +112,11 @@ export function StaffForm({
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
                     <DialogTitle>
-                        {initialData ? "Editar Personal" : "Agregar Nuevo Personal"}
+                        {staff ? "Editar Personal" : "Agregar Nuevo Personal"}
                     </DialogTitle>
 
                     <DialogDescription>
-                        {initialData 
+                        {staff 
                             ? "Actualice los datos del personal existente" 
                             : "Agregue una nueva persona a esta facultad"
                         }
@@ -197,7 +201,7 @@ export function StaffForm({
                             )}
                         />
 
-                        {initialData && (
+                        {staff && (
                             <FormField
                                 control = { form.control }
                                 name    = "isActive"
@@ -232,7 +236,7 @@ export function StaffForm({
                             </Button>
 
                             <Button type="submit">
-                                {initialData ? "Actualizar" : "Agregar"}
+                                {staff ? "Actualizar" : "Agregar"}
                             </Button>
                         </div>
                     </form>
