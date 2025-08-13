@@ -43,14 +43,9 @@ import {
     FormLabel,
     FormMessage,
 }                               from "@/components/ui/form";
-import {
-    ToggleGroup,
-    ToggleGroupItem
-}                               from "@/components/ui/toggle-group";
 import { Button }               from "@/components/ui/button";
 import { Input }                from "@/components/ui/input";
 import { Switch }               from "@/components/ui/switch";
-import { DaySelector }          from "@/components/shared/DaySelector";
 import { MultiSelectCombobox }  from "@/components/shared/Combobox";
 import { Badge }                from "@/components/ui/badge";
 import { ProfessorForm }        from "@/components/professor/professor-form";
@@ -58,16 +53,17 @@ import { CommentSection }       from "@/components/comment/comment-section";
 import { RequestDetailTable }   from "@/components/request-detail/request-detail-table";
 import { Checkbox }             from "@/components/ui/checkbox";
 import {
-    type RequestDetail,
-    UpdateRequestDetail,
-    SpaceType,
-    Size,
-    Level,
-    Building,
     SizeResponse,
     Day,
     Module,
 }                           from "@/types/request";
+import {
+    type RequestDetail,
+    UpdateRequestDetail,
+    SpaceType,
+    Size,
+    Building
+}                           from "@/types/request-detail.model";
 import { useCostCenter }    from "@/hooks/use-cost-center";
 import { getSpaceType }     from "@/lib/utils";
 import { KEY_QUERYS }       from "@/consts/key-queries";
@@ -79,6 +75,7 @@ import {
     successToast
 }                           from "@/config/toast/toast.config";
 import { useSpace }         from "@/hooks/use-space";
+import { Grade }            from "@/types/grade";
 
 
 const numberOrNull = z.union([
@@ -106,11 +103,10 @@ const formSchema = z.object({
     costCenterId    : z.string().nullable().optional(),
     inAfternoon     : z.boolean().default( false ),
     isPriority      : z.boolean().default( false ),
-    level           : z.nativeEnum(Level, { required_error: "Por favor selecciona un nivel" }),
+    gradeId         : z.string().nullable().optional(),
     professorId     : z.string().nullable().optional(),
     spaceId         : z.string().nullable().default(''),
     moduleDays      : z.array(z.object({
-        id          : z.string(),
         day         : z.string(),
         moduleId    : z.string()
     })).default([])
@@ -129,8 +125,6 @@ const formSchema = z.object({
 
 
 export type RequestDetailFormValues = z.infer<typeof formSchema>;
-
-
 
 
 interface RequestDetailFormProps {
@@ -152,13 +146,13 @@ interface RequestDetailFormProps {
 const defaultRequestDetail = ( data: RequestDetail ) => ({
     minimum         : data.minimum,
     maximum         : data.maximum,
-    spaceType       : data.spaceType as SpaceType,
-    spaceSize       : data.spaceSize as Size,
-    building        : data.building as Building,
+    spaceType       : data.spaceType    as SpaceType,
+    spaceSize       : data.spaceSize    as Size,
+    building        : data.building     as Building,
     costCenterId    : data.costCenterId,
     inAfternoon     : data.inAfternoon,
     isPriority      : data.isPriority,
-    level           : data.level,
+    gradeId         : data.grade?.id,
     professorId     : data.professorId,
     spaceId         : data.spaceId,
     moduleDays      : data.moduleDays || [],
@@ -166,6 +160,25 @@ const defaultRequestDetail = ( data: RequestDetail ) => ({
 
 
 type Tab = 'form' | 'comments';
+
+
+function getTypeSpace( requestDetail: RequestDetail | undefined ): boolean[] {
+    if ( !requestDetail ) return [ false, false, false ];
+
+    if ( requestDetail.spaceId ) {
+        return [ true, false, false ];
+    }
+
+    if ( requestDetail.spaceType ) {
+        return [ false, true, false ];
+    }
+
+    if ( requestDetail.spaceSize ) {
+        return [ false, false, true ];
+    }
+
+    return [ false, false, false ];
+}
 
 
 export function RequestDetailForm({ 
@@ -183,8 +196,14 @@ export function RequestDetailForm({
 }: RequestDetailFormProps ): JSX.Element {
     const [tab, setTab]                             = useState<Tab>( 'form' );
     const queryClient                               = useQueryClient();
-    const [typeSpace, setTypeSpace]                 = useState<boolean[]>( [ false, false, false ] );
+    const [typeSpace, setTypeSpace]                 = useState<boolean[]>([ false, false, false ]);
     const [isOpenProfessor, setIsOpenProfessor ]    = useState( false );
+
+
+    useEffect(() => {
+        setTypeSpace( getTypeSpace( requestDetail ));
+    },[requestDetail]);
+
 
     const {
         costCenter,
@@ -198,7 +217,7 @@ export function RequestDetailForm({
         isLoading: isLoadingSpaces,
     } = useSpace({ enabled: true });
 
-    // API function for updating request detail
+
     const updateRequestDetailApi = async ( updatedRequestDetail: UpdateRequestDetail ): Promise<RequestDetail>  =>
         fetchApi<RequestDetail>({
             url:`request-details/${updatedRequestDetail.id}`,
@@ -206,7 +225,7 @@ export function RequestDetailForm({
             body: updatedRequestDetail
         });
 
-    // Mutation for updating request detail
+
     const updateRequestDetailMutation = useMutation<RequestDetail, Error, UpdateRequestDetail>({
         mutationFn: updateRequestDetailApi,
         onSuccess: () => {
@@ -239,6 +258,16 @@ export function RequestDetailForm({
     });
 
 
+    const {
+        data        : grades,
+        isLoading   : isLoadingGrades,
+        isError     : isErrorGrades,
+    } = useQuery({
+        queryKey    : [ KEY_QUERYS.GRADES ],
+        queryFn     : () => fetchApi<Grade[]>({ url: 'grades' }),
+    });
+
+
     const memoizedProfessorOptions = useMemo(() => {
         return professors?.map( professor => ({
             id      : professor.id,
@@ -246,11 +275,6 @@ export function RequestDetailForm({
             value   : professor.id,
         })) ?? [];
     }, [professors]);
-
-
-    const memoizedDays = useMemo(() => {
-        return days?.map( day =>  day.id - 1 ) ?? [];
-    }, [days]);
 
 
     const form = useForm<RequestDetailFormValues>({
@@ -275,7 +299,6 @@ export function RequestDetailForm({
 
             if ( !exists ) {
                 const newModuleDay = {
-                    id          : `${Date.now()}-${Math.random()}`,
                     day         : day,
                     moduleId    : moduleId
                 };
@@ -292,29 +315,24 @@ export function RequestDetailForm({
 
 
     function onSubmitForm( formData: RequestDetailFormValues ): void {
+        formData.building = ( formData.spaceId?.split( '-' )[1] as Building || 'A' );
+
+        if ( typeSpace.every( item => !item )) {
+            formData.spaceType  = null;
+            formData.spaceSize  = null;
+            formData.spaceId    = null;
+        } else if ( typeSpace[0] ) {
+            formData.spaceType = null;
+            formData.spaceSize = null;
+        } else if ( typeSpace[1] ) {
+            formData.spaceId    = null;
+            formData.spaceSize  = null;
+        } else if ( typeSpace[2] ) {
+            formData.spaceId    = null;
+            formData.spaceType  = null;
+        }
+
         console.log( '🚀 ~ file: request-detail-form.tsx:191 ~ formData:', formData );
-        formData.building = ( formData.spaceId?.split('-')[1] as Building || 'A' );
-
-        if ( typeSpace.some( item => item ) ) {
-            formData.spaceType  = undefined;
-            formData.spaceSize  = undefined;
-            formData.spaceId    = null;
-        }
-
-        if ( typeSpace[0] ) {
-            formData.spaceType = undefined;
-            formData.spaceSize = undefined;
-        }
-
-        if ( typeSpace[1] ) {
-            formData.spaceId    = null;
-            formData.spaceSize  = undefined;
-        }
-
-        if ( typeSpace[2] ) {
-            formData.spaceId    = null;
-            formData.spaceType  = undefined;
-        }
 
         updateRequestDetailMutation.mutate({
             ...formData,
@@ -344,7 +362,7 @@ export function RequestDetailForm({
                             className="mr-5"
                             variant={requestDetail.isPriority ? 'destructive' : 'default'}
                         >
-                            {requestDetail.isPriority ? 'Prioritario' : 'Sin Prioridad' }
+                            {requestDetail.isPriority ? 'Restrictivo' : 'No restrictivo' }
                         </Badge>
                     </div>
                 </DialogHeader>
@@ -352,6 +370,7 @@ export function RequestDetailForm({
                 <Tabs defaultValue={tab} onValueChange={( value ) => setTab( value as Tab )} className="w-full">
                     <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="form">Información</TabsTrigger>
+
                         <TabsTrigger value="comments">
                             Comentarios 
                         </TabsTrigger>
@@ -416,47 +435,34 @@ export function RequestDetailForm({
                                         )}
                                     />
 
-                                    {/* Level */}
+                                    {/* Grade */}
                                     <FormField
                                         control = { form.control }
-                                        name    = "level"
+                                        name    = "gradeId"
                                         render  = {({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Nivel</FormLabel>
+                                                <FormLabel>Grado</FormLabel>
 
-                                                <ToggleGroup
-                                                    type            = "single"
-                                                    value           = { field.value }
-                                                    className       = "w-full"
-                                                    defaultValue    = { field.value }
-                                                    onValueChange   = {( value: string ) => {
-                                                        if ( value ) field.onChange( value )
-                                                    }}
+                                                <Select
+                                                    defaultValue    = { field.value ?? 'Sin especificar' }
+                                                    onValueChange   = {( value ) => field.onChange( value === "Sin especificar" ? null : value )}
                                                 >
-                                                    <ToggleGroupItem
-                                                        value       = "PREGRADO"
-                                                        aria-label  = "Pregrado"
-                                                        className   = "flex-1 rounded-tl-lg rounded-bl-lg rounded-tr-none rounded-br-none border-t border-l border-b border-zinc-200 dark:border-zinc-700 dark:data-[state=on]:text-black dark:data-[state=on]:bg-white data-[state=on]:text-white data-[state=on]:bg-black"
-                                                    >
-                                                        Pregrado
-                                                    </ToggleGroupItem>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Seleccionar grado" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
 
-                                                    <ToggleGroupItem
-                                                        value       = "FIRST_GRADE"
-                                                        aria-label  = "1° Grado"
-                                                        className   = "flex-1 rounded-none border-t border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:text-foreground dark:data-[state=on]:text-black dark:data-[state=on]:bg-white data-[state=on]:bg-black data-[state=on]:text-white"
-                                                    >
-                                                        1° Grado
-                                                    </ToggleGroupItem>
+                                                    <SelectContent>
+                                                        <SelectItem value="Sin especificar">Sin especificar</SelectItem>
 
-                                                    <ToggleGroupItem
-                                                        value       = "SECOND_GRADE"
-                                                        aria-label  = "2° Grado"
-                                                        className   = "flex-1 rounded-tl-none rounded-bl-none rounded-tr-lg rounded-br-lg border-t border-r border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:text-foreground dark:data-[state=on]:text-black dark:data-[state=on]:bg-white data-[state=on]:bg-black data-[state=on]:text-white"
-                                                    >
-                                                        2° Grado
-                                                    </ToggleGroupItem>
-                                                </ToggleGroup>
+                                                        {grades?.map( grade => (
+                                                            <SelectItem key={grade.id} value={grade.id}>
+                                                                { grade.name }
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
 
                                                 <FormMessage />
                                             </FormItem>
@@ -524,12 +530,14 @@ export function RequestDetailForm({
                                         name    = "spaceId"
                                         render  = {({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Espacio</FormLabel>
+                                                <FormLabel onClick={() => setTypeSpace([ true, false, false ])}>
+                                                    Espacio
+                                                </FormLabel>
 
                                                 <div className="flex gap-2 items-center">
                                                     <Checkbox
                                                         className		= "cursor-default rounded-full p-[0.6rem] flex justify-center items-center"
-                                                        checked			= {typeSpace[0]}
+                                                        checked			= { typeSpace[0] }
                                                         onCheckedChange	= {( checked ) => setTypeSpace( [ checked as boolean, false, false ] )}
                                                     />
 
@@ -555,12 +563,13 @@ export function RequestDetailForm({
                                         name    = "spaceType"
                                         render  = {({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Tipo de espacio</FormLabel>
+                                                <FormLabel onClick={() => setTypeSpace([ false, true, false ])}>
+                                                    Tipo de espacio</FormLabel>
 
                                                 <div className="flex gap-2 items-center">
                                                     <Checkbox
                                                         className		= "cursor-default rounded-full p-[0.6rem] flex justify-center items-center"
-                                                        checked			= {typeSpace[1]}
+                                                        checked			= { typeSpace[1] }
                                                         onCheckedChange	= {( checked ) => setTypeSpace( [ false, checked as boolean, false ] )}
                                                     />
 
@@ -598,7 +607,9 @@ export function RequestDetailForm({
                                         name    = "spaceSize"
                                         render  = {({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Tamaño del espacio</FormLabel>
+                                                <FormLabel onClick={() => setTypeSpace([ false, false, true ])}>
+                                                    Tamaño del espacio
+                                                </FormLabel>
 
                                                 {isErrorSizes ? (
                                                     <>
@@ -618,7 +629,7 @@ export function RequestDetailForm({
                                                     <div className="flex gap-2 items-center">
                                                         <Checkbox
                                                             className		= "cursor-default rounded-full p-[0.6rem] flex justify-center items-center"
-                                                            checked			= {typeSpace[2]}
+                                                            checked			= { typeSpace[2] }
                                                             onCheckedChange	= {( checked ) => setTypeSpace([ false, false, checked as boolean ])}
                                                         />
 
@@ -697,33 +708,9 @@ export function RequestDetailForm({
                                     )}
                                 />
 
-                                {/* Prioridad */}
-                                {/* <FormField
-                                    control = { form.control }
-                                    name    = "isPriority"
-                                    render  = {({ field }) => (
-                                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                                            <div className="space-y-0.5">
-                                                <FormLabel>Es Prioridad</FormLabel>
-
-                                                <p className="text-sm text-muted-foreground">
-                                                    Indica si es prioridad
-                                                </p>
-                                            </div>
-
-                                            <FormControl>
-                                                <Switch
-                                                    checked         = { field.value }
-                                                    onCheckedChange = { field.onChange }
-                                                />
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
-                                /> */}
-
                                 {/* Tabla de módulos */}
                                 <RequestDetailTable
-                                    requestDetailModule = { form.watch( 'moduleDays' ) }
+                                    requestDetailModule = { form.watch( 'moduleDays' )}
                                     days                = { days || [] }
                                     modules             = { modules }
                                     onModuleToggle      = { handleModuleToggle }
