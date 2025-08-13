@@ -11,6 +11,7 @@ export const KEY_QUERYS = {
     SPACES          : 'spaces',
     MODULES         : 'modules',
     COMMENTS        : "comments",
+    GRADES          : 'grades',
 
     COST_CENTERS    : 'cost-centers',
     NOTIFICATIONS   : 'notifications',
