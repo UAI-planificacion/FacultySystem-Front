@@ -8,31 +8,6 @@ export enum Status {
 }
 
 
-export enum SpaceType {
-    ROOM        = "ROOM",
-    AUDITORIUM  = "AUDITORIUM",
-    COMMUNIC    = "COMMUNIC",
-    LAB         = "LAB",
-    LABPC       = "LABPC",
-    DIS         = "DIS",
-    GARAGE      = "GARAGE",
-    CORE        = "CORE",
-}
-
-
-export enum Size {
-    XS  = "XS",
-    XE  = "XE",
-    S   = "S",
-    SE  = "SE",
-    MS  = "MS",
-    M   = "M",
-    L   = "L",
-    XL  = "XL",
-    XXL = "XXL",
-}
-
-
 export interface Module {
     id          : number;
     code        : string;
@@ -65,23 +40,6 @@ export interface SizeResponse {
 }
 
 
-export enum Level {
-    PREGRADO        = "PREGRADO",
-    FIRST_GRADE     = "FIRST_GRADE",
-    SECOND_GRADE    = "SECOND_GRADE",
-}
-
-
-export enum Building {
-    A = "A",
-    B = "B",
-    C = "C",
-    D = "D",
-    E = "E",
-    F = "F",
-}
-
-
 export interface StaffRequest {
     id      : string;
     name    : string;
@@ -93,55 +51,6 @@ export interface StaffRequest {
 export interface SubjectRequest {
     id      : string;
     name    : string;
-}
-
-
-export interface ModuleDay {
-    id          : string;
-    day         : string;
-    moduleId    : string;
-}
-
-
-export interface RequestDetail {
-    id              : string;
-    requestId       : string;
-    minimum         : number | null;
-    maximum         : number | null;
-    spaceType       : SpaceType | null;
-    spaceSize       : Size | null;
-    costCenterId    : string | null;
-    inAfternoon     : boolean;
-    building        : Building | null;
-    description     : string | null;
-    spaceId         : string | null;
-    isPriority      : boolean;
-    level           : Level;
-    professorId     : string | null;
-    staffCreate     : StaffRequest;
-    staffUpdate     : StaffRequest | null;
-    createdAt       : Date;
-    updatedAt       : Date;
-    moduleDays      : ModuleDay[];
-}
-
-
-export interface UpdateRequestDetail {
-    id              : string;
-    minimum?         : number | null;
-    maximum?         : number | null;
-    spaceType?       : SpaceType | null;
-    spaceSize?       : Size | null;
-    costCenterId?    : string | null;
-    inAfternoon?     : boolean;
-    building?        : Building | null;
-    moduleId?        : string | null;
-    days?            : string[];
-    spaceId?         : string | null;
-    isPriority?      : boolean;
-    level?           : Level;
-    professorId?     : string | null;
-    moduleDays?      : ModuleDay[];
 }
 
 
