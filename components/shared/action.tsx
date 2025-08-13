@@ -1,7 +1,9 @@
 'use client'
 
 import { Pencil, Trash2 } from "lucide-react";
-import { Button } from "../ui/button";
+
+import { Button } from "@/components/ui/button";
+
 
 export function ActionButton(
     {
@@ -9,9 +11,9 @@ export function ActionButton(
         deleteItem,
         item
     }: {
-        editItem: (obj: any) => void;
-        deleteItem: (obj: any) => void;
-        item: any;
+        editItem    : ( obj: any ) => void;
+        deleteItem  : ( obj: any ) => void;
+        item        : any;
     }
 ) {
     return (
