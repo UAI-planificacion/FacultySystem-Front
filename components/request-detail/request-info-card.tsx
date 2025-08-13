@@ -101,21 +101,17 @@ export function RequestInfoCard({ request, onBack }: RequestInfoCardProps ): JSX
                 </div>
 
                 {/* Description and Comments */}
-                <div className="space-y-4 pt-4 border-t">
-                    {request.description && (
-                        <div className="space-y-1">
-                            <p className="text-sm font-medium text-muted-foreground">Descripción</p>
-                            <p className="text-sm whitespace-pre-line">{request.description}</p>
-                        </div>
-                    )}
+                { request.description && (
+                    <div className="pt-2 border-t space-y-1">
+                        <span className="text-sm font-medium text-muted-foreground">
+                            Descripción
+                        </span>
 
-                    {request.comment && (
-                        <div className="space-y-1">
-                            <p className="text-sm font-medium text-muted-foreground">Comentarios</p>
-                            <p className="text-sm text-muted-foreground whitespace-pre-line">{request.comment}</p>
-                        </div>
-                    )}
-                </div>
+                        <p className="text-sm whitespace-pre-line">
+                            { request.description }
+                        </p>
+                    </div>
+                )}
             </CardContent>
         </Card>
     );
