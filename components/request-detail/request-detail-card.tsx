@@ -11,7 +11,6 @@ import {
     Proportions,
     Armchair,
     Cuboid,
-    Clock,
 } from "lucide-react"
 
 import {
@@ -23,12 +22,11 @@ import {
 import { Badge }    from "@/components/ui/badge";
 import { Button }   from "@/components/ui/button";
 
-import type {
-    Module,
-    RequestDetail }                     from "@/types/request";
-import { getLevelName, getSpaceType }   from "@/lib/utils";
-import { Professor }                    from "@/types/professor";
-import LoaderMini                       from "@/icons/LoaderMini";
+import type { Module}       from "@/types/request";
+import { Professor }        from "@/types/professor";
+import { RequestDetail }    from "@/types/request-detail.model";
+import {  getSpaceType }    from "@/lib/utils";
+import LoaderMini           from "@/icons/LoaderMini";
 
 
 export interface RequestDetailCardProps {
@@ -72,13 +70,31 @@ export function RequestDetailCard({
     }, [professors, detail.professorId]);
 
 
-    // const memoizedModuleName = useMemo(() => {
-    //     const module = modules.find( module => module.id.toString() === detail.moduleId );
+    const memoizedDays = useMemo(() => {
+        const daysRecord: Record<string, string> = {};
 
-    //     if ( !module ) return '';
+        detail.moduleDays.forEach( moduleDay => {
+            if ( !daysRecord[ moduleDay.day ]) {
+                daysRecord[ moduleDay.day ] = daysName[ Number( moduleDay.day ) - 1 ];
+            }
+        });
 
-    //     return `${module.startHour}-${module.endHour}`;
-    // }, [modules, detail.moduleId]);
+        return daysRecord;
+    }, [detail.moduleDays]);
+
+    const memoizedModules = useMemo(() => {
+        const modulesRecord: Record<string, string> = {};
+
+        detail.moduleDays.forEach(moduleDay => {
+            const module = modules.find( m => m.id.toString() === moduleDay.moduleId.toString() );
+
+            if ( module && !modulesRecord[moduleDay.moduleId ]) {
+                modulesRecord[moduleDay.moduleId] = `${module.startHour}-${module.endHour}`;
+            }
+        });
+
+        return modulesRecord;
+    }, [modules, detail.moduleDays]);
 
 
     return (
@@ -107,7 +123,8 @@ export function RequestDetailCard({
             <CardContent className="space-y-3">
                 <div className="flex flex-wrap items-center gap-1.5 text-sm">
                     {detail.minimum && detail.maximum && (
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1" title="Mínimo y máximo de estudiantes">
+
                             <Users className="h-4 w-4 text-muted-foreground" />
 
                             <span>
@@ -117,7 +134,8 @@ export function RequestDetailCard({
                     )}
 
                     {detail.spaceId && (
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1" title="Espacio">
+
                             <Cuboid className="h-4 w-4 text-muted-foreground" />
 
                             <span>
@@ -127,7 +145,8 @@ export function RequestDetailCard({
                     )}
 
                     {detail.spaceType && (
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1" title="Tipo de espacio">
+
                             <Armchair className="h-4 w-4 text-muted-foreground" />
 
                             <span>{getSpaceType( detail.spaceType )}</span>
@@ -135,7 +154,8 @@ export function RequestDetailCard({
                     )}
 
                     {detail.building && (
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1" title="Edificio">
+
                             <Building2 className="h-4 w-4 text-muted-foreground" />
 
                             <span>{detail.building}</span>
@@ -143,7 +163,8 @@ export function RequestDetailCard({
                     )}
 
                     {detail.spaceSize && (
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1" title="Tamaño del espacio">
+
                             <Proportions className="h-4 w-4 text-muted-foreground" />
                             <span>{detail.spaceSize}</span>
                         </div>
@@ -152,31 +173,24 @@ export function RequestDetailCard({
                     { isLoadingProfessors && !isErrorProfessors
                         ? <LoaderMini />
                         : detail.professorId &&
-                            <div className="flex items-center gap-1 text-xs">
+                            <div className="flex items-center gap-1 text-xs" title="Profesor">
+
                                 <User className="h-4 w-4 text-muted-foreground" />
                                 <span>{memoizedProfessorName}</span>
                             </div>
                     }
-
-                    {/* { isLoadingModules && !isErrorModules
-                        ? <LoaderMini />
-                        : detail.moduleId &&
-                            <div className="flex items-center gap-1 text-xs">
-                                <Clock className="h-4 w-4 text-muted-foreground" />
-
-                                <span>{memoizedModuleName}</span>
-                            </div>
-                    } */}
                 </div>
 
                 <div className="flex flex-wrap gap-2">
                     <Badge variant={detail.isPriority ? "destructive" : "default"} className="text-xs">
-                        {detail.isPriority ? "Restrictivo" : "No Restrictivo"}
+                        {detail.isPriority ? "Restrictivo" : "No restrictivo"}
                     </Badge>
 
-                    <Badge variant="default" className="text-xs">
-                        {getLevelName(detail.level)}
-                    </Badge>
+                    {detail.grade && (
+                        <Badge variant="default" className="text-xs">
+                            {detail.grade.name}
+                        </Badge>
+                    )}
 
                     {detail.inAfternoon && (
                         <Badge variant="default" className="text-xs">
@@ -191,25 +205,39 @@ export function RequestDetailCard({
                     )}
                 </div>
 
-                {/* {detail.days.length > 0 && (
-                    <div className="flex items-center gap-2">
-                        <p className="text-xs font-medium text-muted-foreground">Días:</p>
+                {detail.moduleDays.length > 0 && (
+                    <div className="space-y-2 items-center gap-2">
+                        <div className="flex items-start gap-2">
+                            <p className="text-xs font-medium text-muted-foreground">Días:</p>
 
-                        <div className="flex flex-wrap gap-1 mt-1">
-                            {detail.days.map((day, index) => (
-                                <Badge key={index} variant="outline" className="text-xs border border-zinc-300 dark:border-zinc-700">
-                                    {daysName[Number(day) - 1]}
-                                </Badge>
-                            ))}
+                            <div className="flex flex-wrap gap-1">
+                                {Object.entries(memoizedDays).map(([dayId, dayName]) => (
+                                    <Badge key={dayId} variant="outline" className="text-xs border border-zinc-300 dark:border-zinc-700">
+                                        {dayName}
+                                    </Badge>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="flex items-start gap-2">
+                            <p className="text-xs font-medium text-muted-foreground">Horarios:</p>
+
+                            <div className="flex flex-wrap gap-1">
+                                {Object.entries(memoizedModules).map(([moduleId, moduleTime]) => (
+                                    <Badge key={moduleId} variant="outline" className="text-xs border border-zinc-300 dark:border-zinc-700">
+                                        {moduleTime}
+                                    </Badge>
+                                ))}
+                            </div>
                         </div>
                     </div>
-                )} */}
+                )}
 
                 {detail.description && (
-                    <div>
+                    <div className="space-y-1">
                         <p className="text-xs font-medium text-muted-foreground">Descripción:</p>
 
-                        <p className="text-xs text-muted-foreground mt-1">{detail.description}</p>
+                        <p className="text-xs text-muted-foreground break-words">{detail.description}</p>
                     </div>
                 )}
             </CardContent>
