@@ -22,11 +22,11 @@ import { RequestDetailForm }    from "@/components/request-detail/request-detail
 import type {
     Module,
     Request,
-    RequestDetail
-}                           from "@/types/request";
-import { KEY_QUERYS }       from "@/consts/key-queries";
-import { Method, fetchApi } from "@/services/fetch";
-import { Professor }        from "@/types/professor";
+}                               from "@/types/request";
+import type { RequestDetail }   from "@/types/request-detail.model";
+import { KEY_QUERYS }           from "@/consts/key-queries";
+import { Method, fetchApi }     from "@/services/fetch";
+import { Professor }            from "@/types/professor";
 
 import {
     errorToast,
@@ -41,7 +41,7 @@ interface RequestDetailViewProps {
 }
 
 
-const initialRequestDetail = {} as RequestDetail
+const initialRequestDetail = {} as RequestDetail;
 
 
 export function RequestDetailView({
