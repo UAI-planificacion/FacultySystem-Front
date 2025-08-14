@@ -28,10 +28,11 @@ export interface RequestFilter {
     setStatusFilter         : ( statusFilter: Status | "ALL" ) => void;
     consecutiveFilter       : "ALL" | "TRUE" | "FALSE";
     setConsecutiveFilter    : ( consecutiveFilter: "ALL" | "TRUE" | "FALSE" ) => void;
-    sortBy                  : "status" | "staffCreate" | "staffUpdate" | "subjectId" | "createdAt";
-    setSortBy               : ( sortBy: "status" | "staffCreate" | "staffUpdate" | "subjectId" | "createdAt" ) => void;
+    sortBy                  : "title" | "consecutive" | "updatedAt";
+    setSortBy               : ( sortBy: "title" | "consecutive" | "updatedAt" ) => void;
     sortOrder               : "asc" | "desc";
     setSortOrder            : ( sortOrder: "asc" | "desc" ) => void;
+    onNewRequest            : () => void;
 }
 
 
@@ -45,12 +46,14 @@ export function RequestFilter({
     sortBy,
     setSortBy,
     sortOrder,
-    setSortOrder
+    setSortOrder,
+    onNewRequest
 }: RequestFilter ): JSX.Element {
     return (
         <Card>
             <CardHeader>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                <div className="flex flex-col lg:flex-row gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end flex-1">
                     <div className="grid space-y-2">
                         <Label htmlFor="search">Buscar por Título</Label>
 
@@ -114,11 +117,9 @@ export function RequestFilter({
                                 </SelectTrigger>
 
                                 <SelectContent>
-                                    <SelectItem value="createdAt">Fecha</SelectItem>
-                                    <SelectItem value="status">Estado</SelectItem>
-                                    <SelectItem value="staffCreate">Creador</SelectItem>
-                                    <SelectItem value="staffUpdate">Actualizador</SelectItem>
-                                    <SelectItem value="subjectId">Asignatura</SelectItem>
+                                    <SelectItem value="title">Título</SelectItem>
+                                    <SelectItem value="consecutive">Consecutivo</SelectItem>
+                                    <SelectItem value="updatedAt">Fecha de Actualización</SelectItem>
                                 </SelectContent>
                             </Select>
 
@@ -130,6 +131,14 @@ export function RequestFilter({
                                 {sortOrder === "asc" ? "↑" : "↓"}
                             </Button>
                         </div>
+                    </div>
+                    </div>
+
+                    <div className="flex items-end">
+                        <Button onClick={onNewRequest} className="w-full lg:w-auto">
+                            <Plus className="mr-2 h-4 w-4" />
+                            Nueva Solicitud
+                        </Button>
                     </div>
                 </div>
             </CardHeader>
