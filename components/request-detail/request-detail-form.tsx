@@ -220,9 +220,9 @@ export function RequestDetailForm({
 
     const updateRequestDetailApi = async ( updatedRequestDetail: UpdateRequestDetail ): Promise<RequestDetail>  =>
         fetchApi<RequestDetail>({
-            url:`request-details/${updatedRequestDetail.id}`,
-            method: Method.PATCH ,
-            body: updatedRequestDetail
+            url     :`request-details/${updatedRequestDetail.id}`,
+            method  : Method.PATCH ,
+            body    : updatedRequestDetail
         });
 
 
