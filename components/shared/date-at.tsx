@@ -3,7 +3,7 @@
 import { ShowDate } from "@/components/shared/date";
 
 interface ShowDateAtProps {
-    createdAt: Date | string;
+    createdAt: Date | string | undefined;
     updatedAt: Date | string | undefined;
 }
 
