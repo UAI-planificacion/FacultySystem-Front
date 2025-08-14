@@ -17,6 +17,7 @@ import {
 import { z }            from "zod";
 import { zodResolver }  from "@hookform/resolvers/zod";
 import { useForm }      from "react-hook-form";
+import { format }       from "@formkit/tempo";
 
 import {
     Dialog,
@@ -56,6 +57,8 @@ import { KEY_QUERYS }                       from "@/consts/key-queries";
 import { Subject }                          from "@/types/subject.model";
 import { Method, fetchApi }                 from "@/services/fetch";
 import { errorToast, successToast }         from "@/config/toast/toast.config";
+import { Period }                           from "@/types/periods.model";
+import { ENV }                              from "@/config/envs/env";
 
 
 export type RequestFormValues = z.infer<typeof formSchema>;
@@ -65,7 +68,7 @@ interface RequestFormProps {
     isOpen      : boolean;
     onClose     : () => void;
     onSuccess?  : () => void;
-    request     : Request;
+    request     : Request | null;
     facultyId   : string;
 }
 
@@ -96,16 +99,23 @@ const formSchema = z.object({
 })
 
 
-const defaultRequest = ( data : Request ) => ({
-    title           : data.title,
-    status          : data.status,
-    // isConsecutive   : data.isConsecutive,
-    // description     : data.description,
-    subjectId       : data.subject.id,
+const defaultRequest = ( data : Request | null ) => ({
+    title           : data?.title || '',
+    status          : data?.status || Status.PENDING,
+    periodId        : data?.periodId || '',
+    isConsecutive   : data?.isConsecutive || false,
+    subjectId       : data?.subject?.id || '',
 });
 
 
 type Tab = 'form' | 'comments';
+
+
+function formatDate( period : Period ) {
+    if ( !period.startDate || !period.endDate ) return '';
+
+    return ` (${format( period.startDate, 'short' )} - ${format( period.endDate, 'short' )})`;
+}
 
 
 export function RequestForm({
@@ -146,6 +156,25 @@ export function RequestForm({
     });
 
 
+    const {
+        data        : periods,
+        isLoading   : isLoadingPeriods,
+        isError     : isErrorPeriods
+    } = useQuery<Period[]>({
+        queryKey: [KEY_QUERYS.PERIODS],
+        queryFn: () => fetchApi({ isApi: false, url: `${ENV.ACADEMIC_SECTION}periods` }),
+    });
+
+
+    const memoizedPeriods = useMemo(() => {
+        return periods?.map( period => ({
+            id      : period.id,
+            label   : `${period.id} - ${ period.name }${ formatDate( period )}`,
+            value   : period.id
+        }) ) ?? [];
+    }, [periods]);
+
+
     const memoizedSubject = useMemo(() => {
         return subjects?.map( professor => ({
             id      : professor.id,
@@ -168,6 +197,9 @@ export function RequestForm({
 
 
     function handleSubmit( data: RequestFormValues ): void {
+        // Implementear create new request
+        if (!request?.id) return;
+        
         console.log('🚀 ~ file: request-form.tsx:71 ~ data:', data)
         updateRequestMutation.mutate({
             ...data,
@@ -189,7 +221,7 @@ export function RequestForm({
                             </DialogDescription>
                         </div>
 
-                        <Consecutive isConsecutive={request.isConsecutive} />
+                        <Consecutive isConsecutive={request?.isConsecutive || false} />
                     </div>
                 </DialogHeader>
 
@@ -292,15 +324,15 @@ export function RequestForm({
                                             render  = {({ field }) => {
                                                 return (
                                                     <FormItem>
-                                                        <FormLabel>Período</FormLabel>
+                                                        <FormLabel>Periodo</FormLabel>
 
                                                         <FormControl>
-                                                            { isError ? (
+                                                            { isErrorPeriods ? (
                                                                 <>
                                                                     <Input
-                                                                        placeholder="ID del período"
-                                                                        value={field.value || ''}
-                                                                        onChange={field.onChange}
+                                                                        placeholder = "ID del período"
+                                                                        value       = { field.value || '' }
+                                                                        onChange    = {field.onChange }
                                                                     />
 
                                                                     <FormDescription>
@@ -312,9 +344,10 @@ export function RequestForm({
                                                                     multiple            = { false }
                                                                     placeholder         = "Seleccionar un período"
                                                                     defaultValues       = { field.value || '' }
-                                                                    onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
-                                                                    options             = { memoizedSubject }
-                                                                    isLoading           = { isLoading }
+                                                                    onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value )}
+                                                                    options             = { memoizedPeriods }
+                                                                    isLoading           = { isLoadingPeriods }
+                                                                    // error               = { isErrorPeriods }
                                                                 />
                                                             )}
                                                         </FormControl>
@@ -369,7 +402,7 @@ export function RequestForm({
                                     {/* Description */}
                                     <div className="flex flex-col space-y-1">
                                         <label>Descripción</label>
-                                        <p>{request.description}</p>
+                                        <p>{request?.description || '-'}</p>
                                     </div>
 
                                     {/* Staff Create - Readonly */}
@@ -378,7 +411,7 @@ export function RequestForm({
                                             <FormLabel>Creado por</FormLabel>
 
                                             <Input 
-                                                value = { request.staffCreate?.name || '-' }
+                                                value = { request?.staffCreate?.name || '-' }
                                                 readOnly 
                                                 disabled 
                                             />
@@ -389,7 +422,7 @@ export function RequestForm({
                                             <FormLabel>Última actualización por</FormLabel>
 
                                             <Input 
-                                                value = { request.staffUpdate?.name || '-' }
+                                                value = { request?.staffUpdate?.name || '-' }
                                                 readOnly 
                                                 disabled 
                                             />
@@ -397,8 +430,8 @@ export function RequestForm({
                                     </div>
 
                                     <ShowDateAt
-                                        createdAt = { request.createdAt }
-                                        updatedAt = { request.updatedAt }
+                                        createdAt = { request?.createdAt }
+                                        updatedAt = { request?.updatedAt }
                                     />
                                 </div>
 
@@ -419,10 +452,12 @@ export function RequestForm({
                     </TabsContent>
 
                     <TabsContent value="comments" className="mt-4">
-                        <CommentSection
-                            requestId   = { request.id }
-                            enabled     = { tab === 'comments' }
-                        />
+                        {request?.id && (
+                            <CommentSection
+                                requestId   = { request.id }
+                                enabled     = { tab === 'comments' }
+                            />
+                        )}
                     </TabsContent>
                 </Tabs>
             </DialogContent>
