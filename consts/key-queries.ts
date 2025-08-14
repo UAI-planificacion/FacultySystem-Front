@@ -4,14 +4,16 @@ export const KEY_QUERYS = {
     STAFF           : 'staff',
     REQUESTS        : 'requests',
     REQUEST_DETAIL  : 'request-detail',
-
-    PROFESSORS      : 'professors',
-    SIZE            : 'sizes',
-    DAYS            : 'days',
-    SPACES          : 'spaces',
     MODULES         : 'modules',
     COMMENTS        : "comments",
     GRADES          : 'grades',
+
+    SPACES          : 'spaces',
+
+    DAYS            : 'days',
+    SIZE            : 'sizes',
+    PROFESSORS      : 'professors',
+    PERIODS         : 'periods',
 
     COST_CENTERS    : 'cost-centers',
     NOTIFICATIONS   : 'notifications',
