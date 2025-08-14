@@ -5,7 +5,7 @@ import {
 	CardContent,
 	CardHeader,
 	CardTitle
-}                   from "@/components/ui/card";
+} from "@/components/ui/card";
 
 
 /**
