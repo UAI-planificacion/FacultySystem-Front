@@ -1,6 +1,16 @@
 'use client'
 
-import {  Eye, User, BookOpen, Trash, Pencil } from "lucide-react";
+import { JSX, useMemo } from "react";
+
+import {
+    Eye,
+    User,
+    BookOpen,
+    Trash,
+    Pencil,
+    CalendarDays
+}                   from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 import {
     Card,
@@ -14,6 +24,11 @@ import { ShowDate }     from "@/components/shared/date";
 import { Consecutive }  from "@/components/shared/consecutive";
 
 import { type Request } from "@/types/request";
+import { Period }       from "@/types/periods.model";
+import { KEY_QUERYS }   from "@/consts/key-queries";
+import { fetchApi }     from "@/services/fetch";
+import { ENV }          from "@/config/envs/env";
+import LoaderMini       from "@/icons/LoaderMini";
 
 
 export interface RequestCardProps {
@@ -23,12 +38,30 @@ export interface RequestCardProps {
     onDelete        : ( request: Request ) => void;
 }
 
+
 export function RequestCard({
     request,
     onViewDetails,
     onEdit,
     onDelete
-}: RequestCardProps ) {
+}: RequestCardProps ): JSX.Element {
+    const {
+        data        : periods,
+        isLoading   : isLoadingPeriods,
+        isError     : isErrorPeriods
+    } = useQuery<Period[]>({
+        queryKey: [KEY_QUERYS.PERIODS],
+        queryFn: () => fetchApi({ isApi: false, url: `${ENV.ACADEMIC_SECTION}periods` }),
+    });
+
+
+    const periodName = useMemo(() => {
+        const period = periods?.find( item => item.id === request.periodId );
+
+        return period ? `${period.id} - ${period.name}` : '';
+    }, [request, periods]);
+
+
     return (
         <Card className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
@@ -47,7 +80,7 @@ export function RequestCard({
 
             <CardContent className="space-y-3">
                 <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                         <BookOpen className="h-4 w-4" />
 
                         <span className="font-medium max-w-full truncate overflow-hidden whitespace-nowrap">
@@ -55,12 +88,29 @@ export function RequestCard({
                         </span>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                         <User className="h-4 w-4" />
 
                         <span className="max-w-full truncate overflow-hidden whitespace-nowrap">
                             { request.staffCreate.name }
                         </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                        <CalendarDays className="h-4 w-4" />
+
+                        { isLoadingPeriods
+                            ? <LoaderMini/>
+                            : <span className="max-w-full truncate overflow-hidden whitespace-nowrap">
+                                { periodName }
+                            </span>
+                        }
+
+                        { isErrorPeriods && (
+                            <span className="max-w-full truncate overflow-hidden whitespace-nowrap">
+                                Sin Peridodo
+                            </span>
+                        )}
                     </div>
 
                     <ShowDate date={ request.createdAt } />
