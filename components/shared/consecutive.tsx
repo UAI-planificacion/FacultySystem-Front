@@ -19,11 +19,14 @@ export function Consecutive(
 ): JSX.Element {
     return (
         <Badge className={cn(
-            'items-center flex gap-2 text-white mr-5', className,
+            'items-center flex gap-2 text-white mr-2', className,
             isConsecutive ? "bg-sky-500 hover:bg-sky-500/90" : "bg-rose-500 hover:bg-rose-500/90"
         )}>
             <GripHorizontal className="h-4 w-4" />
-            {isConsecutive ? "Consecutivo" : "No consecutivo"}
+
+            <span className="inline-flex whitespace-nowrap">
+                {isConsecutive ? "Consecutivo" : "No consecutivo"}
+            </span>
         </Badge>
     );
 }
