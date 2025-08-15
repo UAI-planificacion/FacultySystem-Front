@@ -42,16 +42,16 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
-}                               from "@/components/ui/form";
-import { Button }               from "@/components/ui/button";
-import { Input }                from "@/components/ui/input";
-import { Switch }               from "@/components/ui/switch";
-import { MultiSelectCombobox }  from "@/components/shared/Combobox";
-import { Badge }                from "@/components/ui/badge";
-import { ProfessorForm }        from "@/components/professor/professor-form";
-import { CommentSection }       from "@/components/comment/comment-section";
-import { RequestDetailTable }   from "@/components/request-detail/request-detail-table";
-import { Checkbox }             from "@/components/ui/checkbox";
+}                                   from "@/components/ui/form";
+import { Button }                   from "@/components/ui/button";
+import { Input }                    from "@/components/ui/input";
+import { Switch }                   from "@/components/ui/switch";
+import { MultiSelectCombobox }      from "@/components/shared/Combobox";
+import { Badge }                    from "@/components/ui/badge";
+import { ProfessorForm }            from "@/components/professor/professor-form";
+import { CommentSection }           from "@/components/comment/comment-section";
+import { RequestDetailModuleDays }  from "@/components/request-detail/request-detail-module-days";
+import { Checkbox }                 from "@/components/ui/checkbox";
 import {
     SizeResponse,
     Day,
@@ -62,7 +62,8 @@ import {
     UpdateRequestDetail,
     SpaceType,
     Size,
-    Building
+    Building,
+    CreateRequestDetail
 }                           from "@/types/request-detail.model";
 import { useCostCenter }    from "@/hooks/use-cost-center";
 import { getSpaceType }     from "@/lib/utils";
@@ -80,7 +81,7 @@ import { Grade }            from "@/types/grade";
 
 const numberOrNull = z.union([
     z.string()
-        .transform(val => val === '' ? null : Number(val))
+        .transform( val => val === '' ? null : Number( val ))
         .refine(
             val => val === null || val === undefined || val >= 1,
             { message: "Debe ser al menos 1" }
@@ -91,7 +92,7 @@ const numberOrNull = z.union([
         .optional(),
     z.null(),
     z.undefined()
-]).transform(val => val === undefined ? null : val);
+]).transform( val => val === undefined ? null : val );
 
 
 const formSchema = z.object({
@@ -111,8 +112,7 @@ const formSchema = z.object({
         moduleId    : z.string()
     })).default([])
 }).superRefine(( data, ctx ) => {
-    const minimum = data.minimum;
-    const maximum = data.maximum;
+    const { minimum, maximum } = data;
 
     if ( minimum !== null && maximum !== null && maximum < minimum ) {
         ctx.addIssue({
@@ -218,12 +218,33 @@ export function RequestDetailForm({
     } = useSpace({ enabled: true });
 
 
+    const createRequestDetailApi = async ( newRequestDetail: CreateRequestDetail ): Promise<RequestDetail> =>
+        fetchApi<RequestDetail>({
+            url     : 'request-details',
+            method  : Method.POST,
+            body    : newRequestDetail
+        });
+
+
     const updateRequestDetailApi = async ( updatedRequestDetail: UpdateRequestDetail ): Promise<RequestDetail>  =>
         fetchApi<RequestDetail>({
             url     :`request-details/${updatedRequestDetail.id}`,
             method  : Method.PATCH ,
             body    : updatedRequestDetail
         });
+
+    
+    
+    const createRequestDetailMutation = useMutation<RequestDetail, Error, CreateRequestDetail>({
+        mutationFn: createRequestDetailApi,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.REQUEST_DETAIL, requestId] });
+            onClose?.();
+            form.reset();
+            toast( 'Detalle creado exitosamente', successToast );
+        },
+        onError: ( mutationError ) => toast( `Error al crear el detalle: ${mutationError.message}`, errorToast )
+    });
 
 
     const updateRequestDetailMutation = useMutation<RequestDetail, Error, UpdateRequestDetail>({
@@ -334,10 +355,19 @@ export function RequestDetailForm({
 
         console.log( '🚀 ~ file: request-detail-form.tsx:191 ~ formData:', formData );
 
-        updateRequestDetailMutation.mutate({
-            ...formData,
-            id: requestDetail.id,
-        });
+        if ( requestDetail ) {
+            updateRequestDetailMutation.mutate({
+                ...formData,
+                id      : requestDetail.id,
+                // staffUpdateId : staff?.id || ''
+            });
+        } else {
+            createRequestDetailMutation.mutate({
+                ...formData,
+                requestId,
+                staffCreateId   : '01JZRBZK4XTHE6M62BVGS3XYW6'
+            });
+        }
     }
 
 
@@ -348,26 +378,30 @@ export function RequestDetailForm({
                     <div className=" flex justify-between items-center gap-2">
                         <div>
                             <DialogTitle>
-                                {requestDetail ? 'Editar Detalle' : 'Agregar Nuevo Detalle'}
+                                { requestDetail ? 'Editar Detalle' : 'Agregar Nuevo Detalle' }
                             </DialogTitle>
 
                             <DialogDescription>
-                                {requestDetail 
+                                { requestDetail 
                                     ? 'Modifique los campos necesarios del detalle.' 
-                                    : 'Complete los campos para agregar un nuevo detalle.'}
+                                    : 'Complete los campos para agregar un nuevo detalle.' }
                             </DialogDescription>
                         </div>
 
                         <Badge
-                            className="mr-5"
-                            variant={requestDetail.isPriority ? 'destructive' : 'default'}
+                            className   = "mr-5"
+                            variant     = { requestDetail.isPriority ? 'destructive' : 'default' }
                         >
-                            {requestDetail.isPriority ? 'Restrictivo' : 'No restrictivo' }
+                            { requestDetail.isPriority ? 'Restrictivo' : 'No restrictivo' }
                         </Badge>
                     </div>
                 </DialogHeader>
 
-                <Tabs defaultValue={tab} onValueChange={( value ) => setTab( value as Tab )} className="w-full">
+                <Tabs
+                    defaultValue    = { tab }
+                    onValueChange   = {( value ) => setTab( value as Tab )}
+                    className       = "w-full"
+                >
                     <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="form">Información</TabsTrigger>
 
@@ -709,7 +743,7 @@ export function RequestDetailForm({
                                 />
 
                                 {/* Tabla de módulos */}
-                                <RequestDetailTable
+                                <RequestDetailModuleDays
                                     requestDetailModule = { form.watch( 'moduleDays' )}
                                     days                = { days || [] }
                                     modules             = { modules }
