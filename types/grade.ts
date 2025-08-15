@@ -5,3 +5,9 @@ export interface Grade {
     createdAt       : Date;
     updatedAt       : Date;
 }
+
+
+export interface GradeFormData {
+    name            : string;
+    headquartersId  : string;
+}
