@@ -2,6 +2,8 @@
 
 import { JSX } from "react";
 
+import { Eye, Edit, Trash2 } from "lucide-react";
+
 import {
     Table,
     TableBody,
@@ -9,19 +11,19 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from "@/components/ui/table";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Eye, Edit, Trash2 } from "lucide-react";
+}                               from "@/components/ui/table";
+import {
+    RequestCardSkeletonGrid,
+    RequestErrorCard
+}                               from "@/components/request/request-card-skeleton";
+import { Card, CardContent }    from "@/components/ui/card";
+import { Button }               from "@/components/ui/button";
+import { Badge }                from "@/components/ui/badge";
+import { Consecutive }          from "@/components/shared/consecutive";
+import { ShowStatus }           from "@/components/shared/status";
 
-import { RequestCardSkeletonGrid, RequestErrorCard } from "@/components/request/request-card-skeleton";
-import { Consecutive } from "@/components/shared/consecutive";
-
+import { usePeriods }   from "@/hooks/use-periods";
 import { type Request } from "@/types/request";
-
-import {ShowDate} from "@/components/shared/date"
-import { ShowStatus } from "../shared/status";
 
 
 interface RequestTableProps {
@@ -42,6 +44,7 @@ export function RequestTable({
     isLoading,
     isError
 }: RequestTableProps ): JSX.Element {
+    const { getPeriodName, isLoadingPeriods } = usePeriods();
 
     if ( isLoading ) {
         return <RequestCardSkeletonGrid count={6} />;
@@ -72,12 +75,9 @@ export function RequestTable({
                                 <TableHead>Estado</TableHead>
                                 <TableHead>Consecutivo</TableHead>
                                 <TableHead>Período</TableHead>
-                                <TableHead>Actualizado</TableHead>
-                                <TableHead>Creado</TableHead>
                                 <TableHead>Creado por</TableHead>
                                 <TableHead>Actualizado por</TableHead>
                                 <TableHead>Asignatura</TableHead>
-                                <TableHead>Total Detalles</TableHead>
                                 <TableHead className="text-right">Acciones</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -89,28 +89,27 @@ export function RequestTable({
                                             {request.title}
                                         </div>
                                     </TableCell>
+
                                     <TableCell>
                                         <ShowStatus status={request.status} />
                                     </TableCell>
+
                                     <TableCell>
                                         <Consecutive isConsecutive={request.isConsecutive} />
                                     </TableCell>
+
                                     <TableCell>
                                         <Badge variant="outline">
-                                            {request.periodId}
+                                            {isLoadingPeriods ? request.periodId : getPeriodName( request.periodId )}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell>
-                                        <ShowDate date={request.updatedAt} />
-                                    </TableCell>
-                                    <TableCell>
-                                        <ShowDate date={request.createdAt} />
-                                    </TableCell>
+
                                     <TableCell>
                                         <div className="max-w-[150px] truncate" title={request.staffCreate.name}>
                                             {request.staffCreate.name}
                                         </div>
                                     </TableCell>
+
                                     <TableCell>
                                         {request.staffUpdate ? (
                                             <div className="max-w-[150px] truncate" title={request.staffUpdate.name}>
@@ -120,40 +119,41 @@ export function RequestTable({
                                             <span className="text-muted-foreground">-</span>
                                         )}
                                     </TableCell>
+
                                     <TableCell>
                                         <div className="max-w-[150px] truncate" title={request.subject.name}>
                                             {request.subject.name}
                                         </div>
                                     </TableCell>
-                                    <TableCell>
-                                        <Badge variant="secondary">
-                                            {request.totalDetails}
-                                        </Badge>
-                                    </TableCell>
+
                                     <TableCell className="text-right">
                                         <div className="flex items-center justify-end gap-2">
                                             <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => onViewDetails(request)}
-                                                title="Ver detalles"
+                                                variant     = "ghost"
+                                                size        = "sm"
+                                                onClick     = {() => onViewDetails( request )}
+                                                title       = "Ver detalles"
+                                                className   = "gap-1"
                                             >
+                                                { request.totalDetails }
                                                 <Eye className="h-4 w-4" />
                                             </Button>
+
                                             <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => onEdit(request)}
-                                                title="Editar"
+                                                variant = "ghost"
+                                                size    = "sm"
+                                                onClick = {() => onEdit( request )}
+                                                title   = "Editar"
                                             >
                                                 <Edit className="h-4 w-4" />
                                             </Button>
+
                                             <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => onDelete(request)}
-                                                title="Eliminar"
-                                                className="text-destructive hover:text-destructive"
+                                                variant     = "ghost"
+                                                size        = "sm"
+                                                onClick     = {() => onDelete( request )}
+                                                title       = "Eliminar"
+                                                className   = "text-destructive hover:text-destructive"
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
