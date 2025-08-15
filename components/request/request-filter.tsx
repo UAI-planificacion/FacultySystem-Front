@@ -2,7 +2,7 @@
 
 import { JSX } from "react";
 
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Grid2x2, AlignJustify } from "lucide-react";
 
 import {
     Select,
@@ -12,12 +12,18 @@ import {
     SelectValue
 }                   from "@/components/ui/select";
 import {
+    Tabs,
+    TabsList,
+    TabsTrigger
+}                   from "@/components/ui/tabs";
+import {
     Card,
     CardHeader,
 }                   from "@/components/ui/card";
 import { Button }   from "@/components/ui/button";
 import { Input }    from "@/components/ui/input";
 import { Label }    from "@/components/ui/label";
+import { ViewMode } from "@/components/request/request-main";
 
 import { Status } from "@/types/request";
 
@@ -33,6 +39,8 @@ export interface RequestFilter {
     sortOrder               : "asc" | "desc";
     setSortOrder            : ( sortOrder: "asc" | "desc" ) => void;
     onNewRequest            : () => void;
+    viewMode                : ViewMode,
+    setViewMode             : ( viewMode: ViewMode ) => void;
 }
 
 
@@ -47,97 +55,116 @@ export function RequestFilter({
     setSortBy,
     sortOrder,
     setSortOrder,
-    onNewRequest
+    onNewRequest,
+    viewMode,
+    setViewMode,
 }: RequestFilter ): JSX.Element {
     return (
         <Card>
             <CardHeader>
                 <div className="flex flex-col lg:flex-row gap-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end flex-1">
-                    <div className="grid space-y-2">
-                        <Label htmlFor="search">Buscar por Título</Label>
+                        <div className="grid space-y-2">
+                            <Label htmlFor="search">Buscar por Título</Label>
 
-                        <div className="relative">
-                            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <div className="relative">
+                                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
 
-                            <Input
-                                id          = "search"
-                                placeholder = "Título de solicitud..."
-                                value       = { title }
-                                onChange    = {( e ) => setTitle( e.target.value )}
-                                className   = "pl-8"
-                            />
+                                <Input
+                                    id          = "search"
+                                    placeholder = "Título de solicitud..."
+                                    value       = { title }
+                                    onChange    = {( e ) => setTitle( e.target.value )}
+                                    className   = "pl-8"
+                                />
+                            </div>
                         </div>
-                    </div>
 
-                    <div className="grid space-y-2">
-                        <Label>Estado</Label>
+                        <div className="grid space-y-2">
+                            <Label>Estado</Label>
 
-                        <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as Status | "ALL")}>
-                            <SelectTrigger>
-                                <SelectValue />
-                            </SelectTrigger>
-
-                            <SelectContent>
-                                <SelectItem value="ALL">Todos</SelectItem>
-                                <SelectItem value={Status.PENDING}>Pendiente</SelectItem>
-                                <SelectItem value={Status.APPROVED}>Aprobado</SelectItem>
-                                <SelectItem value={Status.REJECTED}>Rechazado</SelectItem>
-                                <SelectItem value={Status.REVIEWING}>En Revisión</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="grid space-y-2">
-                        <Label>Consecutivo</Label>
-
-                        <Select
-                            value={consecutiveFilter}
-                            onValueChange={( value ) => setConsecutiveFilter( value as "ALL" | "TRUE" | "FALSE" )}
-                        >
-                            <SelectTrigger>
-                                <SelectValue />
-                            </SelectTrigger>
-
-                            <SelectContent>
-                                <SelectItem value="ALL">Todos</SelectItem>
-                                <SelectItem value="TRUE">Sí</SelectItem>
-                                <SelectItem value="FALSE">No</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="grid space-y-2">
-                        <Label>Ordenar por</Label>
-
-                        <div className="flex gap-2">
-                            <Select value={sortBy} onValueChange={(value) => setSortBy(value as any)}>
-                                <SelectTrigger className="flex-1">
+                            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as Status | "ALL")}>
+                                <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>
 
                                 <SelectContent>
-                                    <SelectItem value="title">Título</SelectItem>
-                                    <SelectItem value="consecutive">Consecutivo</SelectItem>
-                                    <SelectItem value="updatedAt">Fecha de Actualización</SelectItem>
+                                    <SelectItem value="ALL">Todos</SelectItem>
+                                    <SelectItem value={Status.PENDING}>Pendiente</SelectItem>
+                                    <SelectItem value={Status.APPROVED}>Aprobado</SelectItem>
+                                    <SelectItem value={Status.REJECTED}>Rechazado</SelectItem>
+                                    <SelectItem value={Status.REVIEWING}>En Revisión</SelectItem>
                                 </SelectContent>
                             </Select>
+                        </div>
 
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+                        <div className="grid space-y-2">
+                            <Label>Consecutivo</Label>
+
+                            <Select
+                                value={consecutiveFilter}
+                                onValueChange={( value ) => setConsecutiveFilter( value as "ALL" | "TRUE" | "FALSE" )}
                             >
-                                {sortOrder === "asc" ? "↑" : "↓"}
-                            </Button>
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+
+                                <SelectContent>
+                                    <SelectItem value="ALL">Todos</SelectItem>
+                                    <SelectItem value="TRUE">Sí</SelectItem>
+                                    <SelectItem value="FALSE">No</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="grid space-y-2">
+                            <Label>Ordenar por</Label>
+
+                            <div className="flex gap-2">
+                                <Select value={sortBy} onValueChange={(value) => setSortBy(value as any)}>
+                                    <SelectTrigger className="flex-1">
+                                        <SelectValue />
+                                    </SelectTrigger>
+
+                                    <SelectContent>
+                                        <SelectItem value="title">Título</SelectItem>
+                                        <SelectItem value="consecutive">Consecutivo</SelectItem>
+                                        <SelectItem value="updatedAt">Fecha de Actualización</SelectItem>
+                                    </SelectContent>
+                                </Select>
+
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+                                >
+                                    {sortOrder === "asc" ? "↑" : "↓"}
+                                </Button>
+                            </div>
                         </div>
                     </div>
-                    </div>
 
-                    <div className="flex items-end">
-                        <Button onClick={onNewRequest} className="w-full lg:w-auto">
-                            <Plus className="mr-2 h-4 w-4" />
-                            Nueva Solicitud
+                    <div className="flex items-end gap-4">
+                        <Tabs
+                            value           = { viewMode }
+                            onValueChange   = {( value ) => setViewMode( value as ViewMode )}
+                        >
+                            <TabsList className="px-1 py-0">
+                                <TabsTrigger value="cards">
+                                    <Grid2x2 className="h-5 w-5" />
+                                </TabsTrigger>
+
+                                <TabsTrigger value="table">
+                                    <AlignJustify className="h-5 w-5" />
+                                </TabsTrigger>
+                            </TabsList>
+                        </Tabs>
+
+                        <Button
+                            onClick     = { onNewRequest }
+                            className   = "w-full lg:w-auto"
+                        >
+                            <Plus className="h-4 w-4" />
                         </Button>
                     </div>
                 </div>
