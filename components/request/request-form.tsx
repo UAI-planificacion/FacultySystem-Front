@@ -48,17 +48,25 @@ import {
 import { Input }                from "@/components/ui/input";
 import { Button }               from "@/components/ui/button";
 import { ShowDateAt }           from "@/components/shared/date-at";
-import { Consecutive }          from "@/components/shared/consecutive";
 import { MultiSelectCombobox }  from "@/components/shared/Combobox";
 import { CommentSection }       from "@/components/comment/comment-section";
+import { Switch }               from "@/components/ui/switch";
+import { Textarea }             from "@/components/ui/textarea";
 
-import { Request, Status, UpdateRequest }   from "@/types/request";
-import { KEY_QUERYS }                       from "@/consts/key-queries";
-import { Subject }                          from "@/types/subject.model";
-import { Method, fetchApi }                 from "@/services/fetch";
-import { errorToast, successToast }         from "@/config/toast/toast.config";
-import { Period }                           from "@/types/periods.model";
-import { ENV }                              from "@/config/envs/env";
+import {
+    CreateRequest,
+    Request,
+    Status,
+    UpdateRequest
+}                                   from "@/types/request";
+import { KEY_QUERYS }               from "@/consts/key-queries";
+import { Subject }                  from "@/types/subject.model";
+import { Method, fetchApi }         from "@/services/fetch";
+import { errorToast, successToast } from "@/config/toast/toast.config";
+import { Period }                   from "@/types/periods.model";
+import { ENV }                      from "@/config/envs/env";
+import { cn }                       from "@/lib/utils";
+import LoaderMini                   from "@/icons/LoaderMini";
 
 
 export type RequestFormValues = z.infer<typeof formSchema>;
@@ -87,11 +95,11 @@ const formSchema = z.object({
         required_error: "Debe seleccionar un período",
         invalid_type_error: "Período no válido"
     }),
-    // isConsecutive: z.boolean(),
-    // description: z.string()
-    //     .max(500, { message: "La descripción no puede tener más de 500 caracteres" })
-    //     .nullable()
-    //     .transform(val => val === "" ? null : val),
+    isConsecutive: z.boolean(),
+    description: z.string()
+        .max(500, { message: "La descripción no puede tener más de 500 caracteres" })
+        .nullable()
+        .transform(val => val === "" ? null : val),
     subjectId: z.string({
         required_error: "Debe seleccionar una asignatura",
         invalid_type_error: "Asignatura no válida"
@@ -100,11 +108,12 @@ const formSchema = z.object({
 
 
 const defaultRequest = ( data : Request | null ) => ({
-    title           : data?.title || '',
-    status          : data?.status || Status.PENDING,
-    periodId        : data?.periodId || '',
-    isConsecutive   : data?.isConsecutive || false,
-    subjectId       : data?.subject?.id || '',
+    title           : data?.title           || '',
+    status          : data?.status          || Status.PENDING,
+    description     : data?.description     || '',
+    periodId        : data?.periodId        || '',
+    isConsecutive   : data?.isConsecutive   || false,
+    subjectId       : data?.subject?.id     || '',
 });
 
 
@@ -128,12 +137,30 @@ export function RequestForm({
     const queryClient   = useQueryClient();
     const [tab, setTab] = useState<Tab>( 'form' );
 
-    // API function to update request
+
+    const createRequestApi = async ( request: CreateRequest ): Promise<Request> =>
+        fetchApi<Request>({ url: `requests`, method: Method.POST, body: request });
+
+
     const updateRequestApi = async ( updatedRequest: UpdateRequest ): Promise<Request>  =>
-        fetchApi<Request>({ url: `requests/${updatedRequest.id}`, method: Method.PATCH, body: updatedRequest });
+        fetchApi<Request>({
+            url     : `requests/${updatedRequest.id}`,
+            method  : Method.PATCH,
+            body    : updatedRequest
+        });
 
 
-    // Mutation for updating request
+    const createRequestMutation = useMutation<Request, Error, CreateRequest>({
+        mutationFn: createRequestApi,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.REQUESTS] });
+            onClose();
+            toast( 'Solicitud creada exitosamente', successToast );
+        },
+        onError: ( mutationError ) => toast( `Error al crear solicitud: ${mutationError.message}`, errorToast )
+    });
+
+
     const updateRequestMutation = useMutation<Request, Error, UpdateRequest>({
         mutationFn: updateRequestApi,
         onSuccess: () => {
@@ -197,14 +224,19 @@ export function RequestForm({
 
 
     function handleSubmit( data: RequestFormValues ): void {
-        // Implementear create new request
-        if (!request?.id) return;
-        
-        console.log('🚀 ~ file: request-form.tsx:71 ~ data:', data)
-        updateRequestMutation.mutate({
-            ...data,
-            id: request.id
-        });
+        console.log( "🚀 ~ file: request-form.tsx:200 ~ data:", data )
+
+        if ( request ) {
+            updateRequestMutation.mutate({
+                ...data,
+                id: request.id
+            });
+        } else {
+            createRequestMutation.mutate({
+                ...data,
+                staffCreateId: '01JZRBZK4XTHE6M62BVGS3XYW6'
+            });
+        }
     }
 
 
@@ -212,28 +244,41 @@ export function RequestForm({
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[700px] max-h-[80vh] transition-all duration-800">
                 <DialogHeader>
-                    <div className="flex justify-between items-center">
-                        <div className="space-y-1">
-                            <DialogTitle>Editar Solicitud</DialogTitle>
+                    <div className="space-y-1">
+                        <DialogTitle>
+                            { request ? 'Editar' : 'Crear' } Solicitud
+                        </DialogTitle>
 
-                            <DialogDescription>
-                                Realice los cambios necesarios en la solicitud
-                            </DialogDescription>
-                        </div>
-
-                        <Consecutive isConsecutive={request?.isConsecutive || false} />
+                        <DialogDescription>
+                            { request
+                                ? "Realice los cambios necesarios en la solicitud"
+                                : "Complete los campos obligatorios para crear una solicitud"
+                            }
+                        </DialogDescription>
                     </div>
                 </DialogHeader>
 
-                <Tabs defaultValue={tab} onValueChange={( value ) => setTab( value as Tab )} className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="form">Información</TabsTrigger>
-                        <TabsTrigger value="comments">
-                            Comentarios 
-                        </TabsTrigger>
-                    </TabsList>
+                <Tabs
+                    defaultValue    = { tab }
+                    onValueChange   = {( value ) => setTab( value as Tab )}
+                    className       = "w-full"
+                >
+                    { request &&
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="form">
+                                Información
+                            </TabsTrigger>
 
-                    <TabsContent value="form" className="space-y-4 mt-4">
+                            <TabsTrigger value="comments">
+                                Comentarios 
+                            </TabsTrigger>
+                        </TabsList>
+                    }
+
+                    <TabsContent
+                        value       = "form"
+                        className   = { cn( "space-y-4", request ? "mt-4": "" )}
+                    >
                         <Form {...form}>
                             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                                 <div className="grid grid-cols-1 gap-4 max-h-[60vh]">
@@ -256,65 +301,67 @@ export function RequestForm({
                                     />
 
                                     {/* Status */}
-                                    <FormField
-                                        control = { form.control }
-                                        name    = "status"
-                                        render  = {({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Estado</FormLabel>
+                                    { request &&
+                                        <FormField
+                                            control = { form.control }
+                                            name    = "status"
+                                            render  = {({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Estado</FormLabel>
 
-                                                <FormControl>
-                                                    <ToggleGroup
-                                                        type            = "single"
-                                                        value           = { field.value }
-                                                        onValueChange   = {( value: Status ) => {
-                                                            if ( value ) field.onChange( value )
-                                                        }}
-                                                        className       = "w-full"
-                                                        defaultValue    = { field.value }
-                                                    >
-                                                        <ToggleGroupItem
-                                                            value       = "PENDING"
-                                                            aria-label  = "Pendiente"
-                                                            className   = "flex-1 rounded-tl-lg rounded-bl-lg rounded-tr-none rounded-br-none border-t border-l border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-amber-400 data-[state=on]:dark:bg-amber-500 data-[state=on]:text-black data-[state=on]:dark:text-white data-[state=on]:hover:bg-amber-500 data-[state=on]:dark:hover:bg-amber-600"
+                                                    <FormControl>
+                                                        <ToggleGroup
+                                                            type            = "single"
+                                                            value           = { field.value }
+                                                            onValueChange   = {( value: Status ) => {
+                                                                if ( value ) field.onChange( value )
+                                                            }}
+                                                            className       = "w-full"
+                                                            defaultValue    = { field.value }
                                                         >
-                                                            <CircleDashed className="mr-2 h-4 w-4"/>
-                                                            Pendiente
-                                                        </ToggleGroupItem>
+                                                            <ToggleGroupItem
+                                                                value       = "PENDING"
+                                                                aria-label  = "Pendiente"
+                                                                className   = "flex-1 rounded-tl-lg rounded-bl-lg rounded-tr-none rounded-br-none border-t border-l border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-amber-400 data-[state=on]:dark:bg-amber-500 data-[state=on]:text-black data-[state=on]:dark:text-white data-[state=on]:hover:bg-amber-500 data-[state=on]:dark:hover:bg-amber-600"
+                                                            >
+                                                                <CircleDashed className="mr-2 h-4 w-4"/>
+                                                                Pendiente
+                                                            </ToggleGroupItem>
 
-                                                        <ToggleGroupItem
-                                                            value       = "REVIEWING"
-                                                            aria-label  = "Revisando"
-                                                            className   = "flex-1 rounded-none border-t border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-blue-400 data-[state=on]:dark:bg-blue-500 data-[state=on]:text-black data-[state=on]:dark:text-white data-[state=on]:hover:bg-blue-500 data-[state=on]:dark:hover:bg-blue-600"
-                                                        >
-                                                            <Eye className="mr-2 h-4 w-4"/>
-                                                            Revisando
-                                                        </ToggleGroupItem>
+                                                            <ToggleGroupItem
+                                                                value       = "REVIEWING"
+                                                                aria-label  = "Revisando"
+                                                                className   = "flex-1 rounded-none border-t border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-blue-400 data-[state=on]:dark:bg-blue-500 data-[state=on]:text-black data-[state=on]:dark:text-white data-[state=on]:hover:bg-blue-500 data-[state=on]:dark:hover:bg-blue-600"
+                                                            >
+                                                                <Eye className="mr-2 h-4 w-4"/>
+                                                                Revisando
+                                                            </ToggleGroupItem>
 
-                                                        <ToggleGroupItem
-                                                            value       = "APPROVED"
-                                                            aria-label  = "Aprobado"
-                                                            className   = "flex-1 rounded-none border-t border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-green-400 data-[state=on]:dark:bg-green-500 data-[state=on]:text-black data-[state=on]:dark:text-white data-[state=on]:hover:bg-green-500 data-[state=on]:dark:hover:bg-green-600"
-                                                        >
-                                                            <BadgeCheck className="mr-2 h-4 w-4"/>
-                                                            Aprobado
-                                                        </ToggleGroupItem>
+                                                            <ToggleGroupItem
+                                                                value       = "APPROVED"
+                                                                aria-label  = "Aprobado"
+                                                                className   = "flex-1 rounded-none border-t border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-green-400 data-[state=on]:dark:bg-green-500 data-[state=on]:text-black data-[state=on]:dark:text-white data-[state=on]:hover:bg-green-500 data-[state=on]:dark:hover:bg-green-600"
+                                                            >
+                                                                <BadgeCheck className="mr-2 h-4 w-4"/>
+                                                                Aprobado
+                                                            </ToggleGroupItem>
 
-                                                        <ToggleGroupItem
-                                                            value       = "REJECTED"
-                                                            aria-label  = "Rechazado"
-                                                            className   = "flex-1 rounded-tl-none rounded-bl-none rounded-tr-lg rounded-br-lg border-t border-r border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-red-400 data-[state=on]:dark:bg-red-500 data-[state=on]:text-black data-[state=on]:dark:text-white data-[state=on]:hover:bg-red-500 data-[state=on]:dark:hover:bg-red-600"
-                                                        >
-                                                            <OctagonX className="mr-2 h-4 w-4"/>
-                                                            Rechazado
-                                                        </ToggleGroupItem>
-                                                    </ToggleGroup>
-                                                </FormControl>
+                                                            <ToggleGroupItem
+                                                                value       = "REJECTED"
+                                                                aria-label  = "Rechazado"
+                                                                className   = "flex-1 rounded-tl-none rounded-bl-none rounded-tr-lg rounded-br-lg border-t border-r border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-red-400 data-[state=on]:dark:bg-red-500 data-[state=on]:text-black data-[state=on]:dark:text-white data-[state=on]:hover:bg-red-500 data-[state=on]:dark:hover:bg-red-600"
+                                                            >
+                                                                <OctagonX className="mr-2 h-4 w-4"/>
+                                                                Rechazado
+                                                            </ToggleGroupItem>
+                                                        </ToggleGroup>
+                                                    </FormControl>
 
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    }
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         {/* Period */}
@@ -347,7 +394,6 @@ export function RequestForm({
                                                                     onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value )}
                                                                     options             = { memoizedPeriods }
                                                                     isLoading           = { isLoadingPeriods }
-                                                                    // error               = { isErrorPeriods }
                                                                 />
                                                             )}
                                                         </FormControl>
@@ -371,9 +417,9 @@ export function RequestForm({
                                                             { isError ? (
                                                                 <>
                                                                     <Input
-                                                                        placeholder="ID de la asignatura"
-                                                                        value={field.value || ''}
-                                                                        onChange={field.onChange}
+                                                                        placeholder = "ID de la asignatura"
+                                                                        value       = { field.value || '' }
+                                                                        onChange    = { field.onChange }
                                                                     />
 
                                                                     <FormDescription>
@@ -399,40 +445,88 @@ export function RequestForm({
                                         />
                                     </div>
 
+                                    {/* Is Consecutive */}
+                                    <FormField
+                                        control = { form.control }
+                                        name    = "isConsecutive"
+                                        render  = {({ field }) => (
+                                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                                <div className="space-y-0.5">
+                                                    <FormLabel className="text-base">Es consecutivo</FormLabel>
+
+                                                    <FormDescription>
+                                                        Marque si la solicitud es para horarios consecutivos
+                                                    </FormDescription>
+                                                </div>
+
+                                                <FormControl>
+                                                    <Switch
+                                                        checked         = { field.value }
+                                                        onCheckedChange = { field.onChange }
+                                                    />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+
                                     {/* Description */}
-                                    <div className="flex flex-col space-y-1">
-                                        <label>Descripción</label>
-                                        <p>{request?.description || '-'}</p>
-                                    </div>
+                                    <FormField
+                                        control = { form.control }
+                                        name    = "description"
+                                        render  = {({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Descripción</FormLabel>
 
-                                    {/* Staff Create - Readonly */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <FormLabel>Creado por</FormLabel>
+                                                <FormControl>
+                                                    <Textarea
+                                                        placeholder = "Agregue una descripción (opcional)"
+                                                        className   = "min-h-[100px] max-h-[200px]"
+                                                        {...field}
+                                                        value       = { field.value || '' }
+                                                    />
+                                                </FormControl>
 
-                                            <Input 
-                                                value = { request?.staffCreate?.name || '-' }
-                                                readOnly 
-                                                disabled 
-                                            />
+                                                <FormDescription className="text-xs flex justify-end">
+                                                    {field.value?.length || 0} / 500
+                                                </FormDescription>
+
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    { request && <>
+                                        {/* Staff Create - Readonly */}
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <FormLabel>Creado por</FormLabel>
+                                                dfsd
+
+                                                <Input 
+                                                    value = { request?.staffCreate?.name || '-' }
+                                                    readOnly 
+                                                    disabled 
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <FormLabel>Última actualización por</FormLabel>
+
+                                                <Input 
+                                                    value = { request?.staffUpdate?.name || '-' }
+                                                    readOnly 
+                                                    disabled 
+                                                />
+                                            </div>
                                         </div>
 
                                         {/* Staff Update - Readonly */}
-                                        <div className="space-y-2">
-                                            <FormLabel>Última actualización por</FormLabel>
-
-                                            <Input 
-                                                value = { request?.staffUpdate?.name || '-' }
-                                                readOnly 
-                                                disabled 
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <ShowDateAt
-                                        createdAt = { request?.createdAt }
-                                        updatedAt = { request?.updatedAt }
-                                    />
+                                        <ShowDateAt
+                                            createdAt = { request?.createdAt }
+                                            updatedAt = { request?.updatedAt }
+                                        />
+                                    </>
+                                    }
                                 </div>
 
                                 <div className="flex justify-between space-x-4 pt-4 border-t">
@@ -444,21 +538,25 @@ export function RequestForm({
                                         type        = "submit"
                                         disabled    = { updateRequestMutation.isPending }
                                     >
-                                        { updateRequestMutation.isPending ? 'Guardando...' : 'Guardar cambios' }
+                                        { updateRequestMutation.isPending && <LoaderMini /> }
+                                        { createRequestMutation.isPending && <LoaderMini /> }
+                                        { request ? 'Guardar cambios' : 'Crear solicitud' }
                                     </Button>
                                 </div>
                             </form>
                         </Form>
                     </TabsContent>
 
-                    <TabsContent value="comments" className="mt-4">
-                        {request?.id && (
-                            <CommentSection
-                                requestId   = { request.id }
-                                enabled     = { tab === 'comments' }
-                            />
-                        )}
-                    </TabsContent>
+                    { request &&
+                        <TabsContent value="comments" className="mt-4">
+                            {request?.id && (
+                                <CommentSection
+                                    requestId   = { request.id }
+                                    enabled     = { tab === 'comments' }
+                                />
+                            )}
+                        </TabsContent>
+                    }
                 </Tabs>
             </DialogContent>
         </Dialog>
