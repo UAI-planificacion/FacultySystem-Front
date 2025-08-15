@@ -1,4 +1,8 @@
-import { JSX, useState, useCallback, useMemo } from "react";
+"use client"
+
+import { JSX } from "react";
+
+import { Edit, Trash2 } from "lucide-react";
 
 import {
     Table,
@@ -6,124 +10,199 @@ import {
     TableCell,
     TableHead,
     TableHeader,
-    TableRow
-}                       from "@/components/ui/table"
-import { Day, Module }  from "@/types/request";
-import { CheckIcon }    from "@/icons/Check";
-import { NoCheckIcon }  from "@/icons/NoCheck";
+    TableRow,
+}                               from "@/components/ui/table";
+import { Card, CardContent }    from "@/components/ui/card";
+import { ScrollArea }           from "@/components/ui/scroll-area";
+import { Badge }                from "@/components/ui/badge";
+import { Skeleton }             from "@/components/ui/skeleton";
+import { Button }               from "@/components/ui/button";
 
-
-interface RequestDetailModule {
-    id?          : string;
-    day         : string;
-    moduleId    : string;
-}
+import type { RequestDetail }   from "@/types/request-detail.model";
+import type { Module }          from "@/types/request";
+import type { Professor }       from "@/types/professor";
+import { getSpaceType }         from "@/lib/utils";
 
 
 interface RequestDetailTableProps {
-    requestDetailModule : RequestDetailModule[];
-    days                : Day[];
+    data                : RequestDetail[] | undefined;
+    isLoading           : boolean;
+    onEdit              : ( detail: RequestDetail ) => void;
+    onDelete            : ( detail: RequestDetail ) => void;
+    professors          : Professor[];
+    isLoadingProfessors : boolean;
+    isErrorProfessors   : boolean;
     modules             : Module[];
-    onModuleToggle      : ( day: string, moduleId: string, isChecked: boolean ) => void;
+    isLoadingModules    : boolean;
+    isErrorModules      : boolean;
 }
 
 
+function TableRowSkeleton() {
+    return (
+        <TableRow>
+            <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+            <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+            <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+            <TableCell><Skeleton className="h-6 w-12" /></TableCell>
+            <TableCell><Skeleton className="h-6 w-12" /></TableCell>
+            <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+            <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+            <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+            <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+            <TableCell>
+                <div className="flex gap-2">
+                    <Skeleton className="h-8 w-8" />
+                    <Skeleton className="h-8 w-8" />
+                </div>
+            </TableCell>
+        </TableRow>
+    );
+}
+
 export function RequestDetailTable({
-    requestDetailModule,
-    days,
+    data,
+    isLoading,
+    onEdit,
+    onDelete,
+    professors,
+    isLoadingProfessors,
+    isErrorProfessors,
     modules,
-    onModuleToggle
-}: RequestDetailTableProps ): JSX.Element {
-    const [animationKeys, setAnimationKeys] = useState<Record<string, number>>({});
-
-
-    const checkedStates = useMemo(() => {
-        const states: Record<string, boolean> = {};
-
-        requestDetailModule.forEach(item => {
-            states[`${item.day}-${item.moduleId}`] = true;
-        });
-        return states;
-    }, [requestDetailModule]);
-
-
-    const isChecked = useCallback(( day: string, moduleId: string ): boolean => {
-        return checkedStates[`${day}-${moduleId}`] || false;
-    }, [checkedStates]);
-
-
-    const handleCheckboxChange = useCallback(( day: string, moduleId: string, checked: boolean ): void => {
-        const key = `${moduleId}-${day}`;
-
-        setAnimationKeys(prev => ({
-            ...prev,
-            [key]: (prev[key] || 0) + 1
-        }));
-
-        onModuleToggle( day, moduleId, checked );
-    }, [onModuleToggle]);
+    isLoadingModules,
+    isErrorModules,
+}: RequestDetailTableProps): JSX.Element {
+    
+    const getProfessorName = (professorId: string | null): string => {
+        if (!professorId || isLoadingProfessors || isErrorProfessors) return "-";
+        const professor = professors.find(p => p.id === professorId);
+        return professor?.name || "-";
+    };
+    
+    const getSpaceDisplay = (detail: RequestDetail): string => {
+        if (detail.spaceId) return detail.spaceId;
+        if (detail.spaceType) return getSpaceType(detail.spaceType) || detail.spaceType;
+        if (detail.spaceSize) return detail.spaceSize;
+        return "-";
+    };
+    
+    const getCapacityRange = (minimum: number | null, maximum: number | null): string => {
+        if (minimum && maximum) return `${minimum} - ${maximum}`;
+        if (minimum) return `${minimum}+`;
+        if (maximum) return `≤ ${maximum}`;
+        return "-";
+    };
 
     return (
-        <div className="w-full">
-            <div className="border rounded-lg bg-background relative">
-                {/* Header fijo */}
-                <div className="sticky top-0 z-30 bg-background border-b">
-                    <div className="overflow-x-auto">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead className="w-[12.2rem] px-3 border-r bg-background">
-                                        Módulos
-                                    </TableHead>
-
-                                    {days.map((day) => (
-                                        <TableHead
-                                            key         = { day.id }
-                                            className   = "text-center w-20 min-w-20 px-2 whitespace-nowrap bg-background"
-                                        >
-                                            { day.name }
-                                        </TableHead>
-                                    ))}
-                                </TableRow>
-                            </TableHeader>
-                        </Table>
-                    </div>
-                </div>
-
-                {/* Contenido con scroll */}
-                <div className="overflow-x-auto max-h-72 overflow-y-auto">
+        <Card>
+            <CardContent className="p-0">
+                <ScrollArea>
                     <Table>
-                        <TableBody>
-                            {modules.map((module) => (
-                                <TableRow key={module.id}>
-                                    <TableCell
-                                        className   = "sticky left-0 bg-background z-10 w-32 min-w-32 p-3 border-r shadow-md text-xs truncate"
-                                        title       = { `${ module.name } ${ module.difference ?? '' } ${ module.startHour }-${ module.endHour }` }
-                                    >
-                                        { module.name } { module.difference ?? '' } { module.startHour }-{ module.endHour }
-                                    </TableCell>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Capacidad</TableHead>
+                                <TableHead>Espacio</TableHead>
+                                <TableHead>Centro de Costo</TableHead>
+                                <TableHead>Tarde</TableHead>
+                                <TableHead>Prioridad</TableHead>
+                                <TableHead>Grado</TableHead>
+                                <TableHead>Profesor</TableHead>
+                                <TableHead>Creado por</TableHead>
+                                <TableHead>Actualizado por</TableHead>
+                                <TableHead className="text-right">Acciones</TableHead>
+                            </TableRow>
+                        </TableHeader>
 
-                                    {days.map( day => (
-                                        <TableCell
-                                            key         = { `${ module.id }-${ day.id }` }
-                                            className   = "text-center w-20 min-w-20 p-2 hover:bg-zinc-200/50 dark:hover:bg-zinc-800 cursor-pointer"
-                                            onClick     = {() => {
-                                                const currentChecked = isChecked( day.id.toString(), module.id.toString() );
-                                                handleCheckboxChange( day.id.toString(), module.id.toString(), !currentChecked );
-                                            }}
-                                        >
-                                            { isChecked( day.id.toString(), module.id.toString() )
-                                                ? <CheckIcon key={`check-${module.id}-${day.id}-${animationKeys[`${module.id}-${day.name}`] || 0}`} />
-                                                : <NoCheckIcon key={`nocheck-${module.id}-${day.id}-${animationKeys[`${module.id}-${day.name}`] || 0}`} />
-                                            }
-                                        </TableCell>
-                                    ))}
+                        <TableBody>
+                            {isLoading ? (
+                                Array.from({ length: 5 }).map((_, index) => (
+                                    <TableRowSkeleton key={`skeleton-${index}`} />
+                                ))
+                            ) : data && data.length > 0 ? (
+                                    data.map((detail) => (
+                                        <TableRow key={detail.id}>
+                                            <TableCell className="font-medium">
+                                                {getCapacityRange(detail.minimum, detail.maximum)}
+                                            </TableCell>
+
+                                            <TableCell>
+                                                {getSpaceDisplay(detail)}
+                                            </TableCell>
+
+                                            <TableCell>
+                                                {detail.costCenterId || "-"}
+                                            </TableCell>
+
+                                            <TableCell>
+                                                <Badge variant={detail.inAfternoon ? "default" : "secondary"}>
+                                                    {detail.inAfternoon ? "Sí" : "No"}
+                                                </Badge>
+                                            </TableCell>
+
+                                            <TableCell>
+                                                <Badge variant={detail.isPriority ? "destructive" : "outline"}>
+                                                    {detail.isPriority ? "Alta" : "Normal"}
+                                                </Badge>
+                                            </TableCell>
+
+                                            <TableCell>
+                                                {detail.grade?.name || "-"}
+                                            </TableCell>
+
+                                            <TableCell>
+                                                {getProfessorName(detail.professorId)}
+                                            </TableCell>
+
+                                            <TableCell>
+                                                <div className="space-y-1">
+                                                    <div className="font-medium text-sm">{detail.staffCreate.name}</div>
+                                                    <div className="text-xs text-muted-foreground">{detail.staffCreate.email}</div>
+                                                </div>
+                                            </TableCell>
+
+                                            <TableCell>
+                                                {detail.staffUpdate ? (
+                                                    <div className="space-y-1">
+                                                        <div className="font-medium text-sm">{detail.staffUpdate.name}</div>
+                                                        <div className="text-xs text-muted-foreground">{detail.staffUpdate.email}</div>
+                                                    </div>
+                                                ) : (
+                                                    "-"
+                                                )}
+                                            </TableCell>
+
+                                            <TableCell className="text-right">
+                                                <div className="flex justify-end gap-2">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => onEdit(detail)}
+                                                    >
+                                                        <Edit className="h-4 w-4" />
+                                                    </Button>
+
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => onDelete(detail)}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                <TableRow>
+                                    <TableCell colSpan={10} className="text-center py-8">
+                                        <p className="text-muted-foreground">No hay detalles para esta solicitud.</p>
+                                    </TableCell>
                                 </TableRow>
-                            ))}
+                            )}
                         </TableBody>
                     </Table>
-                </div>
-            </div>
-        </div>
+                </ScrollArea>
+            </CardContent>
+        </Card>
     );
 }
