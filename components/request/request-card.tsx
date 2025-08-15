@@ -1,6 +1,6 @@
 'use client'
 
-import { JSX, useMemo } from "react";
+import { JSX } from "react";
 
 import {
     Eye,
@@ -10,7 +10,6 @@ import {
     Pencil,
     CalendarDays
 }                   from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
 
 import {
     Card,
@@ -22,13 +21,10 @@ import { Button }       from "@/components/ui/button";
 import { ShowStatus }   from "@/components/shared/status";
 import { ShowDate }     from "@/components/shared/date";
 import { Consecutive }  from "@/components/shared/consecutive";
+import { usePeriods }   from "@/hooks/use-periods";
+import LoaderMini       from "@/icons/LoaderMini";
 
 import { type Request } from "@/types/request";
-import { Period }       from "@/types/periods.model";
-import { KEY_QUERYS }   from "@/consts/key-queries";
-import { fetchApi }     from "@/services/fetch";
-import { ENV }          from "@/config/envs/env";
-import LoaderMini       from "@/icons/LoaderMini";
 
 
 export interface RequestCardProps {
@@ -45,21 +41,7 @@ export function RequestCard({
     onEdit,
     onDelete
 }: RequestCardProps ): JSX.Element {
-    const {
-        data        : periods,
-        isLoading   : isLoadingPeriods,
-        isError     : isErrorPeriods
-    } = useQuery<Period[]>({
-        queryKey: [KEY_QUERYS.PERIODS],
-        queryFn: () => fetchApi({ isApi: false, url: `${ENV.ACADEMIC_SECTION}periods` }),
-    });
-
-
-    const periodName = useMemo(() => {
-        const period = periods?.find( item => item.id === request.periodId );
-
-        return period ? `${period.id} - ${period.name}` : '';
-    }, [request, periods]);
+    const { getPeriodName, isLoadingPeriods, isErrorPeriods } = usePeriods();
 
 
     return (
@@ -102,7 +84,7 @@ export function RequestCard({
                         { isLoadingPeriods
                             ? <LoaderMini/>
                             : <span className="max-w-full truncate overflow-hidden whitespace-nowrap">
-                                { periodName }
+                                { getPeriodName( request.periodId ) }
                             </span>
                         }
 
