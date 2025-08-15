@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useMemo, JSX } from "react";
+import { useState, useMemo, useEffect, JSX }    from "react";
+import { useSearchParams, useRouter }           from "next/navigation";
 
 import {
     useMutation,
@@ -13,7 +14,7 @@ import { RequestFilter }        from "@/components/request/request-filter";
 import { RequestList }          from "@/components/request/request-list";
 import { RequestTable }         from "@/components/request/request-table";
 import { RequestForm }          from "@/components/request/request-form";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DataPagination }       from "@/components/ui/data-pagination";
 
 import { type Request, Status }     from "@/types/request";
 import { Method, fetchApi }         from "@/services/fetch";
@@ -33,7 +34,7 @@ interface RequestMainProps {
 type SortBy             = "title" | "consecutive" | "updatedAt";
 type SortOrder          = "asc" | "desc";
 type ConsecutiveFilter  = "ALL" | "TRUE" | "FALSE";
-type ViewMode           = "cards" | "table";
+export type ViewMode    = "cards" | "table";
 
 
 export function RequestMain({
@@ -44,6 +45,8 @@ export function RequestMain({
     isError
 }: RequestMainProps ): JSX.Element {
     const queryClient                                   = useQueryClient();
+    const searchParams                                  = useSearchParams();
+    const router                                        = useRouter();
     const [isFormOpen, setIsFormOpen]                  = useState( false );
     const [editingRequest, setEditingRequest]          = useState<Request | null>( null );
     const [title, setTitle]                            = useState( "" );
@@ -53,7 +56,12 @@ export function RequestMain({
     const [sortOrder, setSortOrder]                    = useState<SortOrder>( "desc" );
     const [isDeleteDialogOpen, setIsDeleteDialogOpen]  = useState( false );
     const [deletingRequest, setDeletingRequest]        = useState<Request | null>( null );
-    const [viewMode, setViewMode]                      = useState<ViewMode>( "cards" );
+    const [viewMode, setViewMode]                      = useState<ViewMode>(() => {
+        const urlViewMode = searchParams.get('viewMode');
+        return (urlViewMode === 'table' || urlViewMode === 'cards') ? urlViewMode : 'cards';
+    });
+    const [currentPage, setCurrentPage]                = useState( 1 );
+    const [itemsPerPage, setItemsPerPage]              = useState( 15 );
 
 
     const deleteRequestApi = async ( requestId: string ): Promise<Request> =>
@@ -99,6 +107,18 @@ export function RequestMain({
     }, [requests, title, statusFilter, consecutiveFilter, sortBy, sortOrder]);
 
 
+    const paginatedRequests = useMemo(() => {
+        const startIndex = ( currentPage - 1 ) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        return filteredAndSortedRequests.slice( startIndex, endIndex );
+    }, [filteredAndSortedRequests, currentPage, itemsPerPage]);
+
+
+    const totalPages    = Math.ceil( filteredAndSortedRequests.length / itemsPerPage );
+    const startIndex    = ( currentPage - 1 ) * itemsPerPage;
+    const endIndex      = startIndex + itemsPerPage;
+
+
     function handleEdit( request: Request ): void {
         setEditingRequest( request );
         setIsFormOpen( true );
@@ -130,6 +150,31 @@ export function RequestMain({
     }
 
 
+    function handlePageChange( page: number ): void {
+        setCurrentPage( page );
+    }
+
+
+    function handleItemsPerPageChange( newItemsPerPage: number ): void {
+        setItemsPerPage( newItemsPerPage );
+        setCurrentPage( 1 );
+    }
+
+
+    function handleViewModeChange( newViewMode: ViewMode ): void {
+        setViewMode( newViewMode );
+
+        const params = new URLSearchParams( searchParams.toString() );
+        params.set( 'viewMode', newViewMode );
+        router.replace( `?${params.toString()}` );
+    }
+
+
+    useEffect(() => {
+        setCurrentPage( 1 );
+    }, [title, statusFilter, consecutiveFilter, sortBy, sortOrder]);
+
+
     return (
         <div className="space-y-4">
             {/* Filters */}
@@ -145,37 +190,43 @@ export function RequestMain({
                 sortOrder               = { sortOrder }
                 setSortOrder            = { setSortOrder }
                 onNewRequest            = { handleNewRequest }
+                viewMode                = { viewMode }
+                setViewMode             = { handleViewModeChange }
             />
 
             {/* View Mode Tabs */}
-            <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as ViewMode)} className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="cards">Vista de Tarjetas</TabsTrigger>
-                    <TabsTrigger value="table">Vista de Tabla</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="cards" className="mt-4">
-                    <RequestList
-                        requests            = { filteredAndSortedRequests }
-                        onViewDetails       = { onViewDetails }
-                        onEdit              = { handleEdit }
-                        onDelete            = { handleDelete }
-                        isLoading           = { isLoading }
-                        isError             = { isError }
-                    />
-                </TabsContent>
-                
-                <TabsContent value="table" className="mt-4">
-                    <RequestTable
-                        requests            = { filteredAndSortedRequests }
-                        onViewDetails       = { onViewDetails }
-                        onEdit              = { handleEdit }
-                        onDelete            = { handleDelete }
-                        isLoading           = { isLoading }
-                        isError             = { isError }
-                    />
-                </TabsContent>
-            </Tabs>
+            { viewMode === 'cards'
+                ? <RequestList
+                    requests            = { paginatedRequests }
+                    onViewDetails       = { onViewDetails }
+                    onEdit              = { handleEdit }
+                    onDelete            = { handleDelete }
+                    isLoading           = { isLoading }
+                    isError             = { isError }
+                />
+                : <RequestTable
+                    requests            = { paginatedRequests }
+                    onViewDetails       = { onViewDetails }
+                    onEdit              = { handleEdit }
+                    onDelete            = { handleDelete }
+                    isLoading           = { isLoading }
+                    isError             = { isError }
+                />
+            }
+
+            {/* Pagination */}
+            { !isLoading && !isError && filteredAndSortedRequests.length > 0 && (
+                <DataPagination
+                    currentPage             = { currentPage }
+                    totalPages              = { totalPages }
+                    totalItems              = { filteredAndSortedRequests.length }
+                    itemsPerPage            = { itemsPerPage }
+                    onPageChange            = { handlePageChange }
+                    onItemsPerPageChange    = { handleItemsPerPageChange }
+                    startIndex              = { startIndex }
+                    endIndex                = { endIndex }
+                />
+            )}
 
             {/* Request Form */}
             <RequestForm
