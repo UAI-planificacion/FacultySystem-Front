@@ -44,6 +44,24 @@ export interface ModuleDay {
 }
 
 
+export interface BaseRequestDetail {
+    minimum?        : number | null;
+    maximum?        : number | null;
+    spaceType?      : SpaceType | null;
+    spaceSize?      : Size | null;
+    costCenterId?   : string | null;
+    inAfternoon?    : boolean;
+    building?       : Building | null;
+    description?    : string | null;
+    moduleId?       : string | null;
+    days?           : string[];
+    spaceId?        : string | null;
+    isPriority?     : boolean;
+    professorId?    : string | null;
+}
+
+
+
 export interface RequestDetail {
     id              : string;
     requestId       : string;
@@ -64,6 +82,16 @@ export interface RequestDetail {
     createdAt       : Date;
     updatedAt       : Date;
     moduleDays      : ModuleDay[];
+}
+
+
+export interface CreateRequestDetail extends Omit<BaseRequestDetail, 'comment'> {
+    requestId       : string;
+    inAfternoon     : boolean;
+    isPriority      : boolean;
+    staffCreateId   : string;
+    gradeId?: string | null;
+
 }
 
 
