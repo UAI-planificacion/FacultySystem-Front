@@ -70,6 +70,15 @@ export interface Request {
     facultyId       : string;
 }
 
+export interface CreateRequest {
+    id?             : string | null;
+    title           : string;
+    isConsecutive?   : boolean;
+    subjectId?      : string;
+    staffCreateId   : string;
+    description?    : string | null;
+}
+
 
 export interface UpdateRequest {
     id              : string;
