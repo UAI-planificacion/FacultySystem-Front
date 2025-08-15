@@ -80,6 +80,15 @@ export default function Header() {
                                         Profesores
                                     </MenubarTrigger>
                                 </MenubarMenu>
+
+                                <MenubarMenu>
+                                    <MenubarTrigger
+                                        onClick = {() => router.push( '/grades' )}
+                                        id      = "grade"
+                                    >
+                                        Grados
+                                    </MenubarTrigger>
+                                </MenubarMenu>
                             </Menubar>
 
                             <NotificationDialogManager>
