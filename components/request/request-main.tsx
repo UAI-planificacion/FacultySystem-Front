@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useMemo, useEffect, JSX }    from "react";
-import { useSearchParams, useRouter }           from "next/navigation";
 
 import {
     useMutation,
@@ -20,6 +19,7 @@ import { type Request, Status }     from "@/types/request";
 import { Method, fetchApi }         from "@/services/fetch";
 import { errorToast, successToast } from "@/config/toast/toast.config";
 import { KEY_QUERYS }               from "@/consts/key-queries";
+import { useViewMode }              from "@/hooks/use-view-mode";
 
 
 interface RequestMainProps {
@@ -34,7 +34,6 @@ interface RequestMainProps {
 type SortBy             = "title" | "consecutive" | "updatedAt";
 type SortOrder          = "asc" | "desc";
 type ConsecutiveFilter  = "ALL" | "TRUE" | "FALSE";
-export type ViewMode    = "cards" | "table";
 
 
 export function RequestMain({
@@ -45,23 +44,20 @@ export function RequestMain({
     isError
 }: RequestMainProps ): JSX.Element {
     const queryClient                                   = useQueryClient();
-    const searchParams                                  = useSearchParams();
-    const router                                        = useRouter();
-    const [isFormOpen, setIsFormOpen]                  = useState( false );
-    const [editingRequest, setEditingRequest]          = useState<Request | null>( null );
-    const [title, setTitle]                            = useState( "" );
-    const [statusFilter, setStatusFilter]              = useState<Status | "ALL">( "ALL" );
-    const [consecutiveFilter, setConsecutiveFilter]    = useState<ConsecutiveFilter>( "ALL" );
-    const [sortBy, setSortBy]                          = useState<SortBy>( "updatedAt" );
-    const [sortOrder, setSortOrder]                    = useState<SortOrder>( "desc" );
-    const [isDeleteDialogOpen, setIsDeleteDialogOpen]  = useState( false );
-    const [deletingRequest, setDeletingRequest]        = useState<Request | null>( null );
-    const [viewMode, setViewMode]                      = useState<ViewMode>(() => {
-        const urlViewMode = searchParams.get('viewMode');
-        return (urlViewMode === 'table' || urlViewMode === 'cards') ? urlViewMode : 'cards';
+    const [isFormOpen, setIsFormOpen]                   = useState( false );
+    const [editingRequest, setEditingRequest]           = useState<Request | null>( null );
+    const [title, setTitle]                             = useState( "" );
+    const [statusFilter, setStatusFilter]               = useState<Status | "ALL">( "ALL" );
+    const [consecutiveFilter, setConsecutiveFilter]     = useState<ConsecutiveFilter>( "ALL" );
+    const [sortBy, setSortBy]                           = useState<SortBy>( "updatedAt" );
+    const [sortOrder, setSortOrder]                     = useState<SortOrder>( "desc" );
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen]   = useState( false );
+    const [deletingRequest, setDeletingRequest]         = useState<Request | null>( null );
+    const [currentPage, setCurrentPage]                 = useState( 1 );
+    const [itemsPerPage, setItemsPerPage]               = useState( 15 );
+    const { viewMode, onViewChange }                    = useViewMode({
+        queryName: 'viewRequest'
     });
-    const [currentPage, setCurrentPage]                = useState( 1 );
-    const [itemsPerPage, setItemsPerPage]              = useState( 15 );
 
 
     const deleteRequestApi = async ( requestId: string ): Promise<Request> =>
@@ -161,15 +157,6 @@ export function RequestMain({
     }
 
 
-    function handleViewModeChange( newViewMode: ViewMode ): void {
-        setViewMode( newViewMode );
-
-        const params = new URLSearchParams( searchParams.toString() );
-        params.set( 'viewMode', newViewMode );
-        router.replace( `?${params.toString()}` );
-    }
-
-
     useEffect(() => {
         setCurrentPage( 1 );
     }, [title, statusFilter, consecutiveFilter, sortBy, sortOrder]);
@@ -191,7 +178,7 @@ export function RequestMain({
                 setSortOrder            = { setSortOrder }
                 onNewRequest            = { handleNewRequest }
                 viewMode                = { viewMode }
-                setViewMode             = { handleViewModeChange }
+                setViewMode             = { onViewChange }
             />
 
             {/* View Mode Tabs */}
