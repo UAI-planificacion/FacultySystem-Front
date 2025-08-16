@@ -23,6 +23,7 @@ import { ShowDate }             from "@/components/shared/date";
 import { Comment }      from "@/types/comment.model";
 import { useSession }   from "@/hooks/use-session";
 import { useComments }  from "@/hooks/use-comments";
+import { Role }         from "@/types/staff.model";
 
 
 interface CommentSectionProps {
@@ -45,7 +46,7 @@ export function CommentSection( {
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen]           = useState( false );
 	const [deletingCommentId, setDeletingCommentId]             = useState<string | undefined>( undefined );
 	const [deletingCommentContent, setDeletingCommentContent]   = useState<string>( '' );
-	const { session }                                           = useSession();
+	const { staff }                                             = useSession();
 
 	const {
 		comments,
@@ -65,12 +66,11 @@ export function CommentSection( {
 	const handleSubmitComment = () => {
         const content = newComment.trim();
 
-        if ( !content ) return;
+        if ( !content || !staff ) return;
 
         createComment.mutate({
             content,
-            adminName   : session?.user?.name,
-            adminEmail  : session?.user?.email,
+            staffId: staff.id,
             ...(requestId && { requestId }),
             ...(requestDetailId && { requestDetailId }),
         });
@@ -161,7 +161,7 @@ export function CommentSection( {
 								<CommentItem
 									key                 = { comment.id }
 									comment             = { comment }
-									currentUserEmail    = { session?.user?.email || "" }
+									currentUserEmail    = { staff?.email || "" }
 									onEdit              = { handleEditComment }
 									onDelete            = { onOpenDeleteComment }
 									isLoading           = { isLoading }
@@ -257,7 +257,7 @@ function CommentItem( {
 		if ( !currentUserEmail ) return false;
 
 		if ( comment.staff?.email === currentUserEmail ) return true;
-		if ( comment.adminEmail === currentUserEmail ) return true;
+		// if ( comment.adminEmail === currentUserEmail ) return true;
 
 		return false;
 	};
@@ -303,7 +303,7 @@ function CommentItem( {
 	 * Get the author information from comment
 	 */
 	const getAuthorInfo = () => {
-		if ( comment.staff ) {
+		if ( comment.staff.role !== Role.ADMIN ) {
 			return {
 				name    : comment.staff.name,
 				email   : comment.staff.email,
@@ -311,18 +311,10 @@ function CommentItem( {
 			};
 		}
 
-		if ( comment.adminName && comment.adminEmail ) {
-			return {
-				name    : comment.adminName,
-				email   : comment.adminEmail,
-				type    : "admin" as const
-			};
-		}
-
 		return {
-			name    : "Usuario desconocido",
-			email   : "",
-			type    : "unknown" as const
+			name    : comment.staff.name,
+			email   : comment.staff.email,
+			type    : "admin" as const
 		};
 	};
 
