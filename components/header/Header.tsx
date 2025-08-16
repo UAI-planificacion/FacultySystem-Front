@@ -4,6 +4,8 @@ import { useEffect, useState }  from "react";
 import { useRouter }            from "next/navigation";
 import Image                    from "next/image"
 
+import { Building, GraduationCap, UsersRound } from "lucide-react";
+
 import {
     Menubar,
     MenubarMenu,
@@ -22,7 +24,7 @@ import { useSession }   from "@/hooks/use-session";
 export default function Header() {
     useSSE();
     const router                                = useRouter();
-    const session                               = useSession();
+    const { staff }                             = useSession();
     const [showAuthMessage, setShowAuthMessage] = useState( false );
 
     useEffect(() => {
@@ -61,14 +63,17 @@ export default function Header() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                        {session.session && (<>
+                        {staff && (<>
                             <Menubar className="hidden lg:flex bg-black text-white border-zinc-700">
                                 <MenubarMenu>
                                     <MenubarTrigger
                                         onClick = {() => router.push( '/faculties' )}
                                         id      = "faculty"
+                                        className="flex items-center gap-1.5"
                                     >
-                                        Facultades
+                                        <Building className="h-5 w-5" /> 
+
+                                        <span className="hidden xl:flex">Facultades</span>
                                     </MenubarTrigger>
                                 </MenubarMenu>
 
@@ -76,8 +81,11 @@ export default function Header() {
                                     <MenubarTrigger
                                         onClick = {() => router.push( '/professors' )}
                                         id      = "professor"
+                                        className="flex items-center gap-1.5"
                                     >
-                                        Profesores
+                                        <UsersRound className="h-5 w-5" />
+
+                                        <span className="hidden xl:flex">Profesores</span>
                                     </MenubarTrigger>
                                 </MenubarMenu>
 
@@ -85,8 +93,11 @@ export default function Header() {
                                     <MenubarTrigger
                                         onClick = {() => router.push( '/grades' )}
                                         id      = "grade"
+                                        className="flex items-center gap-1.5"
                                     >
-                                        Grados
+                                        <GraduationCap className="h-5 w-5" />
+
+                                        <span className="hidden xl:flex">Grados</span>
                                     </MenubarTrigger>
                                 </MenubarMenu>
                             </Menubar>
