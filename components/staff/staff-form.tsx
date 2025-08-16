@@ -56,7 +56,7 @@ const formSchema = z.object({
     }).regex(/^[a-zA-Z0-9._-]+$/, {
         message: "El email solo puede contener letras, números, puntos, guiones y guiones bajos.",
     }),
-    role: z.enum(["ADMIN", "EDITOR", "VIEWER"] as const, {
+    role: z.enum(["ADMIN", "EDITOR", "VIEWER", "ADMIN_FACULTY"] as const, {
         message: "Por favor selecciona un rol válido.",
     }),
     isActive: z.boolean().default(true),
@@ -175,7 +175,10 @@ export function StaffForm({
                                 <FormItem>
                                     <FormLabel>Rol</FormLabel>
 
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <Select
+                                        onValueChange   = { field.onChange }
+                                        defaultValue    = { field.value }
+                                    >
                                         <FormControl>
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Selecciona un rol" />
@@ -184,6 +187,7 @@ export function StaffForm({
 
                                         <SelectContent>
                                             <SelectItem value="ADMIN">Administrador</SelectItem>
+                                            <SelectItem value="ADMIN_FACULTY">Administrador de Facultad</SelectItem>
                                             <SelectItem value="EDITOR">Editor</SelectItem>
                                             <SelectItem value="VIEWER">Visualizador</SelectItem>
                                         </SelectContent>
