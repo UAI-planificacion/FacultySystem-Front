@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 import {
     Building,
@@ -17,12 +17,14 @@ import {
 import { toast }    from "sonner";
 
 import { FacultyForm }              from "@/components/faculty/faculty-form";
-import { FacultyCard }              from "@/components/faculty/faculty-card";
-import { FacultyCardSkeletonGrid }  from "@/components/faculty/faculty-card-skeleton";
+import { FacultyList }              from "@/components/faculty/faculty-list";
+import { FacultyTable }             from "@/components/faculty/faculty-table";
 import { Button }                   from "@/components/ui/button";
 import { StatisticCard }            from "@/components/ui/statistic-card";
 import { DeleteConfirmDialog }      from "@/components/dialog/DeleteConfirmDialog";
 import { Input }                    from "@/components/ui/input";
+import { ViewMode }                 from "@/components/shared/view-mode";
+import { DataPagination }           from "@/components/ui/data-pagination";
 
 import {
     CreateFacultyInput,
@@ -36,10 +38,12 @@ import {
 }                           from "@/config/toast/toast.config";
 import { Method, fetchApi } from "@/services/fetch";
 import { KEY_QUERYS }       from "@/consts/key-queries";
+import { useViewMode }      from "@/hooks/use-view-mode";
 
 
 export default function FacultiesPage() {
-    const queryClient = useQueryClient();
+    const queryClient                   = useQueryClient();
+    const { viewMode, onViewChange }    = useViewMode({ queryName: 'viewFaculty' });
 
     const {
         data,
@@ -118,6 +122,26 @@ export default function FacultiesPage() {
     const [editingFaculty, setEditingFaculty]           = useState<Faculty | undefined>( undefined );
     const [deletingFacultyId, setDeletingFacultyId]     = useState<string | undefined>( undefined );
     const [filterText, setFilterText]                   = useState( "" );
+    const [currentPage, setCurrentPage]                 = useState( 1 );
+    const [itemsPerPage, setItemsPerPage]               = useState( 10 );
+
+    // Filtered and paginated faculties
+    const filteredFaculties = useMemo(() => {
+        if (!data?.faculties) return [];
+        return data.faculties.filter(faculty =>
+            faculty.name.toLowerCase().includes(filterText.toLowerCase())
+        );
+    }, [data?.faculties, filterText]);
+
+    const paginatedFaculties = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        return filteredFaculties.slice(startIndex, endIndex);
+    }, [filteredFaculties, currentPage, itemsPerPage]);
+
+    const totalPages = Math.ceil(filteredFaculties.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage + 1;
+    const endIndex = Math.min(currentPage * itemsPerPage, filteredFaculties.length);
 
 
     const openNewFacultyForm = () => {
@@ -136,6 +160,11 @@ export default function FacultiesPage() {
         setDeletingFacultyId( id );
         setIsDeleteDialogOpen( true );
     }
+
+    // Reset to first page when filter changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filterText]);
 
 
     if ( isError ) {
@@ -186,42 +215,61 @@ export default function FacultiesPage() {
                         className   = "w-full max-w-md"
                     />
 
-                    <Button onClick={openNewFacultyForm} className="flex items-center">
-                        <Plus className="h-4 w-4 mr-1" />
-                        Crear Facultad
-                    </Button>
+                    <div className="flex items-center gap-4">
+                        <ViewMode
+                            viewMode        = { viewMode }
+                            onViewChange    = { onViewChange }
+                        />
+
+                        <Button
+                            onClick     = { openNewFacultyForm }
+                            className   = "flex items-center"
+                        >
+                            <Plus className="h-4 w-4 mr-1" />
+                            Crear Facultad
+                        </Button>
+                    </div>
                 </div>
 
-                {isLoading ? (
-                    <FacultyCardSkeletonGrid count={12} />
-                ) : (
-                    data!.faculties.filter(faculty => 
-                        faculty.name.toLowerCase().includes(filterText.toLowerCase())
-                    ).length > 0 && data!.faculties?.filter(faculty => 
-                        faculty.name.toLowerCase().includes(filterText.toLowerCase())
-                    ).length === 0 ? (
-                        <div className="text-center p-12 border rounded-lg border-dashed">
-                            <p className="text-muted-foreground">No se han creado facultades.</p>
-
-                            <Button onClick={openNewFacultyForm} variant="outline" className="mt-4">
-                                Crea tu primera facultad
-                            </Button>
-                        </div>
+                {/* Faculty Content */}
+                <div className="space-y-4">
+                    {viewMode === 'cards' ? (
+                        <FacultyList
+                            faculties       = { paginatedFaculties }
+                            isLoading       = { isLoading }
+                            isError         = { isError }
+                            onEdit          = { openEditFacultyForm }
+                            onDelete        = { openDeleteDialog }
+                            onNewFaculty    = { openNewFacultyForm }
+                        />
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {data!.faculties.filter( faculty =>
-                                faculty.name.toLowerCase().includes( filterText.toLowerCase() )
-                            ).map( faculty => (
-                                <FacultyCard
-                                    key         = { faculty.id }
-                                    faculty     = { faculty }
-                                    onEdit      = { openEditFacultyForm }
-                                    onDelete    = { openDeleteDialog }
-                                />
-                            ))}
-                        </div>
-                    )
-                )}
+                        <FacultyTable
+                            faculties       = { paginatedFaculties }
+                            isLoading       = { isLoading }
+                            isError         = { isError }
+                            onEdit          = { openEditFacultyForm }
+                            onDelete        = { openDeleteDialog }
+                            onNewFaculty    = { openNewFacultyForm }
+                        />
+                    )}
+
+                    {/* Pagination */}
+                    {!isLoading && !isError && filteredFaculties.length > 0 && (
+                        <DataPagination
+                            currentPage             = { currentPage }
+                            totalPages              = { totalPages }
+                            totalItems              = { filteredFaculties.length }
+                            itemsPerPage            = { itemsPerPage }
+                            onPageChange            = { setCurrentPage }
+                            onItemsPerPageChange    = { ( newItemsPerPage ) => {
+                                setItemsPerPage( newItemsPerPage );
+                                setCurrentPage( 1 );
+                            }}
+                            startIndex              = { startIndex }
+                            endIndex                = { endIndex }
+                        />
+                    )}
+                </div>
             </div>
 
             {/* Faculty Form Dialog */}
