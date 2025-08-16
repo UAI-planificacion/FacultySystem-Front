@@ -52,6 +52,8 @@ import { ProfessorForm }            from "@/components/professor/professor-form"
 import { CommentSection }           from "@/components/comment/comment-section";
 import { RequestDetailModuleDays }  from "@/components/request-detail/request-detail-module-days";
 import { Checkbox }                 from "@/components/ui/checkbox";
+import { Textarea }                 from "@/components/ui/textarea";
+
 import {
     SizeResponse,
     Day,
@@ -66,28 +68,25 @@ import {
     CreateRequestDetail
 }                           from "@/types/request-detail.model";
 import { useCostCenter }    from "@/hooks/use-cost-center";
-import { getSpaceType }     from "@/lib/utils";
+import { cn, getSpaceType } from "@/lib/utils";
 import { KEY_QUERYS }       from "@/consts/key-queries";
 import { Method, fetchApi } from "@/services/fetch";
-import { ENV }              from "@/config/envs/env";
 import { Professor }        from "@/types/professor";
+import { useSpace }         from "@/hooks/use-space";
+import { Grade }            from "@/types/grade";
+import { useSession }       from "@/hooks/use-session";
+
 import {
     errorToast,
     successToast
 }                           from "@/config/toast/toast.config";
-import { useSpace }         from "@/hooks/use-space";
-import { Grade }            from "@/types/grade";
+import { ENV }              from "@/config/envs/env";
 
 
 const numberOrNull = z.union([
     z.string()
-        .transform( val => val === '' ? null : Number( val ))
-        .refine(
-            val => val === null || val === undefined || val >= 1,
-            { message: "Debe ser al menos 1" }
-        ),
+        .transform( val => val === '' ? null : Number( val )),
     z.number()
-        .min(1, { message: "Debe ser al menos 1" })
         .nullable()
         .optional(),
     z.null(),
@@ -106,7 +105,8 @@ const formSchema = z.object({
     isPriority      : z.boolean().default( false ),
     gradeId         : z.string().nullable().optional(),
     professorId     : z.string().nullable().optional(),
-    spaceId         : z.string().nullable().default(''),
+    description     : z.string().max( 500, "La descripción no puede tener más de 500 caracteres" ).nullable().default(''),
+    spaceId         : z.string().nullable().optional(),
     moduleDays      : z.array(z.object({
         day         : z.string(),
         moduleId    : z.string()
@@ -114,7 +114,7 @@ const formSchema = z.object({
 }).superRefine(( data, ctx ) => {
     const { minimum, maximum } = data;
 
-    if ( minimum !== null && maximum !== null && maximum < minimum ) {
+    if ( minimum && maximum && maximum < minimum ) {
         ctx.addIssue({
             code    : z.ZodIssueCode.custom,
             message : "El máximo no puede ser menor que el mínimo.",
@@ -128,7 +128,7 @@ export type RequestDetailFormValues = z.infer<typeof formSchema>;
 
 
 interface RequestDetailFormProps {
-    requestDetail       : RequestDetail;
+    requestDetail       : RequestDetail | undefined;
     onSuccess?          : () => void;
     onCancel            : () => void;
     isOpen              : boolean;
@@ -143,26 +143,27 @@ interface RequestDetailFormProps {
 }
 
 
-const defaultRequestDetail = ( data: RequestDetail ) => ({
-    minimum         : data.minimum,
-    maximum         : data.maximum,
-    spaceType       : data.spaceType    as SpaceType,
-    spaceSize       : data.spaceSize    as Size,
-    building        : data.building     as Building,
-    costCenterId    : data.costCenterId,
-    inAfternoon     : data.inAfternoon,
-    isPriority      : data.isPriority,
-    gradeId         : data.grade?.id,
-    professorId     : data.professorId,
-    spaceId         : data.spaceId,
-    moduleDays      : data.moduleDays || [],
+const defaultRequestDetail = ( data: RequestDetail | undefined ): RequestDetailFormValues => ({
+    minimum         : data?.minimum     || null,
+    maximum         : data?.maximum     || null,
+    spaceType       : data?.spaceType    as SpaceType,
+    spaceSize       : data?.spaceSize    as Size,
+    building        : data?.building     as Building,
+    costCenterId    : data?.costCenterId,
+    inAfternoon     : data?.inAfternoon || false,
+    description     : data?.description             || '',
+    isPriority      : data?.isPriority  || false,
+    gradeId         : data?.grade?.id,
+    professorId     : data?.professorId,
+    spaceId         : data?.spaceId || '',
+    moduleDays      : data?.moduleDays || [],
 });
 
 
 type Tab = 'form' | 'comments';
 
 
-function getTypeSpace( requestDetail: RequestDetail | undefined ): boolean[] {
+function getTypeSpace( requestDetail: RequestDetail | undefined | null ): boolean[] {
     if ( !requestDetail ) return [ false, false, false ];
 
     if ( requestDetail.spaceId ) {
@@ -194,10 +195,13 @@ export function RequestDetailForm({
     isLoadingModules,
     isErrorModules
 }: RequestDetailFormProps ): JSX.Element {
+    console.log("🚀 ~ file: request-detail-form.tsx:187 ~ requestDetail:", requestDetail)
+
     const [tab, setTab]                             = useState<Tab>( 'form' );
     const queryClient                               = useQueryClient();
     const [typeSpace, setTypeSpace]                 = useState<boolean[]>([ false, false, false ]);
     const [isOpenProfessor, setIsOpenProfessor ]    = useState( false );
+    const { staff }                                 = useSession();
 
 
     useEffect(() => {
@@ -233,8 +237,7 @@ export function RequestDetailForm({
             body    : updatedRequestDetail
         });
 
-    
-    
+
     const createRequestDetailMutation = useMutation<RequestDetail, Error, CreateRequestDetail>({
         mutationFn: createRequestDetailApi,
         onSuccess: () => {
@@ -336,7 +339,12 @@ export function RequestDetailForm({
 
 
     function onSubmitForm( formData: RequestDetailFormValues ): void {
-        formData.building = ( formData.spaceId?.split( '-' )[1] as Building || 'A' );
+        console.log("🚀 ~ file: request-detail-form.tsx:340 ~ formData:", formData)
+        if ( !staff ) return;
+
+        if ( formData.spaceId ) {
+            formData.building = ( formData.spaceId.split( '-' )[1] as Building || 'A' );
+        }
 
         if ( typeSpace.every( item => !item )) {
             formData.spaceType  = null;
@@ -358,15 +366,15 @@ export function RequestDetailForm({
         if ( requestDetail ) {
             updateRequestDetailMutation.mutate({
                 ...formData,
-                id      : requestDetail.id,
-                // staffUpdateId : staff?.id || ''
+                id              : requestDetail.id,
+                staffUpdateId   : staff.id,
             });
         } else {
             createRequestDetailMutation.mutate({
                 ...formData,
                 requestId,
-                staffCreateId   : '01JZRBZK4XTHE6M62BVGS3XYW6'
-            });
+                staffCreateId: staff.id,
+            }            );
         }
     }
 
@@ -376,7 +384,7 @@ export function RequestDetailForm({
             <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                     <div className=" flex justify-between items-center gap-2">
-                        <div>
+                        <div className="space-y-1">
                             <DialogTitle>
                                 { requestDetail ? 'Editar Detalle' : 'Agregar Nuevo Detalle' }
                             </DialogTitle>
@@ -388,12 +396,14 @@ export function RequestDetailForm({
                             </DialogDescription>
                         </div>
 
-                        <Badge
-                            className   = "mr-5"
-                            variant     = { requestDetail.isPriority ? 'destructive' : 'default' }
-                        >
-                            { requestDetail.isPriority ? 'Restrictivo' : 'No restrictivo' }
-                        </Badge>
+                        {requestDetail && (
+                            <Badge
+                                className="mr-5"
+                                variant={requestDetail.isPriority ? 'destructive' : 'default'}
+                            >
+                                {requestDetail.isPriority ? 'Restrictivo' : 'No restrictivo' }
+                            </Badge>
+                        )}
                     </div>
                 </DialogHeader>
 
@@ -402,15 +412,17 @@ export function RequestDetailForm({
                     onValueChange   = {( value ) => setTab( value as Tab )}
                     className       = "w-full"
                 >
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="form">Información</TabsTrigger>
+                    { requestDetail &&
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="form">Información</TabsTrigger>
 
-                        <TabsTrigger value="comments">
-                            Comentarios 
-                        </TabsTrigger>
-                    </TabsList>
+                            <TabsTrigger value="comments">
+                                Comentarios 
+                            </TabsTrigger>
+                        </TabsList>
+                    }
 
-                    <TabsContent value="form" className="space-y-4 mt-4">
+                    <TabsContent value="form" className={cn("space-y-4", requestDetail ? 'mt-4': '')}>
                         <Form {...form}>
                             <form onSubmit={form.handleSubmit( onSubmitForm )} className="space-y-4">
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -751,12 +763,30 @@ export function RequestDetailForm({
                                 />
 
                                 {/* Descripción */}
-                                <div className="w-full">
-                                    <FormLabel>Descripción</FormLabel>
+                                <FormField
+                                    control = { form.control }
+                                    name    = "description"
+                                    render  = {({ field }) => (
+                                        <FormItem className="col-span-2">
+                                            <FormLabel>Descripción</FormLabel>
 
-                                    <p>{requestDetail?.description || '-'}</p>
-                                </div>
+                                            <FormControl>
+                                                <Textarea 
+                                                    {...field}
+                                                    placeholder = "Agregue una descripción opcional"
+                                                    className   = "min-h-[100px] max-h-[250px]"
+                                                    value       = { field.value || '' }
+                                                />
+                                            </FormControl>
 
+                                            <FormDescription className="flex justify-end">
+                                                {field.value?.length || 0 } / 500
+                                            </FormDescription>
+
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                                 <DialogFooter className="mt-6 flex justify-between items-center">
                                     <Button
                                         type    = "button"
@@ -768,9 +798,9 @@ export function RequestDetailForm({
 
                                     <Button
                                         type        = "submit"
-                                        disabled    = { updateRequestDetailMutation.isPending }
+                                        disabled    = { createRequestDetailMutation.isPending || updateRequestDetailMutation.isPending }
                                     >
-                                        {updateRequestDetailMutation.isPending ? (
+                                        { createRequestDetailMutation.isPending || updateRequestDetailMutation.isPending ? (
                                             <>
                                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                                 Guardando...
@@ -782,13 +812,15 @@ export function RequestDetailForm({
                         </Form>
                     </TabsContent>
 
-                    <TabsContent value="comments" className="mt-4">
-                        <CommentSection
-                            requestDetailId = { requestDetail.id }
-                            enabled         = { tab === 'comments' }
-                            size            = { 'h-[378px]' }
-                        />
-                    </TabsContent>
+                    { requestDetail &&
+                        <TabsContent value="comments" className="mt-4">
+                            <CommentSection
+                                requestDetailId = { requestDetail?.id }
+                                enabled         = { tab === 'comments' }
+                                size            = { 'h-[378px]' }
+                                />
+                        </TabsContent>
+                    }
                 </Tabs>
 
                 <ProfessorForm
