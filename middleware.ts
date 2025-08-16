@@ -5,7 +5,8 @@ const BETTER_AUTH_SESSION_COOKIE_NAME = 'better-auth.session_token-faculty';
 
 const protectedRoutes = [
     '/faculties',
-    '/professors'
+    '/professors',
+    '/grades'
 ];
 
 export async function middleware( request: NextRequest ): Promise<NextResponse> {
