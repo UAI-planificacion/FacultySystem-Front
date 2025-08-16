@@ -26,6 +26,13 @@ import {
 	GradeErrorMessage,
     GradeTableSkeleton, 
 }                               from "@/components/grade/grade-table-skeleton";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
+}                               from "@/components/ui/select";
 import { Button }               from "@/components/ui/button";
 import { ScrollArea }           from "@/components/ui/scroll-area"
 import { ActionButton }         from "@/components/shared/action";
@@ -35,8 +42,9 @@ import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
 import { DataPagination }       from "@/components/ui/data-pagination";
 import { GradeForm }            from "@/components/grade/grade-form";
 import { ShowDate }             from "@/components/shared/date";
+import { Headquarter }          from "@/components/shared/headquarter";
 
-import { Grade }                    from "@/types/grade";
+import { Grade, HeadquartersEnum }  from "@/types/grade";
 import { KEY_QUERYS }               from "@/consts/key-queries";
 import { Method, fetchApi }         from "@/services/fetch";
 import { errorToast, successToast } from "@/config/toast/toast.config";
@@ -49,6 +57,7 @@ const endpoint = 'grades';
 export default function GradesPage() {
     const queryClient                                   = useQueryClient();
 	const [searchQuery, setSearchQuery]                 = useState( '' );
+	const [selectedHeadquarter, setSelectedHeadquarter] = useState<string>( 'all' );
 	const [isFormOpen, setIsFormOpen]                   = useState( false );
 	const [editingGrade, setEditingGrade]               = useState<Grade | undefined>( undefined );
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen]   = useState( false );
@@ -56,15 +65,17 @@ export default function GradesPage() {
 	const { data: gradeList, isLoading, isError }       = useQuery({
 		queryKey: [ KEY_QUERYS.GRADES ],
 		queryFn : () => fetchApi<Grade[]>({ url : endpoint }),
-	});
+    });
 
 
 	/**
-	 * Filtra la lista de grados según los criterios de búsqueda
+	 * Filtra la lista de grados según los criterios de búsqueda y sede
 	 */
-	const filteredGrades = gradeList?.filter( grade => 
-		searchQuery === '' || grade.name.toLowerCase().includes( searchQuery.toLowerCase() ) 
-	) || [];
+	const filteredGrades = gradeList?.filter( grade => {
+		const matchesSearch = searchQuery === '' || grade.name.toLowerCase().includes( searchQuery.toLowerCase() );
+		const matchesHeadquarter = selectedHeadquarter === 'all' || selectedHeadquarter === '' || grade.headquartersId.toString() === selectedHeadquarter;
+		return matchesSearch && matchesHeadquarter;
+	}) || [];
 
 
 	/**
@@ -93,6 +104,15 @@ export default function GradesPage() {
 	const handleFilterChange = ( value: string ) => {
 		resetToFirstPage();
 		setSearchQuery( value );
+	};
+
+
+	/**
+	 * Maneja el cambio del filtro de sede
+	 */
+	const handleHeadquarterChange = ( value: string ) => {
+		resetToFirstPage();
+		setSelectedHeadquarter( value );
 	};
 
 
@@ -164,19 +184,42 @@ export default function GradesPage() {
 			{/* Filtros */}
 			<Card>
 				<CardContent className="space-y-4 mt-4">
-					<div className="space-y-2">
-						<Label htmlFor="search">Buscar</Label>
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<div className="space-y-2">
+							<Label htmlFor="search">Buscar</Label>
 
-						<div className="relative">
-							<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+							<div className="relative">
+								<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
 
-							<Input
-								id          = "search"
-								placeholder = "Buscar por ID, nombre o sede..."
-								value       = { searchQuery }
-								onChange    = { (e) => handleFilterChange( e.target.value ) }
-								className   = "pl-10"
-							/>
+								<Input
+									id          = "search"
+									placeholder = "Buscar por nombre..."
+									value       = { searchQuery }
+									onChange    = { (e) => handleFilterChange( e.target.value ) }
+									className   = "pl-10"
+								/>
+							</div>
+						</div>
+
+						<div className="space-y-2">
+							<Label htmlFor="headquarter">Filtrar por Sede</Label>
+
+							<Select 
+								onValueChange = { handleHeadquarterChange }
+								defaultValue  = "all"
+							>
+								<SelectTrigger>
+									<SelectValue placeholder="Todas las sedes" />
+								</SelectTrigger>
+
+								<SelectContent>
+									<SelectItem value="all">Todas las sedes</SelectItem>
+									<SelectItem value={ HeadquartersEnum.ERRAZURIZ.toString() }>Errazuriz</SelectItem>
+									<SelectItem value={ HeadquartersEnum.PENALOLEN.toString() }>Peñalolén</SelectItem>
+									<SelectItem value={ HeadquartersEnum.VINADELMAR.toString() }>Viña del mar</SelectItem>
+									<SelectItem value={ HeadquartersEnum.VITACURA.toString() }>Vitacura</SelectItem>
+								</SelectContent>
+							</Select>
 						</div>
 					</div>
 				</CardContent>
@@ -211,35 +254,33 @@ export default function GradesPage() {
                                     <ScrollArea className="h-[calc(100vh-590px)]">
                                         <Table>
                                             <TableBody>
-                                                {isLoading
-                                                ? (
-                                                    <GradeTableSkeleton rows={10} />
-                                                )
-                                                : (
-                                                    paginatedGrades.map( grade => (
-                                                        <TableRow key={ grade.id }>
-                                                            <TableCell className="font-medium w-[250px]">{ grade.name }</TableCell>
+                                                { isLoading
+                                                    ? <GradeTableSkeleton rows={10} />
+                                                    : paginatedGrades.map( grade => (
+                                                            <TableRow key={ grade.id }>
+                                                                <TableCell className="font-medium w-[250px]">{ grade.name }</TableCell>
 
-                                                            <TableCell className="w-[250px]">{ grade.headquartersId }</TableCell>
+                                                                <TableCell className="w-[250px]">
+                                                                    <Headquarter name={ grade.headquartersId } />
+                                                                </TableCell>
 
-                                                            <TableCell className="w-[200px]">
-                                                                <ShowDate date={ grade.createdAt } />
-                                                            </TableCell>
+                                                                <TableCell className="w-[200px]">
+                                                                    <ShowDate date={ grade.createdAt } />
+                                                                </TableCell>
 
-                                                            <TableCell className="w-[200px]">
-                                                                <ShowDate date={ grade.updatedAt } />
-                                                            </TableCell>
+                                                                <TableCell className="w-[200px]">
+                                                                    <ShowDate date={ grade.updatedAt } />
+                                                                </TableCell>
 
-                                                            <TableCell className="w-[120px]">
-                                                                <ActionButton
-                                                                    editItem={ openEditGradeForm }
-                                                                    deleteItem={ () => onOpenDeleteGrade(grade) }
-                                                                    item={ grade }
-                                                                />
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    ))
-                                                )}
+                                                                <TableCell className="w-[120px]">
+                                                                    <ActionButton
+                                                                        editItem={ openEditGradeForm }
+                                                                        deleteItem={ () => onOpenDeleteGrade(grade) }
+                                                                        item={ grade }
+                                                                    />
+                                                                </TableCell>
+                                                            </TableRow>
+                                                    ))}
 
                                                 { filteredGrades.length === 0 && searchQuery ? (
                                                     <TableRow>
