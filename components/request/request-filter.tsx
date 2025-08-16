@@ -2,7 +2,7 @@
 
 import { JSX } from "react";
 
-import { Search, Plus, Grid2x2, AlignJustify } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 
 import {
     Select,
@@ -12,20 +12,16 @@ import {
     SelectValue
 }                   from "@/components/ui/select";
 import {
-    Tabs,
-    TabsList,
-    TabsTrigger
-}                   from "@/components/ui/tabs";
-import {
     Card,
     CardHeader,
 }                   from "@/components/ui/card";
 import { Button }   from "@/components/ui/button";
 import { Input }    from "@/components/ui/input";
 import { Label }    from "@/components/ui/label";
-import { ViewMode } from "@/components/request/request-main";
+import { ViewMode } from "@/components/shared/view-mode";
 
 import { Status } from "@/types/request";
+
 
 export interface RequestFilter {
     title                   : string;
@@ -145,20 +141,10 @@ export function RequestFilter({
                     </div>
 
                     <div className="flex items-end gap-4">
-                        <Tabs
-                            value           = { viewMode }
-                            onValueChange   = {( value ) => setViewMode( value as ViewMode )}
-                        >
-                            <TabsList className="px-1 py-0">
-                                <TabsTrigger value="cards">
-                                    <Grid2x2 className="h-5 w-5" />
-                                </TabsTrigger>
-
-                                <TabsTrigger value="table">
-                                    <AlignJustify className="h-5 w-5" />
-                                </TabsTrigger>
-                            </TabsList>
-                        </Tabs>
+                        <ViewMode
+                            viewMode        = { viewMode }
+                            onViewChange    = { setViewMode }
+                        />
 
                         <Button
                             onClick     = { onNewRequest }
