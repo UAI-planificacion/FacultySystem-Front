@@ -41,7 +41,7 @@ export function FacultyCard({
             <CardHeader className="pb-2">
                 <div>
                     <CardTitle className="text-xl font-bold flex items-center gap-2">
-                        <Building className="h-5 w-5" /> 
+                        <Building className="h-5 w-5" />
                         {faculty.name}
                     </CardTitle>
 
