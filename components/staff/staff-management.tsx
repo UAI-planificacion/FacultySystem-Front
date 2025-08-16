@@ -76,8 +76,8 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
 
     const filteredStaff = staffList?.filter(staff => {
         const matchesSearch = searchQuery === '' || 
-            staff.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            staff.email.toLowerCase().includes(searchQuery.toLowerCase());
+            staff.name.toLowerCase().includes( searchQuery.toLowerCase() ) ||
+            staff.email.toLowerCase().includes( searchQuery.toLowerCase() );
 
         const matchesRole = roleFilter === 'all'                    || 
             ( roleFilter === 'admin' && staff.role === 'ADMIN' )    ||
@@ -347,7 +347,7 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
                                                 </TableRow>
                                             ))}
 
-                                            {filteredStaff.length === 0 && searchQuery ? (
+                                            { filteredStaff.length === 0 && searchQuery ? (
                                                 <TableRow>
                                                     <TableCell colSpan={5} className="h-24 text-center">
                                                         No se encontraron resultados para &quot;{searchQuery}&quot;
@@ -359,7 +359,7 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
                                                         No hay personal registrado
                                                     </TableCell>
                                                 </TableRow>
-                                            ) : null}
+                                            ) : null }
                                         </TableBody>
                                     </Table>
                                 </ScrollArea>
