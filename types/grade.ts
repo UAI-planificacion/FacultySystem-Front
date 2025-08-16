@@ -1,7 +1,15 @@
+export enum HeadquartersEnum {
+    ERRAZURIZ   = "ERRAZURIZ",
+    PENALOLEN   = "PENALOLEN",
+    VINADELMAR  = "VINADELMAR",
+    VITACURA    = "VITACURA",
+}
+
+
 export interface Grade {
     id              : string;
     name            : string;
-    headquartersId  : string;
+    headquartersId  : HeadquartersEnum;
     createdAt       : Date;
     updatedAt       : Date;
 }
@@ -9,5 +17,5 @@ export interface Grade {
 
 export interface GradeFormData {
     name            : string;
-    headquartersId  : string;
+    headquartersId  : HeadquartersEnum;
 }
