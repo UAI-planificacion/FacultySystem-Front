@@ -1,7 +1,8 @@
 export enum Role {
-    ADMIN   = 'ADMIN',
-    EDITOR  = 'EDITOR',
-    VIEWER  = 'VIEWER',
+    ADMIN           = 'ADMIN',
+    ADMIN_FACULTY   = 'ADMIN_FACULTY',
+    EDITOR          = 'EDITOR',
+    VIEWER          = 'VIEWER',
 }
 
 
