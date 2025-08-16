@@ -97,18 +97,19 @@ export interface CreateRequestDetail extends Omit<BaseRequestDetail, 'comment'> 
 
 export interface UpdateRequestDetail {
     id              : string;
-    minimum?         : number | null;
-    maximum?         : number | null;
-    spaceType?       : SpaceType | null;
-    spaceSize?       : Size | null;
-    costCenterId?    : string | null;
-    inAfternoon?     : boolean;
-    building?        : Building | null;
-    moduleId?        : string | null;
-    days?            : string[];
-    spaceId?         : string | null;
-    isPriority?      : boolean;
-    gradeId?           : string | null;
-    professorId?     : string | null;
-    moduleDays?      : ModuleDay[];
+    minimum?        : number | null;
+    maximum?        : number | null;
+    spaceType?      : SpaceType | null;
+    spaceSize?      : Size | null;
+    costCenterId?   : string | null;
+    inAfternoon?    : boolean;
+    building?       : Building | null;
+    moduleId?       : string | null;
+    days?           : string[];
+    spaceId?        : string | null;
+    isPriority?     : boolean;
+    gradeId?        : string | null;
+    professorId?    : string | null;
+    moduleDays?     : ModuleDay[];
+    staffUpdateId   : string;
 }
