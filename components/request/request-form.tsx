@@ -67,6 +67,7 @@ import { Period }                   from "@/types/periods.model";
 import { ENV }                      from "@/config/envs/env";
 import { cn }                       from "@/lib/utils";
 import LoaderMini                   from "@/icons/LoaderMini";
+import { useSession }               from "@/hooks/use-session";
 
 
 export type RequestFormValues = z.infer<typeof formSchema>;
@@ -136,6 +137,7 @@ export function RequestForm({
 }: RequestFormProps ): JSX.Element {
     const queryClient   = useQueryClient();
     const [tab, setTab] = useState<Tab>( 'form' );
+    const { staff }     = useSession();
 
 
     const createRequestApi = async ( request: CreateRequest ): Promise<Request> =>
@@ -226,15 +228,18 @@ export function RequestForm({
     function handleSubmit( data: RequestFormValues ): void {
         console.log( "🚀 ~ file: request-form.tsx:200 ~ data:", data )
 
+        if ( !staff ) return;
+
         if ( request ) {
             updateRequestMutation.mutate({
                 ...data,
-                id: request.id
+                id: request.id,
+                staffUpdateId: staff.id,
             });
         } else {
             createRequestMutation.mutate({
                 ...data,
-                staffCreateId: '01JZRBZK4XTHE6M62BVGS3XYW6'
+                staffCreateId: staff.id,
             });
         }
     }
