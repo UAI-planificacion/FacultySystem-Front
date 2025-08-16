@@ -1,9 +1,8 @@
 "use client"
 
-import { JSX, useState, useEffect, useMemo }    from "react";
-import { useRouter, useSearchParams }           from "next/navigation";
+import { JSX, useState, useMemo }    from "react";
 
-import { Plus, Grid2x2, AlignJustify } from "lucide-react";
+import { Plus } from "lucide-react";
 
 import {
     useMutation,
@@ -11,12 +10,6 @@ import {
     useQueryClient
 }                   from "@tanstack/react-query";
 import { toast }    from "sonner";
-
-import {
-    Tabs,
-    TabsList,
-    TabsTrigger
-}                                   from "@/components/ui/tabs";
 import { Button }                   from "@/components/ui/button";
 import { DeleteConfirmDialog }      from "@/components/dialog/DeleteConfirmDialog";
 import { RequestInfoCard }          from "@/components/request-detail/request-info-card";
@@ -25,21 +18,20 @@ import { RequestDetailList }        from "@/components/request-detail/request-de
 import { RequestDetailErrorCard }   from "@/components/request-detail/request-detail-card-skeleton";
 import { RequestDetailTable }       from "@/components/request-detail/request-detail-table";
 import { DataPagination }           from "@/components/ui/data-pagination";
+import { ViewMode }                 from "@/components/shared/view-mode";
 
+import { useViewMode }          from "@/hooks/use-view-mode";
 import type { Module, Request } from "@/types/request";
 import type { RequestDetail }   from "@/types/request-detail.model";
+import { Professor }            from "@/types/professor";
 import { KEY_QUERYS }           from "@/consts/key-queries";
 import { Method, fetchApi }     from "@/services/fetch";
-import { Professor }            from "@/types/professor";
 
 import {
     errorToast,
     successToast
 }               from "@/config/toast/toast.config";
 import { ENV }  from "@/config/envs/env";
-
-
-export type ViewDetailMode = "card" | "table";
 
 
 interface RequestDetailViewProps {
@@ -55,33 +47,15 @@ export function RequestDetailView({
     request,
     onBack,
 }: RequestDetailViewProps ): JSX.Element {
-    const queryClient   = useQueryClient();
-    const router        = useRouter();
-    const searchParams  = useSearchParams();
-
-    const [currentPage, setCurrentPage]     = useState( 1 );
-    const [itemsPerPage, setItemsPerPage]   = useState( 15 );
-    const [viewDetail, setViewDetail]       = useState<ViewDetailMode>(
-        (searchParams.get('viewDetail') as ViewDetailMode) || 'card'
-    );
-
-
-    useEffect(() => {
-        const currentViewDetail = searchParams.get('viewDetail') as ViewDetailMode;
-
-        if ( currentViewDetail && currentViewDetail !== viewDetail ) {
-            setViewDetail( currentViewDetail );
-        }
-    }, [searchParams, viewDetail]);
-
-
-    const handleViewDetailChange = (newViewDetail: ViewDetailMode) => {
-        setViewDetail(newViewDetail);
-
-        const params = new URLSearchParams(searchParams.toString());
-        params.set('viewDetail', newViewDetail);
-        router.replace(`?${params.toString()}`);
-    };
+    const queryClient                           = useQueryClient();
+    const [currentPage, setCurrentPage]         = useState( 1 );
+    const [itemsPerPage, setItemsPerPage]       = useState( 15 );
+    const [selectedDetail, setSelectedDetail]   = useState<RequestDetail | undefined>( undefined );
+    const [ isOpenEdit, setIsOpenEdit ]         = useState( false );
+    const [ isOpenDelete, setIsOpenDelete ]     = useState( false );
+    const { viewMode, onViewChange }            = useViewMode({
+        queryName: 'viewDetail'
+    });
 
 
     const {
@@ -114,19 +88,13 @@ export function RequestDetailView({
     });
 
 
-    const [selectedDetail, setSelectedDetail]   = useState<RequestDetail>( initialRequestDetail );
-    const [ isOpenEdit, setIsOpenEdit ]         = useState( false );
-    const [ isOpenDelete, setIsOpenDelete ]     = useState( false );
-
-
-    // Pagination logic
     const paginatedData = useMemo(() => {
         if ( !data ) return [];
 
         const startIndex    = ( currentPage - 1 ) * itemsPerPage;
         const endIndex      = startIndex + itemsPerPage;
 
-        return data.slice(startIndex, endIndex);
+        return data.slice( startIndex, endIndex );
     }, [data, currentPage, itemsPerPage]);
 
 
@@ -160,24 +128,27 @@ export function RequestDetailView({
         onError: ( mutationError ) => toast( `Error al eliminar solicitud: ${mutationError.message}`, errorToast )
     });
 
-    
+
     function openDeleteDialog( requestDetail: RequestDetail ): void {
         setSelectedDetail( requestDetail );
         setIsOpenDelete( true );
     }
+
 
     const onSuccess = (): void => {
         setIsOpenEdit( false );
         setSelectedDetail( initialRequestDetail );
     };
 
-    function handlePageChange(page: number): void {
-        setCurrentPage(page);
+
+    function handlePageChange( page: number ): void {
+        setCurrentPage( page );
     }
 
-    function handleItemsPerPageChange(newItemsPerPage: number): void {
-        setItemsPerPage(newItemsPerPage);
-        setCurrentPage(1);
+
+    function handleItemsPerPageChange( newItemsPerPage: number ): void {
+        setItemsPerPage( newItemsPerPage );
+        setCurrentPage( 1 );
     }
 
 
@@ -195,26 +166,18 @@ export function RequestDetailView({
                     <h2 className="text-xl font-semibold">Detalles de la Solicitud ({data?.length ?? 0})</h2>
 
                     <div className="flex items-end gap-4">
-                        <Tabs
-                            value           = { viewDetail }
-                            onValueChange   = {( value ) => handleViewDetailChange( value as ViewDetailMode )}
-                        >
-                            <TabsList className="px-1 py-0">
-                                <TabsTrigger value="card">
-                                    <Grid2x2 className="h-5 w-5" />
-                                </TabsTrigger>
+                        <ViewMode
+                            viewMode        = { viewMode }
+                            onViewChange    = { onViewChange }
+                        />
 
-                                <TabsTrigger value="table">
-                                    <AlignJustify className="h-5 w-5" />
-                                </TabsTrigger>
-                            </TabsList>
-                        </Tabs>
-
-
-                    <Button>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Agregar Detalle
-                    </Button>
+                        <Button onClick={() => {
+                            setSelectedDetail( undefined );
+                            setIsOpenEdit( true );
+                        }}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Agregar Detalle
+                        </Button>
                     </div>
                 </div>
 
@@ -222,7 +185,7 @@ export function RequestDetailView({
                     <RequestDetailErrorCard />
                 ) : (
                     <>
-                        {viewDetail === 'card' ? (
+                        {viewMode === 'cards' ? (
                             <RequestDetailList
                                 data                = { paginatedData }
                                 isLoading           = { isLoading }
@@ -285,8 +248,8 @@ export function RequestDetailView({
                 <DeleteConfirmDialog
                     isOpen      = { isOpenDelete }
                     onClose     = { () => setIsOpenDelete( false )}
-                    onConfirm   = { () => deleteRequestDetailMutation.mutate( selectedDetail.id || '') }
-                    name        = { selectedDetail.id || '' }
+                    onConfirm   = { () => deleteRequestDetailMutation.mutate( selectedDetail?.id || '') }
+                    name        = { selectedDetail?.id || '' }
                     type        = "el Detalle"
                 />
             </div>
