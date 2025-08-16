@@ -5,12 +5,15 @@ import { JSX, useEffect } from "react";
 import {
     useForm,
     SubmitHandler,
-}                                       from "react-hook-form";
-import { zodResolver }                  from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient }  from "@tanstack/react-query";
-import { toast }                        from "sonner";
-import { Loader2 }                      from "lucide-react";
-import * as z                           from "zod";
+}                       from "react-hook-form";
+import {
+    useMutation,
+    useQueryClient
+}                       from "@tanstack/react-query";
+import { zodResolver }  from "@hookform/resolvers/zod";
+import { toast }        from "sonner";
+import { Loader2 }      from "lucide-react";
+import * as z           from "zod";
 
 
 import {
@@ -20,6 +23,13 @@ import {
     DialogHeader,
     DialogTitle,
 }                   from "@/components/ui/dialog";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
+}                   from "@/components/ui/select";
 import {
     Form,
     FormControl,
@@ -31,7 +41,11 @@ import {
 import { Input }    from "@/components/ui/input";
 import { Button }   from "@/components/ui/button";
 
-import { Grade, GradeFormData }     from "@/types/grade";
+import {
+    Grade,
+    GradeFormData,
+    HeadquartersEnum
+}                                   from "@/types/grade";
 import { KEY_QUERYS }               from "@/consts/key-queries";
 import { Method, fetchApi }         from "@/services/fetch";
 import { errorToast, successToast } from "@/config/toast/toast.config";
@@ -44,8 +58,8 @@ const formSchema = z.object({
     name: z.string().min(2, {
         message: "El nombre debe tener al menos 2 caracteres.",
     }),
-    headquartersId: z.string().min(1, {
-        message: "La sede es requerida.",
+    headquartersId: z.nativeEnum(HeadquartersEnum, {
+        errorMap: () => ({ message: "La sede es requerida." }),
     }),
 });
 
@@ -62,7 +76,7 @@ interface GradeFormProps {
 
 const emptyGrade: Partial<GradeFormValues> = {
     name            : "",
-    headquartersId  : "",
+    headquartersId  : undefined,
 }
 
 
@@ -114,7 +128,7 @@ export function GradeForm({
             toast( 'Grado creado exitosamente', successToast );
         },
         onError: ( mutationError ) => {
-            toast(`Error al crear grado: ${mutationError.message}`, errorToast );
+            toast( `Error al crear grado: ${mutationError.message}`, errorToast );
         },
     });
 
@@ -138,7 +152,7 @@ export function GradeForm({
     useEffect(() => {
         form.reset({
             name            : grade?.name           || "",
-            headquartersId  : grade?.headquartersId || "",
+            headquartersId  : grade?.headquartersId || undefined,
         });
     }, [grade, form]);
 
@@ -147,7 +161,7 @@ export function GradeForm({
      * Maneja el envío del formulario de grado
      */
     const handleSubmit: SubmitHandler<GradeFormValues> = ( data ) => {
-        const gradeData = {
+        const gradeData: GradeFormData = {
             name            : data.name,
             headquartersId  : data.headquartersId,
         };
@@ -201,13 +215,26 @@ export function GradeForm({
                             name    = "headquartersId"
                             render  = {({ field }) => (
                                 <FormItem>
-                                    <FormLabel>ID de Sede</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            placeholder = "Ej: HQ001"
-                                            {...field}
-                                        />
-                                    </FormControl>
+                                    <FormLabel>Sede</FormLabel>
+
+                                    <Select 
+                                        onValueChange   = { field.onChange } 
+                                        defaultValue    = { field.value }
+                                    >
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Selecciona una sede" />
+                                            </SelectTrigger>
+                                        </FormControl>
+
+                                        <SelectContent>
+                                            <SelectItem value={ HeadquartersEnum.ERRAZURIZ.toString() }>Errazuriz</SelectItem>
+                                            <SelectItem value={ HeadquartersEnum.PENALOLEN.toString() }>Peñalolén</SelectItem>
+                                            <SelectItem value={ HeadquartersEnum.VINADELMAR.toString() }>Viña del mar</SelectItem>
+                                            <SelectItem value={ HeadquartersEnum.VITACURA.toString() }>Vitacura</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -222,8 +249,11 @@ export function GradeForm({
                                 Cancelar
                             </Button>
 
-                            <Button type="submit" disabled={!form.formState.isValid || isLoading}>
-                                {isLoading ? (
+                            <Button
+                                type="submit"
+                                disabled={createGradeMutation.isPending || updateGradeMutation.isPending}
+                            >
+                                {createGradeMutation.isPending || updateGradeMutation.isPending ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                         {grade ? "Actualizando..." : "Creando..."}
