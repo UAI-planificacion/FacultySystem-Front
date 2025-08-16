@@ -91,7 +91,7 @@ export function RequestDetailModuleDays({
                 </div>
 
                 {/* Contenido con scroll */}
-                <div className="overflow-x-auto max-h-72 overflow-y-auto">
+                <div className="overflow-x-auto max-h-60 overflow-y-auto">
                     <Table>
                         <TableBody>
                             {modules.map((module) => (
