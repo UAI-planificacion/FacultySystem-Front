@@ -86,4 +86,6 @@ export interface UpdateRequest {
     status?         : Status;
     isConsecutive?  : boolean;
     subjectId?      : string;
+    staffUpdateId?  : string;
+    description?    : string | null;
 }
