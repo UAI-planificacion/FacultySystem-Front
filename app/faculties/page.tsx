@@ -56,11 +56,19 @@ export default function FacultiesPage() {
 
 
     const createFacultyApi = async ( newFacultyData: CreateFacultyInput ): Promise<Faculty>  =>
-        fetchApi<Faculty>({ url: `faculties`, method: Method.POST, body: newFacultyData });
+        fetchApi<Faculty>({
+            url     : `faculties`,
+            method  : Method.POST,
+            body    : newFacultyData
+        });
 
 
     const updateFacultyApi = async ( updatedFacultyData: UpdateFacultyInput ): Promise<Faculty>  =>
-        fetchApi<Faculty>({ url: `faculties/${updatedFacultyData.id}`, method: Method.PATCH, body: updatedFacultyData });
+        fetchApi<Faculty>({
+            url     : `faculties/${updatedFacultyData.id}`,
+            method  : Method.PATCH,
+            body    : updatedFacultyData
+        });
 
 
     const deleteFacultyApi = async ( facultyId: string ): Promise<Faculty> =>
@@ -73,10 +81,10 @@ export default function FacultiesPage() {
             queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.FACULTIES] });
             setIsFormOpen( false );
             setEditingFaculty( undefined );
-            toast('Facultad creada exitosamente', successToast );
+            toast( 'Facultad creada exitosamente', successToast );
         },
         onError: ( mutationError ) => {
-            toast(`Error al crear facultad: ${mutationError.message}`, errorToast );
+            toast( `Error al crear facultad: ${mutationError.message}`, errorToast );
         },
     });
 
@@ -103,7 +111,7 @@ export default function FacultiesPage() {
             toast( 'Facultad eliminada exitosamente', successToast );
         },
         onError: (mutationError) => {
-            toast(`Error al eliminar facultad: ${mutationError.message}`, errorToast );
+            toast( `Error al eliminar facultad: ${mutationError.message}`, errorToast );
         },
     });
 
@@ -127,21 +135,21 @@ export default function FacultiesPage() {
 
     // Filtered and paginated faculties
     const filteredFaculties = useMemo(() => {
-        if (!data?.faculties) return [];
-        return data.faculties.filter(faculty =>
-            faculty.name.toLowerCase().includes(filterText.toLowerCase())
+        if ( !data?.faculties ) return [];
+        return data.faculties.filter( faculty =>
+            faculty.name.toLowerCase().includes( filterText.toLowerCase() )
         );
     }, [data?.faculties, filterText]);
 
     const paginatedFaculties = useMemo(() => {
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        const endIndex = startIndex + itemsPerPage;
-        return filteredFaculties.slice(startIndex, endIndex);
-    }, [filteredFaculties, currentPage, itemsPerPage]);
+        const startIndex    = ( currentPage - 1 ) * itemsPerPage;
+        const endIndex      = startIndex + itemsPerPage;
+        return filteredFaculties.slice( startIndex, endIndex );
+    }, [ filteredFaculties, currentPage, itemsPerPage ]);
 
-    const totalPages = Math.ceil(filteredFaculties.length / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage + 1;
-    const endIndex = Math.min(currentPage * itemsPerPage, filteredFaculties.length);
+    const totalPages = Math.ceil( filteredFaculties.length / itemsPerPage );
+    const startIndex = ( currentPage - 1 ) * itemsPerPage + 1;
+    const endIndex = Math.min( currentPage * itemsPerPage, filteredFaculties.length );
 
 
     const openNewFacultyForm = () => {
@@ -215,7 +223,7 @@ export default function FacultiesPage() {
                         className   = "w-full max-w-md"
                     />
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4">
                         <ViewMode
                             viewMode        = { viewMode }
                             onViewChange    = { onViewChange }
@@ -226,7 +234,8 @@ export default function FacultiesPage() {
                             className   = "flex items-center"
                         >
                             <Plus className="h-4 w-4 mr-1" />
-                            Crear Facultad
+
+                            <span className="hidden sm:flex">Crear Facultad</span>
                         </Button>
                     </div>
                 </div>
