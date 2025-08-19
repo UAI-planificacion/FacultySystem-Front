@@ -40,6 +40,7 @@ import {
     SubjectTableSkeleton, 
     SubjectErrorMessage 
 }                               from "@/components/subject/subject-table-skeleton";
+import { Badge }                from "@/components/ui/badge";
 
 import {
     CreateSubject,
@@ -201,13 +202,15 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
 
 
     function handleFormSubmit( formData: SubjectFormValues ): void {
+        const { dates, ...rest } = formData;
+
         if ( editingSubject ) {
             updateSubjectMutation.mutate({
-                ...formData,
+                ...rest,
             } as UpdateSubject );
         } else {
             createSubjectMutation.mutate({
-                ...formData,
+                ...rest,
                 facultyId,
             } as CreateSubject );
         }
@@ -282,15 +285,17 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
 
                                         <TableHead className="bg-background w-[250px]">Nombre</TableHead>
 
-                                        <TableHead className="bg-background w-[140px]">Fecha Inicio</TableHead>
+                                        <TableHead className="bg-background w-[200px]">Fecha Inicio</TableHead>
 
-                                        <TableHead className="bg-background w-[140px]">Fecha Fin</TableHead>
+                                        <TableHead className="bg-background w-[200px]">Fecha Fin</TableHead>
 
-                                        <TableHead className="text-right bg-background w-[100px]">Alumnos</TableHead>
+                                        <TableHead className="text-center bg-background w-[80px]">Alumnos</TableHead>
 
-                                        <TableHead className="bg-background w-[150px]">Centro de Costo</TableHead>
+                                        <TableHead className="text-center bg-background w-[150px]">Centro de Costo</TableHead>
 
-                                        <TableHead className="text-right bg-background w-[120px]">Acciones</TableHead>
+                                        <TableHead className="text-center bg-background w-[100px]">Inglés</TableHead>
+
+                                        <TableHead className="text-right bg-background w-[100px]">Acciones</TableHead>
                                     </TableRow>
                                 </TableHeader>
                             </Table>
@@ -309,15 +314,37 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
 
                                                     <TableCell className="w-[250px]">{subject.name}</TableCell>
 
-                                                    <TableCell className="w-[140px]"><ShowDate date={subject.startDate} /></TableCell>
+                                                    <TableCell className="w-[200px]">
+                                                        <div className="flex gap-2">
+                                                            <ShowDate date={ subject.startDate[0] } />
 
-                                                    <TableCell className="w-[140px]"><ShowDate date={subject.endDate} /></TableCell>
+                                                            <Badge variant="outline">
+                                                                { subject.startDate.length }
+                                                            </Badge>
+                                                        </div>
+                                                    </TableCell>
 
-                                                    <TableCell className="text-right w-[100px]">{subject.students}</TableCell>
+                                                    <TableCell className="w-[200px]">
+                                                        <div className="flex gap-2">
+                                                            <ShowDate date={ subject.endDate.at( -1 )} />
 
-                                                    <TableCell className="w-[150px]">{subject.costCenterId}</TableCell>
+                                                            <Badge variant="outline">
+                                                                { subject.endDate.length }
+                                                            </Badge>
+                                                        </div>
+                                                    </TableCell>
 
-                                                    <TableCell className="text-right w-[120px]">
+                                                    <TableCell className="text-center w-[80px]">{subject.students}</TableCell>
+
+                                                    <TableCell className="text-center w-[150px] truncate">{subject.costCenterId}</TableCell>
+
+                                                    <TableCell className="text-right w-[110px]">
+                                                        <Badge variant="secondary">
+                                                            { subject.isEnglish ? 'Sí' : 'No' }
+                                                        </Badge>
+                                                    </TableCell>
+
+                                                    <TableCell className="text-right w-[100px]">
                                                         <ActionButton
                                                             editItem    = { openEditSubjectForm }
                                                             deleteItem  = { () => onOpenDeleteSubject( subject )}
@@ -329,13 +356,13 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
 
                                             {filteredSubjects.length === 0 && searchQuery ? (
                                                 <TableRow>
-                                                    <TableCell colSpan={7} className="h-24 text-center">
+                                                    <TableCell colSpan={8} className="h-24 text-center">
                                                         No se encontraron resultados para &quot;{searchQuery}&quot;
                                                     </TableCell>
                                                 </TableRow>
                                             ) : subjects?.length === 0 && !searchQuery ? (
                                                 <TableRow>
-                                                    <TableCell colSpan={7} className="h-24 text-center">
+                                                    <TableCell colSpan={8} className="h-24 text-center">
                                                         No hay asignaturas registradas
                                                     </TableCell>
                                                 </TableRow>
