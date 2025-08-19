@@ -89,6 +89,8 @@ export default function FacultyDetailsPage(): JSX.Element {
                     <TabsTrigger
                         value       = { TabValue.REQUESTS }
                         className   = "h-10 text-md gap-2"
+                        title       = "Solicitudes"
+
                     >
                         <BookCopy className="h-5 w-5" />
 
@@ -98,6 +100,7 @@ export default function FacultyDetailsPage(): JSX.Element {
                     <TabsTrigger
                         value       = { TabValue.PERSONNEL }
                         className   = "h-10 text-md gap-2"
+                        title       = "Personal"
                     >
                         <Users className="h-5 w-5" />
 
@@ -107,6 +110,7 @@ export default function FacultyDetailsPage(): JSX.Element {
                     <TabsTrigger
                         value       = { TabValue.SUBJECTS }
                         className   = "h-10 text-md gap-2"
+                        title       = "Asignaturas"
                     >
                         <BookOpen className="h-5 w-5" />
 
