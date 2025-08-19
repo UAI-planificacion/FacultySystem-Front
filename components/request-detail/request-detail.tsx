@@ -162,10 +162,10 @@ export function RequestDetailView({
 
             {/* Request Details */}
             <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                     <h2 className="text-xl font-semibold">Detalles de la Solicitud ({data?.length ?? 0})</h2>
 
-                    <div className="flex items-end gap-4">
+                    <div className="flex items-end gap-2 sm:gap-4">
                         <ViewMode
                             viewMode        = { viewMode }
                             onViewChange    = { onViewChange }
@@ -174,9 +174,11 @@ export function RequestDetailView({
                         <Button onClick={() => {
                             setSelectedDetail( undefined );
                             setIsOpenEdit( true );
-                        }}>
-                            <Plus className="h-4 w-4 mr-2" />
-                            Agregar Detalle
+                        }}
+                        className="gap-2"
+                        >
+                            <Plus className="h-4 w-4" />
+                            <span className="hidden sm:flex">Agregar Detalle</span>
                         </Button>
                     </div>
                 </div>
