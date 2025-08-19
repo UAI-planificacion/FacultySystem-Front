@@ -2,7 +2,7 @@
 
 import { JSX } from "react";
 
-import { Eye, Edit, Trash2 } from "lucide-react";
+import { Eye } from "lucide-react";
 
 import {
     Table,
@@ -21,6 +21,8 @@ import { Button }               from "@/components/ui/button";
 import { Badge }                from "@/components/ui/badge";
 import { Consecutive }          from "@/components/shared/consecutive";
 import { ShowStatus }           from "@/components/shared/status";
+import { ScrollArea }           from "@/components/ui/scroll-area";
+import { ActionButton }         from "@/components/shared/action";
 
 import { usePeriods }   from "@/hooks/use-periods";
 import { type Request } from "@/types/request";
@@ -66,8 +68,8 @@ export function RequestTable({
 
     return (
         <Card>
-            <CardContent className="p-0">
-                <div className="overflow-x-auto">
+            <CardContent>
+                <ScrollArea className="h-[calc(100vh-531px)]">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -133,37 +135,24 @@ export function RequestTable({
                                                 size        = "sm"
                                                 onClick     = {() => onViewDetails( request )}
                                                 title       = "Ver detalles"
-                                                className   = "gap-1"
+                                                className   = "gap-2"
                                             >
                                                 { request.totalDetails }
                                                 <Eye className="h-4 w-4" />
                                             </Button>
 
-                                            <Button
-                                                variant = "ghost"
-                                                size    = "sm"
-                                                onClick = {() => onEdit( request )}
-                                                title   = "Editar"
-                                            >
-                                                <Edit className="h-4 w-4" />
-                                            </Button>
-
-                                            <Button
-                                                variant     = "ghost"
-                                                size        = "sm"
-                                                onClick     = {() => onDelete( request )}
-                                                title       = "Eliminar"
-                                                className   = "text-destructive hover:text-destructive"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
+                                            <ActionButton
+                                                editItem    = { () => onEdit( request ) }
+                                                deleteItem  = { () => onDelete( request )}
+                                                item        = { request }
+                                            />
                                         </div>
                                     </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
                     </Table>
-                </div>
+                </ScrollArea>
             </CardContent>
         </Card>
     );
