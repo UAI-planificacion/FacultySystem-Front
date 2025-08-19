@@ -140,7 +140,7 @@ export function RequestFilter({
                         </div>
                     </div>
 
-                    <div className="flex items-end gap-4">
+                    <div className="flex items-end gap-2 sm:gap-4">
                         <ViewMode
                             viewMode        = { viewMode }
                             onViewChange    = { setViewMode }
@@ -148,9 +148,11 @@ export function RequestFilter({
 
                         <Button
                             onClick     = { onNewRequest }
-                            className   = "w-full lg:w-auto"
+                            className   = "w-full lg:w-auto gap-2"
                         >
                             <Plus className="h-4 w-4" />
+
+                            <span className="lg:hidden">Crear Solicitud</span>
                         </Button>
                     </div>
                 </div>
