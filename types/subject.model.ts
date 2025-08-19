@@ -1,10 +1,11 @@
 interface BaseSubject {
     id              : string;
     name            : string;
-    startDate?      : Date;
-    endDate?        : Date;
+    startDate       : Date[];
+    endDate         : Date[];
     students        : number;
     costCenterId    : string;
+    isEnglish       : boolean;
 }
 
 
