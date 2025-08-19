@@ -3,212 +3,290 @@
 import { useEffect } from "react";
 
 import {
-    Calendar as CalendarIcon
-}                       from "lucide-react";
-import { zodResolver }  from "@hookform/resolvers/zod";
-import { useForm }      from "react-hook-form";
-import * as z           from "zod";
+	Calendar as CalendarIcon,
+	Plus,
+	Trash,
+}						from "lucide-react";
+import { zodResolver }	from "@hookform/resolvers/zod";
+import { useForm }		from "react-hook-form";
+import * as z			from "zod";
 
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle
-}                           from "@/components/ui/dialog";
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle
+}							from "@/components/ui/dialog";
 import {
-    Form,
-    FormControl,
-    FormDescription,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage
-}                           from "@/components/ui/form";
+	Form,
+	FormControl,
+	FormDescription,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormMessage
+}							from "@/components/ui/form";
 import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger
-}                           from "@/components/ui/popover";
+	Popover,
+	PopoverContent,
+	PopoverTrigger
+}							from "@/components/ui/popover";
 import {
-    MultiSelectCombobox,
-    Option
-}                           from "@/components/shared/Combobox";
-import { Button }           from "@/components/ui/button";
-import { Input }            from "@/components/ui/input";
-import { Textarea }         from "@/components/ui/textarea";
-import { Calendar }         from "@/components/ui/calendar";
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow
+}							from "@/components/ui/table";
+import {
+	MultiSelectCombobox,
+	Option
+}							from "@/components/shared/Combobox";
+import { Button }			from "@/components/ui/button";
+import { Input }			from "@/components/ui/input";
+import { Textarea }			from "@/components/ui/textarea";
+import { Calendar }			from "@/components/ui/calendar";
+import { Switch }			from "@/components/ui/switch";
+import { ScrollArea }		from "@/components/ui/scroll-area";
 
-import { Subject }          from "@/types/subject.model";
-import { cn, tempoFormat }  from "@/lib/utils";
+import { Subject }			from "@/types/subject.model";
+import { cn, tempoFormat }	from "@/lib/utils";
+
+
+// Interface for date pairs in the form
+interface SubjectDate {
+	startDate	: Date;
+	endDate		: Date | undefined;
+}
 
 
 export type SubjectFormValues = z.infer<typeof formSchema>;
 
 
 interface SubjectFormProps {
-    initialData?    : Subject;
-    onSubmit        : ( data: SubjectFormValues ) => void;
-    isOpen          : boolean;
-    onClose         : () => void;
-    costCenter      : Option[];
+	initialData?	: Subject;
+	onSubmit		: ( data: SubjectFormValues ) => void;
+	isOpen			: boolean;
+	onClose			: () => void;
+	costCenter		: Option[];
 }
 
 
 const formSchema = z.object({
-    id: z.string().min(2, {
-        message: "El código de la asignatura debe tener al menos 2 caracteres.",
-    }).max(30, {
-        message: "El código de la asignatura debe tener como máximo 30 caracteres."
-    }),
-    name: z.string().min(2, {
-        message: "El nombre de la asignatura debe tener al menos 2 caracteres.",
-    }).max(200, {
-        message: "El nombre de la asignatura debe tener como máximo 200 caracteres."
-    }),
-    startDate: z.date().optional(),
-    endDate: z.date().optional(),
-    students: z.coerce.number().min(1, {
-        message: "El número máximo de estudiantes debe ser al menos 1.",
-    }).max(1000, {
-        message: "El número máximo de estudiantes no puede exceder los 1000."
-    }),
-    costCenterId: z.string().min(2, {
-        message: "El código del centro de costos debe tener al menos 2 caracteres.",
-    }),
+	id: z.string().min(2, {
+		message: "El código de la asignatura debe tener al menos 2 caracteres.",
+	}).max(30, {
+		message: "El código de la asignatura debe tener como máximo 30 caracteres."
+	}),
+	name: z.string().min(2, {
+		message: "El nombre de la asignatura debe tener al menos 2 caracteres.",
+	}).max(200, {
+		message: "El nombre de la asignatura debe tener como máximo 200 caracteres."
+	}),
+	dates: z.array(z.object({
+		startDate: z.date({
+			required_error: "La fecha de inicio es requerida."
+		}),
+		endDate: z.date().optional()
+	})).min(1, {
+		message: "Debe seleccionar al menos una fecha de inicio."
+	}),
+	students: z.coerce.number().min(1, {
+		message: "El número máximo de estudiantes debe ser al menos 1.",
+	}).max(1000, {
+		message: "El número máximo de estudiantes no puede exceder los 1000."
+	}),
+	costCenterId: z.string().min(2, {
+		message: "El código del centro de costos debe tener al menos 2 caracteres.",
+	}),
+	isEnglish: z.boolean().default(false),
 });
 
 
-const emptySubject = ( initialData: Subject | undefined ) => ({
-    id              : initialData?.id || '',
-    name            : initialData?.name || '',
-    students        : initialData?.students || 0,
-    costCenterId    : initialData?.costCenterId || '',
-    startDate       : initialData?.startDate ? new Date(initialData.startDate) : undefined,
-    endDate         : initialData?.endDate ? new Date(initialData.endDate) : undefined,
-});
+const emptySubject = ( initialData: Subject | undefined ): Partial<SubjectFormValues> => {
+	const dates: SubjectDate[] = [];
 
+	if ( initialData?.startDate && initialData.startDate.length > 0 ) {
+		initialData.startDate.forEach(( startDate, index ) => {
+			// Convert string dates to Date objects if necessary
+			const startDateObj = startDate instanceof Date ? startDate : new Date( startDate );
+			const endDateValue = initialData.endDate?.[index];
+			const endDateObj = endDateValue ? 
+				( endDateValue instanceof Date ? endDateValue : new Date( endDateValue ) ) : 
+				undefined;
+			
+			dates.push({
+				startDate: startDateObj,
+				endDate: endDateObj
+			});
+		});
+	} else if ( !initialData ) {
+		dates.push({
+			startDate: new Date(),
+			endDate: undefined
+		});
+	}
 
-const getDate = ( date: Date | undefined ) => date ? new Date(date) : undefined;
+	return {
+		id				: initialData?.id			|| '',
+		name			: initialData?.name			|| '',
+		students		: initialData?.students		|| 0,
+		costCenterId	: initialData?.costCenterId	|| '',
+		dates,
+		isEnglish		: initialData?.isEnglish	|| false,
+	};
+};
 
 
 export function SubjectForm({
-    initialData,
-    onSubmit,
-    isOpen,
-    onClose,
-    costCenter
+	initialData,
+	onSubmit,
+	isOpen,
+	onClose,
+	costCenter,
 }: SubjectFormProps) {
-    const defaultValues: Partial<SubjectFormValues> = emptySubject( initialData );
+	const defaultValues: Partial<SubjectFormValues> = emptySubject( initialData );
 
-    const form = useForm<SubjectFormValues>({
-        resolver: zodResolver( formSchema ),
-        defaultValues
-    });
+	const form = useForm<SubjectFormValues>({
+		resolver: zodResolver( formSchema ),
+		defaultValues
+	});
 
-
-    useEffect(() => {
-        if ( !isOpen ) return;
-
-        form.reset( emptySubject( initialData ));
-    }, [ isOpen, initialData?.id, form ]);
+	const { watch, setValue } = form;
+	const dates = watch( 'dates' ) || [];
 
 
-    function handleSubmit( formData: SubjectFormValues ): void {
-        const data = {
-            ...formData,
-            startDate   : getDate( formData.startDate ),
-            endDate     : getDate( formData.endDate ),
-        };
+	useEffect(() => {
+		if ( !isOpen ) return;
+		form.reset( emptySubject( initialData ));
+	}, [ isOpen, initialData?.id ]);
 
-        console.log('🚀 ~ file: subject-form.tsx:64 ~ data:', data);
-        onSubmit( data );
-    }
+
+	function handleSubmit( formData: SubjectFormValues ): void {
+		const startDate = formData.dates.map( date => date.startDate );
+		const endDate	= formData.dates.map( date => date.endDate ).filter( date => date !== undefined ) as Date[];
+		const data      = {
+			...formData,
+			startDate,
+			endDate,
+		};
+
+        const { dates, ...rest } = data;
+
+		console.log('🚀 ~ file: subject-form.tsx:64 ~ data:', rest);
+		onSubmit( data );
+	}
+
+
+    const addDatePair = () => {
+		const newDates = [ ...dates, { startDate: new Date(), endDate: undefined } ];
+		setValue( 'dates', newDates );
+	};
+
+
+    const removeDatePair = ( index: number ) => {
+		const newDates = dates.filter( ( _, i ) => i !== index );
+		setValue( 'dates', newDates );
+	};
+
+
+    const updateStartDate = ( index: number, date: Date | undefined ) => {
+		if ( !date ) return;
+
+        const newDates = [ ...dates ];
+		newDates[ index ] = { ...newDates[ index ], startDate: date };
+		setValue( 'dates', newDates );
+	};
+
+
+    const updateEndDate = ( index: number, date: Date | undefined ) => {
+		const newDates      = [ ...dates ];
+		newDates[ index ]   = { ...newDates[ index ], endDate: date };
+
+        setValue( 'dates', newDates );
+	};
+
 
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[600px]">
-                <DialogHeader>
-                    <DialogTitle>
-                        {initialData ? "Editar Asignatura" : "Nueva Asignatura"}
-                    </DialogTitle>
+		<Dialog open={isOpen} onOpenChange={onClose}>
+			<DialogContent className="sm:max-w-[600px]">
+				<DialogHeader>
+					<DialogTitle>
+						{initialData ? "Editar Asignatura" : "Nueva Asignatura"}
+					</DialogTitle>
 
-                    <DialogDescription>
-                        {initialData 
-                            ? "Actualizar los detalles de una asignatura existente" 
-                            : "Agregar una nueva asignatura a esta facultad"
-                        }
-                    </DialogDescription>
-                </DialogHeader>
+					<DialogDescription>
+						{initialData
+							? "Actualizar los detalles de una asignatura existente"
+							: "Agregar una nueva asignatura a esta facultad"
+						}
+					</DialogDescription>
+				</DialogHeader>
 
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-                        <FormField
-                            control = { form.control }
-                            name    = "id"
-                            render  = {({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Código de la Asignatura</FormLabel>
+				<Form {...form}>
+					<form
+                        onSubmit    = { form.handleSubmit( handleSubmit )}
+                        className   = "space-y-4"
+                    >
+						<FormField
+							control = { form.control }
+							name    = "id"
+							render  = {({ field }) => (
+								<FormItem>
+									<FormLabel>Código de la Asignatura</FormLabel>
 
-                                    <FormControl>
-                                        <Input
-                                            {...field}
-                                            placeholder = "CS101"
-                                            disabled    = { !!initialData?.id }
-                                        />
-                                    </FormControl>
+									<FormControl>
+										<Input
+											{...field}
+											placeholder = "Ej: MAT101"
+											disabled	= { !!initialData?.id }
+										/>
+									</FormControl>
 
-                                    <FormDescription>
-                                        Código único para la asignatura
-                                    </FormDescription>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
 
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+						<FormField
+							control = { form.control }
+							name    = "name"
+							render  = {({ field }) => (
+								<FormItem>
+									<FormLabel>Nombre de la Asignatura</FormLabel>
 
-                        <FormField
-                            control = { form.control }
-                            name    = "name"
-                            render  = {({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Nombre de la Asignatura</FormLabel>
+									<FormControl>
+										<Textarea
+											{...field}
+											placeholder = "Ej: Matemáticas Básicas"
+										/>
+									</FormControl>
 
-                                    <FormControl>
-                                        <Textarea
-                                            {...field}
-                                            placeholder = "Introducción a la Informática"
-                                            className   = "min-h-[80px] max-h-[150px]"
-                                        />
-                                    </FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
 
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <FormField
                                 control = { form.control }
                                 name    = "students"
                                 render  = {({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="font-medium">Cupo de estudiantes</FormLabel>
+                                        <FormLabel>Número Máximo de Estudiantes</FormLabel>
 
                                         <FormControl>
                                             <Input
                                                 {...field}
-                                                type        = "number"
-                                                min         = { 1 }
-                                                max         = { 1000 }
-                                                placeholder = "Ej: 30"
-                                                onChange    = {(e) => field.onChange( parseInt( e.target.value ) || 0)}
+                                                type		= "number"
+                                                min			= { 1 }
+                                                max			= { 1000 }
+                                                placeholder = "30"
+                                                onChange	= {(e) => field.onChange( parseInt( e.target.value ) || 0)}
                                             />
                                         </FormControl>
-
-                                        <FormDescription>
-                                            Número máximo de estudiantes
-                                        </FormDescription>
 
                                         <FormMessage />
                                     </FormItem>
@@ -220,128 +298,183 @@ export function SubjectForm({
                                 name    = "costCenterId"
                                 render  = {({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="font-medium">Centro de Costos</FormLabel>
+                                        <FormLabel>Centro de Costos</FormLabel>
 
-                                        <MultiSelectCombobox
-                                            multiple            = { false }
-                                            placeholder         = "Seleccionar centro de costo"
-                                            defaultValues       = { field.value || '' }
-                                            onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
-                                            options             = { costCenter }
-                                        />
+                                        <FormControl>
+                                            <MultiSelectCombobox
+                                                multiple			= { false }
+                                                placeholder			= "Seleccionar centro de costos"
+                                                defaultValues		= { field.value || '' }
+                                                onSelectionChange	= {( value ) => field.onChange( value === undefined ? null : value )}
+                                                options				= { costCenter }
+                                            />
+                                        </FormControl>
 
-                                        <FormDescription>
-                                            Selecciona el centro de costos asociado
-                                        </FormDescription>
-
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control = { form.control }
-                                name    = "startDate"
-                                render  = {({ field }) => (
-                                    <FormItem className="flex flex-col">
-                                        <FormLabel className="font-medium">Fecha de inicio</FormLabel>
-
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <FormControl>
-                                                    <Button
-                                                        variant={"outline"}
-                                                        className={cn(
-                                                            "w-full pl-3 text-left font-normal",
-                                                            !field.value && "text-muted-foreground"
-                                                        )}
-                                                    >
-                                                        {field.value ? (
-                                                            tempoFormat(field.value)
-                                                        ) : (
-                                                            <span>Selecciona una fecha</span>
-                                                        )}
-
-                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                    </Button>
-                                                </FormControl>
-                                            </PopoverTrigger>
-
-                                            <PopoverContent className="w-auto p-0" align="start">
-                                                <Calendar
-                                                    mode        = "single"
-                                                    selected    = { field.value }
-                                                    onSelect    = { field.onChange }
-                                                    disabled    = {( date ) => date < new Date() }
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control = { form.control }
-                                name    = "endDate"
-                                render  = {({ field }) => (
-                                    <FormItem className="flex flex-col">
-                                        <FormLabel className="font-medium">Fecha de finalización</FormLabel>
-
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <FormControl>
-                                                    <Button
-                                                        variant     = "outline"
-                                                        className   = {cn(
-                                                            "w-full pl-3 text-left font-normal",
-                                                            !field.value && "text-muted-foreground"
-                                                        )}
-                                                    >
-                                                        {field.value
-                                                            ? tempoFormat( field.value )
-                                                            : <span>Selecciona una fecha</span>
-                                                        }
-
-                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                    </Button>
-                                                </FormControl>
-                                            </PopoverTrigger>
-
-                                            <PopoverContent className="w-auto p-0" align="start">
-                                                <Calendar
-                                                    mode        = "single"
-                                                    selected    = { field.value }
-                                                    onSelect    = { field.onChange }
-                                                    disabled    = {( date ) => date < ( form.getValues( 'startDate' ) || new Date() )}
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
                         </div>
 
-                        <div className="flex justify-between">
-                            <Button
-                                type    = "button"
-                                variant = "outline"
-                                onClick = { onClose }
-                            >
-                                Cancelar
-                            </Button>
+						<FormField
+							control = { form.control }
+							name    = "dates"
+							render  = {() => (
+								<FormItem>
+									<ScrollArea className={cn(
+                                        dates.length <= 1 ? 'h-28' : dates.length <= 3 ? 'h-auto' : 'h-72',
+                                        "w-full border rounded-md transition-all duration-300"
+                                    )}>
+										<Table>
+											<TableHeader>
+												<TableRow>
+													<TableHead className="bg-background w-[250px] text-white">Fecha de Inicio</TableHead>
+													<TableHead className="bg-background w-[250px] text-white">Fecha de Fin</TableHead>
+													<TableHead className="bg-background w-[30px]">
+                                                        <Button
+                                                            type        = "button"
+                                                            onClick     = { addDatePair }
+                                                            className   = "gap-2"
+                                                            size        = "sm"
+                                                        >
+                                                            <Plus className="h-4 w-4" />
+                                                        </Button>
+                                                    </TableHead>
+												</TableRow>
+											</TableHeader>
 
-                            <Button type="submit">
-                                {initialData
-                                    ? "Actualizar Asignatura"
-                                    : "Crear Asignatura"
-                                }
-                            </Button>
-                        </div>
-                    </form>
-                </Form>
-            </DialogContent>
-        </Dialog>
-    );
+											<TableBody>
+                                                { dates.length === 0 ? (
+                                                    <TableRow>
+                                                        <TableCell colSpan={3} className="text-center bg-background">
+                                                            No hay fechas disponibles
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ) : null }
+												{dates.map(( dateItem, index ) => (
+													<TableRow key={index}>
+														<TableCell className="w-[250px]" isPadding={false}>
+															<Popover>
+																<PopoverTrigger asChild>
+																	<Button
+																		variant     = "outline"
+																		className   = {cn(
+																			"w-full justify-start text-left font-normal gap-2",
+																			!dateItem.startDate && "text-muted-foreground"
+																		)}
+																	>
+																		<CalendarIcon className="h-4 w-4" />
+
+																		{ dateItem.startDate
+                                                                            ? tempoFormat( dateItem.startDate )
+                                                                            : "Seleccionar fecha"
+                                                                        }
+																	</Button>
+																</PopoverTrigger>
+
+																<PopoverContent className="w-auto p-0">
+																	<Calendar
+																		mode        = "single"
+																		selected    = { dateItem.startDate }
+																		onSelect    = {( selectedDate ) => updateStartDate( index, selectedDate )}
+																		disabled    = {( date ) => date < new Date() }
+																	/>
+																</PopoverContent>
+															</Popover>
+														</TableCell>
+
+														<TableCell className="w-[250px]" isPadding={false}>
+															<Popover>
+																<PopoverTrigger asChild>
+																	<Button
+																		variant     = "outline"
+																		className   = {cn(
+																			"w-full justify-start text-left font-normal gap-2",
+																			!dateItem.endDate && "text-muted-foreground"
+																		)}
+																	>
+																		<CalendarIcon className="h-4 w-4" />
+
+																		{ dateItem.endDate ? tempoFormat( dateItem.endDate ) : "Seleccone una fecha" }
+																	</Button>
+																</PopoverTrigger>
+
+																<PopoverContent className="w-auto p-0">
+																	<Calendar
+																		mode        = "single"
+																		selected    = { dateItem.endDate }
+																		onSelect    = {( selectedDate ) => updateEndDate( index, selectedDate )}
+																		disabled    = {( date ) => date < dateItem.startDate || date < new Date() }
+																	/>
+																</PopoverContent>
+															</Popover>
+														</TableCell>
+
+														<TableCell className="w-[30px] text-center" isPadding={false}>
+															<Button
+																type    = "button"
+																variant = "destructive"
+																size    = "icon"
+																onClick = {() => removeDatePair( index )}
+															>
+																<Trash className="h-4 w-4" />
+															</Button>
+														</TableCell>
+													</TableRow>
+												))}
+											</TableBody>
+										</Table>
+									</ScrollArea>
+
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+
+						<FormField
+							control = { form.control }
+							name    = "isEnglish"
+							render  = {({ field }) => (
+								<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+									<div className="space-y-0.5">
+										<FormLabel className="text-base">
+											Asignatura en Inglés
+										</FormLabel>
+
+										<FormDescription>
+											Marcar si la asignatura se imparte en inglés
+										</FormDescription>
+									</div>
+
+									<FormControl>
+										<Switch
+											checked         = { field.value }
+											onCheckedChange = { field.onChange }
+										/>
+									</FormControl>
+								</FormItem>
+							)}
+						/>
+
+						<div className="flex justify-end space-x-2">
+							<Button
+								type    = "button"
+								variant = "outline"
+								onClick = { onClose }
+							>
+								Cancelar
+							</Button>
+
+							<Button
+								type        = "submit"
+								disabled    = { !form.formState.isValid }
+							>
+								{ initialData ? "Actualizar" : "Crear" }
+							</Button>
+						</div>
+					</form>
+				</Form>
+			</DialogContent>
+		</Dialog>
+	);
 }
