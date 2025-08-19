@@ -2,8 +2,6 @@
 
 import { JSX } from "react";
 
-import { Edit, Trash2 } from "lucide-react";
-
 import {
     Table,
     TableBody,
@@ -16,7 +14,7 @@ import { Card, CardContent }    from "@/components/ui/card";
 import { ScrollArea }           from "@/components/ui/scroll-area";
 import { Badge }                from "@/components/ui/badge";
 import { Skeleton }             from "@/components/ui/skeleton";
-import { Button }               from "@/components/ui/button";
+import { ActionButton }         from "@/components/shared/action";
 
 import type { RequestDetail }   from "@/types/request-detail.model";
 import type { Module }          from "@/types/request";
@@ -72,31 +70,35 @@ export function RequestDetailTable({
     isLoadingModules,
     isErrorModules,
 }: RequestDetailTableProps): JSX.Element {
-    
     const getProfessorName = (professorId: string | null): string => {
-        if (!professorId || isLoadingProfessors || isErrorProfessors) return "-";
-        const professor = professors.find(p => p.id === professorId);
+        if ( !professorId || isLoadingProfessors || isErrorProfessors ) return "-";
+
+        const professor = professors.find( p => p.id === professorId );
+
         return professor?.name || "-";
     };
-    
+
+
     const getSpaceDisplay = (detail: RequestDetail): string => {
-        if (detail.spaceId) return detail.spaceId;
-        if (detail.spaceType) return getSpaceType(detail.spaceType) || detail.spaceType;
-        if (detail.spaceSize) return detail.spaceSize;
+        if ( detail.spaceId ) return detail.spaceId;
+        if ( detail.spaceType ) return getSpaceType( detail.spaceType ) || detail.spaceType;
+        if ( detail.spaceSize ) return detail.spaceSize;
+
         return "-";
     };
-    
+
+
     const getCapacityRange = (minimum: number | null, maximum: number | null): string => {
-        if (minimum && maximum) return `${minimum} - ${maximum}`;
-        if (minimum) return `${minimum}+`;
-        if (maximum) return `≤ ${maximum}`;
+        if ( minimum  && maximum ) return `${minimum} - ${maximum}`;
+        if ( minimum ) return `${minimum}+`;
+        if ( maximum ) return `≤ ${maximum}`;
         return "-";
     };
 
     return (
         <Card>
             <CardContent className="p-0">
-                <ScrollArea>
+                <ScrollArea className="h-[calc(100vh-768px)]">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -140,8 +142,8 @@ export function RequestDetailTable({
                                             </TableCell>
 
                                             <TableCell>
-                                                <Badge variant={detail.isPriority ? "destructive" : "outline"}>
-                                                    {detail.isPriority ? "Alta" : "Normal"}
+                                                <Badge variant={detail.isPriority ? "destructive" : "default"}>
+                                                    {detail.isPriority ? "Restrictivo" : "No Restrictivo"}
                                                 </Badge>
                                             </TableCell>
 
@@ -172,23 +174,11 @@ export function RequestDetailTable({
                                             </TableCell>
 
                                             <TableCell className="text-right">
-                                                <div className="flex justify-end gap-2">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => onEdit(detail)}
-                                                    >
-                                                        <Edit className="h-4 w-4" />
-                                                    </Button>
-
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => onDelete(detail)}
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
+                                                <ActionButton
+                                                    editItem    = { () => onEdit( detail ) }
+                                                    deleteItem  = { () => onDelete( detail )}
+                                                    item        = { detail }
+                                                />
                                             </TableCell>
                                         </TableRow>
                                     ))
