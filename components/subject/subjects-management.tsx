@@ -390,7 +390,7 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
 
             {/* Subject Form Dialog */}
             <SubjectForm
-                initialData = { editingSubject }
+                subject     = { editingSubject }
                 onSubmit    = { handleFormSubmit }
                 onClose     = { () => setIsFormOpen( false )}
                 isOpen      = { isFormOpen }
