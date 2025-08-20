@@ -28,7 +28,16 @@ export function usePagination<T>({
     const paginationData = useMemo(() => {
         const totalItems    = data.length;
         const totalPages    = Math.ceil( totalItems / itemsPerPage );
-        const startIndex    = ( currentPage - 1 ) * itemsPerPage;
+        
+        // Auto-adjust current page if it exceeds total pages
+        let adjustedCurrentPage = currentPage;
+        if ( totalPages > 0 && currentPage > totalPages ) {
+            adjustedCurrentPage = totalPages;
+            // Use setTimeout to avoid state update during render
+            setTimeout(() => setCurrentPage( totalPages ), 0);
+        }
+        
+        const startIndex    = ( adjustedCurrentPage - 1 ) * itemsPerPage;
         const endIndex      = startIndex + itemsPerPage;
         const paginatedData = data.slice( startIndex, endIndex );
 
@@ -37,7 +46,8 @@ export function usePagination<T>({
             totalPages,
             startIndex,
             endIndex,
-            paginatedData
+            paginatedData,
+            adjustedCurrentPage
         };
     }, [data, currentPage, itemsPerPage]);
 
@@ -51,7 +61,7 @@ export function usePagination<T>({
     };
 
     return {
-        currentPage,
+        currentPage: paginationData.adjustedCurrentPage,
         itemsPerPage,
         totalItems: paginationData.totalItems,
         totalPages: paginationData.totalPages,
