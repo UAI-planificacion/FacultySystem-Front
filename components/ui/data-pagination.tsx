@@ -47,7 +47,7 @@ export function DataPagination({
 
     return (
         <div className={`space-y-4 ${className}`}>
-            {/* Selector de elementos por página */}
+            {/* Selector de elementos por página - Siempre visible cuando hay elementos */}
             <div className="w-full flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                     <Label htmlFor="items-per-page" className="text-sm font-medium hidden sm:inline">
@@ -72,9 +72,9 @@ export function DataPagination({
                     </Select>
                 </div>
 
-                {/* Información de paginación */}
+                {/* Información de paginación - Siempre visible cuando hay elementos */}
                 <div className="text-sm text-muted-foreground text-end">
-                    Mostrando {startIndex + 1} a {Math.min(endIndex, totalItems)} de {totalItems} resultados
+                    Mostrando {Math.max(startIndex + 1, 1)} a {Math.min(endIndex, totalItems)} de {totalItems} resultados
                 </div>
             </div>
 
@@ -148,10 +148,10 @@ export function DataPagination({
                 </div>
             )}
 
-            {/* Información adicional de página */}
-            {totalPages > 1 && (
+            {/* Información adicional de página - Siempre visible cuando hay elementos */}
+            {totalPages > 0 && (
                 <div className="text-center text-sm text-muted-foreground">
-                    Página {currentPage} de {totalPages}
+                    Página {Math.max(currentPage, 1)} de {Math.max(totalPages, 1)}
                 </div>
             )}
         </div>
