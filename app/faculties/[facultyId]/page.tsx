@@ -90,7 +90,6 @@ export default function FacultyDetailsPage(): JSX.Element {
                         value       = { TabValue.REQUESTS }
                         className   = "h-10 text-md gap-2"
                         title       = "Solicitudes"
-
                     >
                         <BookCopy className="h-5 w-5" />
 
