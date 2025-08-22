@@ -313,7 +313,7 @@ export function RequestDetailForm({
     }, [requestDetail, isOpen]);
 
 
-    const handleModuleToggle = ( day: string, moduleId: string, isChecked: boolean ): void => {
+    function handleModuleToggle( day: string, moduleId: string, isChecked: boolean ): void {
         const currentModuleDays = form.getValues( 'moduleDays' );
 
         if ( isChecked ) {
@@ -374,7 +374,7 @@ export function RequestDetailForm({
                 ...formData,
                 requestId,
                 staffCreateId: staff.id,
-            }            );
+            });
         }
     }
 
