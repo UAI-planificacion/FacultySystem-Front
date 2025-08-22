@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react";
+import { JSX, useState } from "react";
 
 import {
     useMutation,
@@ -58,7 +58,10 @@ interface StaffManagementProps {
 }
 
 
-export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
+export function StaffManagement({
+    facultyId,
+    enabled
+}: StaffManagementProps ): JSX.Element {
     const queryClient                                   = useQueryClient();
     const [searchQuery, setSearchQuery]                 = useState( '' );
     const [roleFilter, setRoleFilter]                   = useState<string>( 'all' );
@@ -74,23 +77,19 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
     });
 
 
-    const filteredStaff = staffList?.filter(staff => {
-        const matchesSearch = searchQuery === '' || 
-            staff.name.toLowerCase().includes( searchQuery.toLowerCase() ) ||
-            staff.email.toLowerCase().includes( searchQuery.toLowerCase() );
+    const filteredStaff = staffList?.filter( staff => {
+        const matchesSearch = searchQuery === ''
+            || staff.name.toLowerCase().includes( searchQuery.toLowerCase() )
+            || staff.email.toLowerCase().includes( searchQuery.toLowerCase() );
 
-        const matchesRole = roleFilter === 'all'                    || 
-            ( roleFilter === 'admin' && staff.role === 'ADMIN' )    ||
-            ( roleFilter === 'editor' && staff.role === 'EDITOR' )  ||
-            ( roleFilter === 'viewer' && staff.role === 'VIEWER' );
+        const matchesRole = roleFilter === 'all'
+            || ( roleFilter === 'admin'     && staff.role === 'ADMIN' )
+            || ( roleFilter === 'editor'    && staff.role === 'EDITOR' )
+            || ( roleFilter === 'viewer'    && staff.role === 'VIEWER' );
 
-        let matchesStatus = true;
-
-        if ( statusFilter === 'active' ) {
-            matchesStatus = staff.isActive === true;
-        } else if ( statusFilter === 'inactive' ) {
-            matchesStatus = staff.isActive === false;
-        }
+        const matchesStatus = statusFilter === 'all'
+            || ( statusFilter === 'active' && staff.isActive )
+            || ( statusFilter === 'inactive' && !staff.isActive );
 
         return matchesSearch && matchesRole && matchesStatus;
     }) || [];
@@ -119,7 +118,7 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
     /**
      * Resetea la página actual cuando cambian los filtros
      */
-    const handleFilterChange = ( filterType: 'search' | 'role' | 'status', value: string ) => {
+    function handleFilterChange( filterType: 'search' | 'role' | 'status', value: string ): void {
         resetToFirstPage();
 
         switch ( filterType ) {
@@ -149,15 +148,15 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
 
 
     const createStaffApi = async ( newStaff: CreateStaff ): Promise<Staff>  =>
-        fetchApi<Staff>( { url: `staff`, method: Method.POST, body: newStaff } );
+        fetchApi<Staff>({ url: `staff`, method: Method.POST, body: newStaff });
 
 
     const updateStaffApi = async ( updatedStaff: UpdateStaff ): Promise<Staff>  =>
-        fetchApi<Staff>( { url: `staff/${updatedStaff.id}`, method: Method.PATCH, body: updatedStaff } );
+        fetchApi<Staff>({ url: `staff/${updatedStaff.id}`, method: Method.PATCH, body: updatedStaff });
 
 
     const deleteStaffApi = async ( staffId: string ): Promise<Staff> =>
-        fetchApi<Staff>( { url: `staff/${staffId}`, method: Method.DELETE } );
+        fetchApi<Staff>({ url: `staff/${staffId}`, method: Method.DELETE });
 
 
     const createStaffMutation = useMutation<Staff, Error, CreateStaff>({
@@ -168,9 +167,7 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
             setEditingStaff( undefined );
             toast( 'Personal creado exitosamente', successToast );
         },
-        onError: ( mutationError ) => {
-            toast( `Error al crear personal: ${mutationError.message}`, errorToast );
-        },
+        onError: ( mutationError ) => toast( `Error al crear personal: ${mutationError.message}`, errorToast )
     });
 
 
@@ -182,9 +179,7 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
             setEditingStaff( undefined );
             toast( 'Personal actualizado exitosamente', successToast );
         },
-        onError: ( mutationError ) => {
-            toast(`Error al actualizar personal: ${mutationError.message}`, errorToast );
-        },
+        onError: ( mutationError ) => toast(`Error al actualizar personal: ${mutationError.message}`, errorToast )
     });
 
 
@@ -195,9 +190,7 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
             setIsDeleteDialogOpen( false );
             toast( 'Personal eliminado exitosamente', successToast );
         },
-        onError: (mutationError) => {
-            toast(`Error al eliminar personal: ${mutationError.message}`, errorToast );
-        },
+        onError: ( mutationError ) => toast( `Error al eliminar personal: ${mutationError.message}`, errorToast )
     });
 
 
@@ -248,7 +241,7 @@ export function StaffManagement({ facultyId, enabled }: StaffManagementProps) {
                             <div className="grid space-y-2">
                                 <Label htmlFor="role">Role</Label>
 
-                                <Select value={roleFilter} onValueChange={(value) => handleFilterChange( 'role', value )}>
+                                <Select value={roleFilter} onValueChange={( value ) => handleFilterChange( 'role', value )}>
                                     <SelectTrigger id="role">
                                         <SelectValue placeholder="Filtrar por rol" />
                                     </SelectTrigger>
