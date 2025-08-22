@@ -25,7 +25,7 @@ import { Button }   from "@/components/ui/button";
 import type { Module}       from "@/types/request";
 import { Professor }        from "@/types/professor";
 import { RequestDetail }    from "@/types/request-detail.model";
-import {  getSpaceType }    from "@/lib/utils";
+import { getSpaceType }     from "@/lib/utils";
 import LoaderMini           from "@/icons/LoaderMini";
 
 
