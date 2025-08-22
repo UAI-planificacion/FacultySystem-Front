@@ -90,8 +90,7 @@ export interface CreateRequestDetail extends Omit<BaseRequestDetail, 'comment'> 
     inAfternoon     : boolean;
     isPriority      : boolean;
     staffCreateId   : string;
-    gradeId?: string | null;
-
+    gradeId?        : string | null;
 }
 
 
