@@ -53,9 +53,7 @@ export function RequestDetailView({
     const [selectedDetail, setSelectedDetail]   = useState<RequestDetail | undefined>( undefined );
     const [ isOpenEdit, setIsOpenEdit ]         = useState( false );
     const [ isOpenDelete, setIsOpenDelete ]     = useState( false );
-    const { viewMode, onViewChange }            = useViewMode({
-        queryName: 'viewDetail'
-    });
+    const { viewMode, onViewChange }            = useViewMode({ queryName: 'viewDetail' });
 
 
     const {
@@ -178,7 +176,7 @@ export function RequestDetailView({
                         className="gap-2"
                         >
                             <Plus className="h-4 w-4" />
-                            <span className="hidden sm:flex">Agregar Detalle</span>
+                            <span className="hidden sm:flex">Crear Detalle</span>
                         </Button>
                     </div>
                 </div>
