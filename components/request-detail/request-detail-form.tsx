@@ -105,7 +105,7 @@ const formSchema = z.object({
     isPriority      : z.boolean().default( false ),
     gradeId         : z.string().nullable().optional(),
     professorId     : z.string().nullable().optional(),
-    description     : z.string().max( 500, "La descripción no puede tener más de 500 caracteres" ).nullable().default(''),
+    description     : z.string().max( 500, "La descripción no puede tener más de 500 caracteres" ).nullable().default( '' ),
     spaceId         : z.string().nullable().optional(),
     moduleDays      : z.array(z.object({
         day         : z.string(),
