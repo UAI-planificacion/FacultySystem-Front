@@ -185,7 +185,7 @@ export function RequestDetailView({
                     <RequestDetailErrorCard />
                 ) : (
                     <>
-                        {viewMode === 'cards' ? (
+                        { viewMode === 'cards' ? (
                             <RequestDetailList
                                 data                = { paginatedData }
                                 isLoading           = { isLoading }
