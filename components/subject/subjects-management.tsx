@@ -6,9 +6,9 @@ import {
     useMutation,
     useQuery,
     useQueryClient
-}                       from "@tanstack/react-query";
-import { Plus, Search } from "lucide-react";
-import { toast }        from "sonner";
+}                                   from "@tanstack/react-query";
+import { Calendar, Plus, Search }   from "lucide-react";
+import { toast }                    from "sonner";
 
 import {
     Table,
@@ -27,19 +27,18 @@ import {
     CardContent,
     CardHeader
 }                               from "@/components/ui/card";
+import { 
+    SubjectTableSkeleton, 
+    SubjectErrorMessage 
+}                               from "@/components/subject/subject-table-skeleton";
 import { DataPagination }       from "@/components/ui/data-pagination";
 import { Button }               from "@/components/ui/button";
 import { ScrollArea }           from "@/components/ui/scroll-area";
 import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
 import { Input }                from "@/components/ui/input";
 import { Label }                from "@/components/ui/label";
-import { ShowDate }             from "@/components/shared/date";
 import { ActionButton }         from "@/components/shared/action";
 import { MultiSelectCombobox }  from "@/components/shared/Combobox";
-import { 
-    SubjectTableSkeleton, 
-    SubjectErrorMessage 
-}                               from "@/components/subject/subject-table-skeleton";
 import { Badge }                from "@/components/ui/badge";
 
 import {
@@ -281,19 +280,23 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                             <Table>
                                 <TableHeader className="sticky top-0 z-10 bg-background">
                                     <TableRow>
-                                        <TableHead className="bg-background w-[120px]">Código</TableHead>
+                                        <TableHead className="bg-background w-[100px]">Sigla</TableHead>
 
-                                        <TableHead className="bg-background w-[250px]">Nombre</TableHead>
+                                        <TableHead className="bg-background w-[300px]">Nombre</TableHead>
 
-                                        <TableHead className="bg-background w-[200px]">Fecha Inicio</TableHead>
+                                        <TableHead className="text-end bg-background w-[100px]">Fechas</TableHead>
 
-                                        <TableHead className="bg-background w-[200px]">Fecha Fin</TableHead>
+                                        {/* <TableHead className="bg-background w-[100px]">Fechas Fin</TableHead> */}
 
-                                        <TableHead className="text-center bg-background w-[80px]">Alumnos</TableHead>
+                                        <TableHead className="text-center bg-background w-[50px]">Alumnos</TableHead>
 
-                                        <TableHead className="text-center bg-background w-[150px]">Centro de Costo</TableHead>
+                                        <TableHead className="text-center bg-background w-[120px]">Centro de Costo</TableHead>
 
-                                        <TableHead className="text-center bg-background w-[100px]">Inglés</TableHead>
+                                        <TableHead className="text-center bg-background w-[50px]">Edificio</TableHead>
+
+                                        <TableHead className="bg-background w-[120px]">Espacio</TableHead>
+
+                                        <TableHead className="text-center bg-background w-[50px]">Inglés</TableHead>
 
                                         <TableHead className="text-right bg-background w-[100px]">Acciones</TableHead>
                                     </TableRow>
@@ -310,13 +313,13 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                                         <TableBody>
                                             {paginatedSubjects.map((subject) => (
                                                 <TableRow key={subject.id}>
-                                                    <TableCell className="font-medium w-[120px]">{subject.id}</TableCell>
+                                                    <TableCell className="font-medium w-[100px] truncate">{subject.id}</TableCell>
 
-                                                    <TableCell className="w-[250px]">{subject.name}</TableCell>
+                                                    <TableCell className="w-[300px] truncate" title={subject.name}>{subject.name}</TableCell>
 
-                                                    <TableCell className="w-[200px]">
-                                                        <div className="flex gap-2">
-                                                            <ShowDate date={ subject.startDate[0] } />
+                                                    <TableCell className="w-[100px]">
+                                                        <div className="flex gap-2 items-center">
+                                                            <Calendar className="w-4 h-4" />
 
                                                             <Badge variant="outline">
                                                                 { subject.startDate.length }
@@ -324,21 +327,42 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                                                         </div>
                                                     </TableCell>
 
-                                                    <TableCell className="w-[200px]">
-                                                        <div className="flex gap-2">
-                                                            <ShowDate date={ subject.endDate.at( -1 )} />
+                                                    {/* <TableCell className="w-[100px]">
+                                                        <div className="flex gap-2 items-center">
+                                                            <Calendar className="w-4 h-4" />
 
                                                             <Badge variant="outline">
                                                                 { subject.endDate.length }
                                                             </Badge>
                                                         </div>
+                                                    </TableCell> */}
+
+                                                    <TableCell className="text-center w-[50px]">{subject.students}</TableCell>
+
+                                                    <TableCell
+                                                        className   = "text-end w-[120px] truncate"
+                                                        title       = { subject.costCenterId }
+                                                    >
+                                                        { subject.costCenterId }
                                                     </TableCell>
 
-                                                    <TableCell className="text-center w-[80px]">{subject.students}</TableCell>
+                                                    <TableCell className="text-end w-[50px]">
+                                                        <Badge variant="outline">
+                                                            {subject.building ?? '-'}
+                                                        </Badge>
+                                                    </TableCell>
 
-                                                    <TableCell className="text-center w-[150px] truncate">{subject.costCenterId}</TableCell>
+                                                    <TableCell className="w-[120px] text-center">
+                                                        <Badge
+                                                            variant     = "outline"
+                                                            className   = "truncate max-w-full"
+                                                            title       = { subject.spaceType ?? subject.spaceSize ?? '-' }
+                                                        >
+                                                            { subject.spaceType ?? subject.spaceSize ?? '-' }
+                                                        </Badge>
+                                                    </TableCell>
 
-                                                    <TableCell className="text-right w-[110px]">
+                                                    <TableCell className="text-end w-[50px]">
                                                         <Badge variant="secondary">
                                                             { subject.isEnglish ? 'Sí' : 'No' }
                                                         </Badge>
@@ -356,13 +380,13 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
 
                                             {filteredSubjects.length === 0 && searchQuery ? (
                                                 <TableRow>
-                                                    <TableCell colSpan={8} className="h-24 text-center">
+                                                    <TableCell colSpan={10} className="h-24 text-center">
                                                         No se encontraron resultados para &quot;{searchQuery}&quot;
                                                     </TableCell>
                                                 </TableRow>
                                             ) : subjects?.length === 0 && !searchQuery ? (
                                                 <TableRow>
-                                                    <TableCell colSpan={8} className="h-24 text-center">
+                                                    <TableCell colSpan={10} className="h-24 text-center">
                                                         No hay asignaturas registradas
                                                     </TableCell>
                                                 </TableRow>
