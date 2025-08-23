@@ -14,6 +14,7 @@ export const KEY_QUERYS = {
     SIZE            : 'sizes',
     PROFESSORS      : 'professors',
     PERIODS         : 'periods',
+    SECCTIONS       : 'seccions',
 
     COST_CENTERS    : 'cost-centers',
     NOTIFICATIONS   : 'notifications',
