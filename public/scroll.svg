@@ -1,0 +1,12 @@
+<svg viewBox="0 0 17 17" width="10" height="10" version="1.1" xmlns="http://www.w3.org/2000/svg"
+    xmlns:xlink="http://www.w3.org/1999/xlink" fill="#ccc" data-darkreader-inline-fill=""
+    style="--darkreader-inline-fill: var(--darkreader-background-ffffff, #181a1b); --darkreader-inline-stroke: var(--darkreader-text-ffffff, #e8e6e3);"
+    stroke="#ccc" data-darkreader-inline-stroke="">
+    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+    <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+    <g id="SVGRepo_iconCarrier">
+        <path d="M16 3v2h-15v-2h15zM1 10h15v-2h-15v2zM1 15h15v-2h-15v2z" fill="#ccc"
+            data-darkreader-inline-fill=""
+            style="--darkreader-inline-fill: var(--darkreader-background-ffffff, #181a1b);"></path>
+    </g>
+</svg>
