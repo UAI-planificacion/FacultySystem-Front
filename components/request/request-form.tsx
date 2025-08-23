@@ -205,10 +205,10 @@ export function RequestForm({
 
 
     const memoizedSubject = useMemo(() => {
-        return subjects?.map( professor => ({
-            id      : professor.id,
-            label   : `${professor.id}-${professor.name}`,
-            value   : professor.id,
+        return subjects?.map( subject => ({
+            id      : subject.id,
+            label   : `${subject.id}-${subject.name}`,
+            value   : subject.id,
         })) ?? [];
     }, [subjects]);
 
