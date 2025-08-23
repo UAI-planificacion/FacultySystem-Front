@@ -1,14 +1,20 @@
 "use client"
 
-import { useState, useCallback } from "react";
-import { useDropzone } from "react-dropzone";
-import { Upload, FileSpreadsheet, X, AlertCircle } from "lucide-react";
-import { toast } from "sonner";
+import { useState, useCallback, JSX } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+    Upload,
+    FileSpreadsheet,
+    X,
+    AlertCircle
+}                       from "lucide-react";
+import { useDropzone }  from "react-dropzone";
+import { toast }        from "sonner";
+
+import { Button }                   from "@/components/ui/button";
+import { Card, CardContent }        from "@/components/ui/card";
+import { Badge }                    from "@/components/ui/badge";
+import { Alert, AlertDescription }  from "@/components/ui/alert";
 
 import { errorToast, successToast } from "@/config/toast/toast.config";
 
@@ -25,9 +31,12 @@ interface UploadError {
 }
 
 
-export function SubjectUpload({ onUpload, isUploading }: SubjectUploadProps) {
-	const [selectedFile, setSelectedFile] = useState<File | null>( null );
-	const [uploadError, setUploadError] = useState<UploadError | null>( null );
+export function SubjectUpload({
+    onUpload,
+    isUploading
+}: SubjectUploadProps ): JSX.Element {
+	const [selectedFile, setSelectedFile]   = useState<File | null>( null );
+	const [uploadError, setUploadError]     = useState<UploadError | null>( null );
 
 
 	/**
@@ -41,7 +50,7 @@ export function SubjectUpload({ onUpload, isUploading }: SubjectUploadProps) {
 			'text/csv' // .csv
 		];
 
-		if ( !allowedTypes.includes( file.type ) ) {
+		if ( !allowedTypes.includes( file.type )) {
 			return {
 				type		: 'format',
 				message		: 'Solo se permiten archivos Excel (.xlsx, .xls) o CSV (.csv)'
@@ -50,10 +59,11 @@ export function SubjectUpload({ onUpload, isUploading }: SubjectUploadProps) {
 
 		// Check file size (max 10MB)
 		const maxSize = 10 * 1024 * 1024; // 10MB
-		if ( file.size > maxSize ) {
+
+        if ( file.size > maxSize ) {
 			return {
-				type		: 'size',
-				message		: 'El archivo no puede ser mayor a 10MB'
+				type	: 'size',
+				message : 'El archivo no puede ser mayor a 10MB'
 			};
 		}
 
@@ -140,12 +150,12 @@ export function SubjectUpload({ onUpload, isUploading }: SubjectUploadProps) {
 						`}
 					>
 						<input {...getInputProps()} />
-						
+
 						<div className="flex flex-col items-center gap-4">
 							<div className="p-4 rounded-full bg-muted">
 								<Upload className="h-8 w-8 text-muted-foreground" />
 							</div>
-							
+
 							<div className="space-y-2">
 								<h3 className="text-lg font-semibold">
 									{isDragActive 
@@ -153,11 +163,11 @@ export function SubjectUpload({ onUpload, isUploading }: SubjectUploadProps) {
 										: 'Arrastra y suelta tu archivo Excel'
 									}
 								</h3>
-								
+
 								<p className="text-sm text-muted-foreground">
 									o haz clic para seleccionar un archivo
 								</p>
-								
+
 								<p className="text-xs text-muted-foreground">
 									Formatos soportados: .xlsx, .xls, .csv (máx. 10MB)
 								</p>
@@ -171,8 +181,9 @@ export function SubjectUpload({ onUpload, isUploading }: SubjectUploadProps) {
 			{uploadError && (
 				<Alert variant="destructive">
 					<AlertCircle className="h-4 w-4" />
+
 					<AlertDescription>
-						{uploadError.message}
+						{ uploadError.message }
 					</AlertDescription>
 				</Alert>
 			)}
@@ -186,17 +197,17 @@ export function SubjectUpload({ onUpload, isUploading }: SubjectUploadProps) {
 								<div className="p-2 rounded bg-green-100 dark:bg-green-900/20">
 									<FileSpreadsheet className="h-5 w-5 text-green-600 dark:text-green-400" />
 								</div>
-								
+
 								<div className="flex-1">
 									<p className="font-medium text-sm">{selectedFile.name}</p>
 									<p className="text-xs text-muted-foreground">
 										{(selectedFile.size / 1024 / 1024).toFixed(2)} MB
 									</p>
 								</div>
-								
+
 								<Badge variant="secondary">Listo</Badge>
 							</div>
-							
+
 							<Button
 								variant="ghost"
 								size="sm"
@@ -227,10 +238,11 @@ export function SubjectUpload({ onUpload, isUploading }: SubjectUploadProps) {
 			<Card>
 				<CardContent className="p-4">
 					<h4 className="font-medium mb-2">Instrucciones para el archivo Excel:</h4>
+
 					<ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-						<li>Solo debe ser formato .xls (Excel)</li>
-						<li>No puede superar los 15mb.</li>
-						<li>Solo se toma en la hoja 1</li>
+						<li>Solo debe ser formato .xls (Excel).</li>
+						<li>No puede superar los 10mb.</li>
+						<li>Solo se realiza la lectura de la hoja 1.</li>
 						<li>Si se registra con algún problema puedes modificarlo manualmente.</li>
 					</ul>
 				</CardContent>
