@@ -1,13 +1,19 @@
 "use client"
 
-import { useState, useCallback, JSX } from "react";
+import { useState, useCallback, JSX }   from "react";
+import { useParams }                    from "next/navigation";
 
 import {
     Upload,
     FileSpreadsheet,
     X,
-    AlertCircle
+    AlertCircle,
+    HardDriveDownload
 }                       from "lucide-react";
+import {
+    useMutation,
+    useQueryClient
+}                       from "@tanstack/react-query";
 import { useDropzone }  from "react-dropzone";
 import { toast }        from "sonner";
 
@@ -17,11 +23,15 @@ import { Badge }                    from "@/components/ui/badge";
 import { Alert, AlertDescription }  from "@/components/ui/alert";
 
 import { errorToast, successToast } from "@/config/toast/toast.config";
+import { Subject }                  from "@/types/subject.model";
+import { Method }                   from "@/services/fetch";
+import { ENV }                      from "@/config/envs/env";
+import { KEY_QUERYS }               from "@/consts/key-queries";
 
 
 interface SubjectUploadProps {
-	onUpload		: ( file: File ) => void;
-	isUploading		: boolean;
+	onUpload?	: ( file: File ) => void;
+	isUploading	: boolean;
 }
 
 
@@ -33,8 +43,11 @@ interface UploadError {
 
 export function SubjectUpload({
     onUpload,
-    isUploading
+    isUploading,
 }: SubjectUploadProps ): JSX.Element {
+    const params                            = useParams();
+    const { facultyId  }                    = params;
+    const queryClient                       = useQueryClient();
 	const [selectedFile, setSelectedFile]   = useState<File | null>( null );
 	const [uploadError, setUploadError]     = useState<UploadError | null>( null );
 
@@ -43,7 +56,6 @@ export function SubjectUpload({
 	 * Validates the uploaded file
 	 */
 	const validateFile = useCallback(( file: File ): UploadError | null => {
-		// Check file type
 		const allowedTypes = [
 			'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
 			'application/vnd.ms-excel', // .xls
@@ -100,6 +112,61 @@ export function SubjectUpload({
 
 
 	/**
+	 * API function to upload Excel file
+	 */
+	const uploadExcelFile = async ( file: File ): Promise<Subject[]> => {
+		const formData = new FormData();
+		formData.append('file', file);
+
+		const response = await fetch(`${ENV.REQUEST_BACK_URL}subjects/bulk-upload/${facultyId}`, {
+			method  : Method.POST,
+			body    : formData,
+		});
+
+		if ( !response.ok ) {
+			const errorBody = await response.json();
+			throw new Error(errorBody.message || `API error: ${response.status} ${response.statusText}`);
+		}
+
+		return await response.json() as Subject[];
+	};
+
+
+	/**
+	 * Mutation for bulk upload
+	 */
+	const bulkUploadMutation = useMutation<Subject[], Error, File>({
+		mutationFn	: uploadExcelFile,
+		onSuccess	: ( newSubjects ) => {
+			// Update the cache with new subjects
+			queryClient.setQueryData<Subject[]>(
+				[KEY_QUERYS.SUBJECTS, facultyId],
+				( oldData: any ) => {
+					if ( !oldData ) return newSubjects;
+					return [...oldData, ...newSubjects];
+				}
+			);
+
+			// Show success message
+			toast(
+				`Carga completada: ${newSubjects.length} asignaturas creadas exitosamente`,
+				successToast
+			);
+
+			// Reset form
+			setSelectedFile( null );
+			setUploadError( null );
+
+			// Call external onUpload if provided
+			if ( onUpload ) onUpload( selectedFile! );
+		},
+		onError	: ( error ) => {
+			toast( `Error al cargar archivo: ${error.message}`, errorToast );
+		},
+	});
+
+
+	/**
 	 * Handles file upload
 	 */
 	const handleUpload = () => {
@@ -108,7 +175,7 @@ export function SubjectUpload({
 			return;
 		}
 
-		onUpload( selectedFile );
+		bulkUploadMutation.mutate( selectedFile );
 	};
 
 
@@ -123,13 +190,13 @@ export function SubjectUpload({
 
 	const { getRootProps, getInputProps, isDragActive } = useDropzone({
 		onDrop,
-		accept		: {
+		multiple	: false,
+		disabled	: isUploading,
+        accept      : {
 			'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
 			'application/vnd.ms-excel': ['.xls'],
 			'text/csv': ['.csv']
 		},
-		multiple	: false,
-		disabled	: isUploading
 	});
 
 
@@ -141,7 +208,7 @@ export function SubjectUpload({
 					<div
 						{...getRootProps()}
 						className={`
-							border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
+							border-4 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
 							${isDragActive 
 								? 'border-primary bg-primary/5' 
 								: 'border-muted-foreground/25 hover:border-primary/50'
@@ -209,10 +276,10 @@ export function SubjectUpload({
 							</div>
 
 							<Button
-								variant="ghost"
-								size="sm"
-								onClick={removeFile}
-								disabled={isUploading}
+								variant     = "ghost"
+								size        = "sm"
+								onClick     = { removeFile }
+								disabled    = { isUploading }
 							>
 								<X className="h-4 w-4" />
 							</Button>
@@ -225,11 +292,11 @@ export function SubjectUpload({
 			{selectedFile && (
 				<div className="flex justify-end">
 					<Button
-						onClick={handleUpload}
-						disabled={isUploading}
-						className="min-w-32"
+						onClick     = { handleUpload }
+						disabled    = { isUploading }
+						className   = "min-w-32"
 					>
-						{isUploading ? 'Subiendo...' : 'Subir Archivo'}
+						{ isUploading ? 'Subiendo...' : 'Subir Archivo' }
 					</Button>
 				</div>
 			)}
@@ -245,6 +312,22 @@ export function SubjectUpload({
 						<li>Solo se realiza la lectura de la hoja 1.</li>
 						<li>Si se registra con algún problema puedes modificarlo manualmente.</li>
 					</ul>
+				</CardContent>
+			</Card>
+
+            <Card>
+				<CardContent className="p-4 w-full">
+					<a
+                        href="/plantilla.xlsx"
+                        download
+                        className="border-4 hover:border-primary/50 rounded-lg cursor-pointer transition-colors border-dashed px-4 py-2 w-full grid justify-center content-center gap-1"
+                    >
+                        <span className="flex justify-center">
+                            <HardDriveDownload className="h-9 w-9 text-muted-foreground" />
+                        </span>
+
+                        <h4 className="font-medium mb-2">Descarga la plantilla</h4>
+                    </a>
 				</CardContent>
 			</Card>
 		</div>
