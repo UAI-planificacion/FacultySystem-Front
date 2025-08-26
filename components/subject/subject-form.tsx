@@ -713,17 +713,14 @@ export function SubjectForm({
 
                     { !subject &&
                         <TabsContent value="file">
-                            <SubjectUpload
-                                onUpload    = { () => {} }
-                                isUploading = { false }
-                                />
+                            <SubjectUpload isUploading={ false } />
                         </TabsContent>
                     }
 
                     { subject &&
                         <TabsContent value="section">
                             <SubjectSection
-                                subject = { subject}
+                                subject = { subject }
                                 enabled = { !!subject }
                             />
                         </TabsContent>
