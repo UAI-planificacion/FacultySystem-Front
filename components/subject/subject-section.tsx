@@ -33,13 +33,14 @@ export function SubjectSection({
     subject,
     enabled
 }: Props ): JSX.Element {
+    const url = `${ENV.ACADEMIC_SECTION}Sections/subjectId/${subject.id}`;
     const {
         data: sections,
         isLoading,
         isError,
     } = useQuery({
         queryKey    : [ KEY_QUERYS.SECCTIONS, subject.id ],
-        queryFn     : () => fetchApi<Section[]>({ url: `${ENV.ACADEMIC_SECTION}Sections`, isApi: false }),
+        queryFn     : () => fetchApi<Section[]>({ url, isApi: false }),
         enabled
     });
 
