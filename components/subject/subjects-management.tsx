@@ -284,7 +284,7 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
 
                                         <TableHead className="bg-background w-[300px]">Nombre</TableHead>
 
-                                        <TableHead className="text-end bg-background w-[100px]">Fechas</TableHead>
+                                        <TableHead className="text-center bg-background w-[100px]">Fechas</TableHead>
 
                                         {/* <TableHead className="bg-background w-[100px]">Fechas Fin</TableHead> */}
 
@@ -313,9 +313,13 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                                         <TableBody>
                                             {paginatedSubjects.map((subject) => (
                                                 <TableRow key={subject.id}>
-                                                    <TableCell className="font-medium w-[100px] truncate">{subject.id}</TableCell>
+                                                    <TableCell className="font-medium w-[100px] truncate">
+                                                        { subject.id }
+                                                    </TableCell>
 
-                                                    <TableCell className="w-[300px] truncate" title={subject.name}>{subject.name}</TableCell>
+                                                    <TableCell className="w-[300px] truncate" title={subject.name}>
+                                                        { subject.name }
+                                                    </TableCell>
 
                                                     <TableCell className="w-[100px]">
                                                         <div className="flex gap-2 items-center">
@@ -337,7 +341,9 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                                                         </div>
                                                     </TableCell> */}
 
-                                                    <TableCell className="text-center w-[50px]">{subject.students}</TableCell>
+                                                    <TableCell className="text-center w-[50px]">
+                                                        { subject.students }
+                                                    </TableCell>
 
                                                     <TableCell
                                                         className   = "text-end w-[120px] truncate"
