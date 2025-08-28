@@ -120,8 +120,6 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
         itemsPerPage,
         totalItems,
         totalPages,
-        startIndex,
-        endIndex,
         paginatedData: paginatedSubjects,
         setCurrentPage,
         setItemsPerPage,
@@ -292,8 +290,6 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
 
                                         <TableHead className="text-center bg-background w-[100px]">Fechas</TableHead>
 
-                                        {/* <TableHead className="bg-background w-[100px]">Fechas Fin</TableHead> */}
-
                                         <TableHead className="text-center bg-background w-[50px]">Alumnos</TableHead>
 
                                         <TableHead className="text-center bg-background w-[120px]">Centro de Costo</TableHead>
@@ -314,7 +310,7 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                             ) : isLoading ? (
                                 <SubjectTableSkeleton rows={10} />
                             ) : (
-                                <ScrollArea className="h-[calc(100vh-600px)]">
+                                <ScrollArea className="h-[calc(100vh-555px)]">
                                     <Table>
                                         <TableBody>
                                             {paginatedSubjects.map((subject) => (
@@ -336,16 +332,6 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                                                             </Badge>
                                                         </div>
                                                     </TableCell>
-
-                                                    {/* <TableCell className="w-[100px]">
-                                                        <div className="flex gap-2 items-center">
-                                                            <Calendar className="w-4 h-4" />
-
-                                                            <Badge variant="outline">
-                                                                { subject.endDate.length }
-                                                            </Badge>
-                                                        </div>
-                                                    </TableCell> */}
 
                                                     <TableCell className="text-center w-[50px]">
                                                         { subject.students }
@@ -383,6 +369,7 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                                                     <TableCell className="text-right w-[160px]">
                                                         <div className="flex gap-2 items-center justify-end">
                                                             <Button
+                                                                title   = "Ver Secciones"
                                                                 size    = "icon"
                                                                 variant = "outline"
                                                                 onClick = { () => router.push( `/sections/${subject.id}` )}
@@ -430,8 +417,6 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                 itemsPerPage            = { itemsPerPage }
                 onPageChange            = { setCurrentPage }
                 onItemsPerPageChange    = { setItemsPerPage }
-                startIndex              = { startIndex }
-                endIndex                = { endIndex }
             />
 
             {/* Subject Form Dialog */}

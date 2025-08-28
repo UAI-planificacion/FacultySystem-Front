@@ -86,8 +86,6 @@ export default function GradesPage() {
 		itemsPerPage,
 		totalItems,
 		totalPages,
-		startIndex,
-		endIndex,
 		paginatedData: paginatedGrades,
 		setCurrentPage,
 		setItemsPerPage,
@@ -226,7 +224,7 @@ export default function GradesPage() {
 			</Card>
 
 			{/* Tabla de grados */}
-            <div className="space-y-2">
+            <div className="space-y-4">
                 <Card>
                     <CardContent className="mt-5">
                         { gradeList?.length === 0 && !isLoading && !isError ? (
@@ -251,7 +249,7 @@ export default function GradesPage() {
                                     <GradeErrorMessage />
                                 ) 
                                 : (
-                                    <ScrollArea className="h-[calc(100vh-590px)]">
+                                    <ScrollArea className="h-[calc(100vh-500px)]">
                                         <Table>
                                             <TableBody>
                                                 { isLoading
@@ -312,8 +310,6 @@ export default function GradesPage() {
                     itemsPerPage            = { itemsPerPage }
                     onPageChange            = { setCurrentPage }
                     onItemsPerPageChange    = { setItemsPerPage }
-                    startIndex              = { startIndex }
-                    endIndex                = { endIndex }
                 />
             </div>
 

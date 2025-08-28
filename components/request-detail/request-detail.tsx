@@ -222,8 +222,6 @@ export function RequestDetailView({
                                 itemsPerPage            = { itemsPerPage }
                                 onPageChange            = { handlePageChange }
                                 onItemsPerPageChange    = { handleItemsPerPageChange }
-                                startIndex              = { startIndex }
-                                endIndex                = { Math.min(endIndex, data.length) }
                             />
                         )}
                     </>

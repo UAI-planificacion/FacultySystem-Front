@@ -6,9 +6,9 @@ import {
 	useMutation,
 	useQuery,
 	useQueryClient
-}                   from "@tanstack/react-query";
-import { Plus, Search }     from "lucide-react";
-import { toast }    from "sonner";
+}                       from "@tanstack/react-query";
+import { Plus, Search } from "lucide-react";
+import { toast }        from "sonner";
 
 import {
 	Select,
@@ -21,8 +21,6 @@ import { DataPagination }       from "@/components/ui/data-pagination";
 import {
 	Card,
 	CardContent,
-	CardHeader,
-    CardTitle,
 }                               from "@/components/ui/card";
 import {
 	Table,
@@ -251,7 +249,7 @@ export default function ProfessorsPage() {
 			</Card>
 
 			{/* Tabla de profesores */}
-            <div className="space-y-2">
+            <div className="space-y-4">
                 <Card>
                     <CardContent className="mt-5">
                         { professorList?.length === 0 && !isLoading && !isError ? (
@@ -276,7 +274,7 @@ export default function ProfessorsPage() {
                                     <ProfessorErrorMessage />
                                 ) 
                                 : (
-                                    <ScrollArea className="h-[calc(100vh-590px)]">
+                                    <ScrollArea className="h-[calc(100vh-500px)]">
                                         <Table>
                                             <TableBody>
                                                 {isLoading
@@ -338,8 +336,6 @@ export default function ProfessorsPage() {
                     itemsPerPage            = { itemsPerPage }
                     onPageChange            = { setCurrentPage }
                     onItemsPerPageChange    = { setItemsPerPage }
-                    startIndex              = { startIndex }
-                    endIndex                = { endIndex }
                 />
             </div>
 

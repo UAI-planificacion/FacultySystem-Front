@@ -111,8 +111,6 @@ export function RequestMain({
 
 
     const totalPages    = Math.ceil( filteredAndSortedRequests.length / itemsPerPage );
-    const startIndex    = ( currentPage - 1 ) * itemsPerPage;
-    const endIndex      = startIndex + itemsPerPage;
 
 
     function handleEdit( request: Request ): void {
@@ -210,8 +208,6 @@ export function RequestMain({
                     itemsPerPage            = { itemsPerPage }
                     onPageChange            = { handlePageChange }
                     onItemsPerPageChange    = { handleItemsPerPageChange }
-                    startIndex              = { startIndex }
-                    endIndex                = { endIndex }
                 />
             )}
 

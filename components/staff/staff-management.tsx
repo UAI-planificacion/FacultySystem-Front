@@ -103,8 +103,6 @@ export function StaffManagement({
         itemsPerPage,
         totalItems,
         totalPages,
-        startIndex,
-        endIndex,
         paginatedData: paginatedStaff,
         setCurrentPage,
         setItemsPerPage,
@@ -313,7 +311,7 @@ export function StaffManagement({
                             ) : isLoading ? (
                                 <StaffTableSkeleton rows={10} />
                             ) : (
-                                <ScrollArea className="h-[calc(100vh-600px)]">
+                                <ScrollArea className="h-[calc(100vh-555px)]">
                                     <Table>
                                         <TableBody>
                                             {paginatedStaff.map((staff) => (
@@ -370,8 +368,6 @@ export function StaffManagement({
                 itemsPerPage            = { itemsPerPage }
                 onPageChange            = { setCurrentPage }
                 onItemsPerPageChange    = { setItemsPerPage }
-                startIndex              = { startIndex }
-                endIndex                = { endIndex }
             />
 
             {/* Staff Form Dialog */}

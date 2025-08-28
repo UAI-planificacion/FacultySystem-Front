@@ -148,8 +148,6 @@ export default function FacultiesPage() {
     }, [ filteredFaculties, currentPage, itemsPerPage ]);
 
     const totalPages = Math.ceil( filteredFaculties.length / itemsPerPage );
-    const startIndex = ( currentPage - 1 ) * itemsPerPage + 1;
-    const endIndex = Math.min( currentPage * itemsPerPage, filteredFaculties.length );
 
 
     const openNewFacultyForm = () => {
@@ -274,8 +272,6 @@ export default function FacultiesPage() {
                                 setItemsPerPage( newItemsPerPage );
                                 setCurrentPage( 1 );
                             }}
-                            startIndex              = { startIndex }
-                            endIndex                = { endIndex }
                         />
                     )}
                 </div>
