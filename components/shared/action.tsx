@@ -22,6 +22,7 @@ export function ActionButton({
     return (
         <div className="flex justify-end gap-1.5">
             <Button
+                title   = "Editar"
                 variant = "outline"
                 size    = "icon"
                 onClick = {() => editItem( item )}
@@ -30,6 +31,7 @@ export function ActionButton({
             </Button>
 
             <Button
+                title   = "Eliminar"
                 variant = "outline"
                 size    = "icon"
                 onClick = {() => deleteItem( item )}
