@@ -1,9 +1,16 @@
 "use client"
 
-import { JSX, useEffect, useState, useMemo } from "react";
+import {
+    JSX,
+    useEffect,
+    useState,
+    useMemo
+}                       from "react";
+import { useRouter }    from 'next/navigation';
 
 import {
 	Calendar as CalendarIcon,
+	Grid2x2,
 	Plus,
 	Trash,
 }						from "lucide-react";
@@ -70,7 +77,6 @@ import { Calendar }			from "@/components/ui/calendar";
 import { Switch }			from "@/components/ui/switch";
 import { ScrollArea }		from "@/components/ui/scroll-area";
 import { SubjectUpload }    from "@/components/subject/subject-upload";
-import { SubjectSection }   from "@/components/subject/subject-section";
 
 import { cn, getSpaceType, tempoFormat }    from "@/lib/utils";
 import { Building, Size, SpaceType }        from "@/types/request-detail.model";
@@ -199,6 +205,8 @@ export function SubjectForm({
 	costCenter,
 }: SubjectFormProps ): JSX.Element {
     const [typeSpace, setTypeSpace] = useState<boolean[]>([ false, false, false ]);
+    const router                    = useRouter();
+
 
 	const form = useForm<SubjectFormValues>({
 		resolver		: zodResolver( formSchema ),
@@ -209,6 +217,7 @@ export function SubjectForm({
 
 	const { watch, setValue } = form;
 	const dates = watch( 'dates' ) || [];
+
 
     const {
         data        : sizes,
@@ -276,7 +285,7 @@ export function SubjectForm({
 
     return (
 		<Dialog open={isOpen} onOpenChange={onClose}>
-			<DialogContent className="sm:max-w-[800px]">
+			<DialogContent className="sm:max-w-[600px]">
 				<DialogHeader>
 					<DialogTitle>
 						{subject ? "Editar Asignatura" : "Nueva Asignatura"}
@@ -291,14 +300,12 @@ export function SubjectForm({
 				</DialogHeader>
 
                 <Tabs defaultValue="form" className="w-full">
+                    { !subject && (
                         <TabsList className="grid grid-cols-2 mb-4">
                             <TabsTrigger value="form">Formulario</TabsTrigger>
-
-                            { !subject
-                                ? <TabsTrigger value="file">Archivo</TabsTrigger>
-                                : <TabsTrigger value="section">Secciones</TabsTrigger>
-                            }
+                            <TabsTrigger value="file">Archivo</TabsTrigger>
                         </TabsList>
+                    )}
 
                     <TabsContent value="form">
                         <Form {...form}>
@@ -700,12 +707,26 @@ export function SubjectForm({
                                         Cancelar
                                     </Button>
 
-                                    <Button
-                                        type        = "submit"
-                                        disabled    = { !form.formState.isValid }
-                                    >
-                                        { subject ? "Actualizar" : "Crear" }
-                                    </Button>
+                                    <div className="flex gap-2 items-center">
+                                        {subject &&
+                                            <Button
+                                                variant     = "outline"
+                                                onClick     = { () => router.push( `/sections/${subject.id}` )}
+                                                type        = "button"
+                                                className   = "gap-2"
+                                            >
+                                                <Grid2x2 className="w-5 h-5" />
+                                                Ver Secciones
+                                            </Button>
+                                        }
+
+                                        <Button
+                                            type        = "submit"
+                                            disabled    = { !form.formState.isValid }
+                                        >
+                                            { subject ? "Actualizar" : "Crear" }
+                                        </Button>
+                                    </div>
                                 </div>
                             </form>
                         </Form>
@@ -714,15 +735,6 @@ export function SubjectForm({
                     { !subject &&
                         <TabsContent value="file">
                             <SubjectUpload isUploading={ false } />
-                        </TabsContent>
-                    }
-
-                    { subject &&
-                        <TabsContent value="section">
-                            <SubjectSection
-                                subject = { subject }
-                                enabled = { !!subject }
-                            />
                         </TabsContent>
                     }
                 </Tabs>
