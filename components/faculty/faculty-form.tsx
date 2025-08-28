@@ -135,7 +135,7 @@ export function FacultyForm({
                             )}
                         />
 
-                        <div className="flex justify-end gap-2 items-center">
+                        <div className="flex justify-between gap-2 items-center">
                             <Button
                                 type        = "button"
                                 onClick     = { onClose }
