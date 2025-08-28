@@ -1,14 +1,20 @@
 "use client"
 
-import { useMemo, useState } from "react";
+import { useMemo, useState }    from "react";
+import { useRouter }            from 'next/navigation';
 
 import {
     useMutation,
     useQuery,
     useQueryClient
-}                                   from "@tanstack/react-query";
-import { Calendar, Plus, Search }   from "lucide-react";
-import { toast }                    from "sonner";
+}                       from "@tanstack/react-query";
+import {
+    Calendar,
+    Grid2x2,
+    Plus,
+    Search
+}                       from "lucide-react";
+import { toast }        from "sonner";
 
 import {
     Table,
@@ -67,6 +73,7 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
     const [selectedCostCenter, setSelectedCostCenter]   = useState<string>( 'all' );
     const [isDeleteDialogOpen, setIsDeleteDialogOpen]   = useState( false );
     const [deletingSubjectId, setDeletingSubjectId]     = useState<string | undefined>( undefined );
+    const router                                        = useRouter();
 
 
     const {
@@ -82,8 +89,8 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
 
     const {
         costCenter,
-        isLoading: isLoadingCostCenter,
-        isError: isErrorCostCenter
+        isLoading   : isLoadingCostCenter,
+        isError     : isErrorCostCenter
     } = useCostCenter({ enabled });
 
 
@@ -93,13 +100,12 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
         const searchLower = searchQuery.toLowerCase();
 
         return subjects.filter(subject => {
-            const matchesSearch = 
-                subject.id.toLowerCase().includes( searchLower ) ||
-                subject.name.toLowerCase().includes( searchLower );
+            const matchesSearch = subject.id.toLowerCase().includes( searchLower )
+                || subject.name.toLowerCase().includes( searchLower );
 
             const matchesCostCenter = 
-                selectedCostCenter === 'all' || 
-                subject.costCenterId === selectedCostCenter;
+                selectedCostCenter === 'all'
+                || subject.costCenterId === selectedCostCenter;
 
             return matchesSearch && matchesCostCenter;
         });
@@ -298,7 +304,7 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
 
                                         <TableHead className="text-center bg-background w-[50px]">Inglés</TableHead>
 
-                                        <TableHead className="text-right bg-background w-[100px]">Acciones</TableHead>
+                                        <TableHead className="text-right bg-background w-[160px]">Acciones</TableHead>
                                     </TableRow>
                                 </TableHeader>
                             </Table>
@@ -374,12 +380,22 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                                                         </Badge>
                                                     </TableCell>
 
-                                                    <TableCell className="text-right w-[100px]">
-                                                        <ActionButton
-                                                            editItem    = { openEditSubjectForm }
-                                                            deleteItem  = { () => onOpenDeleteSubject( subject )}
-                                                            item        = { subject }
-                                                        />
+                                                    <TableCell className="text-right w-[160px]">
+                                                        <div className="flex gap-2 items-center justify-end">
+                                                            <Button
+                                                                size    = "icon"
+                                                                variant = "outline"
+                                                                onClick = { () => router.push( `/sections/${subject.id}` )}
+                                                            >
+                                                                <Grid2x2 className="w-4 h-4" />
+                                                            </Button>
+
+                                                            <ActionButton
+                                                                editItem    = { openEditSubjectForm }
+                                                                deleteItem  = { () => onOpenDeleteSubject( subject )}
+                                                                item        = { subject }
+                                                            />
+                                                        </div>
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
