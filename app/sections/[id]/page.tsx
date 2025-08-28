@@ -43,6 +43,17 @@ import { usePagination }    from "@/hooks/use-pagination";
 type SizeFilter = 'XS' | 'XE' | 'S' | 'M' | 'L' | 'XL' | 'XXL' | 'all';
 
 
+const days = [
+    'Lunes',
+    'Martes',
+    'Miércoles',
+    'Jueves',
+    'Viernes',
+    'Sábado',
+    'Domingo',
+];
+
+
 export default function SectionsPage() {
     const params                        = useParams();
     const subjectId                     = params.id as string;
@@ -149,11 +160,16 @@ export default function SectionsPage() {
 
 	return (
 		<main className="container mx-auto p-6 space-y-6 min-h-[calc(100vh-74px)]">
-			<header className="flex justify-between items-center">
-                <Button onClick={ () => router.back() }>
+			<header className="flex justify-start gap-4 items-center">
+                <Button
+                    onClick = { () => router.back() }
+                    size    = "icon"
+                    variant = "secondary"
+                >
                     <ArrowLeft className="w-4 h-4" />
                 </Button>
-				<h1 className="text-3xl font-bold">Secciones de la Asignatura</h1>
+
+				<h1 className="text-3xl font-bold">Secciones de la Asignatura { subjectId }</h1>
 			</header>
 
 			{/* Filtros */}
@@ -201,7 +217,7 @@ export default function SectionsPage() {
 			</Card>
 
 			{/* Tabla de secciones */}
-            <div className="space-y-2">
+            <div className="space-y-4">
                 <Card>
                     <CardContent className="mt-5">
                         { sectionsList?.length === 0 && !isLoading && !isError ? (
@@ -214,10 +230,10 @@ export default function SectionsPage() {
                                     <TableHeader className="sticky top-0 z-10 bg-background">
                                         <TableRow>
                                             <TableHead className="bg-background w-20">Código</TableHead>
-                                            <TableHead className="bg-background w-24">Sala</TableHead>
-                                            <TableHead className="bg-background w-16">Día</TableHead>
+                                            <TableHead className="bg-background w-28">Sala</TableHead>
+                                            <TableHead className="bg-background w-28">Día</TableHead>
                                             <TableHead className="bg-background w-24">Módulo</TableHead>
-                                            <TableHead className="bg-background w-96">Período</TableHead>
+                                            <TableHead className="bg-background w-32">Período</TableHead>
                                             <TableHead className="bg-background w-40">Profesor</TableHead>
                                             <TableHead className="bg-background w-24">Sesión</TableHead>
                                             <TableHead className="bg-background w-20">Tamaño</TableHead>
@@ -243,7 +259,7 @@ export default function SectionsPage() {
                                     </div>
                                 ) 
                                 : (
-                                    <ScrollArea className="h-[calc(100vh-590px)]">
+                                    <ScrollArea className="h-[calc(100vh-500px)]">
                                         <Table>
                                             <TableBody>
                                                 {isLoading
@@ -268,55 +284,59 @@ export default function SectionsPage() {
                                                 : (
                                                     paginatedSections.map( section => (
                                                         <TableRow key={ section.id }>
-                                                            <TableCell className="font-medium">{section.code}</TableCell>
-
-                                                            <TableCell>{section.room}</TableCell>
-
-                                                            <TableCell className="text-center">
-                                                                { section.day }
+                                                            <TableCell className="font-medium w-20">
+                                                                { section.code }
                                                             </TableCell>
 
-                                                            <TableCell>
-                                                                { section.moduleId }
+                                                            <TableCell className="w-28">
+                                                                { section.room }
                                                             </TableCell>
 
-                                                            <TableCell className="whitespace-nowrap">
+                                                            <TableCell className="w-28">
+                                                                { days[section.day - 1] }
+                                                            </TableCell>
+
+                                                            <TableCell className="w-24">
+                                                                M{ section.moduleId }
+                                                            </TableCell>
+
+                                                            <TableCell className="whitespace-nowrap w-32">
                                                                 { section.period }
                                                             </TableCell>
 
                                                             <TableCell
-                                                                className   = "truncate"
+                                                                className   = "truncate w-40"
                                                                 title       = { section.professorName }
                                                             >
                                                                 { section.professorName }
                                                             </TableCell>
 
-                                                            <TableCell>
+                                                            <TableCell className="w-24">
                                                                 { section.session }
                                                             </TableCell>
 
-                                                            <TableCell>
+                                                            <TableCell className="w-20 text-center">
                                                                 <Badge variant="outline">
                                                                     { section.size }
                                                                 </Badge>
                                                             </TableCell>
 
-                                                            <TableCell className="text-center">
+                                                            <TableCell className="w-28 text-end">
                                                                 { section.correctedRegistrants }
                                                             </TableCell>
 
-                                                            <TableCell className="text-center">
+                                                            <TableCell className="w-28 text-end">
                                                                 { section.realRegistrants }
                                                             </TableCell>
 
                                                             <TableCell
-                                                                className   = "truncate"
+                                                                className   = "truncate w-32"
                                                                 title       = { section.plannedBuilding }
                                                             >
                                                                 { section.plannedBuilding }
                                                             </TableCell>
 
-                                                            <TableCell className="text-center">
+                                                            <TableCell className="w-28 text-end">
                                                                 { section.chairsAvailable }
                                                             </TableCell>
                                                         </TableRow>
@@ -353,8 +373,6 @@ export default function SectionsPage() {
                     itemsPerPage            = { itemsPerPage }
                     onPageChange            = { setCurrentPage }
                     onItemsPerPageChange    = { setItemsPerPage }
-                    startIndex              = { startIndex }
-                    endIndex                = { endIndex }
                 />
             </div>
 		</main>
