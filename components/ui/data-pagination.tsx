@@ -25,9 +25,9 @@ interface DataPaginationProps {
     itemsPerPage            : number;
     onPageChange            : ( page: number ) => void;
     onItemsPerPageChange    : ( itemsPerPage: number ) => void;
-    startIndex              : number;
-    endIndex                : number;
-    className?              : string;
+    // startIndex              : number;
+    // endIndex                : number;
+    // className?              : string;
 }
 
 export function DataPagination({
@@ -37,45 +37,37 @@ export function DataPagination({
     itemsPerPage,
     onPageChange,
     onItemsPerPageChange,
-    startIndex,
-    endIndex,
-    className = ""
-}: DataPaginationProps) {
+    // startIndex,
+    // endIndex,
+    // className = ""
+}: DataPaginationProps ) {
     const itemsPerPageOptions = [10, 15, 30, 50];
 
     if ( totalItems === 0 ) return null;
 
     return (
-        <div className={`space-y-4 ${className}`}>
-            {/* Selector de elementos por página - Siempre visible cuando hay elementos */}
-            <div className="w-full flex items-center justify-between gap-4">
-                <div className="flex items-center gap-2">
-                    <Label htmlFor="items-per-page" className="text-sm font-medium hidden sm:inline">
-                        Elementos por página
-                    </Label>
+        <div className="w-full flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+                <Label htmlFor="items-per-page" className="text-sm font-medium hidden sm:inline">
+                    Elementos por página
+                </Label>
 
-                    <Select
-                        value={itemsPerPage.toString()}
-                        onValueChange={(value) => onItemsPerPageChange(Number(value))}
-                    >
-                        <SelectTrigger id="items-per-page" className="w-20">
-                            <SelectValue />
-                        </SelectTrigger>
+                <Select
+                    value={itemsPerPage.toString()}
+                    onValueChange={(value) => onItemsPerPageChange(Number(value))}
+                >
+                    <SelectTrigger id="items-per-page" className="w-20">
+                        <SelectValue />
+                    </SelectTrigger>
 
-                        <SelectContent>
-                            {itemsPerPageOptions.map((option) => (
-                                <SelectItem key={option} value={option.toString()}>
-                                    {option}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                {/* Información de paginación - Siempre visible cuando hay elementos */}
-                <div className="text-sm text-muted-foreground text-end">
-                    Mostrando {Math.max(startIndex + 1, 1)} a {Math.min(endIndex, totalItems)} de {totalItems} resultados
-                </div>
+                    <SelectContent>
+                        {itemsPerPageOptions.map((option) => (
+                            <SelectItem key={option} value={option.toString()}>
+                                {option}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </div>
 
             {/* Paginación */}
@@ -145,13 +137,6 @@ export function DataPagination({
                             </PaginationItem>
                         </PaginationContent>
                     </Pagination>
-                </div>
-            )}
-
-            {/* Información adicional de página - Siempre visible cuando hay elementos */}
-            {totalPages > 0 && (
-                <div className="text-center text-sm text-muted-foreground">
-                    Página {Math.max(currentPage, 1)} de {Math.max(totalPages, 1)}
                 </div>
             )}
         </div>
