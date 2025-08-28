@@ -53,6 +53,7 @@ import { CommentSection }           from "@/components/comment/comment-section";
 import { RequestDetailModuleDays }  from "@/components/request-detail/request-detail-module-days";
 import { Checkbox }                 from "@/components/ui/checkbox";
 import { Textarea }                 from "@/components/ui/textarea";
+import { GradeForm }                from "@/components/grade/grade-form";
 
 import {
     SizeResponse,
@@ -201,6 +202,7 @@ export function RequestDetailForm({
     const queryClient                               = useQueryClient();
     const [typeSpace, setTypeSpace]                 = useState<boolean[]>([ false, false, false ]);
     const [isOpenProfessor, setIsOpenProfessor ]    = useState( false );
+    const [isOpenGrade, setIsOpenGrade ]            = useState( false );
     const { staff }                                 = useSession();
 
 
@@ -489,26 +491,40 @@ export function RequestDetailForm({
                                             <FormItem>
                                                 <FormLabel>Grado</FormLabel>
 
-                                                <Select
-                                                    defaultValue    = { field.value ?? 'Sin especificar' }
-                                                    onValueChange   = {( value ) => field.onChange( value === "Sin especificar" ? null : value )}
-                                                >
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Seleccionar grado" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
+                                                <div className="flex items-center gap-2">
+                                                    <Select
+                                                        defaultValue    = { field.value ?? 'Sin especificar' }
+                                                        onValueChange   = {( value ) => field.onChange( value === "Sin especificar" ? null : value )}
+                                                        disabled        = { isLoadingGrades }
 
-                                                    <SelectContent>
-                                                        <SelectItem value="Sin especificar">Sin especificar</SelectItem>
+                                                    >
+                                                        <FormControl>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Seleccionar grado" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
 
-                                                        {grades?.map( grade => (
-                                                            <SelectItem key={grade.id} value={grade.id}>
-                                                                { grade.name }
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
+                                                        <SelectContent>
+                                                            <SelectItem value="Sin especificar">Sin especificar</SelectItem>
+
+                                                            {grades?.map( grade => (
+                                                                <SelectItem key={grade.id} value={grade.id}>
+                                                                    { grade.name }
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+
+                                                    <Button
+                                                        size        = "icon"
+                                                        type        = "button"
+                                                        variant     = "outline"
+                                                        className   = "flex-shrink-0"
+                                                        onClick     = {() => setIsOpenGrade( true )}
+                                                    >
+                                                        <Plus className="w-5 h-5"/>
+                                                    </Button>
+                                                </div>
 
                                                 <FormMessage />
                                             </FormItem>
@@ -827,6 +843,12 @@ export function RequestDetailForm({
                     professors = { undefined }
                     isOpen      = { isOpenProfessor }
                     onClose     = { () => setIsOpenProfessor( false )}
+                />
+
+                <GradeForm
+                    grade   = { undefined }
+                    isOpen  = { isOpenGrade }
+                    onClose = { () => setIsOpenGrade( false )}
                 />
             </DialogContent>
         </Dialog>
