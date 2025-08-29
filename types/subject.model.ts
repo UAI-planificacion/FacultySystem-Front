@@ -1,4 +1,4 @@
-import { Building, Size, SpaceType } from "./request-detail.model";
+import { Building, Size, SpaceType } from "@/types/request-detail.model";
 
 interface BaseSubject {
     id              : string;
