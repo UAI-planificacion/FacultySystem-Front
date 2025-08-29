@@ -107,8 +107,6 @@ export default function SectionsPage() {
 		currentPage,
 		itemsPerPage,
 		totalPages,
-		startIndex,
-		endIndex,
 		paginatedData: paginatedSections,
 		setCurrentPage,
 		setItemsPerPage,
