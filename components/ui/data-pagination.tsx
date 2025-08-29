@@ -25,9 +25,6 @@ interface DataPaginationProps {
     itemsPerPage            : number;
     onPageChange            : ( page: number ) => void;
     onItemsPerPageChange    : ( itemsPerPage: number ) => void;
-    // startIndex              : number;
-    // endIndex                : number;
-    // className?              : string;
 }
 
 export function DataPagination({
@@ -37,9 +34,6 @@ export function DataPagination({
     itemsPerPage,
     onPageChange,
     onItemsPerPageChange,
-    // startIndex,
-    // endIndex,
-    // className = ""
 }: DataPaginationProps ) {
     const itemsPerPageOptions = [10, 15, 30, 50];
 
