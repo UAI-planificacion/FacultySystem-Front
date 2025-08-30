@@ -19,3 +19,30 @@ export interface Section {
     subjectId               : string,
     period                  : string
 }
+
+
+
+export enum Session {
+    C = 'C', // Cátedra
+    A = 'A', // Ayudantía
+    T = 'T', // Taller
+    L = 'L'  // Laboratorio
+}
+
+export interface SectionToCreate {
+    period: string;
+    session: Session;
+}
+
+export interface SessionCounts {
+    [Session.C]: number;
+    [Session.A]: number;
+    [Session.T]: number;
+    [Session.L]: number;
+}
+
+export interface SectionData {
+    id: string;
+    period: string;
+    sessionCounts: SessionCounts;
+}
