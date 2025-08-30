@@ -38,6 +38,7 @@ import { KEY_QUERYS }       from "@/consts/key-queries";
 import { fetchApi }         from "@/services/fetch";
 import { ENV }              from "@/config/envs/env";
 import { usePagination }    from "@/hooks/use-pagination";
+import SectionCreator from "@/components/subject/subject-sections";
 
 
 type SizeFilter = 'XS' | 'XE' | 'S' | 'M' | 'L' | 'XL' | 'XXL' | 'all';
@@ -170,8 +171,10 @@ export default function SectionsPage() {
 				<h1 className="text-3xl font-bold">Secciones de la Asignatura { subjectId }</h1>
 			</header>
 
+            <SectionCreator />
+
 			{/* Filtros */}
-			<Card>
+			{/* <Card>
 				<CardContent className="space-y-4 mt-4">
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 						<div className="space-y-2">
@@ -214,7 +217,6 @@ export default function SectionsPage() {
 				</CardContent>
 			</Card>
 
-			{/* Tabla de secciones */}
             <div className="space-y-4">
                 <Card>
                     <CardContent className="mt-5">
@@ -363,7 +365,6 @@ export default function SectionsPage() {
                     </CardContent>
                 </Card>
 
-                {/* Paginación */}
                 <DataPagination
                     currentPage             = { currentPage }
                     totalPages              = { totalPages }
@@ -372,7 +373,7 @@ export default function SectionsPage() {
                     onPageChange            = { setCurrentPage }
                     onItemsPerPageChange    = { setItemsPerPage }
                 />
-            </div>
+            </div> */}
 		</main>
 	);
 }
