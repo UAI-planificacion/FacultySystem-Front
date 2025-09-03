@@ -1,379 +1,347 @@
 'use client'
 
-import { useState }             from "react";
-import { useParams, useRouter } from "next/navigation";
-
-import { useQuery }             from "@tanstack/react-query";
-import { ArrowLeft, Search }    from "lucide-react";
+import React, { useState, useMemo } from 'react';
+import { useParams, useRouter }     from "next/navigation";
 
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-}                           from "@/components/ui/select";
+    Plus,
+    Save,
+    BrushCleaning,
+    ArrowLeft
+}                   from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { format }   from "@formkit/tempo";
+
 import {
-	Card,
-	CardContent,
-}                           from "@/components/ui/card";
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow
-}                           from "@/components/ui/table";
-import { DataPagination }   from "@/components/ui/data-pagination";
-import { ScrollArea }       from "@/components/ui/scroll-area"
-import { Input }            from "@/components/ui/input";
-import { Label }	        from "@/components/ui/label";
-import { Badge }	        from "@/components/ui/badge";
-import { Skeleton }	        from "@/components/ui/skeleton";
+    Session,
+    SectionToCreate,
+    SectionData,
+    Section
+}                       from '@/types/section.model';
+import { KEY_QUERYS }   from '@/consts/key-queries';
+import { fetchApi }     from '@/services/fetch';
+import { ENV }          from '@/config/envs/env';
+import { Period }       from '@/types/periods.model';
+
+import { SectionCard }       from "@/components/section/section-card";
+import { SectionTable }     from "@/components/section/section.table";
+import { SectionAddedTable } from "@/components/section/section-added-table";
+import { ViewMode }         from "@/components/shared/view-mode";
+import { useViewMode }      from "@/hooks/use-view-mode";
 import { Button }           from "@/components/ui/button";
-
-import { Section }          from "@/types/section.model";
-import { KEY_QUERYS }       from "@/consts/key-queries";
-import { fetchApi }         from "@/services/fetch";
-import { ENV }              from "@/config/envs/env";
-import { usePagination }    from "@/hooks/use-pagination";
-import SectionCreator from "@/components/subject/subject-sections";
+import { Tabs, TabsContent, TabsTrigger, TabsList } from '@/components/ui/tabs';
 
 
-type SizeFilter = 'XS' | 'XE' | 'S' | 'M' | 'L' | 'XL' | 'XXL' | 'all';
+function formatDate( period : Period ): string {
+    if ( !period.startDate || !period.endDate ) return '';
+
+    return ` (${format( period.startDate, 'short' )} - ${format( period.endDate, 'short' )})`;
+}
 
 
-const days = [
-    'Lunes',
-    'Martes',
-    'Miércoles',
-    'Jueves',
-    'Viernes',
-    'Sábado',
-    'Domingo',
-];
+const emptySection: SectionData = {
+    id              : Math.random().toString( 36 ).substring( 2 ),
+    period          : '',
+    sectionNumber   : 1,
+    isNew           : true,
+    sessionCounts   : {
+        [Session.C]     : 0,
+        [Session.A]     : 0,
+        [Session.T]     : 0,
+        [Session.L]     : 0,
+    },
+}
 
 
 export default function SectionsPage() {
-    const params                        = useParams();
-    const subjectId                     = params.id as string;
-	const [searchQuery, setSearchQuery] = useState( '' );
-	const [sizeFilter, setSizeFilter]   = useState<SizeFilter>( 'all' );
-	const url                           = `${ENV.ACADEMIC_SECTION}Sections/subjectId/${subjectId}`;
-    const router                        = useRouter();
+    const params    = useParams();
+    const subjectId = params.id as string;
+    const router    = useRouter();
+
+
+    const { viewMode, onViewChange } = useViewMode({
+        queryName   : 'view',
+        defaultMode : 'cards'
+    });
+
 
     const {
-        data: sectionsList,
-        isLoading,
-        isError
-    } = useQuery({
-		queryKey    : [ KEY_QUERYS.SECCTIONS, subjectId ],
-		queryFn     : () => fetchApi<Section[]>({ url, isApi: false }),
-        enabled     : !!subjectId
-	});
+        data        : periods,
+        isLoading   : isLoadingPeriods,
+        isError     : isErrorPeriods
+    } = useQuery<Period[]>({
+        queryKey: [KEY_QUERYS.PERIODS],
+        queryFn : () => fetchApi({
+            isApi   : false,
+            url     : `${ENV.ACADEMIC_SECTION}periods`
+        }),
+    });
 
 
-	/**
-	 * Filtra la lista de secciones según los criterios de búsqueda
-	 */
-	const filteredSections = sectionsList?.filter( section => {
-		const getStringValue = ( value: any ): string => {
-			if ( typeof value === 'object' && value !== null ) {
-				return (( value as any ).name || JSON.stringify( value )).toLowerCase();
-			}
-			return String( value || '' ).toLowerCase();
-		};
-
-		const matchesSearch = searchQuery === ''
-            || getStringValue( section.code ).includes( searchQuery.toLowerCase() )
-            || getStringValue( section.professorName ).includes( searchQuery.toLowerCase() )
-            || getStringValue( section.room ).includes( searchQuery.toLowerCase() )
-            || getStringValue( section.session ).includes( searchQuery.toLowerCase() );
-
-		const sectionSize = typeof section.size === 'object' && section.size && 'name' in section.size 
-			? ( section.size as any ).name 
-			: section.size;
-
-        const matchesSize = sizeFilter === 'all' || sectionSize === sizeFilter;
-
-		return matchesSearch && matchesSize;
-	}) || [];
+    const memoizedPeriods = useMemo(() => {
+        return periods?.map( period => ({
+            id      : period.id,
+            label   : `${period.id} - ${ period.name }${ formatDate( period )}`,
+            value   : period.id
+        }) ) ?? [];
+    }, [periods]);
 
 
-	/**
-	 * Hook de paginación
-	 */
-	const {
-		currentPage,
-		itemsPerPage,
-		totalPages,
-		paginatedData: paginatedSections,
-		setCurrentPage,
-		setItemsPerPage,
-		resetToFirstPage
-	} = usePagination({
-		data                : filteredSections,
-		initialItemsPerPage : 10
-	});
+    const getAvailablePeriodsForSection = ( currentSectionId: string ) => {
+        const selectedPeriods = sections
+            .filter( section => section.id !== currentSectionId && section.period )
+            .map( section => section.period );
+
+        return memoizedPeriods.filter( period => !selectedPeriods.includes( period.value ));
+    };
 
 
-	/**
-	 * Resetea la página actual cuando cambian los filtros
-	 */
-	const handleFilterChange = ( filterType: 'search' | 'size', value: string ) => {
-		resetToFirstPage();
+    const [sections, setSections] = useState<SectionData[]>([ emptySection ]);
 
-		switch ( filterType ) {
-			case 'search':
-				setSearchQuery( value );
-			break;
+    // Get the next available section number
+    const getNextAvailableSectionNumber = () => {
+        const usedNumbers = sections.map( section => section.sectionNumber ).sort( ( a, b ) => a - b );
 
-            case 'size':
-				setSizeFilter( value as SizeFilter );
-			break;
-		}
-	};
+        for ( let i = 1; i <= usedNumbers.length + 1; i++ ) {
+            if ( !usedNumbers.includes( i ) ) {
+                return i;
+            }
+        }
 
-	if ( isLoading ) {
-		return (
-			<main className="container mx-auto p-6 space-y-6 min-h-[calc(100vh-74px)]">
-				<div className="space-y-4">
-					<Skeleton className="h-8 w-64" />
-					<Skeleton className="h-32 w-full" />
-					<Skeleton className="h-96 w-full" />
-				</div>
-			</main>
-		);
-	}
+        return usedNumbers.length + 1;
+    };
 
-	if ( isError ) {
-		return (
-			<main className="container mx-auto p-6 space-y-6 min-h-[calc(100vh-74px)]">
-				<div className="text-center py-8">
-					<p className="text-muted-foreground">Error al cargar las secciones</p>
-				</div>
-			</main>
-		);
-	}
+    // Get closest available number when there's a conflict
+    const getClosestAvailableNumber = ( targetNumber: number, excludeId?: string ) => {
+        const usedNumbers = sections
+            .filter( section => excludeId ? section.id !== excludeId : true )
+            .map( section => section.sectionNumber );
+
+        if ( !usedNumbers.includes( targetNumber )) {
+            return targetNumber;
+        }
+
+        // Find closest available number
+        for ( let offset = 1; offset <= sections.length + 1; offset++ ) {
+            const lower = targetNumber - offset;
+            const higher = targetNumber + offset;
+
+            if ( lower > 0 && !usedNumbers.includes( lower )) {
+                return lower;
+            }
+
+            if ( !usedNumbers.includes( higher )) {
+                return higher;
+            }
+        }
+
+        return getNextAvailableSectionNumber();
+    };
+
+
+    const addSection = () => {
+        const newSection = {
+            ...emptySection,
+            id              : Math.random().toString( 36 ).substring( 2 ),
+            sectionNumber   : getNextAvailableSectionNumber()
+        };
+
+        setSections( prev => [ ...prev, newSection ]);
+    };
+
+
+    const removeSection = ( sectionId: string ) => {
+        setSections( prev => prev.filter( section => section.id !== sectionId ));
+    };
+
+
+    const updateSectionPeriod = ( sectionId: string, period: string ) => {
+        setSections( prev => prev.map( section =>
+            section.id === sectionId 
+            ? { ...section, period }
+            : section
+        ));
+    };
+
+    const updateSectionNumber = ( sectionId: string, newNumber: number ) => {
+        const validNumber = getClosestAvailableNumber( newNumber, sectionId );
+        
+        setSections( prev => prev.map( section =>
+            section.id === sectionId 
+            ? { ...section, sectionNumber: validNumber }
+            : section
+        ));
+    };
+
+
+    const updateSessionCount = ( sectionId: string, session: Session, delta: number ) => {
+        setSections(prev => prev.map(section => 
+            section.id === sectionId 
+            ? {
+                ...section,
+                sessionCounts: {
+                    ...section.sessionCounts,
+                    [session]: Math.max( 0, section.sessionCounts[session] + delta )
+                }
+            }
+            : section
+        ));
+    };
+
+
+    const setSessionCount = ( sectionId: string, session: Session, value: string ) => {
+        const count = parseInt( value ) || 0;
+
+        setSections( prev => prev.map( section =>
+            section.id === sectionId 
+            ? {
+                ...section,
+                sessionCounts: {
+                    ...section.sessionCounts,
+                    [session]: Math.max(0, count)
+                }
+            }
+            : section
+        ));
+    };
+
+
+    const generatedSections = useMemo(() => {
+        const result: SectionToCreate[] = [];
+
+        sections.forEach(section => {
+            if ( !section.period ) return;
+
+            Object.entries( section.sessionCounts ).forEach(([ session, count ]) => {
+                for ( let i = 0; i < count; i++ ) {
+                    result.push({
+                        periodId    : section.period.split( '-' )[0],
+                        session     : session as Session,
+                        code        : section.sectionNumber
+                    });
+                }
+            });
+        });
+
+        return result;
+    }, [sections]);
+
+
+    function handleSave(): void {
+        if ( generatedSections.length === 0 ) {
+            return;
+        }
+
+        console.log( 'Secciones generadas:', generatedSections );
+    };
+
 
 	return (
-		<main className="container mx-auto p-6 space-y-6 min-h-[calc(100vh-74px)]">
-			<header className="flex justify-start gap-4 items-center">
-                <Button
-                    onClick = { () => router.back() }
-                    size    = "icon"
-                    variant = "secondary"
-                >
-                    <ArrowLeft className="w-4 h-4" />
-                </Button>
+        <main className="container mx-auto py-6 px-4 sm:px-5 min-h-[calc(100vh-74px)]">
+			<header className=" space-y-2 sm:space-y-0 sm:flex justify-between gap-4 items-center w-full">
+                <div className="flex items-center gap-4">
+                    <Button
+                        onClick = { () => router.back() }
+                        size    = "icon"
+                        variant = "secondary"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                    </Button>
 
-				<h1 className="text-3xl font-bold">Secciones de la Asignatura { subjectId }</h1>
+                    <h1 className="text-xl md:text-3xl font-bold">Secciones de la Asignatura { subjectId }</h1>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <ViewMode
+                        viewMode        = { viewMode }
+                        onViewChange    = { onViewChange }
+                    />
+
+                    <Button
+                        onClick     = { addSection }
+                        className   = "items-center gap-2 w-full sm:w-auto"
+                        disabled = { sections.length === periods?.length }
+                    >
+                        <Plus className="h-4 w-4" />
+                        Agregar Sección
+                    </Button>
+                </div>
 			</header>
 
-            <SectionCreator />
+            <Tabs defaultValue="add" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="add">Agregar Secciones</TabsTrigger>
+                    <TabsTrigger value="show">Ver Secciones Existentes</TabsTrigger>
+                </TabsList>
 
-			{/* Filtros */}
-			{/* <Card>
-				<CardContent className="space-y-4 mt-4">
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-						<div className="space-y-2">
-							<Label htmlFor="search">Buscar</Label>
-
-							<div className="relative">
-								<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-
-								<Input
-									id          = "search"
-									placeholder = "Buscar por código, profesor, sala o sesión..."
-									value       = { searchQuery }
-									onChange    = { (e) => handleFilterChange( 'search', e.target.value ) }
-									className   = "pl-10"
-								/>
-							</div>
-						</div>
-
-						<div className="space-y-2">
-							<Label htmlFor="size-filter">Tamaño de Sección</Label>
-
-							<Select value={ sizeFilter } onValueChange={ (value) => handleFilterChange( 'size', value ) }>
-								<SelectTrigger id="size-filter">
-									<SelectValue placeholder="Seleccionar tamaño" />
-								</SelectTrigger>
-
-								<SelectContent>
-									<SelectItem value="all">Todos</SelectItem>
-									<SelectItem value="XS">XS</SelectItem>
-									<SelectItem value="XE">XE</SelectItem>
-									<SelectItem value="S">S</SelectItem>
-									<SelectItem value="M">M</SelectItem>
-									<SelectItem value="L">L</SelectItem>
-									<SelectItem value="XL">XL</SelectItem>
-									<SelectItem value="XXL">XXL</SelectItem>
-								</SelectContent>
-							</Select>
-						</div>
-					</div>
-				</CardContent>
-			</Card>
-
-            <div className="space-y-4">
-                <Card>
-                    <CardContent className="mt-5">
-                        { sectionsList?.length === 0 && !isLoading && !isError ? (
-                            <div className="text-center p-8 text-muted-foreground">
-                                No se han encontrado secciones.
+                <TabsContent value="add" className="mt-6">
+                    <div className="h-[calc(100vh-350px)] sm:h-[calc(100vh-300px)] overflow-auto"> 
+                        {viewMode === 'cards' ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {sections.map( section => (
+                                    <SectionCard
+                                        key                             = { section.id }
+                                        section                         = { section }
+                                        updateSectionNumber             = { updateSectionNumber }
+                                        removeSection                   = { removeSection }
+                                        removeDisabled                  = { sections.length === 1 }
+                                        isErrorPeriods                  = { isErrorPeriods }
+                                        updateSectionPeriod             = { updateSectionPeriod }
+                                        getAvailablePeriodsForSection   = { getAvailablePeriodsForSection }
+                                        isLoadingPeriods                = { isLoadingPeriods }
+                                        updateSessionCount              = { updateSessionCount }
+                                        setSessionCount                 = { setSessionCount }
+                                    />
+                                ))}
                             </div>
                         ) : (
-                            <div>
-                                <Table>
-                                    <TableHeader className="sticky top-0 z-10 bg-background">
-                                        <TableRow>
-                                            <TableHead className="bg-background w-20">Código</TableHead>
-                                            <TableHead className="bg-background w-28">Sala</TableHead>
-                                            <TableHead className="bg-background w-28">Día</TableHead>
-                                            <TableHead className="bg-background w-24">Módulo</TableHead>
-                                            <TableHead className="bg-background w-32">Período</TableHead>
-                                            <TableHead className="bg-background w-40">Profesor</TableHead>
-                                            <TableHead className="bg-background w-24">Sesión</TableHead>
-                                            <TableHead className="bg-background w-20">Tamaño</TableHead>
-                                            <TableHead className="bg-background w-28">Registrados Corregidos</TableHead>
-                                            <TableHead className="bg-background w-28">Registrados Reales</TableHead>
-                                            <TableHead className="bg-background w-32">Edificio Planificado</TableHead>
-                                            <TableHead className="bg-background w-28">Sillas Disponibles</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                </Table>
+                            <SectionTable
+                                section                         = { sections }
+                                updateSectionNumber             = { updateSectionNumber }
+                                removeSection                   = { removeSection }
+                                removeDisabled                  = { sections.length === 1 }
+                                isErrorPeriods                  = { isErrorPeriods }
+                                updateSectionPeriod             = { updateSectionPeriod }
+                                getAvailablePeriodsForSection   = { getAvailablePeriodsForSection }
+                                isLoadingPeriods                = { isLoadingPeriods }
+                                updateSessionCount              = { updateSessionCount }
+                                setSessionCount                 = { setSessionCount }
+                            />
+                        )}
+                    </div>
 
-                                { isError ? (
-                                    <div className="text-center p-8 text-muted-foreground flex gap-2 items-center">
-                                        <Button
-                                            onClick={ () => router.back() }
-                                            variant="outline"
-                                            size="icon"
-                                        >
-                                            <ArrowLeft className="w-4 h-4" />
-                                        </Button>
+                    <div className="grid sm:flex sm:justify-between space-y-2 sm:space-y-0 sm:gap-4 border-t-2 items-center sm:pt-2 mt-2">
+                        <Button
+                            onClick     = { () => setSections([emptySection])}
+                            disabled    = { sections.length === 1 }
+                            className   = "flex items-center gap-2"
+                            variant     = "destructive"
+                        >
+                            <BrushCleaning className="h-4 w-4" />
 
-                                        <h2>Error al cargar las secciones</h2>
-                                    </div>
-                                ) 
-                                : (
-                                    <ScrollArea className="h-[calc(100vh-500px)]">
-                                        <Table>
-                                            <TableBody>
-                                                {isLoading
-                                                ? (
-                                                    Array.from({ length: 10 }).map((_, index) => (
-                                                        <TableRow key={index}>
-                                                            <TableCell><Skeleton className="h-4 w-full" /></TableCell>
-                                                            <TableCell><Skeleton className="h-4 w-full" /></TableCell>
-                                                            <TableCell><Skeleton className="h-4 w-full" /></TableCell>
-                                                            <TableCell><Skeleton className="h-4 w-full" /></TableCell>
-                                                            <TableCell><Skeleton className="h-4 w-full" /></TableCell>
-                                                            <TableCell><Skeleton className="h-4 w-full" /></TableCell>
-                                                            <TableCell><Skeleton className="h-4 w-full" /></TableCell>
-                                                            <TableCell><Skeleton className="h-4 w-full" /></TableCell>
-                                                            <TableCell><Skeleton className="h-4 w-full" /></TableCell>
-                                                            <TableCell><Skeleton className="h-4 w-full" /></TableCell>
-                                                            <TableCell><Skeleton className="h-4 w-full" /></TableCell>
-                                                            <TableCell><Skeleton className="h-4 w-full" /></TableCell>
-                                                        </TableRow>
-                                                    ))
-                                                )
-                                                : (
-                                                    paginatedSections.map( section => (
-                                                        <TableRow key={ section.id }>
-                                                            <TableCell className="font-medium w-20">
-                                                                { section.code }
-                                                            </TableCell>
+                            Limpiar Secciones
+                        </Button>
 
-                                                            <TableCell className="w-28">
-                                                                { section.room }
-                                                            </TableCell>
+                        <Button
+                            onClick     = { handleSave }
+                            disabled    = { generatedSections.length === 0 }
+                            className   = "flex items-center gap-2"
+                        >
+                            <Save className="h-4 w-4" />
+                            Crear Secciones ({ generatedSections.length })
+                        </Button>
+                    </div>
+                </TabsContent>
 
-                                                            <TableCell className="w-28">
-                                                                { days[section.day - 1] }
-                                                            </TableCell>
-
-                                                            <TableCell className="w-24">
-                                                                M{ section.moduleId }
-                                                            </TableCell>
-
-                                                            <TableCell className="whitespace-nowrap w-32">
-                                                                { section.period }
-                                                            </TableCell>
-
-                                                            <TableCell
-                                                                className   = "truncate w-40"
-                                                                title       = { section.professorName }
-                                                            >
-                                                                { section.professorName }
-                                                            </TableCell>
-
-                                                            <TableCell className="w-24">
-                                                                { section.session }
-                                                            </TableCell>
-
-                                                            <TableCell className="w-20 text-center">
-                                                                <Badge variant="outline">
-                                                                    { section.size }
-                                                                </Badge>
-                                                            </TableCell>
-
-                                                            <TableCell className="w-28 text-end">
-                                                                { section.correctedRegistrants }
-                                                            </TableCell>
-
-                                                            <TableCell className="w-28 text-end">
-                                                                { section.realRegistrants }
-                                                            </TableCell>
-
-                                                            <TableCell
-                                                                className   = "truncate w-32"
-                                                                title       = { section.plannedBuilding }
-                                                            >
-                                                                { section.plannedBuilding }
-                                                            </TableCell>
-
-                                                            <TableCell className="w-28 text-end">
-                                                                { section.chairsAvailable }
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    ))
-                                                )}
-
-                                                { filteredSections.length === 0 && searchQuery ? (
-                                                    <TableRow>
-                                                        <TableCell colSpan={ 12 } className="h-24 text-center">
-                                                            No se encontraron resultados para &quot;{ searchQuery }&quot;
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ) : sectionsList?.length === 0 && !searchQuery ? (
-                                                    <TableRow>
-                                                        <TableCell colSpan={ 12 } className="h-24 text-center">
-                                                            No hay secciones registradas
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ) : null }
-                                            </TableBody>
-                                        </Table>
-                                    </ScrollArea>
-                                ) }
-                            </div>
-                        ) }
-                    </CardContent>
-                </Card>
-
-                <DataPagination
-                    currentPage             = { currentPage }
-                    totalPages              = { totalPages }
-                    totalItems              = { filteredSections.length }
-                    itemsPerPage            = { itemsPerPage }
-                    onPageChange            = { setCurrentPage }
-                    onItemsPerPageChange    = { setItemsPerPage }
-                />
-            </div> */}
+                <TabsContent value="show" className="mt-6">
+                    <SectionAddedTable
+                        memoizedPeriods     = { memoizedPeriods }
+                        isLoadingPeriods    = { isLoadingPeriods }
+                        enabled             = { true }
+                        subjectId           = { subjectId }
+                    />
+                </TabsContent>
+            </Tabs> 
 		</main>
 	);
 }
