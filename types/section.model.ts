@@ -30,8 +30,9 @@ export enum Session {
 }
 
 export interface SectionToCreate {
-    period: string;
-    session: Session;
+    periodId    : string;
+    session     : Session;
+    code        : number;
 }
 
 export interface SessionCounts {
@@ -42,7 +43,9 @@ export interface SessionCounts {
 }
 
 export interface SectionData {
-    id: string;
-    period: string;
-    sessionCounts: SessionCounts;
+    id              : string;
+    period          : string;
+    sessionCounts   : SessionCounts;
+    sectionNumber   : number;
+    isNew           : boolean;
 }
