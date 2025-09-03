@@ -3,6 +3,7 @@
 import { Minus, Plus } from 'lucide-react';
 
 import {
+    sessionBorders,
     sessionColors,
     sessionLabels
 }                   from '@/components/section/section.config';
@@ -18,6 +19,7 @@ interface Props {
     updateSessionCount  : ( sectionId: string, session: Session, delta: number ) => void,
     setSessionCount     : ( sectionId: string, session: Session, value: string ) => void;
     section             : SectionData;
+    showLabel           : boolean;
 }
 
 
@@ -25,32 +27,35 @@ export function SessionButton({
     session,
     updateSessionCount,
     setSessionCount,
-    section
+    section,
+    showLabel
 }: Props ) {
     return (
-        <div key={session} className="space-y-2 ">
-            <div className="flex items-center gap-2">
-                <div className={`w-3 h-3 rounded-full ${sessionColors[session]}`} />
+        <div key={session} className="space-y-2 w-full">
+            { showLabel &&
+                <div className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${sessionColors[session]}`} />
 
-                <Label className="text-sm">{sessionLabels[session]}</Label>
-            </div>
+                    <Label className="text-sm">{sessionLabels[session]}</Label>
+                </div>
+            }
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2" title={ showLabel ? '' : sessionLabels[session]}>
                 <Button
                     variant     = "outline"
                     size        = "sm"
                     onClick     = {() => updateSessionCount(section.id, session, -1)}
                     disabled    = {section.sessionCounts[session] === 0}
-                    className   = "h-8 w-8 p-0"
+                    className   = {`px-2 h-8 ${sessionBorders[session]}`}
                 >
-                    <Minus className="h-3 w-3" />
+                    <Minus className="h-4 w-4" />
                 </Button>
 
                 <Input
                     type        = "number"
                     value       = {section.sessionCounts[session]}
                     onChange    = {(e) => setSessionCount(section.id, session, e.target.value)}
-                    className   = "text-center h-8 w-16"
+                    className   = {`text-center w-full h-8 ${sessionBorders[session]}`}
                     min         = "0"
                 />
 
@@ -58,9 +63,9 @@ export function SessionButton({
                     variant     = "outline"
                     size        = "sm"
                     onClick     = {() => updateSessionCount(section.id, session, 1)}
-                    className   = "h-8 w-8 p-0"
+                    className   = {`px-2 h-8 ${sessionBorders[session]}`}
                 >
-                    <Plus className="h-3 w-3" />
+                    <Plus className="h-4 w-4" />
                 </Button>
             </div>
         </div>
