@@ -10,17 +10,21 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-}                           from '@/components/ui/table';
+}                               from '@/components/ui/table';
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue
-}                           from '@/components/ui/select';
-import { ActionButton }     from '@/components/shared/action';
-import { DataPagination }   from '@/components/ui/data-pagination';
-import { Label }            from '@/components/ui/label';
+}                               from '@/components/ui/select';
+import { ActionButton }         from '@/components/shared/action';
+import { DataPagination }       from '@/components/ui/data-pagination';
+import { Label }                from '@/components/ui/label';
+import { Badge }                from '@/components/ui/badge';
+import { ActiveBadge }          from '@/components/shared/active';
+import { SessionName }          from '@/components/section/session-name';
+import { Card, CardContent }    from '@/components/ui/card';
 
 import { Section }      from '@/types/section.model';
 import { KEY_QUERYS }   from '@/consts/key-queries';
@@ -43,6 +47,17 @@ interface Props {
     isLoadingPeriods    : boolean;
     memoizedPeriods     : Option[];
 }
+
+
+const days = [
+    'Lunes',
+    'Martes',
+    'Miércoles',
+    'Jueves',
+    'Viernes',
+    'Sábado',
+    'Domingo'
+];
 
 
 export function SectionAddedTable({
@@ -113,13 +128,13 @@ export function SectionAddedTable({
 
     // Days of the week
     const daysOfWeek = useMemo(() => [
-        { value: 'Lunes', label: 'Lunes' },
-        { value: 'Martes', label: 'Martes' },
-        { value: 'Miércoles', label: 'Miércoles' },
-        { value: 'Jueves', label: 'Jueves' },
-        { value: 'Viernes', label: 'Viernes' },
-        { value: 'Sábado', label: 'Sábado' },
-        { value: 'Domingo', label: 'Domingo' },
+        { value: 'Lunes',       label: 'Lunes' },
+        { value: 'Martes',      label: 'Martes' },
+        { value: 'Miércoles',   label: 'Miércoles' },
+        { value: 'Jueves',      label: 'Jueves' },
+        { value: 'Viernes',     label: 'Viernes' },
+        { value: 'Sábado',      label: 'Sábado' },
+        { value: 'Domingo',     label: 'Domingo' },
     ], []);
 
     // Filter and paginate sections
@@ -147,10 +162,10 @@ export function SectionAddedTable({
         return { sections, totalItems, totalPages };
     }, [ sectionsData, codeFilter, roomFilter, dayFilter, periodFilter, currentPage, itemsPerPage ]);
 
-    // Reset to first page when filters change
+    // Reset to first page when filters change or items per page changes
     React.useEffect(() => {
         setCurrentPage( 1 );
-    }, [ codeFilter, roomFilter, dayFilter, periodFilter ]);
+    }, [ codeFilter, roomFilter, dayFilter, periodFilter, itemsPerPage ]);
 
     if ( isLoadingSections ) {
         return (
@@ -179,123 +194,179 @@ export function SectionAddedTable({
     return (
         <div className="w-full space-y-4">
             {/* Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 rounded-lg">
-                <div className="space-y-2">
-                    <Label htmlFor="code-filter">Filtrar por Código</Label>
-                    <Select value={codeFilter} onValueChange={setCodeFilter}>
-                        <SelectTrigger id="code-filter">
-                            <SelectValue placeholder="Seleccionar código" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Todos los códigos</SelectItem>
-                            {uniqueCodes.map(( code ) => (
-                                <SelectItem key={code} value={code}>
-                                    {code}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
+            <Card>
+                <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 rounded-lg">
+                        <div className="space-y-2">
+                            <Label htmlFor="code-filter">Filtrar por Código</Label>
+                            <Select value={codeFilter} onValueChange={setCodeFilter}>
+                                <SelectTrigger id="code-filter">
+                                    <SelectValue placeholder="Seleccionar código" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Todos los códigos</SelectItem>
+                                    {uniqueCodes.map(( code ) => (
+                                        <SelectItem key={code} value={code}>
+                                            {code}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-                <div className="space-y-2">
-                    <Label htmlFor="room-filter">Filtrar por Sala</Label>
-                    <Select value={roomFilter} onValueChange={setRoomFilter}>
-                        <SelectTrigger id="room-filter">
-                            <SelectValue placeholder="Seleccionar sala" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Todas las salas</SelectItem>
-                            {mockRooms.map(( room ) => (
-                                <SelectItem key={room.id} value={room.description}>
-                                    {room.description}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="room-filter">Filtrar por Sala</Label>
+                            <Select value={roomFilter} onValueChange={setRoomFilter}>
+                                <SelectTrigger id="room-filter">
+                                    <SelectValue placeholder="Seleccionar sala" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Todas las salas</SelectItem>
+                                    {mockRooms.map(( room ) => (
+                                        <SelectItem key={room.id} value={room.description}>
+                                            {room.description}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-                <div className="space-y-2">
-                    <Label htmlFor="day-filter">Filtrar por Día</Label>
-                    <Select value={dayFilter} onValueChange={setDayFilter}>
-                        <SelectTrigger id="day-filter">
-                            <SelectValue placeholder="Seleccionar día" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Todos los días</SelectItem>
-                            {daysOfWeek.map(( day ) => (
-                                <SelectItem key={day.value} value={day.value}>
-                                    {day.label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="day-filter">Filtrar por Día</Label>
+                            <Select value={dayFilter} onValueChange={setDayFilter}>
+                                <SelectTrigger id="day-filter">
+                                    <SelectValue placeholder="Seleccionar día" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Todos los días</SelectItem>
+                                    {daysOfWeek.map(( day ) => (
+                                        <SelectItem key={day.value} value={day.value}>
+                                            {day.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-                <div className="space-y-2">
-                    <Label htmlFor="period-filter">Filtrar por Período</Label>
-                    <Select value={periodFilter} onValueChange={setPeriodFilter}>
-                        <SelectTrigger id="period-filter">
-                            <SelectValue placeholder="Seleccionar período" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Todos los períodos</SelectItem>
-                            {!isLoadingPeriods && memoizedPeriods?.map(( period ) => (
-                                <SelectItem key={period.id} value={period.value}>
-                                    {period.label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-            </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="period-filter">Filtrar por Período</Label>
+                            <Select value={periodFilter} onValueChange={setPeriodFilter}>
+                                <SelectTrigger id="period-filter">
+                                    <SelectValue placeholder="Seleccionar período" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Todos los períodos</SelectItem>
+                                    {!isLoadingPeriods && memoizedPeriods?.map(( period ) => (
+                                        <SelectItem key={period.id} value={period.value}>
+                                            {period.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
 
             {/* Table */}
-            <div className="overflow-auto">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Código</TableHead>
-                            <TableHead>Sesión</TableHead>
-                            <TableHead>Tamaño</TableHead>
-                            <TableHead>Inscritos Corregidos</TableHead>
-                            <TableHead>Inscritos Reales</TableHead>
-                            <TableHead>Edificio Planificado</TableHead>
-                            <TableHead>Sillas Disponibles</TableHead>
-                            <TableHead>Sala</TableHead>
-                            <TableHead>Profesor</TableHead>
-                            <TableHead>Día</TableHead>
-                            <TableHead>Módulo</TableHead>
-                            <TableHead>Período</TableHead>
-                            <TableHead className="text-right">Acciones</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {filteredAndPaginatedSections.sections.map(( section ) => (
-                            <TableRow key={section.id}>
-                                <TableCell className="font-medium">{section.code}</TableCell>
-                                <TableCell>{section.session}</TableCell>
-                                <TableCell>{section.size}</TableCell>
-                                <TableCell>{section.correctedRegistrants}</TableCell>
-                                <TableCell>{section.realRegistrants}</TableCell>
-                                <TableCell>{section.plannedBuilding}</TableCell>
-                                <TableCell>{section.chairsAvailable}</TableCell>
-                                <TableCell>{section.room}</TableCell>
-                                <TableCell>{section.professorName}</TableCell>
-                                <TableCell>{section.day}</TableCell>
-                                <TableCell>{section.moduleId}</TableCell>
-                                <TableCell>{section.period}</TableCell>
-                                <TableCell className="text-right">
-                                    <ActionButton
-                                        editItem    = {handleEdit}
-                                        deleteItem  = {handleDelete}
-                                        item        = {section}
-                                    />
-                                </TableCell>
+            <Card>
+                <CardContent className="mt-5 overflow-x-auto overflow-y-auto h-[calc(100vh-507px)] w-full">
+                    <Table className="min-w-full">
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Código</TableHead>
+                                <TableHead>Sesión</TableHead>
+                                <TableHead>Tamaño</TableHead>
+                                {/* <TableHead>Inscritos Corregidos</TableHead> */}
+                                {/* <TableHead>Inscritos Reales</TableHead> */}
+                                {/* <TableHead>Edificio Planificado</TableHead> */}
+                                {/* <TableHead>Sillas Disponibles</TableHead> */}
+                                <TableHead>Sala</TableHead>
+                                <TableHead>Profesor</TableHead>
+                                <TableHead>Día</TableHead>
+                                <TableHead>Módulo</TableHead>
+                                <TableHead>Período</TableHead>
+                                <TableHead>Abierta</TableHead>
+                                <TableHead className="text-right">Acciones</TableHead>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </div>
+                        </TableHeader>
+                        <TableBody>
+                            {isLoadingSections ? (
+                                <TableRow>
+                                    <TableCell colSpan={9} className="text-center py-8">
+                                        Cargando secciones...
+                                    </TableCell>
+                                </TableRow>
+                            ) : isErrorSections ? (
+                                <TableRow>
+                                    <TableCell colSpan={9} className="text-center py-8 text-red-500">
+                                        Error al cargar las secciones
+                                    </TableCell>
+                                </TableRow>
+                            ) : filteredAndPaginatedSections.sections.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+                                        {sectionsData && sectionsData.length > 0 
+                                            ? 'No se encontraron secciones con los filtros aplicados' 
+                                            : 'No hay secciones disponibles'
+                                        }
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                filteredAndPaginatedSections.sections.map(( section ) => (
+                                    <TableRow key={section.id}>
+                                        <TableCell className="font-medium">{ section.code }</TableCell>
+
+                                    <TableCell>
+                                        <SessionName session={ section.session } />
+                                    </TableCell>
+
+                                    <TableCell>
+                                        <Badge variant={section.size ? 'default': 'outline'}>
+                                            { section.size ?? '-' }
+                                        </Badge>
+                                    </TableCell>
+
+                                    {/* <TableCell>{ section.correctedRegistrants }</TableCell> */}
+
+                                    {/* <TableCell>{ section.realRegistrants }</TableCell> */}
+
+                                    {/* <TableCell>{ section.plannedBuilding }</TableCell> */}
+
+                                    {/* <TableCell>{ section.chairsAvailable }</TableCell> */}
+
+                                    <TableCell>{ section.room ?? '-' }</TableCell>
+
+                                    <TableCell>{ section.professorName }</TableCell>
+
+                                    <TableCell>{ days[section.day - 1] ?? '-' }</TableCell>
+
+                                    <TableCell>{ section.moduleId ? `M${section.moduleId}` : '-' }</TableCell>
+
+                                    <TableCell>{ section.period }</TableCell>
+
+                                    <TableCell>
+                                        <ActiveBadge
+                                            isActive        = { !section.isClosed }
+                                            activeText      = "Si"
+                                            inactiveText    = "No"
+                                        />
+                                    </TableCell>
+
+                                    <TableCell className="text-right">
+                                        <ActionButton
+                                            editItem    = { handleEdit }
+                                            deleteItem  = { handleDelete }
+                                            item        = { section }
+                                        />
+                                    </TableCell>
+                                </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
 
             {/* Pagination */}
             {filteredAndPaginatedSections.totalItems > 0 && (
