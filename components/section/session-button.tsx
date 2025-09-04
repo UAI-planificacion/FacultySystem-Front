@@ -44,25 +44,25 @@ export function SessionButton({
                 <Button
                     variant     = "outline"
                     size        = "sm"
-                    onClick     = {() => updateSessionCount(section.id, session, -1)}
-                    disabled    = {section.sessionCounts[session] === 0}
-                    className   = {`px-2 h-8 ${sessionBorders[session]}`}
+                    onClick     = {() => updateSessionCount(section.id, session, -1 )}
+                    disabled    = { section.sessionCounts[session] === 0 }
+                    className   = { `px-2 h-8 ${sessionBorders[session] }`}
                 >
                     <Minus className="h-4 w-4" />
                 </Button>
 
                 <Input
                     type        = "number"
-                    value       = {section.sessionCounts[session]}
-                    onChange    = {(e) => setSessionCount(section.id, session, e.target.value)}
-                    className   = {`text-center w-full h-8 ${sessionBorders[session]}`}
+                    value       = { section.sessionCounts[ session ]}
+                    onChange    = {( e ) => setSessionCount( section.id, session, e.target.value )}
+                    className   = { `${ showLabel ? 'w-full' : 'w-20' } text-center h-8 ${ sessionBorders[session] }`}
                     min         = "0"
                 />
 
                 <Button
                     variant     = "outline"
                     size        = "sm"
-                    onClick     = {() => updateSessionCount(section.id, session, 1)}
+                    onClick     = {() => updateSessionCount( section.id, session, 1 )}
                     className   = {`px-2 h-8 ${sessionBorders[session]}`}
                 >
                     <Plus className="h-4 w-4" />
