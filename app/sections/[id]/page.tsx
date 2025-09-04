@@ -7,29 +7,44 @@ import {
     Plus,
     Save,
     BrushCleaning,
-    ArrowLeft
+    ArrowLeft,
+    Eye
 }                   from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import {
+    useQuery,
+    useMutation,
+    useQueryClient
+}                   from '@tanstack/react-query';
 import { format }   from "@formkit/tempo";
+import { toast }        from "sonner";
+
+
+import {
+    Tabs,
+    TabsTrigger,
+    TabsList
+}                               from '@/components/ui/tabs';
+import { SectionCard }          from "@/components/section/section-card";
+import { SectionTable }         from "@/components/section/section.table";
+import { SectionAddedTable }    from "@/components/section/section-added-table";
+import { ViewMode }             from "@/components/shared/view-mode";
+import { Button }               from "@/components/ui/button";
 
 import {
     Session,
     SectionToCreate,
     SectionData,
-    Section
-}                       from '@/types/section.model';
-import { KEY_QUERYS }   from '@/consts/key-queries';
-import { fetchApi }     from '@/services/fetch';
-import { ENV }          from '@/config/envs/env';
-import { Period }       from '@/types/periods.model';
-
-import { SectionCard }       from "@/components/section/section-card";
-import { SectionTable }     from "@/components/section/section.table";
-import { SectionAddedTable } from "@/components/section/section-added-table";
-import { ViewMode }         from "@/components/shared/view-mode";
+}                           from '@/types/section.model';
+import { KEY_QUERYS }       from '@/consts/key-queries';
+import { fetchApi, Method } from '@/services/fetch';
+import { ENV }              from '@/config/envs/env';
+import { Period }           from '@/types/periods.model';
 import { useViewMode }      from "@/hooks/use-view-mode";
-import { Button }           from "@/components/ui/button";
-import { Tabs, TabsContent, TabsTrigger, TabsList } from '@/components/ui/tabs';
+import { errorToast, successToast } from "@/config/toast/toast.config";
+
+
+
+type TabType = 'add' | 'show';
 
 
 function formatDate( period : Period ): string {
@@ -54,9 +69,10 @@ const emptySection: SectionData = {
 
 
 export default function SectionsPage() {
-    const params    = useParams();
-    const subjectId = params.id as string;
-    const router    = useRouter();
+    const [tab, setTab] = useState<TabType>( "add" );
+    const params        = useParams();
+    const subjectId     = params.id as string;
+    const router        = useRouter();
 
 
     const { viewMode, onViewChange } = useViewMode({
@@ -98,7 +114,7 @@ export default function SectionsPage() {
 
     const [sections, setSections] = useState<SectionData[]>([ emptySection ]);
 
-    // Get the next available section number
+
     const getNextAvailableSectionNumber = () => {
         const usedNumbers = sections.map( section => section.sectionNumber ).sort( ( a, b ) => a - b );
 
@@ -111,7 +127,7 @@ export default function SectionsPage() {
         return usedNumbers.length + 1;
     };
 
-    // Get closest available number when there's a conflict
+
     const getClosestAvailableNumber = ( targetNumber: number, excludeId?: string ) => {
         const usedNumbers = sections
             .filter( section => excludeId ? section.id !== excludeId : true )
@@ -121,7 +137,6 @@ export default function SectionsPage() {
             return targetNumber;
         }
 
-        // Find closest available number
         for ( let offset = 1; offset <= sections.length + 1; offset++ ) {
             const lower = targetNumber - offset;
             const higher = targetNumber + offset;
@@ -139,7 +154,7 @@ export default function SectionsPage() {
     };
 
 
-    const addSection = () => {
+    function addSection(): void {
         const newSection = {
             ...emptySection,
             id              : Math.random().toString( 36 ).substring( 2 ),
@@ -155,7 +170,7 @@ export default function SectionsPage() {
     };
 
 
-    const updateSectionPeriod = ( sectionId: string, period: string ) => {
+    function updateSectionPeriod( sectionId: string, period: string ): void {
         setSections( prev => prev.map( section =>
             section.id === sectionId 
             ? { ...section, period }
@@ -163,7 +178,8 @@ export default function SectionsPage() {
         ));
     };
 
-    const updateSectionNumber = ( sectionId: string, newNumber: number ) => {
+
+    function updateSectionNumber( sectionId: string, newNumber: number ): void {
         const validNumber = getClosestAvailableNumber( newNumber, sectionId );
         
         setSections( prev => prev.map( section =>
@@ -174,7 +190,7 @@ export default function SectionsPage() {
     };
 
 
-    const updateSessionCount = ( sectionId: string, session: Session, delta: number ) => {
+    function updateSessionCount( sectionId: string, session: Session, delta: number ): void {
         setSections(prev => prev.map(section => 
             section.id === sectionId 
             ? {
@@ -189,7 +205,7 @@ export default function SectionsPage() {
     };
 
 
-    const setSessionCount = ( sectionId: string, session: Session, value: string ) => {
+    function setSessionCount( sectionId: string, session: Session, value: string ): void {
         const count = parseInt( value ) || 0;
 
         setSections( prev => prev.map( section =>
@@ -227,12 +243,40 @@ export default function SectionsPage() {
     }, [sections]);
 
 
+    const queryClient = useQueryClient();
+
+
+    const createSectionsMutation = useMutation({
+        mutationFn: async ( sectionsToCreate: SectionToCreate[] ) => {
+            return fetchApi({
+                isApi   : false,
+                url     : `${ENV.ACADEMIC_SECTION}Sections/create-massive-by-subject/${subjectId}`,
+                method  : Method.POST,
+                body    : sectionsToCreate
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: [ KEY_QUERYS.SECCTIONS, subjectId ]
+            });
+
+            setSections([ emptySection ]);
+            setTab( 'show' );
+            toast( 'Secciones creadas exitosamente', successToast );
+        },
+        onError: ( error ) => {
+            console.error( 'Error creating sections:', error );
+            toast( 'Error al crear secciones', errorToast );
+        }
+    });
+
     function handleSave(): void {
         if ( generatedSections.length === 0 ) {
             return;
         }
+        console.log("🚀 ~ file: page.tsx:268 ~ generatedSections:", generatedSections)
 
-        console.log( 'Secciones generadas:', generatedSections );
+        createSectionsMutation.mutate( generatedSections );
     };
 
 
@@ -251,7 +295,25 @@ export default function SectionsPage() {
                     <h1 className="text-xl md:text-3xl font-bold">Secciones de la Asignatura { subjectId }</h1>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <Tabs
+                    defaultValue={tab}
+                    onValueChange   = {( value ) => setTab( value as TabType )}
+                >
+                    <TabsList>
+                        <TabsTrigger value="add" className='gap-1.5'>
+                            <Plus className="h-5 w-5" />
+                            <span className='hidden md:flex'>Agregar Secciones</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="show" className="gap-1.5">
+                            <Eye className='h-5 w-5' />
+                            <span className='hidden md:flex'>Ver Secciones Existentes</span>
+                        </TabsTrigger>
+                    </TabsList>
+                </Tabs> 
+			</header>
+
+            { tab === 'add' ? ( <>
+                <div className="flex items-center gap-2 justify-end mt-4">
                     <ViewMode
                         viewMode        = { viewMode }
                         onViewChange    = { onViewChange }
@@ -266,82 +328,73 @@ export default function SectionsPage() {
                         Agregar Sección
                     </Button>
                 </div>
-			</header>
 
-            <Tabs defaultValue="add" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="add">Agregar Secciones</TabsTrigger>
-                    <TabsTrigger value="show">Ver Secciones Existentes</TabsTrigger>
-                </TabsList>
+                <div className="h-[calc(100vh-350px)] sm:h-[calc(100vh-330px)] overflow-auto space-y-4">
+                    { viewMode === 'cards' ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {sections.map( section => (
+                                <SectionCard
+                                    key                             = { section.id }
+                                    section                         = { section }
+                                    updateSectionNumber             = { updateSectionNumber }
+                                    removeSection                   = { removeSection }
+                                    removeDisabled                  = { sections.length === 1 }
+                                    isErrorPeriods                  = { isErrorPeriods }
+                                    updateSectionPeriod             = { updateSectionPeriod }
+                                    getAvailablePeriodsForSection   = { getAvailablePeriodsForSection }
+                                    isLoadingPeriods                = { isLoadingPeriods }
+                                    updateSessionCount              = { updateSessionCount }
+                                    setSessionCount                 = { setSessionCount }
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        <SectionTable
+                            section                         = { sections }
+                            updateSectionNumber             = { updateSectionNumber }
+                            removeSection                   = { removeSection }
+                            removeDisabled                  = { sections.length === 1 }
+                            isErrorPeriods                  = { isErrorPeriods }
+                            updateSectionPeriod             = { updateSectionPeriod }
+                            getAvailablePeriodsForSection   = { getAvailablePeriodsForSection }
+                            isLoadingPeriods                = { isLoadingPeriods }
+                            updateSessionCount              = { updateSessionCount }
+                            setSessionCount                 = { setSessionCount }
+                        />
+                    )}
+                </div>
 
-                <TabsContent value="add" className="mt-6">
-                    <div className="h-[calc(100vh-350px)] sm:h-[calc(100vh-300px)] overflow-auto"> 
-                        {viewMode === 'cards' ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {sections.map( section => (
-                                    <SectionCard
-                                        key                             = { section.id }
-                                        section                         = { section }
-                                        updateSectionNumber             = { updateSectionNumber }
-                                        removeSection                   = { removeSection }
-                                        removeDisabled                  = { sections.length === 1 }
-                                        isErrorPeriods                  = { isErrorPeriods }
-                                        updateSectionPeriod             = { updateSectionPeriod }
-                                        getAvailablePeriodsForSection   = { getAvailablePeriodsForSection }
-                                        isLoadingPeriods                = { isLoadingPeriods }
-                                        updateSessionCount              = { updateSessionCount }
-                                        setSessionCount                 = { setSessionCount }
-                                    />
-                                ))}
-                            </div>
-                        ) : (
-                            <SectionTable
-                                section                         = { sections }
-                                updateSectionNumber             = { updateSectionNumber }
-                                removeSection                   = { removeSection }
-                                removeDisabled                  = { sections.length === 1 }
-                                isErrorPeriods                  = { isErrorPeriods }
-                                updateSectionPeriod             = { updateSectionPeriod }
-                                getAvailablePeriodsForSection   = { getAvailablePeriodsForSection }
-                                isLoadingPeriods                = { isLoadingPeriods }
-                                updateSessionCount              = { updateSessionCount }
-                                setSessionCount                 = { setSessionCount }
-                            />
-                        )}
-                    </div>
+                <div className="grid sm:flex sm:justify-between space-y-2 sm:space-y-0 sm:gap-4 border-t-2 items-center sm:pt-2 mt-2">
+                    <Button
+                        onClick     = { () => setSections([emptySection])}
+                        disabled    = { sections.length === 1 }
+                        className   = "flex items-center gap-2"
+                        variant     = "destructive"
+                    >
+                        <BrushCleaning className="h-4 w-4" />
 
-                    <div className="grid sm:flex sm:justify-between space-y-2 sm:space-y-0 sm:gap-4 border-t-2 items-center sm:pt-2 mt-2">
-                        <Button
-                            onClick     = { () => setSections([emptySection])}
-                            disabled    = { sections.length === 1 }
-                            className   = "flex items-center gap-2"
-                            variant     = "destructive"
-                        >
-                            <BrushCleaning className="h-4 w-4" />
+                        Limpiar Secciones
+                    </Button>
 
-                            Limpiar Secciones
-                        </Button>
-
-                        <Button
-                            onClick     = { handleSave }
-                            disabled    = { generatedSections.length === 0 }
-                            className   = "flex items-center gap-2"
-                        >
-                            <Save className="h-4 w-4" />
-                            Crear Secciones ({ generatedSections.length })
-                        </Button>
-                    </div>
-                </TabsContent>
-
-                <TabsContent value="show" className="mt-6">
+                    <Button
+                        onClick     = { handleSave }
+                        disabled    = { generatedSections.length === 0 }
+                        className   = "flex items-center gap-2"
+                    >
+                        <Save className="h-4 w-4" />
+                        Crear Secciones ({ generatedSections.length })
+                    </Button>
+                </div>
+                </> )
+                : (
                     <SectionAddedTable
                         memoizedPeriods     = { memoizedPeriods }
                         isLoadingPeriods    = { isLoadingPeriods }
                         enabled             = { true }
                         subjectId           = { subjectId }
                     />
-                </TabsContent>
-            </Tabs> 
+                )
+            }
 		</main>
 	);
 }
