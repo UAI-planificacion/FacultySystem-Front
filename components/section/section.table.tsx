@@ -33,6 +33,7 @@ export function SectionTable({
     setSessionCount
 }: Props ) {
     sections = sections as SectionData[];
+
     return (
         <div className="border rounded-lg">
             <Table>
@@ -73,18 +74,19 @@ export function SectionTable({
                         <TableHead className="w-[80px]">Acciones</TableHead>
                     </TableRow>
                 </TableHeader>
+
                 <TableBody>
-                    {sections.map((secttion) => (
-                        <TableRow key={secttion.id}>
+                    {sections.map((section) => (
+                        <TableRow key={section.id}>
                             {/* Número de Sección */}
                             <TableCell>
                                 <Input
                                     type        = "number"
                                     min         = "1"
                                     max         = "200"
-                                    value       = { secttion.sectionNumber }
+                                    value       = { section.sectionNumber }
                                     className   = "w-16 h-8 text-center"
-                                    onChange    = {( e ) => updateSectionNumber( secttion.id, parseInt( e.target.value ) || 1 )}
+                                    onChange    = {( e ) => updateSectionNumber( section.id, parseInt( e.target.value ) || 1 )}
                                 />
                             </TableCell>
 
@@ -94,7 +96,7 @@ export function SectionTable({
                                     <div className="space-y-1">
                                         <Input
                                             placeholder = "ID del período"
-                                            onChange    = {( event ) => updateSectionPeriod( secttion.id, event.target.value )}
+                                            onChange    = {( event ) => updateSectionPeriod( section.id, event.target.value )}
                                             className   = "h-8"
                                         />
 
@@ -106,9 +108,9 @@ export function SectionTable({
                                     <MultiSelectCombobox
                                         multiple            = { false }
                                         placeholder         = "Seleccionar período"
-                                        defaultValues       = { secttion.period || '' }
-                                        onSelectionChange   = {( value ) => updateSectionPeriod( secttion.id, value as string )}
-                                        options             = { getAvailablePeriodsForSection( secttion.id )}
+                                        defaultValues       = { section.period || '' }
+                                        onSelectionChange   = {( value ) => updateSectionPeriod( section.id, value as string )}
+                                        options             = { getAvailablePeriodsForSection( section.id )}
                                         isLoading           = { isLoadingPeriods }
                                     />
                                 )}
@@ -121,7 +123,7 @@ export function SectionTable({
                                         session             = { session }
                                         updateSessionCount  = { updateSessionCount }
                                         setSessionCount     = { setSessionCount }
-                                        section             = { secttion }
+                                        section             = { section }
                                         showLabel           = { false }
                                     />
                                 </TableCell>
@@ -130,10 +132,10 @@ export function SectionTable({
                             {/* Acciones */}
                             <TableCell>
                                 <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() => removeSection(secttion.id)}
-                                    disabled={removeDisabled}
+                                    variant     = "destructive"
+                                    size        = "sm"
+                                    onClick     = {() => removeSection( section.id )}
+                                    disabled    = { removeDisabled }
                                 >
                                     <Trash2 className="h-4 w-4" />
                                 </Button>
