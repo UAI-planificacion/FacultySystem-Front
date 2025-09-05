@@ -24,7 +24,7 @@ export function SectionCard({
     removeDisabled,
     isErrorPeriods,
     updateSectionPeriod,
-    getAvailablePeriodsForSection,
+    periods,
     isLoadingPeriods,
     updateSessionCount,
     setSessionCount
@@ -84,7 +84,7 @@ export function SectionCard({
                             placeholder         = "Seleccionar un período"
                             defaultValues       = { section.period || '' }
                             onSelectionChange   = {( value ) => updateSectionPeriod( section.id, value as string )}
-                            options             = { getAvailablePeriodsForSection( section.id ) }
+                            options             = { periods }
                             isLoading           = { isLoadingPeriods }
                         />
                     )}
