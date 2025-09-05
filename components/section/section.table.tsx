@@ -27,7 +27,7 @@ export function SectionTable({
     removeDisabled,
     isErrorPeriods,
     updateSectionPeriod,
-    getAvailablePeriodsForSection,
+    periods,
     isLoadingPeriods,
     updateSessionCount,
     setSessionCount
@@ -110,7 +110,7 @@ export function SectionTable({
                                         placeholder         = "Seleccionar período"
                                         defaultValues       = { section.period || '' }
                                         onSelectionChange   = {( value ) => updateSectionPeriod( section.id, value as string )}
-                                        options             = { getAvailablePeriodsForSection( section.id )}
+                                        options             = { periods }
                                         isLoading           = { isLoadingPeriods }
                                     />
                                 )}
