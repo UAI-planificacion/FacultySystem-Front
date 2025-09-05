@@ -31,14 +31,14 @@ export interface PeriodsSection {
 
 
 export interface Props {
-    section                         : SectionData | SectionData[];
-    updateSectionNumber             : ( sectionId: string, newNumber: number ) => void;
-    removeSection                   : ( sectionId: string ) => void;
-    removeDisabled                  : boolean;
-    isErrorPeriods                  : boolean;
-    updateSectionPeriod             : ( sectionId: string, period: string ) => void;
-    getAvailablePeriodsForSection   : ( currentSectionId: string ) => PeriodsSection[];
-    isLoadingPeriods                : boolean;
-    updateSessionCount              : ( sectionId: string, session: Session, delta: number ) => void
-    setSessionCount                 : ( sectionId: string, session: Session, value: string ) => void
+    section                 : SectionData | SectionData[];
+    updateSectionNumber     : ( sectionId: string, newNumber: number ) => void;
+    removeSection           : ( sectionId: string ) => void;
+    removeDisabled          : boolean;
+    isErrorPeriods          : boolean;
+    updateSectionPeriod     : ( sectionId: string, period: string ) => void;
+    periods                 : PeriodsSection[];
+    isLoadingPeriods        : boolean;
+    updateSessionCount      : ( sectionId: string, session: Session, delta: number ) => void
+    setSessionCount         : ( sectionId: string, session: Session, value: string ) => void
 }
