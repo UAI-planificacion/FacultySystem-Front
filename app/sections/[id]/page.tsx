@@ -14,10 +14,10 @@ import {
     useQuery,
     useMutation,
     useQueryClient
-}                   from '@tanstack/react-query';
-import { format }   from "@formkit/tempo";
+}                       from '@tanstack/react-query';
+import { format }       from "@formkit/tempo";
 import { toast }        from "sonner";
-
+import { v7 as uuid7 }  from 'uuid';
 
 import {
     Tabs,
@@ -35,13 +35,16 @@ import {
     SectionToCreate,
     SectionData,
 }                           from '@/types/section.model';
+import {
+    errorToast,
+    successToast
+}                           from "@/config/toast/toast.config";
+import { Subject }          from '@/types/subject.model';
 import { KEY_QUERYS }       from '@/consts/key-queries';
 import { fetchApi, Method } from '@/services/fetch';
 import { ENV }              from '@/config/envs/env';
 import { Period }           from '@/types/periods.model';
 import { useViewMode }      from "@/hooks/use-view-mode";
-import { errorToast, successToast } from "@/config/toast/toast.config";
-
 
 
 type TabType = 'add' | 'show';
@@ -55,7 +58,7 @@ function formatDate( period : Period ): string {
 
 
 const emptySection: SectionData = {
-    id              : Math.random().toString( 36 ).substring( 2 ),
+    id              : uuid7(),
     period          : '',
     sectionNumber   : 1,
     isNew           : true,
@@ -93,6 +96,16 @@ export default function SectionsPage() {
         }),
     });
 
+    const {
+        data        : subjectData,
+        isLoading   : isLoadingSubject,
+        isError     : isErrorSubject
+    } = useQuery<Subject>({
+        queryKey: [KEY_QUERYS.SUBJECTS, subjectId],
+        queryFn : () => fetchApi({ url: `subjects/${subjectId}` }),
+        enabled: !!subjectId,
+    });
+
 
     const memoizedPeriods = useMemo(() => {
         return periods?.map( period => ({
@@ -101,15 +114,6 @@ export default function SectionsPage() {
             value   : period.id
         }) ) ?? [];
     }, [periods]);
-
-
-    const getAvailablePeriodsForSection = ( currentSectionId: string ) => {
-        const selectedPeriods = sections
-            .filter( section => section.id !== currentSectionId && section.period )
-            .map( section => section.period );
-
-        return memoizedPeriods.filter( period => !selectedPeriods.includes( period.value ));
-    };
 
 
     const [sections, setSections] = useState<SectionData[]>([ emptySection ]);
@@ -157,7 +161,7 @@ export default function SectionsPage() {
     function addSection(): void {
         const newSection = {
             ...emptySection,
-            id              : Math.random().toString( 36 ).substring( 2 ),
+            id              : uuid7(),
             sectionNumber   : getNextAvailableSectionNumber()
         };
 
@@ -214,7 +218,7 @@ export default function SectionsPage() {
                 ...section,
                 sessionCounts: {
                     ...section.sessionCounts,
-                    [session]: Math.max(0, count)
+                    [session]: Math.max( 0, count )
                 }
             }
             : section
@@ -233,7 +237,8 @@ export default function SectionsPage() {
                     result.push({
                         periodId    : section.period.split( '-' )[0],
                         session     : session as Session,
-                        code        : section.sectionNumber
+                        code        : section.sectionNumber,
+                        groupId     : section.id
                     });
                 }
             });
@@ -322,7 +327,6 @@ export default function SectionsPage() {
                     <Button
                         onClick     = { addSection }
                         className   = "items-center gap-2 w-full sm:w-auto"
-                        disabled = { sections.length === periods?.length }
                     >
                         <Plus className="h-4 w-4" />
                         Agregar Sección
@@ -334,32 +338,32 @@ export default function SectionsPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {sections.map( section => (
                                 <SectionCard
-                                    key                             = { section.id }
-                                    section                         = { section }
-                                    updateSectionNumber             = { updateSectionNumber }
-                                    removeSection                   = { removeSection }
-                                    removeDisabled                  = { sections.length === 1 }
-                                    isErrorPeriods                  = { isErrorPeriods }
-                                    updateSectionPeriod             = { updateSectionPeriod }
-                                    getAvailablePeriodsForSection   = { getAvailablePeriodsForSection }
-                                    isLoadingPeriods                = { isLoadingPeriods }
-                                    updateSessionCount              = { updateSessionCount }
-                                    setSessionCount                 = { setSessionCount }
+                                    key                 = { section.id }
+                                    section             = { section }
+                                    updateSectionNumber = { updateSectionNumber }
+                                    removeSection       = { removeSection }
+                                    removeDisabled      = { sections.length === 1 }
+                                    isErrorPeriods      = { isErrorPeriods }
+                                    updateSectionPeriod = { updateSectionPeriod }
+                                    periods             = { memoizedPeriods}
+                                    isLoadingPeriods    = { isLoadingPeriods }
+                                    updateSessionCount  = { updateSessionCount }
+                                    setSessionCount     = { setSessionCount }
                                 />
                             ))}
                         </div>
                     ) : (
                         <SectionTable
-                            section                         = { sections }
-                            updateSectionNumber             = { updateSectionNumber }
-                            removeSection                   = { removeSection }
-                            removeDisabled                  = { sections.length === 1 }
-                            isErrorPeriods                  = { isErrorPeriods }
-                            updateSectionPeriod             = { updateSectionPeriod }
-                            getAvailablePeriodsForSection   = { getAvailablePeriodsForSection }
-                            isLoadingPeriods                = { isLoadingPeriods }
-                            updateSessionCount              = { updateSessionCount }
-                            setSessionCount                 = { setSessionCount }
+                            section             = { sections }
+                            updateSectionNumber = { updateSectionNumber }
+                            removeSection       = { removeSection }
+                            removeDisabled      = { sections.length === 1 }
+                            isErrorPeriods      = { isErrorPeriods }
+                            updateSectionPeriod = { updateSectionPeriod }
+                            periods             = { memoizedPeriods}
+                            isLoadingPeriods    = { isLoadingPeriods }
+                            updateSessionCount  = { updateSessionCount }
+                            setSessionCount     = { setSessionCount }
                         />
                     )}
                 </div>
@@ -392,6 +396,7 @@ export default function SectionsPage() {
                         isLoadingPeriods    = { isLoadingPeriods }
                         enabled             = { true }
                         subjectId           = { subjectId }
+                        facultyId           = { subjectData?.facultyId || '' }
                     />
                 )
             }
