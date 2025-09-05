@@ -5,20 +5,21 @@ export interface Section {
     id                      : string;
     code                    : number;
     session                 : Session;
-    size                    : Size;
-    correctedRegistrants    : number;
-    realRegistrants         : number;
-    plannedBuilding         : string;
-    chairsAvailable         : number;
-    room                    : string;
-    professorName           : string;
-    professorId             : string;
-    day                     : number;
-    moduleId                : string;
-    subjectName             : string;
-    subjectId               : string;
+    size                    : Size | null;
+    correctedRegistrants    : number | null;
+    realRegistrants         : number | null;
+    plannedBuilding         : string | null;
+    chairsAvailable         : number | null;
+    room                    : string | null;
+    professorName           : string | null;
+    professorId             : string | null;
+    day                     : number | null;
+    moduleId                : string | null;
+    subjectName             : string | null;
+    subjectId               : string | null;
     period                  : string;
     isClosed                : boolean;
+    groupId                 : string;
 }
 
 
@@ -34,6 +35,7 @@ export interface SectionToCreate {
     periodId    : string;
     session     : Session;
     code        : number;
+    groupId     : string;
 }
 
 export interface SessionCounts {
