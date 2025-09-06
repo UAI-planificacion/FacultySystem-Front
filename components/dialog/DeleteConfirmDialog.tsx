@@ -14,12 +14,13 @@ import {
 } from '@/components/ui/alert-dialog';
 
 
-interface DeleteConfirmDialogProps {
+interface Props {
     isOpen      : boolean;
     onClose     : () => void;
     onConfirm   : () => void;
     type        : string;
     name        : string;
+    isDeleted?  : boolean;
 }
 
 
@@ -29,7 +30,8 @@ export function DeleteConfirmDialog({
     onConfirm,
     type,
     name,
-}: DeleteConfirmDialogProps ): React.JSX.Element {
+    isDeleted = true
+}: Props ): React.JSX.Element {
     return (
         <AlertDialog open={isOpen} onOpenChange={onClose}>
             <AlertDialogContent>
@@ -37,7 +39,11 @@ export function DeleteConfirmDialog({
                     <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
 
                     <AlertDialogDescription>
-                        Esta acción no se puede deshacer. Se eliminará permanentemente { type }{ ' ' }
+                        { isDeleted 
+                            ? `Esta acción no se puede deshacer. Se eliminará permanentemente ${ type } `
+                            : 'Esta acción cerrará todo el grupo '
+                        }
+
                         <span className="font-semibold">"{ name }"</span> del sistema.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
@@ -49,7 +55,7 @@ export function DeleteConfirmDialog({
                         onClick={onConfirm}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
-                        Eliminar
+                        { isDeleted ? "Eliminar" : "Cerrar"}
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
