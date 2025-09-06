@@ -80,8 +80,8 @@ import { useSession }       from "@/hooks/use-session";
 import {
     errorToast,
     successToast
-}                           from "@/config/toast/toast.config";
-import { ENV }              from "@/config/envs/env";
+}               from "@/config/toast/toast.config";
+import { ENV }  from "@/config/envs/env";
 
 
 const numberOrNull = z.union([
