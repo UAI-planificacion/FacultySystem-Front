@@ -297,20 +297,25 @@ export default function SectionsPage() {
                         <ArrowLeft className="w-4 h-4" />
                     </Button>
 
-                    <h1 className="text-xl md:text-3xl font-bold">Secciones de la Asignatura { subjectId }</h1>
+                    <h1 className="text-xl md:text-3xl font-bold">
+                        Secciones de la Asignatura { subjectId }
+                    </h1>
                 </div>
 
                 <Tabs
-                    defaultValue={tab}
+                    defaultValue    = { tab }
                     onValueChange   = {( value ) => setTab( value as TabType )}
                 >
                     <TabsList>
                         <TabsTrigger value="add" className='gap-1.5'>
                             <Plus className="h-5 w-5" />
+
                             <span className='hidden md:flex'>Agregar Secciones</span>
                         </TabsTrigger>
+
                         <TabsTrigger value="show" className="gap-1.5">
                             <Eye className='h-5 w-5' />
+
                             <span className='hidden md:flex'>Ver Secciones Existentes</span>
                         </TabsTrigger>
                     </TabsList>
@@ -333,7 +338,7 @@ export default function SectionsPage() {
                     </Button>
                 </div>
 
-                <div className="h-[calc(100vh-350px)] sm:h-[calc(100vh-330px)] overflow-auto space-y-4">
+                <div className="h-[calc(100vh-350px)] sm:h-[calc(100vh-330px)] overflow-auto space-y-4 mt-4">
                     { viewMode === 'cards' ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {sections.map( section => (
