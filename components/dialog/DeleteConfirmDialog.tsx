@@ -21,6 +21,7 @@ interface Props {
     type        : string;
     name        : string;
     isDeleted?  : boolean;
+    isClosed?   : boolean;
 }
 
 
@@ -30,7 +31,8 @@ export function DeleteConfirmDialog({
     onConfirm,
     type,
     name,
-    isDeleted = true
+    isDeleted = true,
+    isClosed = false,
 }: Props ): React.JSX.Element {
     return (
         <AlertDialog open={isOpen} onOpenChange={onClose}>
@@ -41,7 +43,7 @@ export function DeleteConfirmDialog({
                     <AlertDialogDescription>
                         { isDeleted 
                             ? `Esta acción no se puede deshacer. Se eliminará permanentemente ${ type } `
-                            : 'Esta acción cerrará todo el grupo '
+                            : `Esta acción ${ isClosed ? 'abrirá' : 'cerrará' } todo el grupo `
                         }
 
                         <span className="font-semibold">"{ name }"</span> del sistema.
@@ -55,7 +57,12 @@ export function DeleteConfirmDialog({
                         onClick={onConfirm}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
-                        { isDeleted ? "Eliminar" : "Cerrar"}
+                        { isDeleted
+                            ? "Eliminar"
+                            : isClosed
+                                ? "Abrir"
+                                : "Cerrar"
+                        }
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
