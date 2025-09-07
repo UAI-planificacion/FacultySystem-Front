@@ -1,11 +1,13 @@
 'use client'
 
-import React, {
-    useState,
-    useEffect
-}                   from 'react';
-import { useForm }  from 'react-hook-form';
+import React, { useEffect } from 'react';
+import { useForm }          from 'react-hook-form';
 
+import {
+    useMutation,
+    useQueryClient
+}                       from '@tanstack/react-query';
+import { toast }        from 'sonner';
 import { zodResolver }  from '@hookform/resolvers/zod';
 import * as z           from 'zod';
 
@@ -30,7 +32,12 @@ import { Badge }                from '@/components/ui/badge';
 import { MultiSelectCombobox }  from '@/components/shared/Combobox';
 import { Card, CardContent }    from '@/components/ui/card';
 
-import { SizeResponse } from '@/types/request';
+import { SizeResponse }     from '@/types/request';
+import { fetchApi, Method } from '@/services/fetch';
+import { KEY_QUERYS }       from '@/consts/key-queries';
+
+import { errorToast, successToast } from '@/config/toast/toast.config';
+import { ENV }                      from '@/config/envs/env';
 
 
 interface Option {
@@ -59,6 +66,12 @@ interface SectionGroup {
 }
 
 
+interface UpdateGroupRequest {
+    code        : number;
+    periodId    : string;
+    size        : string | null | undefined;
+}
+
 interface Props {
     isOpen          : boolean;
     onClose         : () => void;
@@ -66,7 +79,7 @@ interface Props {
     memoizedPeriods : Option[];
     sizes           : SizeResponse[];
     existingGroups  : SectionGroup[];
-    onSave          : ( updatedGroup: SectionGroup ) => void;
+    onSuccess?      : () => void;
 }
 
 
@@ -88,52 +101,67 @@ export function SectionFormGroup({
     memoizedPeriods,
     sizes,
     existingGroups,
-    onSave
+    onSuccess,
 }: Props ) {
-    console.log("🚀 ~ file: section-form-group.tsx:85 ~ group:", group)
+    const queryClient = useQueryClient();
 
-    const [isSubmitting, setIsSubmitting] = useState<boolean>( false );
+
+    const updateGroupApi = async ( updatedGroup: UpdateGroupRequest & { groupId: string } ): Promise<any> =>
+        fetchApi({
+            isApi   : false,
+            url     : `${ENV.ACADEMIC_SECTION}Sections/groupId/${updatedGroup.groupId}`,
+            method  : Method.PATCH,
+            body    : {
+                code        : updatedGroup.code,
+                periodId    : updatedGroup.periodId,
+                size        : updatedGroup.size
+            }
+        });
+
+
+    const updateGroupMutation = useMutation({
+        mutationFn: updateGroupApi,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECCTIONS] });
+            onClose();
+            toast( 'Grupo actualizado exitosamente', successToast );
+            onSuccess?.();
+        },
+        onError: ( mutationError: any ) => toast( `Error al actualizar el grupo: ${mutationError.message}`, errorToast )
+    });
+
 
     const form = useForm<FormData>({
         resolver    : zodResolver( formSchema ),
         defaultValues: {
             code    : group?.code || 0,
             period  : group?.period.split( '-' )[0] || '',
-            size    : group?.sections[0]?.size || '',
+            size    : group?.sections[0]?.size,
         }
     });
 
 
-    // Reset form when group changes
     useEffect(() => {
         if ( group ) {
             form.reset({
                 code    : group.code,
                 period  : group.period.split( '-' )[0],
-                size    : group.sections[0]?.size || '',
+                size    : group.sections[0]?.size,
             });
         }
     }, [ group, form ]);
 
 
-    // Custom validation for unique code and period combination
     const validateUniqueCodePeriod = ( code: number, period: string ): boolean => {
         if ( !group ) return true;
 
-        return !existingGroups.some( existingGroup => 
+        const isUnique = !existingGroups.some( existingGroup => 
             existingGroup.groupId !== group.groupId &&
             existingGroup.code === code &&
             existingGroup.period.split( '-' )[0] === period
         );
-    };
 
-
-    // Handle form submission
-    const onSubmit = async ( data: FormData ) => {
-        if ( !group ) return;
-
-        // Validate unique code and period combination
-        if ( !validateUniqueCodePeriod( data.code, data.period ) ) {
+        if ( !isUnique ) {
             form.setError( 'code', {
                 type    : 'manual',
                 message : 'Ya existe un grupo con este número y período'
@@ -142,47 +170,44 @@ export function SectionFormGroup({
                 type    : 'manual',
                 message : 'Ya existe un grupo con este número y período'
             });
-            return;
+
+            return false;
         }
 
-        setIsSubmitting( true );
-
-        try {
-            const updatedGroup = {
-                code        : data.code,
-                periodId    : data.period,
-                size        : data.size,
-                // TODO: QUITAR
-                groupId : group.groupId
-            }
-
-            console.log("🚀 ~ file: section-form-group.tsx:151 ~ updatedGroup:", updatedGroup)
-
-            // onSave( updatedGroup );
-            // onClose();
-        } catch ( error ) {
-            console.error( 'Error updating group:', error );
-        } finally {
-            setIsSubmitting( false );
-        }
+        return true;
     };
 
 
-    // Handle dialog close
+    const onSubmit = async ( data: FormData ) => {
+        if ( !validateUniqueCodePeriod( data.code, data.period )) {
+            return;
+        }
+
+        const updatedGroup: UpdateGroupRequest & { groupId: string } = {
+            code        : data.code,
+            periodId    : data.period,
+            size        : data.size,
+            groupId     : group!.groupId
+        };
+
+        console.log("🚀 ~ file: section-form-group.tsx:151 ~ updatedGroup:", updatedGroup);
+
+        updateGroupMutation.mutate( updatedGroup );
+    };
+
+
     const handleClose = () => {
         form.reset();
         onClose();
     };
 
 
-    // Prepare size options
     const sizeOptions = sizes?.map( size => ({
         label   : size.detail,
         value   : size.id
     })) || [];
 
 
-    // Prepare period options
     const periodOptions = memoizedPeriods || [];
 
 
@@ -296,16 +321,16 @@ export function SectionFormGroup({
                                 type        = "button"
                                 variant     = "outline"
                                 onClick     = { handleClose }
-                                disabled    = { isSubmitting }
+                                disabled    = { updateGroupMutation.isPending }
                             >
                                 Cancelar
                             </Button>
 
                             <Button
                                 type        = "submit"
-                                disabled    = { isSubmitting }
+                                disabled    = { updateGroupMutation.isPending }
                             >
-                                {isSubmitting ? 'Guardando...' : 'Guardar Cambios'}
+                                {updateGroupMutation.isPending ? 'Guardando...' : 'Guardar Cambios'}
                             </Button>
                         </div>
                     </form>
