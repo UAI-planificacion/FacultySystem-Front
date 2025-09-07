@@ -23,12 +23,12 @@ import {
     Tabs,
     TabsTrigger,
     TabsList
-}                               from '@/components/ui/tabs';
-import { SectionCard }          from "@/components/section/section-card";
-import { SectionTable }         from "@/components/section/section.table";
-import { SectionAddedTable }    from "@/components/section/section-added-table";
-import { ViewMode }             from "@/components/shared/view-mode";
-import { Button }               from "@/components/ui/button";
+}                       from '@/components/ui/tabs';
+import { SectionCard }  from "@/components/section/section-card";
+import { SectionTable } from "@/components/section/section.table";
+import { SectionMain }  from "@/components/section/section-main";
+import { ViewMode }     from "@/components/shared/view-mode";
+import { Button }       from "@/components/ui/button";
 
 import {
     Session,
@@ -396,7 +396,7 @@ export default function SectionsPage() {
                 </div>
                 </> )
                 : (
-                    <SectionAddedTable
+                    <SectionMain
                         memoizedPeriods     = { memoizedPeriods }
                         isLoadingPeriods    = { isLoadingPeriods }
                         enabled             = { true }
