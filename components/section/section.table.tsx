@@ -10,13 +10,13 @@ import {
     TableHeader,
     TableRow,
 }                               from "@/components/ui/table";
-import { MultiSelectCombobox }  from "@/components/shared/Combobox";
 import { Button }               from "@/components/ui/button";
 import { Input }                from "@/components/ui/input";
 import { SessionButton }        from "@/components/section/session-button";
+import { PeriodSelect }         from "@/components/shared/item-select/period-select";
+import { Props, sessionColors } from "./section.config";
 
 import { SectionData, Session } from "@/types/section.model";
-import { Props, sessionColors } from "./section.config";
 
 
 
@@ -25,10 +25,7 @@ export function SectionTable({
     updateSectionNumber,
     removeSection,
     removeDisabled,
-    isErrorPeriods,
     updateSectionPeriod,
-    periods,
-    isLoadingPeriods,
     updateSessionCount,
     setSessionCount
 }: Props ) {
@@ -92,28 +89,11 @@ export function SectionTable({
 
                             {/* Período */}
                             <TableCell>
-                                {isErrorPeriods ? (
-                                    <div className="space-y-1">
-                                        <Input
-                                            placeholder = "ID del período"
-                                            onChange    = {( event ) => updateSectionPeriod( section.id, event.target.value )}
-                                            className   = "h-8"
-                                        />
-
-                                        <span className="text-xs text-muted-foreground">
-                                            Error al cargar los períodos. Ingrese el ID manualmente.
-                                        </span>
-                                    </div>
-                                ) : (
-                                    <MultiSelectCombobox
-                                        multiple            = { false }
-                                        placeholder         = "Seleccionar período"
-                                        defaultValues       = { section.period || '' }
-                                        onSelectionChange   = {( value ) => updateSectionPeriod( section.id, value as string )}
-                                        options             = { periods }
-                                        isLoading           = { isLoadingPeriods }
-                                    />
-                                )}
+                                <PeriodSelect
+                                    defaultValues       = { section.period || '' }
+                                    onSelectionChange   = {( value ) => updateSectionPeriod( section.id, value as string )}
+                                    multiple            = { false }
+                                />
                             </TableCell>
 
                             {/* Sesiones */}
