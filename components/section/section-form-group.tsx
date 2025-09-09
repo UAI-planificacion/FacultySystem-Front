@@ -29,10 +29,10 @@ import {
 import { Input }                from '@/components/ui/input';
 import { Button }               from '@/components/ui/button';
 import { Badge }                from '@/components/ui/badge';
-import { MultiSelectCombobox }  from '@/components/shared/Combobox';
 import { Card, CardContent }    from '@/components/ui/card';
+import { SizeSelect }           from '@/components/shared/item-select/size-select';
+import { PeriodSelect }         from '@/components/shared/item-select/period-select';
 
-import { SizeResponse }     from '@/types/request';
 import { fetchApi, Method } from '@/services/fetch';
 import { KEY_QUERYS }       from '@/consts/key-queries';
 
@@ -76,8 +76,6 @@ interface Props {
     isOpen          : boolean;
     onClose         : () => void;
     group           : SectionGroup | null;
-    memoizedPeriods : Option[];
-    sizes           : SizeResponse[];
     existingGroups  : SectionGroup[];
     onSuccess?      : () => void;
 }
@@ -98,8 +96,6 @@ export function SectionFormGroup({
     isOpen,
     onClose,
     group,
-    memoizedPeriods,
-    sizes,
     existingGroups,
     onSuccess,
 }: Props ) {
@@ -202,47 +198,38 @@ export function SectionFormGroup({
     };
 
 
-    const sizeOptions = sizes?.map( size => ({
-        label   : size.detail,
-        value   : size.id
-    })) || [];
-
-
-    const periodOptions = memoizedPeriods || [];
-
-
     return (
         <Dialog open={isOpen} onOpenChange={handleClose}>
             <DialogContent className="sm:max-w-[400px]">
-                <DialogHeader>
+                <DialogHeader className="space-y-4">
                     <DialogTitle>Editar Grupo de Secciones</DialogTitle>
 
                     <DialogDescription>
                         Modifica los datos del grupo. Los cambios se aplicarán a todas las secciones del grupo.
                     </DialogDescription>
+
+                    {/* Group Info */}
+                    {group && (
+                        <Card>
+                            <CardContent className="mt-4">
+                                <h4 className="font-medium mb-2">Información del Grupo</h4>
+
+                                <div className="grid grid-cols-2 gap-2 text-sm">
+                                    <div>
+                                        <span className="font-medium">Secciones:</span>
+
+                                        <Badge variant="secondary" className="ml-2">
+                                            {group.sections.length}
+                                        </Badge>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
                 </DialogHeader>
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit( onSubmit )} className="space-y-6">
-                        {/* Group Info */}
-                        {group && (
-                            <Card>
-                                <CardContent className="mt-4">
-                                    <h4 className="font-medium mb-2">Información del Grupo</h4>
-
-                                    <div className="grid grid-cols-2 gap-2 text-sm">
-                                        <div>
-                                            <span className="font-medium">Secciones:</span>
-
-                                            <Badge variant="secondary" className="ml-2">
-                                                {group.sections.length}
-                                            </Badge>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        )}
-
                         <div className="grid grid-cols-1  gap-4">
                             {/* Code Field */}
                             <FormField
@@ -272,18 +259,12 @@ export function SectionFormGroup({
                                 name    = "period"
                                 render  = {({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Período</FormLabel>
-
-                                        <FormControl>
-                                            <MultiSelectCombobox
-                                                options             = { periodOptions }
-                                                defaultValues       = { field.value || '' }
-                                                onSelectionChange   = {( values ) => field.onChange( values || '' )}
-                                                placeholder         = "Seleccionar período"
-                                                className           = "w-full"
-                                                multiple            = { false }
-                                            />
-                                        </FormControl>
+                                        <PeriodSelect
+                                            label               = "Período"
+                                            defaultValues       = { field.value || '' }
+                                            multiple            = { false }
+                                            onSelectionChange   = {( values ) => field.onChange( values || '' )}
+                                        />
 
                                         <FormMessage />
                                     </FormItem>
@@ -296,18 +277,12 @@ export function SectionFormGroup({
                                 name    = "size"
                                 render  = {({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Tamaño</FormLabel>
-
-                                        <FormControl>
-                                            <MultiSelectCombobox
-                                                options             = { sizeOptions }
-                                                defaultValues       = { field.value as string }
-                                                onSelectionChange   = {( values ) => field.onChange( values || '' )}
-                                                placeholder         = "Seleccionar tamaño"
-                                                className           = "w-full"
-                                                multiple            = { false }
-                                            />
-                                        </FormControl>
+                                        <SizeSelect
+                                            label               = "Tamaño"
+                                            defaultValues       = { field.value as string }
+                                            onSelectionChange   = {( values ) => field.onChange( values || '' )}
+                                            multiple            = { false }
+                                        />
 
                                         <FormMessage />
                                     </FormItem>
