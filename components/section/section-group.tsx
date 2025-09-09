@@ -2,9 +2,9 @@
 
 import React, { useMemo, useState } from "react"
 
-import { ChevronDown, ChevronRight } from "lucide-react"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { toast } from "sonner"
+import { ChevronDown, ChevronRight, Plus }  from "lucide-react"
+import { useMutation, useQueryClient }      from "@tanstack/react-query"
+import { toast }                            from "sonner"
 
 import {
     Table,
@@ -17,7 +17,6 @@ import {
 import {
     SectionGroup,
     SessionCount,
-    Option
 }                                   from "@/components/section/types";
 import { Button }                   from "@/components/ui/button"
 import { Checkbox }                 from "@/components/ui/checkbox"
@@ -30,11 +29,11 @@ import { DeleteConfirmDialog }      from "@/components/dialog/DeleteConfirmDialo
 import { SectionFormGroup }         from "@/components/section/section-form-group"
 
 import { Section, Session } from "@/types/section.model"
-import { SizeResponse }     from "@/types/request"
 import { fetchApi, Method } from "@/services/fetch"
-import { KEY_QUERYS } from "@/consts/key-queries"
+import { KEY_QUERYS }       from "@/consts/key-queries"
+
 import { errorToast, successToast } from "@/config/toast/toast.config"
-import { ENV } from "@/config/envs/env"
+import { ENV }                      from "@/config/envs/env"
 
 
 interface PaginetedGroup {
@@ -49,8 +48,6 @@ interface Props {
     sectionsData                : Section[] | undefined;
     isLoadingSections           : boolean;
     isErrorSections             : boolean;
-    memoizedPeriods             : Option[];
-    sizes                       : SizeResponse[] | undefined;
 }
 
 
@@ -74,9 +71,8 @@ export function SectionGroupTable({
     sectionsData,
     isLoadingSections,
     isErrorSections,
-    memoizedPeriods,
-    sizes
 }: Props ) {
+    const queryClient                                   = useQueryClient();
     const [ expandedGroups, setExpandedGroups ]         = useState<Set<string>>( new Set() );
     const [ selectedGroups, setSelectedGroups ]         = useState<Set<string>>( new Set() );
     const [ selectedSections, setSelectedSections ]     = useState<Set<string>>( new Set() );
@@ -183,7 +179,7 @@ export function SectionGroupTable({
     };
 
 
-    const isGroupPartiallySelected = ( group: SectionGroup ): boolean => {
+    function isGroupPartiallySelected( group: SectionGroup ): boolean {
         const groupSectionIds       = group.sections.map( s => s.id );
         const selectedGroupSections = groupSectionIds.filter( id => selectedSections.has( id ));
 
@@ -191,7 +187,7 @@ export function SectionGroupTable({
     };
 
 
-    const formatSessionCounts = ( sessionCounts: SessionCount ): string => {
+    function formatSessionCounts( sessionCounts: SessionCount ): string {
         const counts: string[] = [];
 
         if ( sessionCounts[Session.C] > 0 ) counts.push( `${sessionCounts[Session.C]}C` );
@@ -203,20 +199,19 @@ export function SectionGroupTable({
     };
 
 
-    const handleEditGroup = ( group: SectionGroup ) => {
+    function handleEditGroup( group: SectionGroup ): void {
         setSelectedGroupEdit( group );
         setIsEditDialogOpen( true );
     };
 
 
-    const handleDeleteGroup = ( group: SectionGroup ) => {
+    function handleDeleteGroup( group: SectionGroup ): void {
         setSelectedGroup( group );
         setIsOpenDelete( true );
     };
 
 
-
-    const handleSectionSelection = ( sectionId: string, groupId: string ) => {
+    function handleSectionSelection( sectionId: string, groupId: string ): void {
         const isCurrentlySelected   = selectedSections.has( sectionId );
         const checked               = !isCurrentlySelected;
 
@@ -235,36 +230,33 @@ export function SectionGroupTable({
         // Check if we need to update group selection
         const group = groupedSections.find( g => g.groupId === groupId );
 
-        if ( group ) {
-            const groupSectionIds       = group.sections.map( s => s.id );
-            const selectedGroupSections = groupSectionIds.filter( id => 
-                checked
-                    ? ( selectedSections.has( id ) || id === sectionId )
-                    : ( selectedSections.has( id ) && id !== sectionId )
-            );
+        if ( !group ) return;
 
-            setSelectedGroups( ( prev ) => {
-                const newSet = new Set( prev );
+        const groupSectionIds       = group.sections.map( s => s.id );
+        const selectedGroupSections = groupSectionIds.filter( id => 
+            checked
+                ? ( selectedSections.has( id ) || id === sectionId )
+                : ( selectedSections.has( id ) && id !== sectionId )
+        );
 
-                if ( selectedGroupSections.length === groupSectionIds.length ) {
-                    newSet.add( groupId );
-                } else {
-                    newSet.delete( groupId );
-                }
+        setSelectedGroups( ( prev ) => {
+            const newSet = new Set( prev );
 
-                return newSet;
-            });
-        }
+            if ( selectedGroupSections.length === groupSectionIds.length ) {
+                newSet.add( groupId );
+            } else {
+                newSet.delete( groupId );
+            }
+
+            return newSet;
+        });
     };
 
 
-    const handleCloseEditDialog = () => {
+    function handleCloseEditDialog(): void {
         setIsEditDialogOpen( false );
         setSelectedGroupEdit( null );
     };
-
-
-    const queryClient = useQueryClient();
 
 
     const deleteGroupApi = async ( groupId: string ): Promise<void> =>
@@ -286,7 +278,8 @@ export function SectionGroupTable({
         onError: ( mutationError ) => toast( `Error al eliminar grupo: ${mutationError.message}`, errorToast )
     });
 
-    const handleConfirmDeleteGroup = () => {
+
+    function handleConfirmDeleteGroup(): void {
         if ( selectedGroup && 'groupId' in selectedGroup ) {
             deleteGroupMutation.mutate( selectedGroup.groupId );
         }
@@ -382,6 +375,15 @@ export function SectionGroupTable({
 
                                     <TableCell className="text-right">
                                         <div className="flex items-center justify-end gap-2">
+                                            <Button
+                                                title   = "Agregar Sección"
+                                                size    = "icon"
+                                                variant = "outline"
+                                                onClick = { () => {} }
+                                            >
+                                                <Plus className="w-4 h-4" />
+                                            </Button>
+
                                             <ActionButton
                                                 editItem        = {() => handleEditGroup( group )}
                                                 deleteItem      = {() => handleDeleteGroup( group )}
@@ -412,8 +414,6 @@ export function SectionGroupTable({
                 isOpen              = { isEditDialogOpen }
                 onClose             = { handleCloseEditDialog }
                 group               = { selectedGroupEdit }
-                memoizedPeriods     = { memoizedPeriods }
-                sizes               = { sizes || [] }
                 existingGroups      = { groupedSections }
             />
 
