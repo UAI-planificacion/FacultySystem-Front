@@ -372,7 +372,7 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                                                                 title   = "Ver Secciones"
                                                                 size    = "icon"
                                                                 variant = "outline"
-                                                                onClick = { () => router.push( `/sections/${subject.id}` )}
+                                                                onClick = { () => router.push( `/sections?subject=${subject.id}` )}
                                                             >
                                                                 <Grid2x2 className="w-4 h-4" />
                                                             </Button>
