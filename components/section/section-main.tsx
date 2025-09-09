@@ -1,10 +1,10 @@
 'use client'
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect }  from 'react';
+import { useRouter }                            from 'next/navigation';
 
 import { Pencil }   from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-
 
 import {
     Card,
@@ -16,50 +16,70 @@ import { Label }                from '@/components/ui/label';
 import { Button }               from '@/components/ui/button';
 import { MultiSelectCombobox }  from '@/components/shared/Combobox';
 import { SectionGroupTable }    from '@/components/section/section-group';
+import { SubjectSelect }        from '@/components/shared/item-select/subject-select';
+import { SizeSelect }           from '@/components/shared/item-select/size-select';
+import { PeriodSelect }         from '@/components/shared/item-select/period-select';
+import { SpaceSelect }          from '@/components/shared/item-select/space-select';
+import { SessionSelect }        from '@/components/shared/item-select/session-select';
+import { ModuleSelect }         from '@/components/shared/item-select/module-select';
+import { ProfessorSelect }      from '@/components/shared/item-select/professor-select';
+import { DaySelect }            from '@/components/shared/item-select/days-select';
 
-import { Module, SizeResponse } from '@/types/request';
-import { useSpace }             from '@/hooks/use-space';
 import { Section, Session }     from '@/types/section.model';
-import { Subject }              from '@/types/subject.model';
 import { KEY_QUERYS }           from '@/consts/key-queries';
 import { fetchApi }             from '@/services/fetch';
 import { ENV }                  from '@/config/envs/env';
-import { SectionGroup, Option } from './types';
-
+import { SectionGroup }         from './types';
 
 
 interface Props {
-    onEdit?             : ( section: Section ) => void;
-    onDelete?           : ( section: Section ) => void;
-    subjectId           : string;
-    facultyId           : string;
-    enabled             : boolean;
-    isLoadingPeriods    : boolean;
-    memoizedPeriods     : Option[];
+    onEdit?         : ( section: Section ) => void;
+    onDelete?       : ( section: Section ) => void;
+    enabled         : boolean;
+    searchParams    : URLSearchParams;
 }
+
+
+const stateOptions = [
+    { label: 'Abiertas', value: 'open' },
+    { label: 'Cerradas', value: 'closed' }
+];
 
 
 export function SectionMain({
     onEdit,
     onDelete,
     enabled,
-    subjectId,
-    facultyId,
-    isLoadingPeriods,
-    memoizedPeriods,
+    searchParams,
 }: Props ) {
-    const [codeFilter, setCodeFilter]               = useState<string[]>( [] );
-    const [roomFilter, setRoomFilter]               = useState<string[]>( [] );
-    const [dayFilter, setDayFilter]                 = useState<string[]>( [] );
-    const [periodFilter, setPeriodFilter]           = useState<string[]>( [] );
-    const [statusFilter, setStatusFilter]           = useState<string[]>( [] );
-    const [subjectFilter, setSubjectFilter]         = useState<string[]>( [] );
-    const [sizeFilter, setSizeFilter]               = useState<string[]>( [] );
-    const [sessionFilter, setSessionFilter]         = useState<string[]>( [] );
-    const [moduleFilter, setModuleFilter]           = useState<string[]>( [] );
+    const router = useRouter();
+    // Initialize filters from URL search params
+    const [codeFilter, setCodeFilter]               = useState<string[]>(() => searchParams.get('code')?.split(',').filter(Boolean) || []);
+    const [roomFilter, setRoomFilter]               = useState<string[]>(() => searchParams.get('room')?.split(',').filter(Boolean) || []);
+    const [dayFilter, setDayFilter]                 = useState<string[]>(() => searchParams.get('day')?.split(',').filter(Boolean) || []);
+    const [periodFilter, setPeriodFilter]           = useState<string[]>(() => searchParams.get('period')?.split(',').filter(Boolean) || []);
+    const [statusFilter, setStatusFilter]           = useState<string[]>(() => searchParams.get('status')?.split(',').filter(Boolean) || []);
+    const [subjectFilter, setSubjectFilter]         = useState<string[]>(() => searchParams.get('subject')?.split(',').filter(Boolean) || []);
+    const [sizeFilter, setSizeFilter]               = useState<string[]>(() => searchParams.get('size')?.split(',').filter(Boolean) || []);
+    const [sessionFilter, setSessionFilter]         = useState<string[]>(() => searchParams.get('session')?.split(',').filter(Boolean) || []);
+    const [moduleFilter, setModuleFilter]           = useState<string[]>(() => searchParams.get('module')?.split(',').filter(Boolean) || []);
+    const [professorFilter, setProfessorFilter]     = useState<string[]>(() => searchParams.get('professor')?.split(',').filter(Boolean) || []);
     const [selectedSections, setSelectedSections]   = useState<Set<string>>( new Set() );
     const [currentPage, setCurrentPage]             = useState<number>( 1 );
     const [itemsPerPage, setItemsPerPage]           = useState<number>( 10 );
+
+    // Function to update URL with filter parameters
+    const updateUrlParams = (filterName: string, values: string[]) => {
+        const params = new URLSearchParams(searchParams.toString());
+
+        if (values.length > 0) {
+            params.set(filterName, values.join(','));
+        } else {
+            params.delete(filterName);
+        }
+
+        router.push(`/sections?${params.toString()}`);
+    };
 
 
     const {
@@ -68,42 +88,11 @@ export function SectionMain({
         isError     : isErrorSections
     } = useQuery<Section[]>({
         enabled,
-        queryKey: [ KEY_QUERYS.SECCTIONS, subjectId ],
+        queryKey: [ KEY_QUERYS.SECCTIONS ],
         queryFn : () => fetchApi({
             isApi   : false,
-            url     : `${ENV.ACADEMIC_SECTION}Sections/subjectId/${subjectId}`,
+            url     : `${ENV.ACADEMIC_SECTION}Sections`,
         }),
-    });
-
-
-    const {
-        data        : subjects,
-        isLoading   : isLoadingSubjects,
-        isError     : isErrorSubjects
-    } = useQuery<Subject[]>({
-        queryKey: [KEY_QUERYS.SUBJECTS, facultyId],
-        queryFn : () => fetchApi({ url: `subjects/all/${facultyId}` }),
-        enabled: !!facultyId,
-    });
-
-
-    const {
-        data        : sizes,
-        isLoading   : isLoadingSizes,
-        isError     : isErrorSizes,
-    } = useQuery({
-        queryKey    : [ KEY_QUERYS.SIZE ],
-        queryFn     : () => fetchApi<SizeResponse[]>({ url: `${ENV.ACADEMIC_SECTION}sizes`, isApi: false }),
-    });
-
-
-    const {
-        data        : modules,
-        isLoading   : isLoadingModules,
-        isError     : isErrorModules,
-    } = useQuery({
-        queryKey    : [ KEY_QUERYS.MODULES ],
-        queryFn     : () => fetchApi<Module[]>({ url: `${ENV.ACADEMIC_SECTION}modules/original`, isApi: false }),
     });
 
 
@@ -114,24 +103,6 @@ export function SectionMain({
 
         return codes.sort();
     }, [ sectionsData ]);
-
-
-    const {
-        spaces      : rooms,
-        isLoading   : isLoadingRooms,
-        isError     : isErrorRooms
-    } = useSpace({ enabled: true });
-
-
-    const daysOfWeek = useMemo(() => [
-        { value: '1', label: 'Lunes' },
-        { value: '2', label: 'Martes' },
-        { value: '3', label: 'Miércoles' },
-        { value: '4', label: 'Jueves' },
-        { value: '5', label: 'Viernes' },
-        { value: '6', label: 'Sábado' },
-        { value: '7', label: 'Domingo' },
-    ], []);
 
 
     const getDayAbbreviation = ( day: number ): string => {
@@ -199,17 +170,18 @@ export function SectionMain({
 
         // Apply filters
         const filtered = groupedSections.filter(( group ) => {
-            const matchesCode       = codeFilter.length     === 0 || codeFilter.includes( group.code.toString() );
-            const matchesRoom       = roomFilter.length     === 0 || group.sections.some( section => roomFilter.includes( section.room || '' ));
-            const matchesDay        = dayFilter.length      === 0 || group.sections.some( section => dayFilter.includes( section.day?.toString() || '' ));
-            const matchesPeriod     = periodFilter.length   === 0 || periodFilter.includes( group.period?.split( '-' )[0] || '' );
-            const matchesStatus     = statusFilter.length   === 0 || statusFilter.includes( group.isOpen ? 'open' : 'closed' );
-            const matchesSubject    = subjectFilter.length  === 0 || group.sections.some( section => subjectFilter.includes( section.subjectId || '' ));
-            const matchesSize       = sizeFilter.length     === 0 || group.sections.some( section => sizeFilter.includes( section.size || '' ));
-            const matchesSession    = sessionFilter.length  === 0 || group.sections.some( section => sessionFilter.includes( section.session ));
-            const matchesModule     = moduleFilter.length   === 0 || group.sections.some( section => moduleFilter.includes( section.moduleId?.toString() || '' ));
+            const matchesCode       = codeFilter.length         === 0 || codeFilter.includes( group.code.toString() );
+            const matchesRoom       = roomFilter.length         === 0 || group.sections.some( section => roomFilter.includes( section.room || '' ));
+            const matchesDay        = dayFilter.length          === 0 || group.sections.some( section => dayFilter.includes( section.day?.toString() || '' ));
+            const matchesPeriod     = periodFilter.length       === 0 || periodFilter.includes( group.period?.split( '-' )[0] || '' );
+            const matchesStatus     = statusFilter.length       === 0 || statusFilter.includes( group.isOpen ? 'open' : 'closed' );
+            const matchesSubject    = subjectFilter.length      === 0 || group.sections.some( section => subjectFilter.includes( section.subjectId || '' ));
+            const matchesSize       = sizeFilter.length         === 0 || group.sections.some( section => sizeFilter.includes( section.size || '' ));
+            const matchesSession    = sessionFilter.length      === 0 || group.sections.some( section => sessionFilter.includes( section.session ));
+            const matchesModule     = moduleFilter.length       === 0 || group.sections.some( section => moduleFilter.includes( section.moduleId?.toString() || '' ));
+            const matchesProfessor  = professorFilter.length    === 0 || group.sections.some( section => professorFilter.includes( section.professorId || '' ));
 
-            return matchesCode && matchesRoom && matchesDay && matchesPeriod && matchesStatus && matchesSubject && matchesSize && matchesSession && matchesModule;
+            return matchesCode && matchesRoom && matchesDay && matchesPeriod && matchesStatus && matchesSubject && matchesSize && matchesSession && matchesModule && matchesProfessor;
         });
 
         const totalItems = filtered.length;
@@ -221,30 +193,12 @@ export function SectionMain({
         const groups     = filtered.slice( startIndex, endIndex );
 
         return { groups, totalItems, totalPages };
-    }, [ groupedSections, codeFilter, roomFilter, dayFilter, periodFilter, statusFilter, subjectFilter, sizeFilter, sessionFilter, moduleFilter, currentPage, itemsPerPage ]);
+    }, [ groupedSections, codeFilter, roomFilter, dayFilter, periodFilter, statusFilter, subjectFilter, sizeFilter, sessionFilter, moduleFilter, professorFilter, currentPage, itemsPerPage ]);
 
 
     useEffect(() => {
         setCurrentPage( 1 );
-    }, [ codeFilter, roomFilter, dayFilter, periodFilter, statusFilter, subjectFilter, sizeFilter, sessionFilter, moduleFilter, itemsPerPage ]);
-
-
-    // if ( isLoadingSections ) {
-    //     return (
-    //         <div className="flex justify-center items-center p-8">
-    //             <div className="text-lg">Cargando secciones...</div>
-    //         </div>
-    //     );
-    // }
-
-
-    // if ( isErrorSections ) {
-    //     return (
-    //         <div className="flex justify-center items-center p-8">
-    //             <div className="text-lg text-red-500">Error al cargar las secciones</div>
-    //         </div>
-    //     );
-    // }
+    }, [ codeFilter, roomFilter, dayFilter, periodFilter, statusFilter, subjectFilter, sizeFilter, sessionFilter, moduleFilter, professorFilter, itemsPerPage ]);
 
 
     if ( !sectionsData || sectionsData.length === 0 ) {
@@ -266,8 +220,6 @@ export function SectionMain({
                             sectionsData                = { sectionsData }
                             isLoadingSections           = { isLoadingSections }
                             isErrorSections             = { isErrorSections }
-                            memoizedPeriods             = { memoizedPeriods }
-                            sizes                       = { sizes }
                         />
                     </CardContent>
 
@@ -292,116 +244,114 @@ export function SectionMain({
                         <h3 className="text-lg font-semibold mb-4">Filtros</h3>
 
                         <div className="space-y-2">
-                            <Label htmlFor="code-filter">Filtrar por Código</Label>
+                            <Label htmlFor="code-filter">Filtrar por Números</Label>
 
                             <MultiSelectCombobox
                                 options             = { uniqueCodes.map(code => ({ label: code, value: code })) }
                                 defaultValues       = { codeFilter }
-                                onSelectionChange   = {( value ) => setCodeFilter( value as string[] )}
-                                placeholder         = "Seleccionar códigos"
+                                placeholder         = "Seleccionar Números"
+                                onSelectionChange   = {( value ) => {
+                                    const newValues = value as string[];
+                                    setCodeFilter( newValues );
+                                    updateUrlParams( 'code', newValues );
+                                }}
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="room-filter">Filtrar por Sala</Label>
+                        <SpaceSelect
+                            label               = "Filtrar por Espacios"
+                            defaultValues       = { roomFilter }
+                            onSelectionChange   = {( value ) => {
+                                const newValues = value as string[];
+                                setRoomFilter(newValues);
+                                updateUrlParams('room', newValues);
+                            }}
+                        />
 
-                            <MultiSelectCombobox
-                                options             = { rooms || [] }
-                                defaultValues       = { roomFilter }
-                                onSelectionChange   = {( value ) =>setRoomFilter( value as string[] )}
-                                placeholder         = "Seleccionar salas"
-                                disabled            = { isLoadingRooms }
-                            />
-                        </div>
+                        <DaySelect
+                            label               = "Filtrar por Días"
+                            defaultValues       = { dayFilter }
+                            onSelectionChange   = {( value ) => {
+                                const newValues = value as string[];
+                                setDayFilter( newValues );
+                                updateUrlParams( 'day', newValues );
+                            }}
+                        />
 
-                        <div className="space-y-2">
-                            <Label htmlFor="day-filter">Filtrar por Día</Label>
-
-                            <MultiSelectCombobox
-                                options             = { daysOfWeek.map( day => ({ label: day.label, value: day.value }))}
-                                defaultValues       = { dayFilter }
-                                onSelectionChange   = {( value ) => setDayFilter( value as string[] )}
-                                placeholder         = "Seleccionar días"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="period-filter">Filtrar por Período</Label>
-
-                            <MultiSelectCombobox
-                                options             = { memoizedPeriods?.map(period => ({ label: period.label, value: period.value })) || [] }
-                                defaultValues       = { periodFilter }
-                                onSelectionChange   = {( value ) =>setPeriodFilter( value as string[] )}
-                                placeholder         = "Seleccionar períodos"
-                                disabled            = { isLoadingPeriods }
-                            />
-                        </div>
+                        <PeriodSelect
+                            label               = "Filtrar por Períodos"
+                            defaultValues       = { periodFilter }
+                            onSelectionChange   = {( value ) => {
+                                const newValues = value as string[];
+                                setPeriodFilter( newValues );
+                                updateUrlParams( 'period', newValues );
+                            }}
+                        />
 
                         <div className="space-y-2">
-                            <Label htmlFor="status-filter">Filtrar por Estado</Label>
+                            <Label htmlFor="status-filter">Filtrar por Estados</Label>
 
                             <MultiSelectCombobox
                                 defaultValues       = { statusFilter }
-                                onSelectionChange   = {( value )  => setStatusFilter( value as string[] )}
                                 placeholder         = "Seleccionar estados"
-                                options             = {[
-                                    { label: 'Abiertas', value: 'open' },
-                                    { label: 'Cerradas', value: 'closed' }
-                                ]}
+                                options             = { stateOptions }
+                                onSelectionChange   = {( value ) => {
+                                    const newValues = value as string[];
+                                    setStatusFilter( newValues );
+                                    updateUrlParams( 'status', newValues );
+                                }}
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="subject-filter">Filtrar por Asignatura</Label>
+                        <SubjectSelect
+                            label               = "Filtrar por Asignaturas"
+                            defaultValues       = { subjectFilter }
+                            onSelectionChange   = {( value ) => {
+                                const newValues = value as string[];
+                                setSubjectFilter( newValues );
+                                updateUrlParams( 'subject', newValues );
+                            }}
+                        />
 
-                            <MultiSelectCombobox
-                                options             = { subjects?.map(subject => ({ label: subject.name, value: subject.id })) || [] }
-                                defaultValues       = { subjectFilter }
-                                onSelectionChange   = {( value ) => setSubjectFilter( value as string[] )}
-                                placeholder         = "Seleccionar asignaturas"
-                                disabled            = { isLoadingSubjects }
-                            />
-                        </div>
+                        <SizeSelect
+                            label               = "Filtrar por Tamaños"
+                            defaultValues       = { sizeFilter }
+                            onSelectionChange   = {( value ) => {
+                                const newValues = value as string[];
+                                setSizeFilter( newValues );
+                                updateUrlParams( 'size', newValues );
+                            }}
+                        />
 
-                        <div className="space-y-2">
-                            <Label htmlFor="size-filter">Filtrar por Tamaño</Label>
+                        <SessionSelect
+                            label               = "Filtrar por Sesiones"
+                            defaultValues       = { sessionFilter }
+                            onSelectionChange   = {( value ) => {
+                                const newValues = value as string[];
+                                setSessionFilter( newValues );
+                                updateUrlParams( 'session', newValues );
+                            }}
+                        />
 
-                            <MultiSelectCombobox
-                                options             = { sizes?.map(size => ({ label: size.detail, value: size.id })) || [] }
-                                defaultValues       = { sizeFilter }
-                                onSelectionChange   = {( value ) => setSizeFilter( value as string[] )}
-                                placeholder         = "Seleccionar tamaños"
-                                disabled            = { isLoadingSizes }
-                            />
-                        </div>
+                        <ModuleSelect
+                            label               = "Filtrar por Módulos"
+                            defaultValues       = { moduleFilter }
+                            onSelectionChange   = {( value ) => {
+                                const newValues = value as string[];
+                                setModuleFilter( newValues );
+                                updateUrlParams( 'module', newValues );
+                            }}
+                        />
 
-                        <div className="space-y-2">
-                            <Label htmlFor="session-filter">Filtrar por Sesión</Label>
-
-                            <MultiSelectCombobox
-                                options             = {[
-                                    { label: 'Cátedra', value: Session.C },
-                                    { label: 'Ayudantía', value: Session.A },
-                                    { label: 'Taller', value: Session.T },
-                                    { label: 'Laboratorio', value: Session.L }
-                                ]}
-                                defaultValues       = { sessionFilter }
-                                onSelectionChange   = {( value ) => setSessionFilter( value as string[] )}
-                                placeholder         = "Seleccionar sesiones"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="module-filter">Filtrar por Módulo</Label>
-
-                            <MultiSelectCombobox
-                                options             = { modules?.map(module => ({ label: `${module.name} (${module.code})`, value: module.id.toString() })) || [] }
-                                defaultValues       = { moduleFilter }
-                                onSelectionChange   = {( value ) => setModuleFilter( value as string[] )}
-                                placeholder         = "Seleccionar módulos"
-                                disabled            = { isLoadingModules }
-                            />
-                        </div>
+                        <ProfessorSelect
+                            label               = "Filtrar por Profesores"
+                            defaultValues       = { professorFilter }
+                            onSelectionChange   = {( value ) => {
+                                const newValues = value as string[];
+                                setProfessorFilter( newValues );
+                                updateUrlParams( 'professor', newValues );
+                            }}
+                        />
                     </CardContent>
 
                     <CardFooter>
