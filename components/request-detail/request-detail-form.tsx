@@ -18,14 +18,14 @@ import {
     TabsContent,
     TabsList,
     TabsTrigger,
-}                               from "@/components/ui/tabs";
+}                                   from "@/components/ui/tabs";
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-}                               from "@/components/ui/select";
+}                                   from "@/components/ui/select";
 import {
     Dialog,
     DialogContent,
@@ -33,7 +33,7 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle
-}                               from "@/components/ui/dialog"
+}                                   from "@/components/ui/dialog"
 import {
     Form,
     FormControl,
@@ -561,18 +561,18 @@ export function RequestDetailForm({
                                                                 multiple            = { false }
                                                                 placeholder         = "Seleccionar profesor"
                                                                 defaultValues       = { field.value || '' }
-                                                                onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
+                                                                onSelectionChange   = {( value ) => field.onChange( value === undefined ? null : value )}
                                                                 options             = { memoizedProfessorOptions }
                                                                 isLoading           = { isLoadingProfessors }
                                                             />
                                                         </div>
 
                                                         <Button
-                                                            size    = {"icon"}
-                                                            type    = "button"
-                                                            variant = {"outline"}
-                                                            className = "flex-shrink-0"
-                                                            onClick = {() => setIsOpenProfessor( true )}
+                                                            size        = {"icon"}
+                                                            type        = "button"
+                                                            variant     = {"outline"}
+                                                            className   = "flex-shrink-0"
+                                                            onClick     = {() => setIsOpenProfessor( true )}
                                                         >
                                                             <Plus className="w-5 h-5"/>
                                                         </Button>
