@@ -93,12 +93,25 @@ export function MultiSelectCombobox({
         }
     }, [defaultValues, multiple]);
 
-    const [selectedValues, setSelectedValues] = useState<Set<string>>(initialSelectedValues);
+    const [selectedValues, setSelectedValues] = useState<Set<string>>( initialSelectedValues );
 
-    // Sync internal state with external defaultValues changes
+
+    const isInitialMount = useRef( true );
+
+
     useEffect(() => {
-        setSelectedValues(initialSelectedValues);
-    }, [initialSelectedValues]);
+        if ( isInitialMount.current ) {
+            isInitialMount.current = false;
+            return;
+        }
+
+        const currentValues = Array.from( selectedValues ).sort().join( ',' );
+        const newValues     = Array.from( initialSelectedValues ).sort().join( ',' );
+
+        if ( currentValues !== newValues ) {
+            setSelectedValues( initialSelectedValues );
+        }
+    }, [initialSelectedValues, selectedValues]);
 
 
     const listRef = useRef<List>(null)
