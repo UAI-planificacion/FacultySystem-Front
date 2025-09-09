@@ -30,9 +30,12 @@ export interface FetchApi<T> {
 }
 
 
-export async function fetchApi<T>(
-    { url, method = Method.GET, body, isApi = true }: FetchApi<T>
-): Promise<T> {
+export async function fetchApi<T>({
+    url,
+    body,
+    method  = Method.GET,
+    isApi   = true
+}: FetchApi<T> ): Promise<T> {
     if ( isApi ) url = `${ENV.REQUEST_BACK_URL}${url}`;
 
     const bodyRequest = method !== Method.GET ? body : undefined;
