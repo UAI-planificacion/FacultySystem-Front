@@ -35,10 +35,7 @@ export interface Props {
     updateSectionNumber     : ( sectionId: string, newNumber: number ) => void;
     removeSection           : ( sectionId: string ) => void;
     removeDisabled          : boolean;
-    isErrorPeriods          : boolean;
     updateSectionPeriod     : ( sectionId: string, period: string ) => void;
-    periods                 : PeriodsSection[];
-    isLoadingPeriods        : boolean;
     updateSessionCount      : ( sectionId: string, session: Session, delta: number ) => void
     setSessionCount         : ( sectionId: string, session: Session, value: string ) => void
 }
