@@ -6,15 +6,15 @@ import {
     Card,
     CardContent,
     CardHeader
-}                               from "@/components/ui/card";
-import { MultiSelectCombobox }  from "@/components/shared/Combobox";
-import { Button }               from "@/components/ui/button";
-import { Input }                from "@/components/ui/input";
-import { Label }                from "@/components/ui/label";
-import { SessionButton }        from "@/components/section/session-button";
+}                           from "@/components/ui/card";
+import { Button }           from "@/components/ui/button";
+import { Input }            from "@/components/ui/input";
+import { Label }            from "@/components/ui/label";
+import { SessionButton }    from "@/components/section/session-button";
+import { PeriodSelect }     from "@/components/shared/item-select/period-select";
+import { Props }            from "./section.config";
 
 import { SectionData, Session } from "@/types/section.model";
-import { Props } from "./section.config";
 
 
 export function SectionCard({
@@ -22,10 +22,7 @@ export function SectionCard({
     updateSectionNumber,
     removeSection,
     removeDisabled,
-    isErrorPeriods,
     updateSectionPeriod,
-    periods,
-    isLoadingPeriods,
     updateSessionCount,
     setSessionCount
 }: Props ) {
@@ -64,39 +61,21 @@ export function SectionCard({
 
             <CardContent className="space-y-4">
                 {/* Selector de período para esta sección */}
-                <div className="space-y-2">
-                    <Label>Período para esta sección</Label>
-
-                    { isErrorPeriods ? (
-                        <>
-                            <Input
-                                placeholder = "ID del período"
-                                onChange    = {(event) => updateSectionPeriod( section.id, event.target.value )}
-                            />
-
-                            <span className='text-sm text-foreground'>
-                                Error al cargar los períodos. Ingrese el ID manualmente.
-                            </span>
-                        </>
-                    ) : (
-                        <MultiSelectCombobox
-                            multiple            = { false }
-                            placeholder         = "Seleccionar un período"
-                            defaultValues       = { section.period || '' }
-                            onSelectionChange   = {( value ) => updateSectionPeriod( section.id, value as string )}
-                            options             = { periods }
-                            isLoading           = { isLoadingPeriods }
-                        />
-                    )}
-                </div>
+                <PeriodSelect
+                    placeholder         = "Seleccionar un período"
+                    defaultValues       = { section.period || '' }
+                    onSelectionChange   = {( value ) => updateSectionPeriod( section.id, value as string )}
+                    multiple            = { false }
+                />
 
                 {/* Contadores de sesiones */}
                 <div className="space-y-3">
                     <Label className="text-sm font-medium">Cantidad por tipo de sesión</Label>
 
                     <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-4 gap-4">
-                        {Object.entries( Session ).map(([_, session]) => (
+                        {Object.entries( Session ).map(([_, session], index) => (
                             <SessionButton
+                                key                 = { `${section.id}-${index}` }
                                 session             = { session }
                                 updateSessionCount  = { updateSessionCount }
                                 setSessionCount     = { setSessionCount }
