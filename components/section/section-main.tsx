@@ -28,12 +28,13 @@ import { SessionSelect }        from '@/components/shared/item-select/session-se
 import { ModuleSelect }         from '@/components/shared/item-select/module-select';
 import { ProfessorSelect }      from '@/components/shared/item-select/professor-select';
 import { DaySelect }            from '@/components/shared/item-select/days-select';
+import { SectionForm }          from '@/components/section/section-form';
+import { SectionGroup }         from '@/components/section/types';
 
-import { Section, Session }     from '@/types/section.model';
-import { KEY_QUERYS }           from '@/consts/key-queries';
-import { fetchApi }             from '@/services/fetch';
-import { ENV }                  from '@/config/envs/env';
-import { SectionGroup }         from './types';
+import { Section, Session } from '@/types/section.model';
+import { KEY_QUERYS }       from '@/consts/key-queries';
+import { fetchApi }         from '@/services/fetch';
+import { ENV }              from '@/config/envs/env';
 
 
 interface Props {
@@ -71,6 +72,7 @@ export function SectionMain({
     const [selectedSections, setSelectedSections]   = useState<Set<string>>( new Set() );
     const [currentPage, setCurrentPage]             = useState<number>( 1 );
     const [itemsPerPage, setItemsPerPage]           = useState<number>( 10 );
+    const [isEditSection, setIsEditSection]         = useState<boolean>( false );
 
     // Function to update URL with filter parameters
     const updateUrlParams = (filterName: string, values: string[]) => {
@@ -134,9 +136,9 @@ export function SectionMain({
                 groups[groupId] = {
                     groupId         : groupId,
                     code            : section.code,
-                    period          : section.period,
-                    subjectId       : section.subjectId,
-                    subjectName     : section.subjectName,
+                    period          : `${section.period.id}-${section.period.name}`,
+                    subjectId       : section.subject.id,
+                    subjectName     : section.subject.name,
                     sessionCounts   : {
                         [Session.C] : 0,
                         [Session.A] : 0,
@@ -158,8 +160,8 @@ export function SectionMain({
             const scheduleSet = new Set<string>();
 
             group.sections.forEach(( section ) => {
-                const dayAbbr       = getDayAbbreviation( section?.day || 1 );
-                const scheduleItem  = `${dayAbbr}-${section.moduleId}`;
+                const dayAbbr       = getDayAbbreviation( section?.day?.id || 1 );
+                const scheduleItem  = `${dayAbbr}-${section.module?.id}`;
                 scheduleSet.add( scheduleItem );
             });
 
@@ -181,11 +183,11 @@ export function SectionMain({
             const matchesDay        = dayFilter.length          === 0 || group.sections.some( section => dayFilter.includes( section.day?.toString() || '' ));
             const matchesPeriod     = periodFilter.length       === 0 || periodFilter.includes( group.period?.split( '-' )[0] || '' );
             const matchesStatus     = statusFilter.length       === 0 || statusFilter.includes( group.isOpen ? 'open' : 'closed' );
-            const matchesSubject    = subjectFilter.length      === 0 || group.sections.some( section => subjectFilter.includes( section.subjectId || '' ));
+            const matchesSubject    = subjectFilter.length      === 0 || group.sections.some( section => subjectFilter.includes( section.subject?.id || '' ));
             const matchesSize       = sizeFilter.length         === 0 || group.sections.some( section => sizeFilter.includes( section.size || '' ));
             const matchesSession    = sessionFilter.length      === 0 || group.sections.some( section => sessionFilter.includes( section.session ));
-            const matchesModule     = moduleFilter.length       === 0 || group.sections.some( section => moduleFilter.includes( section.moduleId?.toString() || '' ));
-            const matchesProfessor  = professorFilter.length    === 0 || group.sections.some( section => professorFilter.includes( section.professorId || '' ));
+            const matchesModule     = moduleFilter.length       === 0 || group.sections.some( section => moduleFilter.includes( section.module?.id?.toString() || '' ));
+            const matchesProfessor  = professorFilter.length    === 0 || group.sections.some( section => professorFilter.includes( section.professor?.id || '' ));
 
             return matchesCode && matchesRoom && matchesDay && matchesPeriod && matchesStatus && matchesSubject && matchesSize && matchesSession && matchesModule && matchesProfessor;
         });
@@ -208,6 +210,7 @@ export function SectionMain({
 
 
     return (
+        <>
         <div className="w-full mt-4">
             <div className="flex gap-4">
                 {/* Table */}
@@ -382,7 +385,7 @@ export function SectionMain({
 
                     <CardFooter>
                         <Button
-                            onClick     = {() => console.log('****Seleccionado:', selectedSections)}
+                            onClick     = {() => setIsEditSection( true )}
                             className   = "gap-2 w-full"
                         >
                             <Pencil className="w-4 h-4" />
@@ -393,5 +396,16 @@ export function SectionMain({
                 </Card>
             </div>
         </div>
+
+         {/* Edit Section Dialog */}
+        <SectionForm
+            isOpen  = { isEditSection }
+            onClose = { () => setIsEditSection( false ) }
+            section = { null }
+            onSave  = { () => {} }
+            ids     = { Array.from( selectedSections )}
+        />
+
+        </>
     );
 }
