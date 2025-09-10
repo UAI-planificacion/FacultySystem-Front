@@ -25,7 +25,7 @@ export function ActiveBadge({
 
             <Badge
                 variant     = { isActive ? 'default' : 'destructive' }
-                className   = { `${isActive ? 'bg-green-600' : 'bg-red-600'} text-white` }
+                className   = { `${isActive ? 'bg-green-600 hover:bg-green-600/80' : 'bg-red-600 hover:bg-red-600/80'} text-white` }
             >
                 { isActive ? activeText : inactiveText }
             </Badge>
