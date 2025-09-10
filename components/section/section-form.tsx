@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { useForm }      from 'react-hook-form';
 import { zodResolver }  from '@hookform/resolvers/zod';
@@ -8,6 +8,7 @@ import * as z           from 'zod';
 
 import {
     useMutation,
+    useQuery,
     useQueryClient
 }                   from '@tanstack/react-query';
 import { toast }    from 'sonner';
@@ -48,9 +49,11 @@ import {
     CreateSectionRequest,
     Section,
     Session,
+    UpdateMassiveSectionRequest,
     UpdateSectionRequest
 }                       from '@/types/section.model';
 import { Size }         from '@/types/request-detail.model';
+import { DayModule }    from '@/types/day-module.model';
 
 
 interface Props {
@@ -60,12 +63,12 @@ interface Props {
     onSave      : ( updatedSection: Section ) => void;
     onSuccess?  : () => void;
     group?      : SectionGroup | null;
+    ids?        : string[] | null;
 }
 
 
-// Zod schema for form validation
 const formSchema = z.object({
-    session                 : z.nativeEnum( Session, { required_error: 'Debe seleccionar una sesión' }),
+    session                 : z.nativeEnum( Session ).nullable().optional(),
     size                    : z.nativeEnum( Size ).nullable().optional(),
     correctedRegistrants    : z.number().nullable().optional(),
     realRegistrants         : z.number().nullable().optional(),
@@ -74,7 +77,15 @@ const formSchema = z.object({
     room                    : z.string().nullable().optional(),
     professorId             : z.string().nullable().optional(),
     day                     : z.number().min(1).max(7).nullable().optional(),
-    moduleId                : z.string().nullable().optional()
+    moduleId                : z.number().nullable().optional()
+}).refine(( data ) => {
+    const hasDaySelected    = data.day      !== null && data.day        !== undefined;
+    const hasModuleSelected = data.moduleId !== null && data.moduleId   !== undefined;
+
+    return hasDaySelected === hasModuleSelected;
+}, {
+    message : 'Debe seleccionar tanto el día como el módulo, o ninguno de los dos',
+    path    : ['day']
 });
 
 
@@ -87,9 +98,24 @@ export function SectionForm({
     section,
     onSave,
     onSuccess,
-    group
+    group,
+    ids
 }: Props ) {
     const queryClient = useQueryClient();
+    const [ sessionRequired, setSessionRequired ] = useState<boolean>( false );
+
+
+    const {
+        data : dayModulesData,
+        isLoading,
+        isError,
+    } = useQuery({
+        queryKey    : [ KEY_QUERYS.MODULES, 'dayModule' ],
+        queryFn     : () => fetchApi<DayModule[]>({
+            url         : `${ENV.ACADEMIC_SECTION}modules/dayModule`,
+            isApi       : false
+        }),
+    });
 
 
     const createSectionApi = async ( newSection: CreateSectionRequest ): Promise<Section> =>
@@ -101,23 +127,12 @@ export function SectionForm({
         });
 
 
-    const updateSectionApi = async ( updatedSection: UpdateSectionRequest ): Promise<Section> =>
+    const updateSectionApi = async ( updatedSection: UpdateMassiveSectionRequest | UpdateSectionRequest ): Promise<Section> =>
         fetchApi({
             isApi   : false,
-            url     : `${ENV.ACADEMIC_SECTION}Sections/${updatedSection.id}`,
+            url     : `${ENV.ACADEMIC_SECTION}Sections/${ ids ? `massive/${ids.join(',')}` :  (updatedSection  as UpdateSectionRequest).id }`,
             method  : Method.PATCH,
-            body    : {
-                session                 : updatedSection.session,
-                size                    : updatedSection.size,
-                correctedRegistrants    : updatedSection.correctedRegistrants,
-                realRegistrants         : updatedSection.realRegistrants,
-                plannedBuilding         : updatedSection.plannedBuilding,
-                chairsAvailable         : updatedSection.chairsAvailable,
-                roomId                  : updatedSection.roomId,
-                professorId             : updatedSection.professorId,
-                day                     : updatedSection.day,
-                moduleId                : updatedSection.moduleId
-            }
+            body    : updatedSection
         });
 
 
@@ -141,26 +156,32 @@ export function SectionForm({
             queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECCTIONS] });
             onSave( updatedSection );
             onClose();
-            toast( 'Sección actualizada exitosamente', successToast );
+
+            const isMassive = ids ? 'Secciones actualizadas' : 'Sección actualizada';
+
+            toast( `${isMassive} exitosamente`, successToast );
             onSuccess?.();
         },
-        onError: ( mutationError: any ) => toast( `Error al actualizar la sección: ${mutationError.message}`, errorToast )
+        onError: ( mutationError: any ) => {
+            const isMassive = ids ? 'Secciones' : 'Sección';
+            toast( `Error al actualizar la ${isMassive}: ${mutationError.message}`, errorToast )
+        }
     });
 
 
     const form = useForm<FormData>({
         resolver    : zodResolver( formSchema ),
         defaultValues: {
-            session                 : section?.session || Session.C,
-            size                    : section?.size || null,
+            session                 : section?.session              || null,
+            size                    : section?.size                 || null,
             correctedRegistrants    : section?.correctedRegistrants || null,
-            realRegistrants         : section?.realRegistrants || null,
-            plannedBuilding         : section?.plannedBuilding || null,
-            chairsAvailable         : section?.chairsAvailable || null,
-            room                    : section?.room || null,
-            professorId             : section?.professorId || null,
-            day                     : section?.day || null,
-            moduleId                : section?.moduleId || null
+            realRegistrants         : section?.realRegistrants      || null,
+            plannedBuilding         : section?.plannedBuilding      || null,
+            chairsAvailable         : section?.chairsAvailable      || null,
+            room                    : section?.room                 || null,
+            professorId             : section?.professor?.id        || null,
+            day                     : section?.day?.id              || null,
+            moduleId                : section?.module?.id           || null
         }
     });
 
@@ -175,31 +196,79 @@ export function SectionForm({
                 plannedBuilding         : section.plannedBuilding,
                 chairsAvailable         : section.chairsAvailable,
                 room                    : section.room,
-                professorId             : section.professorId,
-                day                     : section.day,
-                moduleId                : section.moduleId
+                professorId             : section.professor?.id,
+                day                     : section.day?.id,
+                moduleId                : section.module?.id
             });
         }
-    }, [ section, form ]);
+
+        setSessionRequired( false )
+    }, [ section, form, isOpen ]);
 
 
     function onSubmit( data: FormData ): void {
+        let dayModuleId : number | null = null;
+
+        if ( !ids && !data.session ) {
+            setSessionRequired( true );
+            return;
+        }
+
+        if ( isLoading ) return;
+
+        if ( isError ) {
+            toast( 'Error al cargar los días y los módulos. No seleccione el día y el módulo por ahora', errorToast );
+            return;
+        }
+
+        if ( data.day && data.moduleId && (dayModulesData?.length ?? 0) > 0 ) {
+            dayModuleId = dayModulesData!
+            .find(( dayModule ) => dayModule.dayId === data.day && dayModule.moduleId === Number(data.moduleId ))?.id || null;
+
+            if ( !dayModuleId ) {
+                toast( 'Esta combinación de día y módulo no existe, selecciona otro.', errorToast );
+                return;
+            }
+        }
+
+        const {
+            session,
+            size,
+            correctedRegistrants,
+            realRegistrants,
+            plannedBuilding,
+            chairsAvailable,
+            room,
+            professorId,
+        } = data;
+
         const sectionData = {
-            session                 : data.session,
-            size                    : data.size                 || null,
-            correctedRegistrants    : data.correctedRegistrants || null,
-            realRegistrants         : data.realRegistrants      || null,
-            plannedBuilding         : data.plannedBuilding      || null,
-            chairsAvailable         : data.chairsAvailable      || null,
-            roomId                  : data.room                 || null,
-            professorId             : data.professorId          || null,
-            day                     : data.day                  || null,
-            moduleId                : data.moduleId             || null
+            ...(size && { size }),
+            ...(correctedRegistrants && { correctedRegistrants }),
+            ...(realRegistrants && { realRegistrants }),
+            ...(plannedBuilding && { plannedBuilding }),
+            ...(chairsAvailable && { chairsAvailable }),
+            ...(room && { roomId: room }),
+            ...(professorId && { professorId }),
+            ...(dayModuleId && { dayModuleId }),
         };
+
+        if ( ids  ) {
+            const updateMassiveSection : UpdateMassiveSectionRequest = {
+                ...sectionData,
+                ...(session && { session }),
+            }
+
+            console.log("🚀 ~ file: section-form.tsx:284 ~ updateMassiveSection:", updateMassiveSection)
+
+            updateSectionMutation.mutate( updateMassiveSection );
+            return;
+        }
 
         if ( section ) {
             const updatedSection: UpdateSectionRequest = {
                 ...sectionData,
+                session: data.session!,
                 id: section.id,
             };
 
@@ -215,6 +284,7 @@ export function SectionForm({
                 periodId    : group.period.split( '-' )[0],
                 groupId     : group.groupId,
                 subjectId   : group.subjectId,
+                session     : data.session!,
             }
 
             console.log("🚀 ~ file: section-form.tsx:227 ~ createSection:", createSection)
@@ -234,17 +304,26 @@ export function SectionForm({
         <Dialog open={isOpen} onOpenChange={handleClose}>
             <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>{section ? 'Editar Sección' : 'Crear Nueva Sección'}</DialogTitle>
+                    <DialogTitle>
+                        { ids
+                            ? 'Editar Secciones'
+                            : section
+                                ? 'Editar Sección'
+                                : 'Crear Nueva Sección'
+                        }
+                    </DialogTitle>
 
                     <DialogDescription>
-                        { section
-                            ? 'Modifica los datos de la sección individual.'
-                            : 'Completa los datos para crear una nueva sección.'
+                        { ids
+                            ? 'Modifica los datos de todas las secciones selecciondas.'
+                            : section
+                                ? 'Modifica los datos de la sección individual.'
+                                : 'Completa los datos para crear una nueva sección.'
                         }
                     </DialogDescription>
 
                     {/* Section Info */}
-                    <SectionInfo section={section} group={group} />
+                    { !ids && <SectionInfo section={section} group={group} /> }
                 </DialogHeader>
 
                 <Form {...form}>
@@ -261,11 +340,15 @@ export function SectionForm({
                                                 label               = "Sesión"
                                                 placeholder         = "Seleccionar sesión"
                                                 defaultValues       = { field.value ? [field.value] : [] }
-                                                onSelectionChange   = {( values ) => field.onChange( values as string as Session.C )}
                                                 multiple            = { false }
+                                                onSelectionChange   = {( values ) => {
+                                                    field.onChange( values as string as Session );
+                                                    setSessionRequired( false );
+                                                }}
                                             />
                                         </FormControl>
 
+                                        { sessionRequired && <span className='text-red-700'>Debe seleccionar una sesión</span>  }
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -454,8 +537,8 @@ export function SectionForm({
                                         <FormControl>
                                             <ModuleSelect
                                                 label               = "Módulo"
-                                                defaultValues       = { field.value ? [field.value] : [] }
-                                                onSelectionChange   = {( values ) => field.onChange( values as string || null )}
+                                                defaultValues       = { field.value ? [field.value.toString()] : [] }
+                                                onSelectionChange   = {( values ) => field.onChange( values as string ? parseInt( values as string ) : null )}
                                                 multiple            = { false }
                                             />
                                         </FormControl>
