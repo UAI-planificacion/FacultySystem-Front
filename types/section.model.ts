@@ -1,48 +1,89 @@
 import { Size } from "@/types/request-detail.model";
 
+
+interface Day {
+    id      : number;
+    name    : string;
+}
+
+
+interface Module {
+    id          : number;
+    code        : string;
+    startHour   : string;
+    endHour     : string;
+    diference   : string | null;
+}
+
+
+interface Professor {
+    id      : string;
+    name    : string;
+}
+
+
+interface Subject {
+    id      : string;
+    name    : string;
+}
+
+
+interface Period {
+    id      : string;
+    name    : string;
+}
+
+
 export interface SectionBase {
-    session                 : Session;
-    size                    : Size | null | undefined;
-    correctedRegistrants    : number | null;
-    realRegistrants         : number | null;
-    plannedBuilding         : string | null;
-    chairsAvailable         : number | null;
-    professorId             : string | null;
+    size?                   : Size | null | undefined;
+    correctedRegistrants?   : number | null;
+    realRegistrants?        : number | null;
+    plannedBuilding?        : string | null;
+    chairsAvailable?        : number | null;
 }
 
 
 export interface Section extends SectionBase {
-    id                      : string;
-    period                  : string;
-    professorName           : string | null;
-    room                    : string | null;
-    code                    : number;
-    day                     : number | null;
-    moduleId                : string | null;
-    subjectName             : string;
-    subjectId               : string;
-    isClosed                : boolean;
-    groupId                 : string;    
+    id          : string;
+    code        : number;
+    period      : Period;
+    subject     : Subject;
+    room        : string | null;
+    professor   : Professor | null;
+    isClosed    : boolean;
+    groupId     : string;
+    day         : Day | null;
+    module      : Module | null;
+    session                : Session;
+
+}
+
+interface SectionSave {
+    roomId?         : string | null;
+    professorId?    : string | null;
+    dayModuleId?    : number | null;
+
 }
 
 
-export interface CreateSectionRequest extends SectionBase {
-    roomId      : string | null;
+export interface CreateSectionRequest extends SectionBase, SectionSave {
     periodId    : string;
     subjectId   : string;
-
-    code                    : number;
-    day                     : number | null;
-    moduleId                : string | null;
-    groupId                 : string;    
+    code        : number;
+    groupId     : string;
+    session     : Session;
 }
 
 
-export interface UpdateSectionRequest extends SectionBase {
-    id          : string;
-    roomId      : string | null;
-    day         : number | null;
-    moduleId    : string | null;
+export interface UpdateSectionRequest extends SectionBase, SectionSave {
+    id      : string;
+    session : Session;
+
+}
+
+
+export interface UpdateMassiveSectionRequest extends SectionBase, SectionSave {
+    session? : Session | null;
 }
 
 
