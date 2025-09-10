@@ -1,27 +1,49 @@
 import { Size } from "@/types/request-detail.model";
 
-
-export interface Section {
-    id                      : string;
-    code                    : number;
+export interface SectionBase {
     session                 : Session;
-    size                    : Size | null;
+    size                    : Size | null | undefined;
     correctedRegistrants    : number | null;
     realRegistrants         : number | null;
     plannedBuilding         : string | null;
     chairsAvailable         : number | null;
-    room                    : string | null;
-    professorName           : string | null;
     professorId             : string | null;
-    day                     : number | null;
-    moduleId                : string | null;
-    subjectName             : string | null;
-    subjectId               : string | null;
-    period                  : string;
-    isClosed                : boolean;
-    groupId                 : string;
 }
 
+
+export interface Section extends SectionBase {
+    id                      : string;
+    period                  : string;
+    professorName           : string | null;
+    room                    : string | null;
+    code                    : number;
+    day                     : number | null;
+    moduleId                : string | null;
+    subjectName             : string;
+    subjectId               : string;
+    isClosed                : boolean;
+    groupId                 : string;    
+}
+
+
+export interface CreateSectionRequest extends SectionBase {
+    roomId      : string | null;
+    periodId    : string;
+    subjectId   : string;
+
+    code                    : number;
+    day                     : number | null;
+    moduleId                : string | null;
+    groupId                 : string;    
+}
+
+
+export interface UpdateSectionRequest extends SectionBase {
+    id          : string;
+    roomId      : string | null;
+    day         : number | null;
+    moduleId    : string | null;
+}
 
 
 export enum Session {
