@@ -711,7 +711,7 @@ export function SubjectForm({
                                         {subject &&
                                             <Button
                                                 variant     = "outline"
-                                                onClick     = { () => router.push( `/sections/${subject.id}` )}
+                                                onClick     = { () => router.push( `/sections?subject=${subject.id}` )}
                                                 type        = "button"
                                                 className   = "gap-2"
                                             >
