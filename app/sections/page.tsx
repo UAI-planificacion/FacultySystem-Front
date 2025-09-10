@@ -282,7 +282,7 @@ export default function SectionsPage() {
                         <TabsTrigger value="show" className="gap-1.5">
                             <Boxes className="h-5 w-5" />
 
-                            <span className='hidden md:flex'>Grupos</span>
+                            <span className='hidden md:flex'>Secciones</span>
                         </TabsTrigger>
 
                         <TabsTrigger value="add" className='gap-1.5'>
