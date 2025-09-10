@@ -1,10 +1,16 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 
 import { useForm }      from 'react-hook-form';
 import { zodResolver }  from '@hookform/resolvers/zod';
 import * as z           from 'zod';
+
+import {
+    useMutation,
+    useQueryClient
+}                   from '@tanstack/react-query';
+import { toast }    from 'sonner';
 
 import {
     Dialog,
@@ -20,20 +26,31 @@ import {
     FormItem,
     FormLabel,
     FormMessage
-}                               from '@/components/ui/form';
-import { Input }                from '@/components/ui/input';
-import { Button }               from '@/components/ui/button';
-import { Badge }                from '@/components/ui/badge';
-import { Card, CardContent }    from '@/components/ui/card';
-import { SizeSelect }           from '@/components/shared/item-select/size-select';
-import { SpaceSelect }          from '@/components/shared/item-select/space-select';
-import { ModuleSelect }         from '@/components/shared/item-select/module-select';
-import { ProfessorSelect }      from '@/components/shared/item-select/professor-select';
-import { SessionSelect }        from '@/components/shared/item-select/session-select';
-import { DaySelect }            from '@/components/shared/item-select/days-select';
+}                           from '@/components/ui/form';
+import { Input }            from '@/components/ui/input';
+import { Button }           from '@/components/ui/button';
+import { SizeSelect }       from '@/components/shared/item-select/size-select';
+import { SpaceSelect }      from '@/components/shared/item-select/space-select';
+import { ModuleSelect }     from '@/components/shared/item-select/module-select';
+import { ProfessorSelect }  from '@/components/shared/item-select/professor-select';
+import { SessionSelect }    from '@/components/shared/item-select/session-select';
+import { DaySelect }        from '@/components/shared/item-select/days-select';
+import { SectionGroup }     from '@/components/section/types';
+import { SectionInfo }      from '@/components/section/section-info';
 
-import { Section, Session } from '@/types/section.model';
-import { Size }             from '@/types/request-detail.model';
+import { fetchApi, Method } from '@/services/fetch';
+import { KEY_QUERYS }       from '@/consts/key-queries';
+
+import { errorToast, successToast } from '@/config/toast/toast.config';
+import { ENV }                      from '@/config/envs/env';
+
+import {
+    CreateSectionRequest,
+    Section,
+    Session,
+    UpdateSectionRequest
+}                       from '@/types/section.model';
+import { Size }         from '@/types/request-detail.model';
 
 
 interface Props {
@@ -41,13 +58,15 @@ interface Props {
     onClose     : () => void;
     section     : Section | null;
     onSave      : ( updatedSection: Section ) => void;
+    onSuccess?  : () => void;
+    group?      : SectionGroup | null;
 }
 
 
 // Zod schema for form validation
 const formSchema = z.object({
     session                 : z.nativeEnum( Session, { required_error: 'Debe seleccionar una sesión' }),
-    size                    : z.string().nullable().optional(),
+    size                    : z.nativeEnum( Size ).nullable().optional(),
     correctedRegistrants    : z.number().nullable().optional(),
     realRegistrants         : z.number().nullable().optional(),
     plannedBuilding         : z.string().nullable().optional(),
@@ -66,9 +85,68 @@ export function SectionForm({
     isOpen,
     onClose,
     section,
-    onSave
+    onSave,
+    onSuccess,
+    group
 }: Props ) {
-    const [isSubmitting, setIsSubmitting] = useState<boolean>( false );
+    const queryClient = useQueryClient();
+
+
+    const createSectionApi = async ( newSection: CreateSectionRequest ): Promise<Section> =>
+        fetchApi({
+            isApi   : false,
+            url     : `${ENV.ACADEMIC_SECTION}Sections`,
+            method  : Method.POST,
+            body    : newSection
+        });
+
+
+    const updateSectionApi = async ( updatedSection: UpdateSectionRequest ): Promise<Section> =>
+        fetchApi({
+            isApi   : false,
+            url     : `${ENV.ACADEMIC_SECTION}Sections/${updatedSection.id}`,
+            method  : Method.PATCH,
+            body    : {
+                session                 : updatedSection.session,
+                size                    : updatedSection.size,
+                correctedRegistrants    : updatedSection.correctedRegistrants,
+                realRegistrants         : updatedSection.realRegistrants,
+                plannedBuilding         : updatedSection.plannedBuilding,
+                chairsAvailable         : updatedSection.chairsAvailable,
+                roomId                  : updatedSection.roomId,
+                professorId             : updatedSection.professorId,
+                day                     : updatedSection.day,
+                moduleId                : updatedSection.moduleId
+            }
+        });
+
+
+    // Mutations
+    const createSectionMutation = useMutation({
+        mutationFn: createSectionApi,
+        onSuccess: ( createdSection ) => {
+            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECCTIONS] });
+            onSave( createdSection );
+            onClose();
+            toast( 'Sección creada exitosamente', successToast );
+            onSuccess?.();
+        },
+        onError: ( mutationError: any ) => toast( `Error al crear la sección: ${mutationError.message}`, errorToast )
+    });
+
+
+    const updateSectionMutation = useMutation({
+        mutationFn: updateSectionApi,
+        onSuccess: ( updatedSection ) => {
+            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECCTIONS] });
+            onSave( updatedSection );
+            onClose();
+            toast( 'Sección actualizada exitosamente', successToast );
+            onSuccess?.();
+        },
+        onError: ( mutationError: any ) => toast( `Error al actualizar la sección: ${mutationError.message}`, errorToast )
+    });
+
 
     const form = useForm<FormData>({
         resolver    : zodResolver( formSchema ),
@@ -87,7 +165,6 @@ export function SectionForm({
     });
 
 
-    // Reset form when section changes
     useEffect(() => {
         if ( section ) {
             form.reset({
@@ -106,40 +183,48 @@ export function SectionForm({
     }, [ section, form ]);
 
 
-    // Handle form submission
-    const onSubmit = async ( data: FormData ) => {
-        if ( !section ) return;
+    function onSubmit( data: FormData ): void {
+        const sectionData = {
+            session                 : data.session,
+            size                    : data.size                 || null,
+            correctedRegistrants    : data.correctedRegistrants || null,
+            realRegistrants         : data.realRegistrants      || null,
+            plannedBuilding         : data.plannedBuilding      || null,
+            chairsAvailable         : data.chairsAvailable      || null,
+            roomId                  : data.room                 || null,
+            professorId             : data.professorId          || null,
+            day                     : data.day                  || null,
+            moduleId                : data.moduleId             || null
+        };
 
-        setIsSubmitting( true );
-
-        try {
-            // Create updated section
-            const updatedSection: Section = {
-                ...section,
-                session                 : data.session,
-                size                    : (data.size as Size ) ?? null,
-                correctedRegistrants    : data.correctedRegistrants || null,
-                realRegistrants         : data.realRegistrants || null,
-                plannedBuilding         : data.plannedBuilding || null,
-                chairsAvailable         : data.chairsAvailable || null,
-                room                    : data.room || null,
-                professorId             : data.professorId || null,
-                day                     : data.day || null,
-                moduleId                : data.moduleId || null
+        if ( section ) {
+            const updatedSection: UpdateSectionRequest = {
+                ...sectionData,
+                id: section.id,
             };
 
-            onSave( updatedSection );
-            onClose();
-        } catch ( error ) {
-            console.error( 'Error updating section:', error );
-        } finally {
-            setIsSubmitting( false );
+            console.log("🚀 ~ file: section-form.tsx:217 ~ updatedSection:", updatedSection)
+
+            updateSectionMutation.mutate( updatedSection );
+        } else {
+            if ( !group ) return;
+
+            const createSection : CreateSectionRequest = {
+                ...sectionData,
+                code        : group.code,
+                periodId    : group.period.split( '-' )[0],
+                groupId     : group.groupId,
+                subjectId   : group.subjectId,
+            }
+
+            console.log("🚀 ~ file: section-form.tsx:227 ~ createSection:", createSection)
+
+            createSectionMutation.mutate( createSection );
         }
     };
 
 
-    // Handle dialog close
-    const handleClose = () => {
+    function handleClose(): void {
         form.reset();
         onClose();
     };
@@ -149,36 +234,17 @@ export function SectionForm({
         <Dialog open={isOpen} onOpenChange={handleClose}>
             <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Editar Sección</DialogTitle>
+                    <DialogTitle>{section ? 'Editar Sección' : 'Crear Nueva Sección'}</DialogTitle>
 
                     <DialogDescription>
-                        Modifica los datos de la sección individual.
+                        { section
+                            ? 'Modifica los datos de la sección individual.'
+                            : 'Completa los datos para crear una nueva sección.'
+                        }
                     </DialogDescription>
 
                     {/* Section Info */}
-                    {section && (
-                        <Card>
-                            <CardContent className="mt-4">
-                                <h4 className="font-medium mb-2">Información de la Sección</h4>
-
-                                <div className="grid grid-cols-2 gap-2 text-sm">
-                                    <div>
-                                        <span className="font-medium">Número:</span>
-                                        <Badge variant="secondary" className="ml-2">
-                                            {section.code}
-                                        </Badge>
-                                    </div>
-
-                                    <div>
-                                        <span className="font-medium">Período:</span>
-                                        <Badge variant="outline" className="ml-2">
-                                            {section.period}
-                                        </Badge>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
+                    <SectionInfo section={section} group={group} />
                 </DialogHeader>
 
                 <Form {...form}>
@@ -406,16 +472,22 @@ export function SectionForm({
                                 type        = "button"
                                 variant     = "outline"
                                 onClick     = { handleClose }
-                                disabled    = { isSubmitting }
+                                disabled    = { createSectionMutation.isPending || updateSectionMutation.isPending }
                             >
                                 Cancelar
                             </Button>
 
                             <Button
                                 type        = "submit"
-                                disabled    = { isSubmitting }
+                                disabled    = { createSectionMutation.isPending || updateSectionMutation.isPending }
                             >
-                                {isSubmitting ? 'Guardando...' : 'Guardar Cambios'}
+                                {( createSectionMutation.isPending || updateSectionMutation.isPending )
+                                    ? 'Guardando...' 
+                                    : ( section
+                                        ? 'Guardar Cambios'
+                                        : 'Crear Sección'
+                                    )
+                                }
                             </Button>
                         </div>
                     </form>
