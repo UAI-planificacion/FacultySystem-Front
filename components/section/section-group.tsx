@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo, useState } from "react"
+import React, { useState } from "react"
 
 import { ChevronDown, ChevronRight, Plus }  from "lucide-react"
 import { useMutation, useQueryClient }      from "@tanstack/react-query"
@@ -14,21 +14,19 @@ import {
     TableHeader,
     TableRow
 }                                   from "@/components/ui/table"
-import {
-    SectionGroup,
-    SessionCount,
-}                                   from "@/components/section/types";
+import { SectionGroup }             from "@/components/section/types";
 import { Button }                   from "@/components/ui/button"
 import { Checkbox }                 from "@/components/ui/checkbox"
-import { Badge }                    from "@/components/ui/badge"
 import { ActiveBadge }              from "@/components/shared/active"
 import { ActionButton }             from "@/components/shared/action"
 import { ChangeStatusSection }      from "@/components/section/change-status"
 import { SectionDetailExpanded }    from "@/components/section/section-detail.expanded"
 import { DeleteConfirmDialog }      from "@/components/dialog/DeleteConfirmDialog"
 import { SectionFormGroup }         from "@/components/section/section-form-group"
+import { SectionForm }              from "@/components/section/section-form"
+import { SessionShort }             from "@/components/section/session-short"
 
-import { Section, Session } from "@/types/section.model"
+import { Section }          from "@/types/section.model"
 import { fetchApi, Method } from "@/services/fetch"
 import { KEY_QUERYS }       from "@/consts/key-queries"
 
@@ -48,6 +46,9 @@ interface Props {
     sectionsData                : Section[] | undefined;
     isLoadingSections           : boolean;
     isErrorSections             : boolean;
+    groupedSections             : SectionGroup[];
+    selectedSections            : Set<string>;
+    onSelectedSectionsChange    : (selectedSections: Set<string>) => void;
 }
 
 
@@ -71,13 +72,17 @@ export function SectionGroupTable({
     sectionsData,
     isLoadingSections,
     isErrorSections,
+    groupedSections,
+    selectedSections,
+    onSelectedSectionsChange
 }: Props ) {
     const queryClient                                   = useQueryClient();
     const [ expandedGroups, setExpandedGroups ]         = useState<Set<string>>( new Set() );
     const [ selectedGroups, setSelectedGroups ]         = useState<Set<string>>( new Set() );
-    const [ selectedSections, setSelectedSections ]     = useState<Set<string>>( new Set() );
     const [ selectedGroupEdit, setSelectedGroupEdit ]   = useState<SectionGroup | null>( null );
     const [ isEditDialogOpen, setIsEditDialogOpen ]     = useState<boolean>( false );
+    const [ isEditSection, setIsEditSection ]           = useState<boolean>( false );
+    const [ crateSectionEdit, setCreateSectionEdit ]    = useState<SectionGroup | null>( null );
     const [ isOpenDelete, setIsOpenDelete ]             = useState( false );
     const [ selectedGroup, setSelectedGroup ]           = useState<SectionGroup | undefined>( undefined );
 
@@ -101,50 +106,6 @@ export function SectionGroupTable({
         selectedGroups.has( group.groupId );
 
 
-    const groupedSections = useMemo(() => {
-        const groups: { [key: string]: SectionGroup } = {};
-
-        sectionsData?.forEach(( section ) => {
-            const groupId = section.groupId;
-
-            if ( !groups[groupId] ) {
-                groups[groupId] = {
-                    groupId         : groupId,
-                    code            : section.code,
-                    period          : section.period,
-                    sessionCounts   : {
-                        [Session.C] : 0,
-                        [Session.A] : 0,
-                        [Session.T] : 0,
-                        [Session.L] : 0
-                    },
-                    schedule        : '',
-                    isOpen          : !section.isClosed,
-                    sections        : []
-                };
-            }
-
-            groups[groupId].sections.push( section );
-            groups[groupId].sessionCounts[section.session]++;
-        } );
-
-        // Generate schedule for each group
-        Object.values( groups ).forEach( ( group ) => {
-            const scheduleSet = new Set<string>();
-
-            group.sections.forEach(( section ) => {
-                const dayAbbr       = getDayAbbreviation( section?.day || 1 );
-                const scheduleItem  = `${dayAbbr}-${section.moduleId}`;
-                scheduleSet.add( scheduleItem );
-            });
-
-            group.schedule = Array.from( scheduleSet ).sort().join( ', ' );
-        } );
-
-        return Object.values( groups );
-    }, [ sectionsData ] );
-
-
     function handleGroupSelection( groupId: string, checked: boolean ): void {
         setSelectedGroups( ( prev ) => {
             const newSet = new Set( prev );
@@ -163,19 +124,17 @@ export function SectionGroupTable({
 
         if ( !group ) return;
 
-        setSelectedSections( ( prev ) => {
-            const newSet = new Set( prev );
+        const newSelectedSections = new Set( selectedSections );
 
-            group.sections.forEach( ( section ) => {
-                if ( checked ) {
-                    newSet.add( section.id );
-                } else {
-                    newSet.delete( section.id );
-                }
-            } );
+        group.sections.forEach( ( section ) => {
+            if ( checked ) {
+                newSelectedSections.add( section.id );
+            } else {
+                newSelectedSections.delete( section.id );
+            }
+        } );
 
-            return newSet;
-        });
+        onSelectedSectionsChange( newSelectedSections );
     };
 
 
@@ -184,18 +143,6 @@ export function SectionGroupTable({
         const selectedGroupSections = groupSectionIds.filter( id => selectedSections.has( id ));
 
         return selectedGroupSections.length > 0 && selectedGroupSections.length < groupSectionIds.length;
-    };
-
-
-    function formatSessionCounts( sessionCounts: SessionCount ): string {
-        const counts: string[] = [];
-
-        if ( sessionCounts[Session.C] > 0 ) counts.push( `${sessionCounts[Session.C]}C` );
-        if ( sessionCounts[Session.A] > 0 ) counts.push( `${sessionCounts[Session.A]}A` );
-        if ( sessionCounts[Session.T] > 0 ) counts.push( `${sessionCounts[Session.T]}T` );
-        if ( sessionCounts[Session.L] > 0 ) counts.push( `${sessionCounts[Session.L]}L` );
-
-        return counts.join( ', ' );
     };
 
 
@@ -214,18 +161,15 @@ export function SectionGroupTable({
     function handleSectionSelection( sectionId: string, groupId: string ): void {
         const isCurrentlySelected   = selectedSections.has( sectionId );
         const checked               = !isCurrentlySelected;
+        const newSelectedSections = new Set( selectedSections );
 
-        setSelectedSections( ( prev ) => {
-            const newSet = new Set( prev );
+        if ( checked ) {
+            newSelectedSections.add( sectionId );
+        } else {
+            newSelectedSections.delete( sectionId );
+        }
 
-            if ( checked ) {
-                newSet.add( sectionId );
-            } else {
-                newSet.delete( sectionId );
-            }
-
-            return newSet;
-        } );
+        onSelectedSectionsChange( newSelectedSections );
 
         // Check if we need to update group selection
         const group = groupedSections.find( g => g.groupId === groupId );
@@ -235,8 +179,8 @@ export function SectionGroupTable({
         const groupSectionIds       = group.sections.map( s => s.id );
         const selectedGroupSections = groupSectionIds.filter( id => 
             checked
-                ? ( selectedSections.has( id ) || id === sectionId )
-                : ( selectedSections.has( id ) && id !== sectionId )
+                ? ( newSelectedSections.has( id ) )
+                : ( newSelectedSections.has( id ) )
         );
 
         setSelectedGroups( ( prev ) => {
@@ -294,6 +238,7 @@ export function SectionGroupTable({
                         <TableHead className="w-8"></TableHead>
                         <TableHead className="w-12">Seleccionar</TableHead>
                         <TableHead>Número</TableHead>
+                        <TableHead>Asignatura</TableHead>
                         <TableHead>Sesiones</TableHead>
                         <TableHead>Horario</TableHead>
                         <TableHead>Período</TableHead>
@@ -328,7 +273,7 @@ export function SectionGroupTable({
                         filteredAndPaginatedGroups.groups.map(( group ) => (
                             <React.Fragment key={group.groupId}>
                                 {/* Group Row */}
-                                <TableRow className="">
+                                <TableRow className={ group.isOpen ? "" : "bg-zinc-100 dark:bg-zinc-900" }>
                                     <TableCell>
                                         <Button
                                             variant     = "outline"
@@ -355,10 +300,12 @@ export function SectionGroupTable({
 
                                     <TableCell className="font-medium">{ group.code }</TableCell>
 
+                                    <TableCell className="font-medium" title={ group.subjectName }>
+                                        { group.subjectId }
+                                    </TableCell>
+
                                     <TableCell>
-                                        <Badge variant="outline">
-                                            { formatSessionCounts( group.sessionCounts )}
-                                        </Badge>
+                                        <SessionShort sessionCounts={ group.sessionCounts } />
                                     </TableCell>
 
                                     <TableCell>{ group.schedule }</TableCell>
@@ -376,10 +323,14 @@ export function SectionGroupTable({
                                     <TableCell className="text-right">
                                         <div className="flex items-center justify-end gap-2">
                                             <Button
-                                                title   = "Agregar Sección"
-                                                size    = "icon"
-                                                variant = "outline"
-                                                onClick = { () => {} }
+                                                title       = "Agregar Sección"
+                                                size        = "icon"
+                                                variant     = "outline"
+                                                disabled    = { !group.isOpen }
+                                                onClick     = { () => {
+                                                    setCreateSectionEdit( group );
+                                                    setIsEditSection( true );
+                                                }}
                                             >
                                                 <Plus className="w-4 h-4" />
                                             </Button>
@@ -417,11 +368,19 @@ export function SectionGroupTable({
                 existingGroups      = { groupedSections }
             />
 
+            <SectionForm
+                isOpen      = { isEditSection }
+                onClose     = { () => setIsEditSection( false )}
+                section     = { null }
+                onSave      = { () => setIsEditSection( false )}
+                group       = { crateSectionEdit }
+            />
+
             <DeleteConfirmDialog
                 isOpen      = { isOpenDelete }
                 onClose     = { () => setIsOpenDelete( false )}
                 onConfirm   = { handleConfirmDeleteGroup }
-                name        = { selectedGroup && 'code' in selectedGroup ? `${selectedGroup.code} ${selectedGroup.period}` : '' }
+                name        = { `${selectedGroup?.code} ${selectedGroup?.period}` }
                 type        = { "el Grupo" }
             />
         </>
