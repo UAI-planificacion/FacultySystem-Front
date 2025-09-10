@@ -38,7 +38,7 @@ export function ModuleSelect({
     const memoizeModules = useMemo(() => {
         return data?.map( module => ({
             id      : module.id.toString(),
-            label   : `${module.name} (${module.startHour} - ${module.endHour})`,
+            label   : `${module.name}${module.difference ? `-${module.difference}` : ''} (${module.startHour} - ${module.endHour})`,
             value   : module.id.toString()
         }) ) ?? [];
     }, [data]);
