@@ -114,7 +114,7 @@ export function SectionDetailExpanded({
     return (
         <>
         <TableRow>
-            <TableCell colSpan={8} className="p-0">
+            <TableCell colSpan={9} className="p-0">
                 <div className="border-l-4">
                     <Table>
                         <TableHeader>
@@ -163,10 +163,11 @@ export function SectionDetailExpanded({
 
                                     <TableCell className="text-right">
                                         <ActionButton
-                                            editItem        = {() => handleEdit( section )}
-                                            deleteItem      = {() => handleDelete( section )}
-                                            item            = { section }
-                                            isDisabledEdit  = { !group.isOpen }
+                                            editItem            = {() => handleEdit( section )}
+                                            deleteItem          = {() => handleDelete( section )}
+                                            item                = { section }
+                                            isDisabledEdit      = { !group.isOpen }
+                                            isDisabledDelete    = { !group.isOpen }
                                         />
                                     </TableCell>
                                 </TableRow>
