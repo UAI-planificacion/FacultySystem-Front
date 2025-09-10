@@ -25,45 +25,19 @@ import {
     FormItem,
     FormLabel,
     FormMessage
-}                               from '@/components/ui/form';
-import { Input }                from '@/components/ui/input';
-import { Button }               from '@/components/ui/button';
-import { Badge }                from '@/components/ui/badge';
-import { Card, CardContent }    from '@/components/ui/card';
-import { SizeSelect }           from '@/components/shared/item-select/size-select';
-import { PeriodSelect }         from '@/components/shared/item-select/period-select';
+}                       from '@/components/ui/form';
+import { Input }        from '@/components/ui/input';
+import { Button }       from '@/components/ui/button';
+import { SizeSelect }   from '@/components/shared/item-select/size-select';
+import { PeriodSelect } from '@/components/shared/item-select/period-select';
+import { SectionGroup } from '@/components/section/types';
+import { SectionInfo }  from '@/components/section/section-info';
 
 import { fetchApi, Method } from '@/services/fetch';
 import { KEY_QUERYS }       from '@/consts/key-queries';
 
 import { errorToast, successToast } from '@/config/toast/toast.config';
 import { ENV }                      from '@/config/envs/env';
-
-
-interface Option {
-    id      : string;
-    label   : string;
-    value   : string;
-}
-
-
-interface SessionCount {
-    C : number;
-    A : number;
-    T : number;
-    L : number;
-}
-
-
-interface SectionGroup {
-    groupId         : string;
-    code            : number;
-    period          : string;
-    sessionCounts   : SessionCount;
-    schedule        : string;
-    isOpen          : boolean;
-    sections        : any[];
-}
 
 
 interface UpdateGroupRequest {
@@ -148,7 +122,7 @@ export function SectionFormGroup({
     }, [ group, form ]);
 
 
-    const validateUniqueCodePeriod = ( code: number, period: string ): boolean => {
+    function validateUniqueCodePeriod( code: number, period: string ): boolean {
         if ( !group ) return true;
 
         const isUnique = !existingGroups.some( existingGroup => 
@@ -174,7 +148,7 @@ export function SectionFormGroup({
     };
 
 
-    const onSubmit = async ( data: FormData ) => {
+    function onSubmit( data: FormData ): void {
         if ( !validateUniqueCodePeriod( data.code, data.period )) {
             return;
         }
@@ -192,7 +166,7 @@ export function SectionFormGroup({
     };
 
 
-    const handleClose = () => {
+    function handleClose(): void {
         form.reset();
         onClose();
     };
@@ -209,23 +183,7 @@ export function SectionFormGroup({
                     </DialogDescription>
 
                     {/* Group Info */}
-                    {group && (
-                        <Card>
-                            <CardContent className="mt-4">
-                                <h4 className="font-medium mb-2">Información del Grupo</h4>
-
-                                <div className="grid grid-cols-2 gap-2 text-sm">
-                                    <div>
-                                        <span className="font-medium">Secciones:</span>
-
-                                        <Badge variant="secondary" className="ml-2">
-                                            {group.sections.length}
-                                        </Badge>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
+                    {group && <SectionInfo group={group} showCode={false}/> }
                 </DialogHeader>
 
                 <Form {...form}>
