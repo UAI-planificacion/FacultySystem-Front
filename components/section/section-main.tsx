@@ -3,7 +3,11 @@
 import React, { useState, useMemo, useEffect }  from 'react';
 import { useRouter }                            from 'next/navigation';
 
-import { Pencil }   from 'lucide-react';
+import {
+    BrushCleaning,
+    Filter,
+    Pencil
+}                   from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
 import {
@@ -131,6 +135,8 @@ export function SectionMain({
                     groupId         : groupId,
                     code            : section.code,
                     period          : section.period,
+                    subjectId       : section.subjectId,
+                    subjectName     : section.subjectName,
                     sessionCounts   : {
                         [Session.C] : 0,
                         [Session.A] : 0,
@@ -201,14 +207,6 @@ export function SectionMain({
     }, [ codeFilter, roomFilter, dayFilter, periodFilter, statusFilter, subjectFilter, sizeFilter, sessionFilter, moduleFilter, professorFilter, itemsPerPage ]);
 
 
-    if ( !sectionsData || sectionsData.length === 0 ) {
-        return (
-            <div className="flex justify-center items-center p-8">
-                <div className="text-lg text-gray-500">No hay secciones disponibles</div>
-            </div>
-        );
-    }
-
     return (
         <div className="w-full mt-4">
             <div className="flex gap-4">
@@ -220,6 +218,9 @@ export function SectionMain({
                             sectionsData                = { sectionsData }
                             isLoadingSections           = { isLoadingSections }
                             isErrorSections             = { isErrorSections }
+                            groupedSections             = { groupedSections }
+                            selectedSections            = { selectedSections }
+                            onSelectedSectionsChange    = { setSelectedSections }
                         />
                     </CardContent>
 
@@ -241,7 +242,11 @@ export function SectionMain({
                 {/* Filters Sidebar */}
                 <Card className="w-80 flex-shrink-0">
                     <CardContent className="p-4 h-[calc(100vh-280px)] overflow-y-auto space-y-4">
-                        <h3 className="text-lg font-semibold mb-4">Filtros</h3>
+                        <div className="flex items-center gap-2">
+                            <Filter className="w-5 h-5" />
+
+                            <h3 className="text-lg font-semibold">Filtros</h3>
+                        </div>
 
                         <div className="space-y-2">
                             <Label htmlFor="code-filter">Filtrar por Números</Label>
@@ -352,11 +357,32 @@ export function SectionMain({
                                 updateUrlParams( 'professor', newValues );
                             }}
                         />
+
+                        <Button
+                            variant     = "outline"
+                            className   = "w-full gap-2"
+                            onClick     = {() => {
+                                setCodeFilter([]);
+                                setRoomFilter([]);
+                                setDayFilter([]);
+                                setPeriodFilter([]);
+                                setStatusFilter([]);
+                                setSubjectFilter([]);
+                                setSizeFilter([]);
+                                setSessionFilter([]);
+                                setModuleFilter([]);
+                                setProfessorFilter([]);
+                            }}
+                        >
+                            <BrushCleaning className="w-5 h-5" />
+
+                            Limpiar filtros
+                        </Button>
                     </CardContent>
 
                     <CardFooter>
                         <Button
-                            onClick     = {() => console.log('****Seleccionado')}
+                            onClick     = {() => console.log('****Seleccionado:', selectedSections)}
                             className   = "gap-2 w-full"
                         >
                             <Pencil className="w-4 h-4" />
