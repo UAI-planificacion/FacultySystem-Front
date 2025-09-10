@@ -11,7 +11,7 @@ export enum Status {
 export interface Module {
     id          : number;
     code        : string;
-    difference  : number | null;
+    difference  : string | null;
     startHour   : string;
     endHour     : string;
     isActive    : boolean;
