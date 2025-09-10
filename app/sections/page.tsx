@@ -225,7 +225,12 @@ export default function SectionsPage() {
                 queryKey: [ KEY_QUERYS.SECCTIONS ]
             });
 
-            setSections([ emptySection ]);
+            const newSection = {
+                ...emptySection,
+                id : uuid7(),
+            }
+
+            setSections([ newSection ]);
             setTab( 'show' );
             toast( 'Secciones creadas exitosamente', successToast );
         },
@@ -270,7 +275,7 @@ export default function SectionsPage() {
                 </div>
 
                 <Tabs
-                    defaultValue    = { tab }
+                    value           = { tab }
                     onValueChange   = {( value ) => setTab( value as TabType )}
                 >
                     <TabsList>
@@ -291,7 +296,8 @@ export default function SectionsPage() {
 
             { tab === 'add' ? ( <>
                 <div className="flex items-center gap-2 justify-end mt-4">
-                    <SubjectSelect
+                    <div className="flex-1">
+                        <SubjectSelect
                             placeholder         = "Seleccione una asignatura"
                             defaultValues       = { subjectId }
                             onSelectionChange   = {( value ) => {
@@ -300,6 +306,7 @@ export default function SectionsPage() {
                             }}
                             multiple = { false }
                         />
+                    </div>
 
                     <ViewMode
                         viewMode        = { viewMode }
