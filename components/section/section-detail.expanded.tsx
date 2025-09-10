@@ -155,11 +155,13 @@ export function SectionDetailExpanded({
 
                                     <TableCell>{ section.room ?? '-' }</TableCell>
 
-                                    <TableCell>{ section.professorName ?? 'Sin profesor' }</TableCell>
+                                    <TableCell>{ section.professor?.name ?? '-' }</TableCell>
 
-                                    <TableCell>{ days[(section.day ?? -1) - 1] ?? '-' }</TableCell>
+                                    <TableCell>{ days[(section.day?.id ?? -1) - 1] ?? '-' }</TableCell>
 
-                                    <TableCell>{ section.moduleId ? `M${section.moduleId}` : '-' }</TableCell>
+                                    <TableCell title={ section.module?.code ? `M${section.module.code}${ section.module.diference ? `-${section.module.diference}` : '' } ${section.module.startHour}:${section.module.endHour}` : '' }>
+                                        { section.module?.code ? `M${section.module.code} ${ section.module.diference ? `-${section.module.diference}` : '' }` : '-' }
+                                    </TableCell>
 
                                     <TableCell className="text-right">
                                         <ActionButton
