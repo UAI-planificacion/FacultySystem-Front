@@ -14,6 +14,13 @@ export const sessionColors = {
     [Session.L]: 'bg-purple-500',
 };
 
+export const sessionColorsHover = {
+    [Session.C]: 'hover:bg-blue-500/80',
+    [Session.A]: 'hover:bg-green-500/80',
+    [Session.T]: 'hover:bg-orange-500/80',
+    [Session.L]: 'hover:bg-purple-500/80',
+};
+
 
 export const sessionBorders = {
     [Session.C]: 'border border-blue-500/70 dark:border-blue-500/30',
