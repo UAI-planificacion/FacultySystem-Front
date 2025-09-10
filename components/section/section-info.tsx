@@ -57,7 +57,7 @@ export function SectionInfo({
                     <div className="flex items-center gap-2">
                         <span className="font-medium w-20">Periodo:</span>
 
-                        { section?.period || group?.period }
+                        { section?.period?.name || group?.period }
                     </div>
 
                     <hr className="my-1" />
@@ -65,7 +65,7 @@ export function SectionInfo({
                     <div className="flex items-center gap-2">
                         <span className="font-medium w-20">Asignatura:</span>
 
-                        { section?.subjectName || group?.subjectName }
+                        { section?.subject.name || group?.subjectName }
                     </div>
                 </div>
             </CardContent>
