@@ -1,15 +1,15 @@
 'use client'
 
-import { JSX } from "react";
+import { JSX }          from "react";
+import { useRouter }    from 'next/navigation';
 
 import {
     Eye,
     User,
     BookOpen,
-    Trash,
-    Pencil,
-    CalendarDays
-}                   from "lucide-react";
+    CalendarDays,
+    Grid2x2
+} from "lucide-react";
 
 import {
     Card,
@@ -21,9 +21,10 @@ import { Button }       from "@/components/ui/button";
 import { ShowStatus }   from "@/components/shared/status";
 import { ShowDate }     from "@/components/shared/date";
 import { Consecutive }  from "@/components/shared/consecutive";
-import { usePeriods }   from "@/hooks/use-periods";
-import LoaderMini       from "@/icons/LoaderMini";
+import { ActionButton } from "@/components/shared/action";
 
+import LoaderMini       from "@/icons/LoaderMini";
+import { usePeriods }   from "@/hooks/use-periods";
 import { type Request } from "@/types/request";
 
 
@@ -41,7 +42,12 @@ export function RequestCard({
     onEdit,
     onDelete
 }: RequestCardProps ): JSX.Element {
-    const { getPeriodName, isLoadingPeriods, isErrorPeriods } = usePeriods();
+    const {
+        getPeriodName,
+        isLoadingPeriods,
+        isErrorPeriods
+    }               = usePeriods();
+    const router    = useRouter();
 
 
     return (
@@ -66,7 +72,7 @@ export function RequestCard({
                         <BookOpen className="h-4 w-4" />
 
                         <span className="font-medium max-w-full truncate overflow-hidden whitespace-nowrap">
-                            {request.subject.name}
+                            { request.subject.name }
                         </span>
                     </div>
 
@@ -84,7 +90,7 @@ export function RequestCard({
                         { isLoadingPeriods
                             ? <LoaderMini/>
                             : <span className="max-w-full truncate overflow-hidden whitespace-nowrap">
-                                { getPeriodName( request.periodId ) }
+                                { getPeriodName( request.periodId )}
                             </span>
                         }
 
@@ -107,21 +113,18 @@ export function RequestCard({
                 <div className="flex items-center gap-2 justify-end">
                     <Button
                         size        = "sm"
-                        onClick     = { () => onEdit( request )}
-                        className   = "flex items-center gap-1"
+                        onClick     = { () => router.push( `/sections?subject=${request.subject.id}&period=${request.periodId}` )}
+                        className   = "flex items-center"
                         variant     = "outline"
                     >
-                        <Pencil className="h-4 w-4 text-blue-500" />
+                        <Grid2x2 className="h-4 w-4" />
                     </Button>
 
-                    <Button
-                        size        = "sm"
-                        onClick     = { () => onDelete( request )}
-                        className   = "flex items-center gap-1"
-                        variant     = "outline"
-                    >
-                        <Trash className="h-4 w-4 text-red-500" />
-                    </Button>
+                    <ActionButton
+                        item        = { request }
+                        editItem    = { onEdit }
+                        deleteItem  = { onDelete }
+                    />
 
                     <Button
                         size        = "sm"
