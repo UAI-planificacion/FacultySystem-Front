@@ -3,8 +3,6 @@
 import { JSX, useMemo } from "react";
 
 import {
-    Edit,
-    Trash2,
     User,
     Users,
     Building2,
@@ -18,9 +16,9 @@ import {
     CardContent,
     CardHeader,
     CardTitle,
-}                   from "@/components/ui/card";
-import { Badge }    from "@/components/ui/badge";
-import { Button }   from "@/components/ui/button";
+}                       from "@/components/ui/card";
+import { Badge }        from "@/components/ui/badge";
+import { ActionButton } from "@/components/shared/action";
 
 import type { Module}       from "@/types/request";
 import { Professor }        from "@/types/professor";
@@ -103,20 +101,11 @@ export function RequestDetailCard({
                 <div className="flex items-start justify-between">
                     <CardTitle className="text-sm">ID {detail.id}</CardTitle>
 
-                    <div className="flex gap-1">
-                        <Button variant="outline" size="sm" onClick={() => onEdit(detail)}>
-                            <Edit className="h-4 w-4" />
-                        </Button>
-
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => onDelete(detail)}
-                            className="text-red-600 hover:text-red-700"
-                        >
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
-                    </div>
+                    <ActionButton
+                        item        = { detail }
+                        editItem    = { onEdit }
+                        deleteItem  = { onDelete }
+                    />
                 </div>
             </CardHeader>
 
