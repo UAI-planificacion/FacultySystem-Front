@@ -250,19 +250,19 @@ export function SectionGroupTable({
                 <TableBody>
                     {isLoadingSections ? (
                         <TableRow>
-                            <TableCell colSpan={8} className="text-center py-8">
+                            <TableCell colSpan={9} className="text-center py-8">
                                 Cargando secciones...
                             </TableCell>
                         </TableRow>
                     ) : isErrorSections ? (
                         <TableRow>
-                            <TableCell colSpan={8} className="text-center py-8 text-red-500">
+                            <TableCell colSpan={9} className="text-center py-8 text-red-500">
                                 Error al cargar las secciones
                             </TableCell>
                         </TableRow>
                     ) : filteredAndPaginatedGroups.groups.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                            <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                                 {sectionsData && sectionsData.length > 0 
                                     ? 'No se encontraron grupos con los filtros aplicados' 
                                     : 'No hay grupos disponibles'
