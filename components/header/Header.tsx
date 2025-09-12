@@ -4,7 +4,7 @@ import { useEffect, useState }  from "react";
 import { useRouter }            from "next/navigation";
 import Image                    from "next/image";
 
-import { Building, GraduationCap, UsersRound } from "lucide-react";
+import { Building, GraduationCap, Grid2X2, UsersRound } from "lucide-react";
 
 import {
     Menubar,
@@ -59,7 +59,9 @@ export default function Header() {
                             />
                         </a>
 
-                        <h1 className="hidden sm:flex text-2xl sm:text-xl lg:text-2xl xl:text-3xl font-bold text-white">Facultades Académicas</h1>
+                        <h1 className="hidden sm:flex text-2xl sm:text-xl lg:text-2xl xl:text-2xl 2xl:text-3xl font-bold text-white">
+                            Facultades Académicas
+                        </h1>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -67,9 +69,9 @@ export default function Header() {
                             <Menubar className="hidden lg:flex bg-black text-white border-zinc-700">
                                 <MenubarMenu>
                                     <MenubarTrigger
-                                        onClick = {() => router.push( '/faculties' )}
-                                        id      = "faculty"
-                                        className="flex items-center gap-1.5"
+                                        onClick     = {() => router.push( '/faculties' )}
+                                        id          = "faculty"
+                                        className   = "flex items-center gap-1.5"
                                     >
                                         <Building className="h-5 w-5" /> 
 
@@ -79,9 +81,9 @@ export default function Header() {
 
                                 <MenubarMenu>
                                     <MenubarTrigger
-                                        onClick = {() => router.push( '/professors' )}
-                                        id      = "professor"
-                                        className="flex items-center gap-1.5"
+                                        onClick     = {() => router.push( '/professors' )}
+                                        id          = "professor"
+                                        className   = "flex items-center gap-1.5"
                                     >
                                         <UsersRound className="h-5 w-5" />
 
@@ -91,13 +93,25 @@ export default function Header() {
 
                                 <MenubarMenu>
                                     <MenubarTrigger
-                                        onClick = {() => router.push( '/grades' )}
-                                        id      = "grade"
-                                        className="flex items-center gap-1.5"
+                                        onClick     = {() => router.push( '/grades' )}
+                                        id          = "grade"
+                                        className   = "flex items-center gap-1.5"
                                     >
                                         <GraduationCap className="h-5 w-5" />
 
                                         <span className="hidden xl:flex">Grados</span>
+                                    </MenubarTrigger>
+                                </MenubarMenu>
+
+                                <MenubarMenu>
+                                    <MenubarTrigger
+                                        onClick     = {() => router.push( '/sections' )}
+                                        id          = "section"
+                                        className   = "flex items-center gap-1.5"
+                                    >
+                                        <Grid2X2 className="h-5 w-5" />
+
+                                        <span className="hidden xl:flex">Secciones</span>
                                     </MenubarTrigger>
                                 </MenubarMenu>
                             </Menubar>
