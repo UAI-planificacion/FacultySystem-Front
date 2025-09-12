@@ -2,22 +2,21 @@ import { useMemo } from "react";
 
 import { useQuery } from "@tanstack/react-query";
 
-import { Option }           from "@/components/shared/Combobox";
-import { KEY_QUERYS }       from "@/consts/key-queries";
-import { fetchApi }         from "@/services/fetch";
-import { Space }            from "@/types/space.model";
-import { mockFetchSpaces }  from "@/data/space.data";
-import { ENV }              from "@/config/envs/env";
+import { Option }       from "@/components/shared/Combobox";
+import { KEY_QUERYS }   from "@/consts/key-queries";
+import { fetchApi }     from "@/services/fetch";
+import { Space }        from "@/types/space.model";
+import { ENV }          from "@/config/envs/env";
 
 
 // Function to transform cost center data to options format
 export const memoizedSpaceData = (
-	spaceData : Space[] | undefined
+	spaceData : Space | undefined
 ): Option[] => useMemo(() => {
-	return spaceData?.map( space => ({
-		id		: space.lov_vals[0].id,
-		label	: space.lov_vals[0].description,
-		value	: space.lov_vals[0].id,
+	return spaceData?.lov_vals?.map( space => ({
+		id		: space.idlovvals.toString(),
+		label	: space.description,
+		value	: space.idlovvals.toString(),
 	})) ?? [];
 }, [spaceData]);
 
@@ -45,29 +44,23 @@ interface UseSpaceReturn {
 export const useSpace = ( 
 	params : UseSpaceParams = {} 
 ): UseSpaceReturn => {
-	const { enabled = true } = params;
-    const useMockData = ENV.NODE_ENV === 'development';
+	const { enabled = true }    = params;
+    const url                   = `${ENV.ROOM_SYSTEM_URL}${ENV.ROOM_ENDPOINT}`
 
 	const {
-		data: spaces = [],
+		data,
 		isLoading,
 		isError,
 		error
-	} = useQuery<Space[]>({
+	} = useQuery<Space>({
 		queryKey	: [KEY_QUERYS.SPACES],
-		// queryFn		: () => fetchApi({ isApi: false, url: `cost-centers/all` }),
-        queryFn: useMockData 
-            ? mockFetchSpaces
-            : () => fetchApi({ isApi: false, url: `${ENV.ROOM_SYSTEM_URL}${ENV.ROOM_ENDPOINT}` }),
+		queryFn		: () => fetchApi({ isApi: false, url }),
 		enabled,
 	});
 
 
-	// Transform the data using memoized function
-	const spaceOptions = memoizedSpaceData( spaces );
-
 	return {
-		spaces: spaceOptions,
+		spaces: memoizedSpaceData( data ),
 		isLoading,
 		isError,
 		error,
