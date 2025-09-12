@@ -156,17 +156,29 @@ export function SectionMain({
         } );
 
         // Generate schedule for each group
-        Object.values( groups ).forEach( ( group ) => {
-            const scheduleSet = new Set<string>();
+        Object.values( groups ).forEach(( group ) => {
+            const validSchedules = group.sections
+                .filter( section => section?.day?.id && section.module?.code )
+                .map( section => {
+                    const dayAbbr = getDayAbbreviation(section?.day?.id || 0);
+                    return `${dayAbbr}-${section.module?.code}`;
+                });
 
-            group.sections.forEach(( section ) => {
-                const dayAbbr       = getDayAbbreviation( section?.day?.id || 1 );
-                const scheduleItem  = `${dayAbbr}-${section.module?.id}`;
-                scheduleSet.add( scheduleItem );
-            });
+            const uniqueSchedules   = Array.from( new Set( validSchedules )).sort();
+            const length            = uniqueSchedules.length;
+            const maxSlice          = 3;
 
-            group.schedule = Array.from( scheduleSet ).sort().join( ', ' );
-        } );
+            let schedule = '-';
+
+            if ( length > 0 ) {
+                const slicedSchedule    = uniqueSchedules.slice( 0, maxSlice ).join( ', ' );
+                const remaining         = length - maxSlice;
+
+                schedule = `${slicedSchedule}${remaining > 0 ? ` +${remaining}` : ''}`;
+            }
+
+            group.schedule = schedule;
+        });
 
         return Object.values( groups );
     }, [ sectionsData ] );
