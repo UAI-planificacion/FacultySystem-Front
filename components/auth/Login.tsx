@@ -104,6 +104,21 @@ export function Login(): JSX.Element {
 
                             <DropdownMenuSeparator className="lg:hidden" />
 
+                            <DropdownMenuItem className="p-0">
+                                <Button
+                                    size        = "sm"
+                                    type        = "button"
+                                    variant     = "ghost"
+                                    onClick     = {() => router.push( '/sections' )}
+                                    className   = "w-full flex justify-start lg:hidden"
+                                >
+                                    Secciones
+                                </Button>
+                            </DropdownMenuItem>
+
+                            <DropdownMenuSeparator className="lg:hidden" />
+
+
                             {/* Profile */}
                             <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
                             <DropdownMenuSeparator />
