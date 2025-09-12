@@ -6,6 +6,7 @@ import {
     ArrowLeft,
     User,
     BookOpen,
+    CalendarRange,
 } from "lucide-react";
 
 import {
@@ -91,12 +92,23 @@ export function RequestInfoCard({ request, onBack }: RequestInfoCardProps ): JSX
                 </div>
 
                 {/* Subject */}
-                <div className="space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">Asignatura</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                        <p className="text-sm font-medium text-muted-foreground">Asignatura</p>
 
-                    <div className="flex items-center gap-2">
-                        <BookOpen className="h-4 w-4 text-muted-foreground" />
-                        <p className="max-w-full truncate overflow-hidden whitespace-nowrap">{ request.subject.id }-{ request.subject.name }</p>
+                        <div className="flex items-center gap-2">
+                            <BookOpen className="h-4 w-4 text-muted-foreground" />
+                            <p className="max-w-full truncate overflow-hidden whitespace-nowrap">{ request.subject.id }-{ request.subject.name }</p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-1">
+                        <p className="text-sm font-medium text-muted-foreground">Periodo</p>
+
+                        <div className="flex items-center gap-2">
+                            <CalendarRange className="h-4 w-4 text-muted-foreground" />
+                            <p className="max-w-full truncate overflow-hidden whitespace-nowrap">{request.periodId}</p>
+                        </div>
                     </div>
                 </div>
 
