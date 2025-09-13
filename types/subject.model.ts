@@ -3,14 +3,17 @@ import { Building, Size, SpaceType } from "@/types/request-detail.model";
 interface BaseSubject {
     id              : string;
     name            : string;
-    startDate       : Date[];
-    endDate         : Date[];
-    students        : number;
+    // startDate       : Date[];
+    // endDate         : Date[];
+    // students        : number;
     costCenterId    : string;
-    isEnglish       : boolean;
-    building        : Building  | null;
+    // isEnglish       : boolean;
+    isActive       : boolean;
+    // building        : Building  | null;
     spaceSize       : Size      | null;
     spaceType       : SpaceType | null;
+    createAt        : Date | string;
+    updateAt        : Date | string;
 }
 
 
