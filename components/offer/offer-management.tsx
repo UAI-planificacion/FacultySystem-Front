@@ -1,0 +1,442 @@
+"use client"
+
+import { JSX, useState, useMemo } from "react";
+
+import {
+    useMutation,
+    useQuery,
+    useQueryClient
+}                       from "@tanstack/react-query";
+import { Plus, Search } from "lucide-react";
+import { toast }        from "sonner";
+
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+}                               from "@/components/ui/select";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+}                               from "@/components/ui/card";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow
+}                               from "@/components/ui/table"
+import { DataPagination }       from "@/components/ui/data-pagination";
+import { OfferForm }            from "@/components/offer/offer-form"
+import { Button }               from "@/components/ui/button"
+import { ScrollArea }           from "@/components/ui/scroll-area"
+import { ActionButton }         from "@/components/shared/action";
+import { Input }                from "@/components/ui/input";
+import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
+import { Label }                from "@/components/ui/label";
+import { Badge }                from "@/components/ui/badge";
+import { Skeleton }             from "@/components/ui/skeleton";
+
+import { Offer }                    from "@/types/offer.model";
+import { Subject }                  from "@/types/subject.model";
+import { Period }                   from "@/types/periods.model";
+import { KEY_QUERYS }               from "@/consts/key-queries";
+import { Method, fetchApi }         from "@/services/fetch";
+import { errorToast, successToast } from "@/config/toast/toast.config";
+import { usePagination }            from "@/hooks/use-pagination";
+import { getSpaceType }             from "@/lib/utils";
+
+
+interface OfferManagementProps {
+    facultyId   : string;
+    enabled     : boolean;
+}
+
+
+export function OfferManagement({
+    facultyId,
+    enabled
+}: OfferManagementProps ): JSX.Element {
+    const queryClient                                   = useQueryClient();
+    const [searchQuery, setSearchQuery]                 = useState( '' );
+    const [buildingFilter, setBuildingFilter]           = useState<string>( 'all' );
+    const [englishFilter, setEnglishFilter]             = useState<string>( 'all' );
+    const [isFormOpen, setIsFormOpen]                   = useState( false );
+    const [editingOffer, setEditingOffer]               = useState<Offer | undefined>( undefined );
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen]   = useState( false );
+    const [deletingOfferId, setDeletingOfferId]         = useState<string | undefined>( undefined );
+    
+    // Fetch offers
+    const { data: offerList, isLoading, isError }       = useQuery({
+        queryKey    : [ KEY_QUERYS.OFFERS, facultyId ],
+        queryFn     : () => fetchApi<Offer[]>( { url: `offers?facultyId=${facultyId}` } ),
+        enabled
+    });
+    
+    // Fetch subjects for display
+    const { data: subjects } = useQuery({
+        queryKey    : [ KEY_QUERYS.SUBJECTS, facultyId ],
+        queryFn     : () => fetchApi<Subject[]>( { url: `subjects?facultyId=${facultyId}` } ),
+        enabled
+    });
+    
+    // Fetch periods for display
+    const { data: periods } = useQuery({
+        queryKey    : [ KEY_QUERYS.PERIODS ],
+        queryFn     : () => fetchApi<Period[]>( { url: 'periods' } ),
+        enabled
+    });
+
+
+    // Helper functions to get display names
+    const getSubjectName = ( subjectId: string ): string => {
+        const subject = subjects?.find( s => s.id === subjectId );
+        return subject ? `${subject.id} - ${subject.name}` : subjectId;
+    };
+    
+    const getPeriodName = ( periodId: string ): string => {
+        const period = periods?.find( p => p.id === periodId );
+        return period ? period.name : periodId;
+    };
+
+    const filteredOffers = offerList?.filter( offer => {
+        const subjectName = getSubjectName( offer.subjectId );
+        const matchesSearch = searchQuery === ''
+            || subjectName.toLowerCase().includes( searchQuery.toLowerCase() )
+            || offer.building?.toLowerCase().includes( searchQuery.toLowerCase() )
+            || offer.spaceType?.toLowerCase().includes( searchQuery.toLowerCase() );
+
+        const matchesBuilding = buildingFilter === 'all'
+            || offer.building === buildingFilter;
+
+        const matchesEnglish = englishFilter === 'all'
+            || ( englishFilter === 'english' && offer.isEnglish )
+            || ( englishFilter === 'spanish' && !offer.isEnglish );
+
+        return matchesSearch && matchesBuilding && matchesEnglish;
+    }) || [];
+
+
+    /**
+     * Hook de paginación
+     */
+    const {
+        currentPage,
+        itemsPerPage,
+        totalItems,
+        totalPages,
+        paginatedData: paginatedOffers,
+        setCurrentPage,
+        setItemsPerPage,
+        resetToFirstPage
+    } = usePagination({
+        data: filteredOffers,
+        initialItemsPerPage: 10
+    });
+
+
+    /**
+     * Resetea la página actual cuando cambian los filtros
+     */
+    function handleFilterChange( filterType: 'search' | 'building' | 'english', value: string ): void {
+        resetToFirstPage();
+
+        switch ( filterType ) {
+            case 'search':
+                setSearchQuery( value );
+            break;
+            case 'building':
+                setBuildingFilter( value );
+            break;
+            case 'english':
+                setEnglishFilter( value );
+            break;
+        }
+    };
+
+
+    function openNewOfferForm(): void {
+        setEditingOffer( undefined );
+        setIsFormOpen( true );
+    }
+
+
+    function openEditOfferForm( offer: Offer ): void {
+        setEditingOffer( offer );
+        setIsFormOpen( true );
+    }
+
+
+    const deleteOfferApi = async ( offerId: string ): Promise<Offer> =>
+        fetchApi<Offer>({ url: `offers/${offerId}`, method: Method.DELETE });
+
+
+    const deleteOfferMutation = useMutation<Offer, Error, string>({
+        mutationFn: deleteOfferApi,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.OFFERS, facultyId] });
+            setIsDeleteDialogOpen( false );
+            toast( 'Oferta eliminada exitosamente', successToast );
+        },
+        onError: ( mutationError ) => toast( `Error al eliminar oferta: ${mutationError.message}`, errorToast )
+    });
+
+
+    function handleOfferSubmit( offer: Offer ): void {
+        queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.OFFERS, facultyId] });
+        setIsFormOpen( false );
+        setEditingOffer( undefined );
+    }
+
+
+    function onOpenDeleteOffer( offer: Offer ): void {
+        setDeletingOfferId( offer.id.toString() );
+        setIsDeleteDialogOpen( true );
+    }
+
+
+    return (
+        <div className="space-y-4">
+            <Card>
+                <CardHeader>
+                    <div className="lg:flex lg:justify-between items-end gap-4 space-y-4">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full max-w-4xl items-center">
+                            <div className="grid space-y-2">
+                                <Label htmlFor="search">Buscar</Label>
+
+                                <div className="relative flex items-center">
+                                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+
+                                    <Input
+                                        id          = "search"
+                                        type        = "search"
+                                        placeholder = "Buscar ofertas..."
+                                        value       = {searchQuery}
+                                        className   = "pl-8"
+                                        onChange    = {(e) => handleFilterChange( 'search', e.target.value )}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid space-y-2">
+                                <Label htmlFor="building">Edificio</Label>
+
+                                <Select value={buildingFilter} onValueChange={( value ) => handleFilterChange( 'building', value )}>
+                                    <SelectTrigger id="building">
+                                        <SelectValue placeholder="Filtrar por edificio" />
+                                    </SelectTrigger>
+
+                                    <SelectContent>
+                                        <SelectItem value="all">Todos los edificios</SelectItem>
+                                        <SelectItem value="BUILDING_A">Edificio A</SelectItem>
+                                        <SelectItem value="BUILDING_B">Edificio B</SelectItem>
+                                        <SelectItem value="BUILDING_C">Edificio C</SelectItem>
+                                        <SelectItem value="BUILDING_D">Edificio D</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="grid space-y-2">
+                                <Label htmlFor="english">Idioma</Label>
+
+                                <Select value={englishFilter} onValueChange={(value) => handleFilterChange( 'english', value )}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Filtrar por idioma" />
+                                    </SelectTrigger>
+
+                                    <SelectContent>
+                                        <SelectItem value="all">Todos los idiomas</SelectItem>
+                                        <SelectItem value="english">Inglés</SelectItem>
+                                        <SelectItem value="spanish">Español</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
+                        <Button
+                            onClick     = { openNewOfferForm }
+                            className   = "flex items-center gap-1 w-full lg:w-40"
+                        >
+                            <Plus className="h-4 w-4" />
+
+                            Crear Oferta
+                        </Button>
+                    </div>
+                </CardHeader>
+            </Card>
+
+            <Card>
+                <CardContent className="mt-5">
+                    {offerList?.length === 0 && !isLoading && !isError ? (
+                        <div className="text-center p-8 text-muted-foreground">
+                            Aún no se han creado ofertas para esta facultad.
+                        </div>
+                    ) : (
+                        <div>
+                            <Table>
+                                <TableHeader className="sticky top-0 z-10 bg-background">
+                                    <TableRow>
+                                        <TableHead className="bg-background w-[120px]">Tipo/Tamaño</TableHead>
+                                        <TableHead className="bg-background w-[100px]">Edificio</TableHead>
+                                        <TableHead className="bg-background w-[80px]">Inglés</TableHead>
+                                        <TableHead className="bg-background w-[80px]">Fechas</TableHead>
+                                        <TableHead className="bg-background w-[80px]">Taller</TableHead>
+                                        <TableHead className="bg-background w-[80px]">Conferencia</TableHead>
+                                        <TableHead className="bg-background w-[80px]">Tutorial</TableHead>
+                                        <TableHead className="bg-background w-[80px]">Laboratorio</TableHead>
+                                        <TableHead className="bg-background w-[120px]">Período</TableHead>
+                                        <TableHead className="bg-background w-[200px]">Materia</TableHead>
+                                        <TableHead className="text-right bg-background w-[100px]">Acciones</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                            </Table>
+
+                            {isError ? (
+                                <div className="text-center p-8 text-destructive">
+                                    Error al cargar las ofertas
+                                </div>
+                            ) : isLoading ? (
+                                <div className="space-y-2 p-4">
+                                    {Array.from({ length: 10 }).map((_, i) => (
+                                        <Skeleton key={i} className="h-12 w-full" />
+                                    ))}
+                                </div>
+                            ) : (
+                                <ScrollArea className="h-[calc(100vh-555px)]">
+                                    <Table>
+                                        <TableBody>
+                                            {paginatedOffers.map((offer) => (
+                                                <TableRow key={offer.id}>
+                                                    <TableCell className="w-[120px]">
+                                                        <div className="space-y-1">
+                                                            {offer.spaceType && (
+                                                                <Badge variant="outline" className="text-xs">
+                                                                    {getSpaceType(offer.spaceType)}
+                                                                </Badge>
+                                                            )}
+                                                            {offer.spaceSize && (
+                                                                <Badge variant="secondary" className="text-xs">
+                                                                    {offer.spaceSize}
+                                                                </Badge>
+                                                            )}
+                                                        </div>
+                                                    </TableCell>
+
+                                                    <TableCell className="w-[100px]">
+                                                        {offer.building ? (
+                                                            <Badge variant="outline">
+                                                                {offer.building.replace('BUILDING_', '')}
+                                                            </Badge>
+                                                        ) : (
+                                                            <span className="text-muted-foreground">-</span>
+                                                        )}
+                                                    </TableCell>
+
+                                                    <TableCell className="w-[80px]">
+                                                        <Badge variant={offer.isEnglish ? "default" : "secondary"}>
+                                                            {offer.isEnglish ? "Sí" : "No"}
+                                                        </Badge>
+                                                    </TableCell>
+
+                                                    <TableCell className="w-[80px]">
+                                                        <Badge variant="outline">
+                                                            {offer.startDate?.length || 0}
+                                                        </Badge>
+                                                    </TableCell>
+
+                                                    <TableCell className="w-[80px]">
+                                                        {offer.workshop}
+                                                    </TableCell>
+
+                                                    <TableCell className="w-[80px]">
+                                                        {offer.lecture}
+                                                    </TableCell>
+
+                                                    <TableCell className="w-[80px]">
+                                                        {offer.tutorialSession}
+                                                    </TableCell>
+
+                                                    <TableCell className="w-[80px]">
+                                                        {offer.laboratory}
+                                                    </TableCell>
+
+                                                    <TableCell className="w-[120px]">
+                                                        <Badge variant="outline">
+                                                            {getPeriodName(offer.periodId)}
+                                                        </Badge>
+                                                    </TableCell>
+
+                                                    <TableCell className="w-[200px]">
+                                                        <div className="truncate" title={getSubjectName(offer.subjectId)}>
+                                                            {getSubjectName(offer.subjectId)}
+                                                        </div>
+                                                    </TableCell>
+
+                                                    <TableCell className="text-right w-[100px]">
+                                                        <ActionButton
+                                                            editItem    = { openEditOfferForm }
+                                                            deleteItem  = { () => onOpenDeleteOffer(offer) }
+                                                            item        = { offer }
+                                                        />
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+
+                                            { filteredOffers.length === 0 && searchQuery ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={11} className="h-24 text-center">
+                                                        No se encontraron resultados para &quot;{searchQuery}&quot;
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : offerList?.length === 0 && !searchQuery ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={11} className="h-24 text-center">
+                                                        No hay ofertas registradas
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : null }
+                                        </TableBody>
+                                    </Table>
+                                </ScrollArea>
+                            )}
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
+            {/* Pagination */}
+            <DataPagination
+                currentPage             = { currentPage }
+                totalPages              = { totalPages }
+                totalItems              = { totalItems }
+                itemsPerPage            = { itemsPerPage }
+                onPageChange            = { setCurrentPage }
+                onItemsPerPageChange    = { setItemsPerPage }
+            />
+
+            {/* Offer Form Dialog */}
+            <OfferForm
+                offer={editingOffer}
+                isOpen={isFormOpen}
+                onClose={() => {
+                    setIsFormOpen( false )
+                    setEditingOffer(undefined);
+                }}
+                facultyId=""
+            />
+
+            {/* Delete Confirmation Dialog */}
+            <DeleteConfirmDialog
+                isOpen={isDeleteDialogOpen}
+                onClose={() => setIsDeleteDialogOpen(false)}
+                onConfirm={() => deleteOfferMutation.mutate(deletingOfferId!)}
+                name={deletingOfferId!}
+                type="la Oferta"
+            />
+        </div>
+    );
+}
