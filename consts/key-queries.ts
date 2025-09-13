@@ -7,6 +7,7 @@ export const KEY_QUERYS = {
     MODULES         : 'modules',
     COMMENTS        : "comments",
     GRADES          : 'grades',
+    OFFERS          : 'offers',
 
     SPACES          : 'spaces',
 
