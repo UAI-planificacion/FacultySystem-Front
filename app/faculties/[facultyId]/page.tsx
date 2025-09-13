@@ -4,6 +4,7 @@ import { JSX, useEffect, useState, useMemo }        from "react";
 import { useParams, useRouter, useSearchParams }    from 'next/navigation';
 
 import {
+    Album,
     ArrowLeft,
     BookCopy,
     BookOpen,
@@ -21,6 +22,7 @@ import { StaffManagement }      from "@/components/staff/staff-management";
 import { SubjectsManagement }   from "@/components/subject/subjects-management";
 import { RequestsManagement }   from "@/components/request/request";
 import { Button }               from "@/components/ui/button";
+import { OfferManagement }      from "@/components/offer/offer-management";
 
 import { FacultyResponse }      from "@/types/faculty.model";
 import { KEY_QUERYS }           from "@/consts/key-queries";
@@ -28,6 +30,7 @@ import { KEY_QUERYS }           from "@/consts/key-queries";
 
 enum TabValue {
     SUBJECTS    = "subjects",
+    OFFERS      = "offers",
     PERSONNEL   = "personnel",
     REQUESTS    = "requests"
 }
@@ -85,7 +88,7 @@ export default function FacultyDetailsPage(): JSX.Element {
                 onValueChange   = {( value: string ) => setActiveTab( value as TabValue )}
                 className       = "w-full"
             >
-                <TabsList className="grid grid-cols-3 mb-4 h-12">
+                <TabsList className="grid grid-cols-4 mb-4 h-12">
                     <TabsTrigger
                         value       = { TabValue.REQUESTS }
                         className   = "h-10 text-md gap-2"
@@ -115,6 +118,16 @@ export default function FacultyDetailsPage(): JSX.Element {
 
                         <span className="hidden sm:block">Asignaturas</span>
                     </TabsTrigger>
+
+                    <TabsTrigger
+                        value       = { TabValue.OFFERS }
+                        className   = "h-10 text-md gap-2"
+                        title       = "Ofertas"
+                    >
+                        <Album className="h-5 w-5" />
+
+                        <span className="hidden sm:block">Ofertas</span>
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value={TabValue.REQUESTS}>
@@ -135,6 +148,13 @@ export default function FacultyDetailsPage(): JSX.Element {
                     <StaffManagement 
                         facultyId   = { facultyId }
                         enabled     = { activeTab === TabValue.PERSONNEL }
+                    />
+                </TabsContent>
+
+                <TabsContent value={TabValue.OFFERS}>
+                    <OfferManagement 
+                        facultyId   = { facultyId }
+                        enabled     = { activeTab === TabValue.OFFERS }
                     />
                 </TabsContent>
             </Tabs>
