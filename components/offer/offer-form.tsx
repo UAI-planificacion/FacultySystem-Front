@@ -60,6 +60,7 @@ import { ScrollArea }       from "@/components/ui/scroll-area";
 import { PeriodSelect }     from "@/components/shared/item-select/period-select";
 import { SizeSelect }       from "@/components/shared/item-select/size-select";
 import { SubjectSelect }    from "@/components/shared/item-select/subject-select";
+import { CostCenterSelect } from "@/components/shared/item-select/cost-center";
 
 import {
     Building,
@@ -86,16 +87,17 @@ const formSchema = z.object({
     isEnglish       : z.boolean(),
     workshop        : z.number().min( 0, "El taller debe ser mayor o igual a 0" ),
     lecture         : z.number().min( 0, "La conferencia debe ser mayor o igual a 0" ),
-    tutorialSession : z.number().min( 0, "La sesión tutorial debe ser mayor o igual a 0" ),
+    tutoringSession : z.number().min( 0, "La sesión tutorial debe ser mayor o igual a 0" ),
     laboratory      : z.number().min( 0, "El laboratorio debe ser mayor o igual a 0" ),
     subjectId       : z.string().min( 1, "La materia es requerida" ),
     spaceType       : z.nativeEnum( SpaceType ).nullable(),
     spaceSize       : z.nativeEnum( Size ).nullable(),
     periodId        : z.string().min( 1, "El período es requerido" ),
+    costCenter      : z.string().nullable(),
 }).refine(
     ( data ) => {
-        const { workshop, lecture, tutorialSession, laboratory } = data;
-        return workshop > 0 || lecture > 0 || tutorialSession > 0 || laboratory > 0;
+        const { workshop, lecture, tutoringSession, laboratory } = data;
+        return workshop > 0 || lecture > 0 || tutoringSession > 0 || laboratory > 0;
     },
     {
         message : "Al menos uno de los campos (Taller, Cátedra, Ayudantía o Laboratorio) debe ser mayor que 0",
@@ -134,12 +136,13 @@ function defaultOfferValues( offer?: Offer ): Partial<OfferFormValues> {
             isEnglish       : false,
             workshop        : 0,
             lecture         : 0,
-            tutorialSession : 0,
+            tutoringSession : 0,
             laboratory      : 0,
             subjectId       : '',
             spaceType       : null,
             spaceSize       : null,
             periodId        : '',
+            costCenter      : null,
         };
     }
 
@@ -150,12 +153,13 @@ function defaultOfferValues( offer?: Offer ): Partial<OfferFormValues> {
         isEnglish       : offer.isEnglish,
         workshop        : offer.workshop,
         lecture         : offer.lecture,
-        tutorialSession : offer.tutorialSession,
+        tutoringSession : offer.tutoringSession,
         laboratory      : offer.laboratory,
         subjectId       : offer.subjectId,
         spaceType       : offer.spaceType,
         spaceSize       : offer.spaceSize,
         periodId        : offer.periodId,
+        costCenter      : offer.costCenter,
     };
 }
 
@@ -242,18 +246,18 @@ export function OfferForm({
      */
     function handleSubmit( values: OfferFormValues ): void {
         console.log("🚀 ~ file: offer-form.tsx:244 ~ values:", values)
-        // if ( offer ) {
-        //     // Update existing offer
-        //     const updateData: UpdateOffer = {
-        //         id              : offer.id,
-        //         ...values
-        //     };
-        //     updateOfferMutation.mutate( updateData );
-        // } else {
-        //     // Create new offer
-        //     const createData: CreateOffer = values;
-        //     createOfferMutation.mutate( createData );
-        // }
+        if ( offer ) {
+            // Update existing offer
+            const updateData: UpdateOffer = {
+                id              : offer.id,
+                ...values
+            };
+            updateOfferMutation.mutate( updateData );
+        } else {
+            // Create new offer
+            const createData: CreateOffer = values;
+            createOfferMutation.mutate( createData );
+        }
     }
 
 
@@ -327,7 +331,7 @@ export function OfferForm({
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit( handleSubmit )} className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {/* Subject Selection */}
                             <FormField
                                 control = { form.control }
@@ -357,6 +361,24 @@ export function OfferForm({
                                             defaultValues       = { field.value || '' }
                                             multiple            = { false }
                                             onSelectionChange   = {( values ) => field.onChange( values || '' )}
+                                        />
+
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            {/* Cost Center Selection */}
+                            <FormField
+                                control = { form.control }
+                                name    = "costCenter"
+                                render  = {({ field }) => (
+                                    <FormItem>
+                                        <CostCenterSelect
+                                            label               = "Centro de Costos"
+                                            defaultValues       = { field.value || '' }
+                                            multiple            = { false }
+                                            onSelectionChange   = {( values ) => field.onChange( values || null )}
                                         />
 
                                         <FormMessage />
@@ -411,7 +433,7 @@ export function OfferForm({
 
                             <FormField
                                 control = { form.control }
-                                name    = "tutorialSession"
+                                name    = "tutoringSession"
                                 render  = {({ field }) => (
                                     <FormItem>
                                         <FormLabel>Ayudantía</FormLabel>
