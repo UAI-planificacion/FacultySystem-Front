@@ -13,12 +13,13 @@ export interface BasicOffer {
     isEnglish       : boolean;
     workshop        : number;
     lecture         : number;
-    tutorialSession : number;
+    tutoringSession : number;
     laboratory      : number;
     subjectId       : string;
     spaceType       : SpaceType | null;
     spaceSize       : Size      | null;
     periodId        : string;
+    costCenter      : string | null;
 }
 
 
