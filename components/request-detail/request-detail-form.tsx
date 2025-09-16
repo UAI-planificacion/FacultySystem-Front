@@ -54,6 +54,7 @@ import { RequestDetailModuleDays }  from "@/components/request-detail/request-de
 import { Checkbox }                 from "@/components/ui/checkbox";
 import { Textarea }                 from "@/components/ui/textarea";
 import { GradeForm }                from "@/components/grade/grade-form";
+import { CostCenterSelect }         from "@/components/shared/item-select/cost-center";
 
 import {
     SizeResponse,
@@ -68,7 +69,6 @@ import {
     Building,
     CreateRequestDetail
 }                           from "@/types/request-detail.model";
-import { useCostCenter }    from "@/hooks/use-cost-center";
 import { cn, getSpaceType } from "@/lib/utils";
 import { KEY_QUERYS }       from "@/consts/key-queries";
 import { Method, fetchApi } from "@/services/fetch";
@@ -209,13 +209,6 @@ export function RequestDetailForm({
     useEffect(() => {
         setTypeSpace( getTypeSpace( requestDetail ));
     },[requestDetail]);
-
-
-    const {
-        costCenter,
-        isLoading: isLoadingCostCenter,
-        isError: isErrorCostCenter
-    } = useCostCenter({ enabled: true });
 
 
     const {
@@ -754,15 +747,12 @@ export function RequestDetailForm({
                                     name    = "costCenterId"
                                     render  = {({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="font-medium">Centro de Costos</FormLabel>
-
-                                            <MultiSelectCombobox
-                                                multiple            = { false }
-                                                placeholder         = "Seleccionar centro de costo"
+                                            <CostCenterSelect
+                                                label               = "Centro de Costos"
+                                                placeholder         = "Seleccionar Centro de Costo"
                                                 defaultValues       = { field.value || '' }
                                                 onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
-                                                options             = { costCenter }
-                                                isLoading           = { isLoadingCostCenter }
+                                                multiple            = { false }
                                             />
 
                                             <FormMessage />
