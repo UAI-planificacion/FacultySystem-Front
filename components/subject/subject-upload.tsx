@@ -318,7 +318,7 @@ export function SubjectUpload({
             <Card>
 				<CardContent className="p-4 w-full">
 					<a
-                        href="/plantilla.xlsx"
+                        href="/plantilla_asignatura.xlsx"
                         download
                         className="border-4 hover:border-primary/50 rounded-lg cursor-pointer transition-colors border-dashed px-4 py-2 w-full grid justify-center content-center gap-1"
                     >
