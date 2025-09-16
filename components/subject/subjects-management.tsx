@@ -9,7 +9,6 @@ import {
     useQueryClient
 }                       from "@tanstack/react-query";
 import {
-    Calendar,
     Grid2x2,
     Plus,
     Search
@@ -44,8 +43,9 @@ import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
 import { Input }                from "@/components/ui/input";
 import { Label }                from "@/components/ui/label";
 import { ActionButton }         from "@/components/shared/action";
-import { MultiSelectCombobox }  from "@/components/shared/Combobox";
 import { Badge }                from "@/components/ui/badge";
+import { CostCenterSelect }     from "@/components/shared/item-select/cost-center";
+import { ActiveBadge }          from "@/components/shared/active";
 
 import {
     CreateSubject,
@@ -56,7 +56,6 @@ import { KEY_QUERYS }               from "@/consts/key-queries"
 import { Method, fetchApi }         from "@/services/fetch"
 import { errorToast, successToast } from "@/config/toast/toast.config"
 import { usePagination }            from "@/hooks/use-pagination";
-import { useCostCenter }            from "@/hooks/use-cost-center";
 
 
 interface SubjectsManagementProps {
@@ -85,13 +84,6 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
         queryFn : () => fetchApi({ url: `subjects/all/${facultyId}` }),
         enabled,
     });
-
-
-    const {
-        costCenter,
-        isLoading   : isLoadingCostCenter,
-        isError     : isErrorCostCenter
-    } = useCostCenter({ enabled });
 
 
     const filteredSubjects = useMemo(() => {
@@ -205,15 +197,13 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
 
 
     function handleFormSubmit( formData: SubjectFormValues ): void {
-        const { dates, ...rest } = formData;
-
         if ( editingSubject ) {
             updateSubjectMutation.mutate({
-                ...rest,
+                ...formData,
             } as UpdateSubject );
         } else {
             createSubjectMutation.mutate({
-                ...rest,
+                ...formData,
                 facultyId,
             } as CreateSubject );
         }
@@ -241,7 +231,7 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                                     <Input
                                         id          = "search"
                                         type        = "search"
-                                        placeholder = "Buscar por código o nombre..."
+                                        placeholder = "Buscar por sigla o nombre..."
                                         value       = { searchQuery }
                                         className   = "pl-8"
                                         onChange    = {( e ) => handleFilterChange( 'search', e.target.value )}
@@ -249,17 +239,14 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                                 </div>
                             </div>
 
-                            <div className="grid space-y-2">
-                                <Label htmlFor="costCenter">Centro de Costos</Label>
+                            <CostCenterSelect
+                                label               = "Centro de Costos"
+                                placeholder         = "Seleccionar centro de costo"
+                                onSelectionChange   = {( value ) => handleFilterChange( 'costCenter', value as string )}
+                                defaultValues       = { '' }
+                                multiple            = { false }
+                            />
 
-                                <MultiSelectCombobox
-                                    multiple            = { false }
-                                    placeholder         = "Seleccionar centro de costo"
-                                    defaultValues       = { '' }
-                                    onSelectionChange   = {( value ) => handleFilterChange( 'costCenter', value as string )}
-                                    options             = { costCenter }
-                                />
-                            </div>
                         </div>
 
                         <Button
@@ -288,17 +275,13 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
 
                                         <TableHead className="bg-background w-[300px]">Nombre</TableHead>
 
-                                        <TableHead className="text-center bg-background w-[100px]">Fechas</TableHead>
+                                        <TableHead className="bg-background w-[120px]">Centro de Costo</TableHead>
 
-                                        <TableHead className="text-center bg-background w-[50px]">Alumnos</TableHead>
+                                        <TableHead className="bg-background w-[120px]">Tamaño Espacio</TableHead>
 
-                                        <TableHead className="text-center bg-background w-[120px]">Centro de Costo</TableHead>
+                                        <TableHead className="bg-background w-[120px]">Tipo Espacio</TableHead>
 
-                                        <TableHead className="text-center bg-background w-[50px]">Edificio</TableHead>
-
-                                        <TableHead className="bg-background w-[120px]">Espacio</TableHead>
-
-                                        <TableHead className="text-center bg-background w-[50px]">Inglés</TableHead>
+                                        <TableHead className="text-left bg-background w-[80px]">Estado</TableHead>
 
                                         <TableHead className="text-right bg-background w-[160px]">Acciones</TableHead>
                                     </TableRow>
@@ -323,47 +306,27 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                                                         { subject.name }
                                                     </TableCell>
 
-                                                    <TableCell className="w-[100px]">
-                                                        <div className="flex gap-2 items-center">
-                                                            <Calendar className="w-4 h-4" />
-
-                                                            <Badge variant="outline">
-                                                                { subject.startDate.length }
-                                                            </Badge>
-                                                        </div>
-                                                    </TableCell>
-
-                                                    <TableCell className="text-center w-[50px]">
-                                                        { subject.students }
-                                                    </TableCell>
-
                                                     <TableCell
-                                                        className   = "text-end w-[120px] truncate"
+                                                        className   = "text-center w-[120px] truncate"
                                                         title       = { subject.costCenterId }
                                                     >
                                                         { subject.costCenterId }
                                                     </TableCell>
 
-                                                    <TableCell className="text-end w-[50px]">
+                                                    <TableCell className="w-[120px] text-center">
                                                         <Badge variant="outline">
-                                                            {subject.building ?? '-'}
+                                                            { subject.spaceSize ?? '-' }
                                                         </Badge>
                                                     </TableCell>
 
                                                     <TableCell className="w-[120px] text-center">
-                                                        <Badge
-                                                            variant     = "outline"
-                                                            className   = "truncate max-w-full"
-                                                            title       = { subject.spaceType ?? subject.spaceSize ?? '-' }
-                                                        >
-                                                            { subject.spaceType ?? subject.spaceSize ?? '-' }
+                                                        <Badge variant="outline">
+                                                            { subject.spaceTypeId ?? '-' }
                                                         </Badge>
                                                     </TableCell>
 
-                                                    <TableCell className="text-end w-[50px]">
-                                                        <Badge variant="secondary">
-                                                            { subject.isEnglish ? 'Sí' : 'No' }
-                                                        </Badge>
+                                                    <TableCell className=" w-[80px]">
+                                                        <ActiveBadge isActive={ subject.isActive } />
                                                     </TableCell>
 
                                                     <TableCell className="text-right w-[160px]">
@@ -389,13 +352,13 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
 
                                             {filteredSubjects.length === 0 && searchQuery ? (
                                                 <TableRow>
-                                                    <TableCell colSpan={10} className="h-24 text-center">
+                                                    <TableCell colSpan={7} className="h-24 text-center">
                                                         No se encontraron resultados para &quot;{searchQuery}&quot;
                                                     </TableCell>
                                                 </TableRow>
                                             ) : subjects?.length === 0 && !searchQuery ? (
                                                 <TableRow>
-                                                    <TableCell colSpan={10} className="h-24 text-center">
+                                                    <TableCell colSpan={7} className="h-24 text-center">
                                                         No hay asignaturas registradas
                                                     </TableCell>
                                                 </TableRow>
@@ -425,7 +388,6 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                 onSubmit    = { handleFormSubmit }
                 onClose     = { () => setIsFormOpen( false )}
                 isOpen      = { isFormOpen }
-                costCenter  = { costCenter }
             />
 
             <DeleteConfirmDialog
