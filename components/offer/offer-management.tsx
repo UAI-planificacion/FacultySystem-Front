@@ -40,6 +40,7 @@ import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
 import { Label }                from "@/components/ui/label";
 import { Badge }                from "@/components/ui/badge";
 import { Skeleton }             from "@/components/ui/skeleton";
+import { SessionShort }         from "@/components/section/session-short";
 
 import { Offer }                    from "@/types/offer.model";
 import { Subject }                  from "@/types/subject.model";
@@ -100,7 +101,7 @@ export function OfferManagement({
     
     const getPeriodName = ( periodId: string ): string => {
         const period = periods?.find( p => p.id === periodId );
-        return period ? period.name : periodId;
+        return period ? `${period.id} - ${period.name}` : periodId;
     };
 
     const filteredOffers = offerList?.filter( offer => {
@@ -277,24 +278,6 @@ export function OfferManagement({
                         </div>
                     ) : (
                         <div>
-                            <Table>
-                                <TableHeader className="sticky top-0 z-10 bg-background">
-                                    <TableRow>
-                                        <TableHead className="bg-background w-[120px]">Tipo/Tamaño</TableHead>
-                                        <TableHead className="bg-background w-[100px]">Edificio</TableHead>
-                                        <TableHead className="bg-background w-[80px]">Inglés</TableHead>
-                                        <TableHead className="bg-background w-[80px]">Fechas</TableHead>
-                                        <TableHead className="bg-background w-[80px]">Taller</TableHead>
-                                        <TableHead className="bg-background w-[80px]">Conferencia</TableHead>
-                                        <TableHead className="bg-background w-[80px]">Tutorial</TableHead>
-                                        <TableHead className="bg-background w-[80px]">Laboratorio</TableHead>
-                                        <TableHead className="bg-background w-[120px]">Período</TableHead>
-                                        <TableHead className="bg-background w-[200px]">Materia</TableHead>
-                                        <TableHead className="text-right bg-background w-[100px]">Acciones</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                            </Table>
-
                             {isError ? (
                                 <div className="text-center p-8 text-destructive">
                                     Error al cargar las ofertas
@@ -308,9 +291,22 @@ export function OfferManagement({
                             ) : (
                                 <ScrollArea className="h-[calc(100vh-555px)]">
                                     <Table>
+                                        <TableHeader className="sticky top-0 z-10 bg-background">
+                                            <TableRow>
+                                                <TableHead className="bg-background w-[120px]">Tipo/Tamaño</TableHead>
+                                                <TableHead className="bg-background w-[140px]">Período</TableHead>
+                                                <TableHead className="bg-background w-[250px]">Asignatura</TableHead>
+                                                <TableHead className="bg-background w-[120px]">Sesiones</TableHead>
+                                                <TableHead className="bg-background w-[80px] text-center">Fechas</TableHead>
+                                                <TableHead className="bg-background w-[80px] text-center">Edificio</TableHead>
+                                                <TableHead className="bg-background w-[80px] text-center">Inglés</TableHead>
+                                                <TableHead className="text-right bg-background w-[100px]">Acciones</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
                                         <TableBody>
                                             {paginatedOffers.map((offer) => (
                                                 <TableRow key={offer.id}>
+                                                    {/* Tipo/Tamaño */}
                                                     <TableCell className="w-[120px]">
                                                         <div className="space-y-1">
                                                             {offer.spaceType && (
@@ -326,7 +322,42 @@ export function OfferManagement({
                                                         </div>
                                                     </TableCell>
 
-                                                    <TableCell className="w-[100px]">
+                                                    {/* Periodo */}
+                                                    <TableCell className="w-[140px]">
+                                                        <Badge variant="outline">
+                                                            {getPeriodName(offer.periodId)}
+                                                        </Badge>
+                                                    </TableCell>
+
+                                                    {/* Asignatura */}
+                                                    <TableCell className="w-[250px]">
+                                                        <div className="truncate" title={getSubjectName(offer.subjectId)}>
+                                                            {getSubjectName(offer.subjectId)}
+                                                        </div>
+                                                    </TableCell>
+
+                                                    {/* Sesiones */}
+                                                    <TableCell className="w-[120px]">
+                                                        <SessionShort
+                                                            showZero        = { true }
+                                                            sessionCounts   = {{
+                                                                C: offer.lecture,
+                                                                T: offer.workshop,
+                                                                A: offer.tutoringSession,
+                                                                L: offer.laboratory,
+                                                            }}
+                                                        />
+                                                    </TableCell>
+
+                                                    {/* Fechas */}
+                                                    <TableCell className="text-center w-[80px]">
+                                                        <Badge variant="outline">
+                                                            {offer.startDate?.length || 0}
+                                                        </Badge>
+                                                    </TableCell>
+
+                                                    {/* Edificio */}
+                                                    <TableCell className="text-center w-[80px]">
                                                         {offer.building ? (
                                                             <Badge variant="outline">
                                                                 {offer.building.replace('BUILDING_', '')}
@@ -336,46 +367,14 @@ export function OfferManagement({
                                                         )}
                                                     </TableCell>
 
-                                                    <TableCell className="w-[80px]">
+                                                    {/* Inglés */}
+                                                    <TableCell className="text-center w-[80px]">
                                                         <Badge variant={offer.isEnglish ? "default" : "secondary"}>
                                                             {offer.isEnglish ? "Sí" : "No"}
                                                         </Badge>
                                                     </TableCell>
 
-                                                    <TableCell className="w-[80px]">
-                                                        <Badge variant="outline">
-                                                            {offer.startDate?.length || 0}
-                                                        </Badge>
-                                                    </TableCell>
-
-                                                    <TableCell className="w-[80px]">
-                                                        {offer.workshop}
-                                                    </TableCell>
-
-                                                    <TableCell className="w-[80px]">
-                                                        {offer.lecture}
-                                                    </TableCell>
-
-                                                    <TableCell className="w-[80px]">
-                                                        {offer.tutorialSession}
-                                                    </TableCell>
-
-                                                    <TableCell className="w-[80px]">
-                                                        {offer.laboratory}
-                                                    </TableCell>
-
-                                                    <TableCell className="w-[120px]">
-                                                        <Badge variant="outline">
-                                                            {getPeriodName(offer.periodId)}
-                                                        </Badge>
-                                                    </TableCell>
-
-                                                    <TableCell className="w-[200px]">
-                                                        <div className="truncate" title={getSubjectName(offer.subjectId)}>
-                                                            {getSubjectName(offer.subjectId)}
-                                                        </div>
-                                                    </TableCell>
-
+                                                    {/* Acciones */}
                                                     <TableCell className="text-right w-[100px]">
                                                         <ActionButton
                                                             editItem    = { openEditOfferForm }
@@ -420,22 +419,22 @@ export function OfferManagement({
 
             {/* Offer Form Dialog */}
             <OfferForm
-                offer={editingOffer}
-                isOpen={isFormOpen}
-                onClose={() => {
+                offer       = { editingOffer }
+                isOpen      = { isFormOpen }
+                facultyId   = { facultyId }
+                onClose     = {() => {
                     setIsFormOpen( false )
-                    setEditingOffer(undefined);
+                    setEditingOffer( undefined );
                 }}
-                facultyId=""
             />
 
             {/* Delete Confirmation Dialog */}
             <DeleteConfirmDialog
-                isOpen={isDeleteDialogOpen}
-                onClose={() => setIsDeleteDialogOpen(false)}
-                onConfirm={() => deleteOfferMutation.mutate(deletingOfferId!)}
-                name={deletingOfferId!}
-                type="la Oferta"
+                isOpen      = { isDeleteDialogOpen }
+                onClose     = {() => setIsDeleteDialogOpen( false )}
+                onConfirm   = {() => deleteOfferMutation.mutate( deletingOfferId! )}
+                name        = { deletingOfferId! }
+                type        = "la Oferta"
             />
         </div>
     );
