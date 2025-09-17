@@ -9,7 +9,6 @@ const envSchema = z.object({
         message: 'Request back URL is required',
     }),
     NEXT_PUBLIC_REQUEST_ENDPOINT: z.string(),
-    NEXT_PUBLIC_ACADEMIC_SECTION: z.string().min(1),
     NEXT_PUBLIC_ACADEMIC_SSE_ENDPOINT: z.string().min(1),
 
     NEXT_PUBLIC_ROOM_SYSTEM_URL: z.string().min(1),
@@ -57,7 +56,6 @@ const envSchema = z.object({
 const processEnv = {
     NEXT_PUBLIC_REQUEST_BACK_URL    : process.env.NEXT_PUBLIC_REQUEST_BACK_URL,
     NEXT_PUBLIC_REQUEST_ENDPOINT    : process.env.NEXT_PUBLIC_REQUEST_ENDPOINT,
-    NEXT_PUBLIC_ACADEMIC_SECTION    : process.env.NEXT_PUBLIC_ACADEMIC_SECTION,
     NEXT_PUBLIC_ACADEMIC_SSE_ENDPOINT: process.env.NEXT_PUBLIC_ACADEMIC_SSE_ENDPOINT,
     NEXT_PUBLIC_ROOM_SYSTEM_URL     : process.env.NEXT_PUBLIC_ROOM_SYSTEM_URL,
     NEXT_PUBLIC_NODE_ENV            : process.env.NEXT_PUBLIC_NODE_ENV,
@@ -97,7 +95,6 @@ export const ENV = {
     // API URLs
     REQUEST_BACK_URL    : parsedEnv.data.NEXT_PUBLIC_REQUEST_BACK_URL,
     REQUEST_ENDPOINT    : parsedEnv.data.NEXT_PUBLIC_REQUEST_ENDPOINT,
-    ACADEMIC_SECTION    : parsedEnv.data.NEXT_PUBLIC_ACADEMIC_SECTION,
     SSE_ENDPOINT        : parsedEnv.data.NEXT_PUBLIC_ACADEMIC_SSE_ENDPOINT,
 
     ROOM_SYSTEM_URL     : parsedEnv.data.NEXT_PUBLIC_ROOM_SYSTEM_URL,
