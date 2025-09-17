@@ -8,11 +8,10 @@ import { format }   from "@formkit/tempo";
 import { MultiSelectCombobox }  from "@/components/shared/Combobox";
 import { Label }                from "@/components/ui/label";
 import { Input }                from "@/components/ui/input";
+import { Props }                from "@/components/shared/item-select/select-props";
 
 import { KEY_QUERYS }   from "@/consts/key-queries";
 import { fetchApi }     from "@/services/fetch";
-import { ENV }          from "@/config/envs/env";
-import { Props }        from "./select-props";
 import { Period }       from "@/types/periods.model";
 
 
@@ -26,9 +25,10 @@ function formatDate( period : Period ): string {
 export function PeriodSelect({
     defaultValues,
     onSelectionChange,
-    multiple    = true,
     label,
-    placeholder = 'Seleccionar Periodos'
+    multiple    = true,
+    placeholder = 'Seleccionar Periodos',
+    enabled     = true
 } : Props ): JSX.Element {
     const {
         data,
@@ -36,10 +36,8 @@ export function PeriodSelect({
         isError
     } = useQuery<Period[]>({
         queryKey: [KEY_QUERYS.PERIODS],
-        queryFn : () => fetchApi<Period[]>({
-            isApi   : false,
-            url     : `${ENV.ACADEMIC_SECTION}periods`
-        }),
+        queryFn : () => fetchApi<Period[]>({ url: 'periods' }),
+        enabled
     });
 
 

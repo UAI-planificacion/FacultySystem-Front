@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Period }       from "@/types/periods.model";
 import { KEY_QUERYS }   from "@/consts/key-queries";
 import { fetchApi }     from "@/services/fetch";
-import { ENV }          from "@/config/envs/env";
 
 
 /**
@@ -19,7 +18,7 @@ export function usePeriods() {
 		isError		: isErrorPeriods
 	} = useQuery<Period[]>({
 		queryKey	: [KEY_QUERYS.PERIODS],
-		queryFn		: () => fetchApi({ isApi: false, url: `${ENV.ACADEMIC_SECTION}periods` }),
+		queryFn		: () => fetchApi({ url: 'periods' }),
 	});
 
 

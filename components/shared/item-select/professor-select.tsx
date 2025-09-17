@@ -7,20 +7,20 @@ import { useQuery } from "@tanstack/react-query";
 import { MultiSelectCombobox }  from "@/components/shared/Combobox";
 import { Label }                from "@/components/ui/label";
 import { Input }                from "@/components/ui/input";
+import { Props }                from "@/components/shared/item-select/select-props";
 
 import { KEY_QUERYS }   from "@/consts/key-queries";
 import { fetchApi }     from "@/services/fetch";
-import { ENV }          from "@/config/envs/env";
-import { Props }        from "./select-props";
 import { Professor }    from "@/types/professor";
 
 
 export function ProfessorSelect({
     defaultValues,
     onSelectionChange,
-    multiple    = true,
     label,
-    placeholder = 'Seleccionar Profesores'
+    multiple    = true,
+    placeholder = 'Seleccionar Profesores',
+    enabled     = true
 } : Props ): JSX.Element {
     const {
         data,
@@ -28,10 +28,8 @@ export function ProfessorSelect({
         isError,
     } = useQuery({
         queryKey    : [ KEY_QUERYS.PROFESSORS ],
-        queryFn     : () => fetchApi<Professor[]>({
-            isApi   : false,
-            url     : `${ENV.ACADEMIC_SECTION}professors`
-        }),
+        queryFn     : () => fetchApi<Professor[]>({ url: 'professors' }),
+        enabled
     });
 
 

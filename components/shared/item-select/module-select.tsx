@@ -7,20 +7,20 @@ import { useQuery } from "@tanstack/react-query";
 import { MultiSelectCombobox }  from "@/components/shared/Combobox";
 import { Label }                from "@/components/ui/label";
 import { Input }                from "@/components/ui/input";
+import { Props }                from "@/components/shared/item-select/select-props";
 
 import { KEY_QUERYS }   from "@/consts/key-queries";
 import { fetchApi }     from "@/services/fetch";
-import { ENV }          from "@/config/envs/env";
-import { Props }        from "./select-props";
 import { Module }       from "@/types/request";
 
 
 export function ModuleSelect({
     defaultValues,
     onSelectionChange,
-    multiple    = true,
     label,
-    placeholder = 'Seleccionar Módulos'
+    multiple    = true,
+    placeholder = 'Seleccionar Módulos',
+    enabled     = true
 } : Props ): JSX.Element {
     const {
         data,
@@ -28,10 +28,8 @@ export function ModuleSelect({
         isError,
     } = useQuery({
         queryKey    : [ KEY_QUERYS.MODULES ],
-        queryFn     : () => fetchApi<Module[]>({
-            url         : `${ENV.ACADEMIC_SECTION}modules/original`,
-            isApi       : false
-        }),
+        queryFn     : () => fetchApi<Module[]>({ url: 'modules/original' }),
+        enabled
     });
 
 

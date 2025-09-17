@@ -6,26 +6,20 @@ import { useQuery } from "@tanstack/react-query";
 
 import { MultiSelectCombobox }  from "@/components/shared/Combobox";
 import { Label }                from "@/components/ui/label";
-import { KEY_QUERYS }           from "@/consts/key-queries";
-import { fetchApi }             from "@/services/fetch";
-import { Subject }              from "@/types/subject.model";
+import { Props }                from "@/components/shared/item-select/select-props";
 
-
-interface Props {
-    defaultValues       : string | string[] | undefined;
-    onSelectionChange?  : ( selectedValues: string[] | string | undefined ) => void;
-    multiple?           : boolean;
-    label?              : string;
-    placeholder?        : string;
-}
+import { KEY_QUERYS }   from "@/consts/key-queries";
+import { fetchApi }     from "@/services/fetch";
+import { Subject }      from "@/types/subject.model";
 
 
 export function SubjectSelect({
     defaultValues,
     onSelectionChange,
-    multiple    = true,
     label,
-    placeholder = 'Seleccionar asignaturas'
+    multiple    = true,
+    placeholder = 'Seleccionar asignaturas',
+    enabled     = true
 } : Props ): JSX.Element {
     const {
         data,
@@ -34,6 +28,7 @@ export function SubjectSelect({
     } = useQuery<Subject[]>({
         queryKey: [ KEY_QUERYS.SUBJECTS ],
         queryFn : () => fetchApi({ url: 'subjects' }),
+        enabled
     });
 
 
