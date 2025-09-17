@@ -123,8 +123,8 @@ export function RequestTable({
                                     </TableCell>
 
                                     <TableCell>
-                                        <div className="max-w-[150px] truncate" title={request.subject.name}>
-                                            {request.subject.name}
+                                        <div className="max-w-[150px] truncate" title={request.offer.id}>
+                                            {request.offer.id}
                                         </div>
                                     </TableCell>
 
