@@ -11,7 +11,6 @@ import { Button }               from "@/components/ui/button";
 import { SectionGroup }         from "@/components/section/types";
 
 import { fetchApi, Method }         from "@/services/fetch";
-import { ENV }                      from "@/config/envs/env";
 import { KEY_QUERYS }               from "@/consts/key-queries";
 import { errorToast, successToast } from "@/config/toast/toast.config";
 
@@ -30,8 +29,7 @@ export function ChangeStatusSection({
 
     const updateGroupApi = async (): Promise<any> =>
         fetchApi({
-            isApi   : false,
-            url     : `${ENV.ACADEMIC_SECTION}Sections/changeStatus/${group.groupId}`,
+            url     : `Sections/changeStatus/${group.groupId}`,
             method  : Method.PATCH,
         });
 
