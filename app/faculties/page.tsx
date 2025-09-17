@@ -184,11 +184,17 @@ export default function FacultiesPage() {
     return (
         <main className="container mx-auto py-6 px-4 sm:px-5 space-y-6 min-h-[calc(100vh-74px)]">
             {/* Statistics Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                 <StatisticCard
                     title   = "Total de Facultades"
                     value   = { data?.faculties.length }
                     icon    = { <Building className="h-6 w-6" /> }
+                />
+
+                <StatisticCard
+                    title   = "Total de Personal"
+                    value   = { data?.totalPersonnel }
+                    icon    = { <Users className="h-6 w-6" /> }
                 />
 
                 <StatisticCard
@@ -198,9 +204,9 @@ export default function FacultiesPage() {
                 />
 
                 <StatisticCard
-                    title   = "Total de Personal"
-                    value   = { data?.totalPersonnel }
-                    icon    = { <Users className="h-6 w-6" /> }
+                    title   = "Total de Ofertas"
+                    value   = { data?.totalOffers }
+                    icon    = { <BookCopy className="h-6 w-6" /> }
                 />
 
                 <StatisticCard
