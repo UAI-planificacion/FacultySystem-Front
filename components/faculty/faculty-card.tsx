@@ -53,16 +53,6 @@ export function FacultyCard({
 
             <CardFooter className="flex flex-wrap gap-2 pt-4">
                 <Button 
-                    variant     = "outline"
-                    size        = "sm"
-                    onClick     = {() => router.push(`/faculties/${faculty.id}?tab=requests`)}
-                    className   = "flex items-center gap-1.5"
-                >
-                    <BookCopy className="h-4 w-4" />
-                    {faculty.totalRequests || 0} Solicitudes
-                </Button>
-
-                <Button 
                     variant   = "outline"
                     size      = "sm"
                     onClick   = {() => router.push(`/faculties/${faculty.id}?tab=personnel`)}
@@ -80,6 +70,26 @@ export function FacultyCard({
                 >
                     <BookOpen className="h-4 w-4" />
                     {faculty.totalSubjects || 0} Asignaturas
+                </Button>
+
+                <Button 
+                    variant   = "outline"
+                    size      = "sm"
+                    onClick   = {() => router.push(`/faculties/${faculty.id}?tab=offers`)}
+                    className = "flex items-center gap-1.5"
+                >
+                    <BookOpen className="h-4 w-4" />
+                    {faculty.totalOffers || 0} Ofertas
+                </Button>
+
+                <Button 
+                    variant     = "outline"
+                    size        = "sm"
+                    onClick     = {() => router.push(`/faculties/${faculty.id}?tab=requests`)}
+                    className   = "flex items-center gap-1.5"
+                >
+                    <BookCopy className="h-4 w-4" />
+                    {faculty.totalRequests || 0} Solicitudes
                 </Button>
 
                 <div className="flex gap-2 ml-auto">
