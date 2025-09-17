@@ -21,7 +21,8 @@ export function SpaceTypeSelect({
     defaultValues,
     onSelectionChange,
     label,
-    placeholder = 'Selecciona un tipo de espacio'
+    placeholder = 'Selecciona un tipo de espacio',
+    disabled = false,
 } : Props ): JSX.Element {
     return (
         <div className="space-y-2">
@@ -30,6 +31,7 @@ export function SpaceTypeSelect({
             <Select
                 onValueChange   = { onSelectionChange }
                 value           = { defaultValues as string }
+                disabled        = { disabled }
             >
                 <FormControl>
                     <SelectTrigger>
