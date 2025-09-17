@@ -4,7 +4,7 @@ import { StaffRequest } from "@/types/request";
 
 export enum SpaceType {
     ROOM        = "ROOM",
-    AUDITORIO  = "AUDITORIO",
+    AUDITORIO   = "AUDITORIO",
     COMMUNIC    = "COMMUNIC",
     LAB         = "LAB",
     LABPC       = "LABPC",
