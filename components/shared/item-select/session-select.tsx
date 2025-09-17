@@ -4,9 +4,10 @@ import { JSX } from "react";
 
 import { MultiSelectCombobox }  from "@/components/shared/Combobox";
 import { Label }                from "@/components/ui/label";
+import { Props }                from "@/components/shared/item-select/select-props";
 
-import { Props }    from "./select-props";
-import { Session }  from "@/types/section.model";
+import { Session } from "@/types/section.model";
+
 
 const sessionOptions =  [
     { label: 'Cátedra',     value: Session.C },
