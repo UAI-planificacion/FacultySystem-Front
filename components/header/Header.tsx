@@ -50,7 +50,6 @@ export default function Header() {
                             <span className="sr-only">Universidad Adolfo Ibáñez</span>
 
                             <Image
-                                className="p-0"
                                 title       = "UAI"
                                 src         = "https://mailing20s.s3.amazonaws.com/templtates/logosinescudo.png"
                                 alt         = "logo uai"
