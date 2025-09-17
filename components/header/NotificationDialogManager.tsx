@@ -2,20 +2,15 @@
 
 import { JSX, useState } from 'react';
 
-import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { RequestForm }          from '@/components/request/request-form';
 import { RequestDetailForm }    from '@/components/request-detail/request-detail-form';
 
-import {
-    Module,
-    Request,
-    RequestDetail
-}                       from '@/types/request';
-import { KEY_QUERYS }   from '@/consts/key-queries';
-import { Professor }    from '@/types/professor';
-import { fetchApi }     from '@/services/fetch';
-import { ENV } from '@/config/envs/env';
+import { Request }          from '@/types/request';
+import { KEY_QUERYS }       from '@/consts/key-queries';
+import { fetchApi }         from '@/services/fetch';
+import { RequestDetail }    from '@/types/request-detail.model';
 
 
 interface NotificationDialogManagerProps {
@@ -52,31 +47,10 @@ export function NotificationDialogManager({
 		requestId       : '',
 	});
 
-	// Query for professors (needed for request detail form)
-	const {
-		data        : professors = [],
-		isLoading   : isLoadingProfessors,
-		isError     : isErrorProfessors,
-	} = useQuery<Professor[]>({
-		queryKey    : [KEY_QUERYS.PROFESSORS],
-        queryFn     : () => fetchApi<Professor[]>({ url: `${ENV.ACADEMIC_SECTION}professors`, isApi: false }),
-		enabled     : requestDetailDialog.isOpen,
-	});
 
-	// Query for modules (needed for request detail form)
-	const {
-		data        : modules = [],
-		isLoading   : isLoadingModules,
-		isError     : isErrorModules,
-	} = useQuery({
-		queryKey    : [KEY_QUERYS.MODULES],
-        queryFn     : () => fetchApi<Module[]>({ url: `${ENV.ACADEMIC_SECTION}modules/original`, isApi: false }),
-		enabled     : requestDetailDialog.isOpen,
-	});
-
-	const handleRequestClick = ( requestId: string ): void => {
+    function handleRequestClick( requestId: string ): void {
 		console.log( 'handleRequestClick called with requestId:', requestId );
-	
+
 		// Find request in cache from any faculty
 		const allQueries = queryClient.getQueriesData({ queryKey: [KEY_QUERYS.REQUESTS] });
 		console.log( 'All queries found:', allQueries );
@@ -119,7 +93,8 @@ export function NotificationDialogManager({
 		}
 	};
 
-	const handleRequestDetailClick = ( requestId: string, detailId: string ): void => {
+
+    function handleRequestDetailClick( requestId: string, detailId: string ): void {
 		console.log( 'handleRequestDetailClick called with requestId:', requestId, 'detailId:', detailId );
 
 		// First check if request details are in cache
@@ -167,17 +142,17 @@ export function NotificationDialogManager({
 		});
 	};
 
-	const handleRequestSubmit = ( data: any ): void => {
-		// Handle request form submission
-		console.log( 'Request form submitted:', data );
-		setRequestDialog( prev => ({ ...prev, isOpen: false }));
-	};
+	// const handleRequestSubmit = ( data: any ): void => {
+	// 	// Handle request form submission
+	// 	console.log( 'Request form submitted:', data );
+	// 	setRequestDialog( prev => ({ ...prev, isOpen: false }));
+	// };
 
-	const handleRequestDetailSubmit = ( data: any ): void => {
-		// Handle request detail form submission
-		console.log( 'Request detail form submitted:', data );
-		setRequestDetailDialog( prev => ({ ...prev, isOpen: false }));
-	};
+	// const handleRequestDetailSubmit = ( data: any ): void => {
+	// 	// Handle request detail form submission
+	// 	console.log( 'Request detail form submitted:', data );
+	// 	setRequestDetailDialog( prev => ({ ...prev, isOpen: false }));
+	// };
 
 	return (
 		<>
@@ -207,13 +182,7 @@ export function NotificationDialogManager({
 					onClose             = {() => setRequestDetailDialog( prev => ({ ...prev, isOpen: false }))}
 					onCancel            = {() => setRequestDetailDialog( prev => ({ ...prev, isOpen: false }))}
 					requestDetail       = { requestDetailDialog.requestDetail }
-					professors          = { professors }
-					isLoadingProfessors = { isLoadingProfessors }
-					isErrorProfessors   = { isErrorProfessors }
-					modules             = { modules }
                     requestId           = { requestDetailDialog.requestDetail.requestId }
-					isLoadingModules    = { isLoadingModules }
-					isErrorModules      = { isErrorModules }
 				/>
 			)}
 		</>
