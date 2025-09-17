@@ -42,7 +42,6 @@ import {
 import { KEY_QUERYS }               from "@/consts/key-queries";
 import { Method, fetchApi }         from "@/services/fetch";
 import { errorToast, successToast } from "@/config/toast/toast.config";
-import { ENV }                      from "@/config/envs/env";
 import { cn }                       from "@/lib/utils";
 
 
@@ -67,11 +66,6 @@ const formSchema = z.object({
         message: "El email solo puede contener letras, números, puntos, guiones y guiones bajos.",
     })
     .nullable(),
-    // email: z.string()
-    //     .transform(val => val === "" ? null : val)
-    //     .refine(val => val === null || z.string().email().safeParse(val).success, {
-    //         message: "Por favor ingresa una dirección de correo válida.",
-    //     }),
     isMock: z.boolean().default( false ),
 });
 
@@ -99,8 +93,7 @@ const emptyProfessor: Professor = {
  */
 const createProfessorApi = async ( newProfessor: CreateProfessor ): Promise<Professor>  =>
     fetchApi<Professor>({
-        isApi   : false,
-        url     : `${ENV.ACADEMIC_SECTION}${endpoint}`,
+        url     : `${endpoint}`,
         method  : Method.POST,
         body    : newProfessor
     });
@@ -111,8 +104,7 @@ const createProfessorApi = async ( newProfessor: CreateProfessor ): Promise<Prof
  */
 const updateProfessorApi = async ( updatedProfessor: UpdateProfessor ): Promise<Professor>  =>
     fetchApi<Professor>({
-        isApi   : false,
-        url     : `${ENV.ACADEMIC_SECTION}${endpoint}/${updatedProfessor.id}`,
+        url     : `${endpoint}/${updatedProfessor.id}`,
         method  : Method.PATCH,
         body    : updatedProfessor
     });
@@ -134,9 +126,9 @@ export function ProfessorForm({
 
 
     const form = useForm<ProfessorFormValues>({
-        resolver: zodResolver(formSchema) as any,
+        resolver    : zodResolver( formSchema ) as any,
+        mode        : 'onChange',
         defaultValues,
-        mode: 'onChange',
     });
 
 
