@@ -3,6 +3,7 @@ export interface FacultyResponse {
     totalSubjects   : number;
     totalPersonnel  : number;
     totalRequests   : number;
+    totalOffers     : number;
     faculties       : Faculty[];
 }
 
@@ -15,6 +16,7 @@ export interface Faculty {
     totalSubjects   : number;
     totalPersonnel  : number;
     totalRequests   : number;
+    totalOffers     : number;
     createdAt       : string;
     updatedAt       : string;
 }
