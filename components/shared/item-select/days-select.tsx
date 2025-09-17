@@ -7,20 +7,20 @@ import { useQuery } from "@tanstack/react-query";
 import { MultiSelectCombobox }  from "@/components/shared/Combobox";
 import { Label }                from "@/components/ui/label";
 import { Input }                from "@/components/ui/input";
-import { Props }                from "./select-props";
+import { Props }                from "@/components/shared/item-select/select-props";
 
 import { KEY_QUERYS }   from "@/consts/key-queries";
 import { fetchApi }     from "@/services/fetch";
-import { ENV }          from "@/config/envs/env";
 import { Day }          from "@/types/request";
 
 
 export function DaySelect({
     defaultValues,
     onSelectionChange,
-    multiple    = true,
     label,
-    placeholder = 'Seleccionar Días'
+    multiple    = true,
+    placeholder = 'Seleccionar Días',
+    enabled     = true
 } : Props ): JSX.Element {
     const {
         data,
@@ -28,10 +28,8 @@ export function DaySelect({
         isError,
     } = useQuery({
         queryKey    : [ KEY_QUERYS.DAYS ],
-        queryFn     : () => fetchApi<Day[]>({
-            url         : `${ENV.ACADEMIC_SECTION}days`,
-            isApi       : false
-        }),
+        queryFn     : () => fetchApi<Day[]>({ url: 'days' }),
+        enabled
     });
 
 
