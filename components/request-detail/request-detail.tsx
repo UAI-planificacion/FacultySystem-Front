@@ -10,6 +10,7 @@ import {
     useQueryClient
 }                   from "@tanstack/react-query";
 import { toast }    from "sonner";
+
 import { Button }                   from "@/components/ui/button";
 import { DeleteConfirmDialog }      from "@/components/dialog/DeleteConfirmDialog";
 import { RequestInfoCard }          from "@/components/request-detail/request-info-card";
@@ -20,18 +21,16 @@ import { RequestDetailTable }       from "@/components/request-detail/request-de
 import { DataPagination }           from "@/components/ui/data-pagination";
 import { ViewMode }                 from "@/components/shared/view-mode";
 
+import {
+    errorToast,
+    successToast
+}                               from "@/config/toast/toast.config";
 import { useViewMode }          from "@/hooks/use-view-mode";
 import type { Module, Request } from "@/types/request";
 import type { RequestDetail }   from "@/types/request-detail.model";
 import { Professor }            from "@/types/professor";
 import { KEY_QUERYS }           from "@/consts/key-queries";
 import { Method, fetchApi }     from "@/services/fetch";
-
-import {
-    errorToast,
-    successToast
-}               from "@/config/toast/toast.config";
-import { ENV }  from "@/config/envs/env";
 
 
 interface RequestDetailViewProps {
@@ -62,7 +61,7 @@ export function RequestDetailView({
         isError     : isErrorModules,
     } = useQuery({
         queryKey    : [ KEY_QUERYS.MODULES ],
-        queryFn     : () => fetchApi<Module[]>({ url: `${ENV.ACADEMIC_SECTION}modules/original`, isApi: false }),
+        queryFn     : () => fetchApi<Module[]>({ url: 'modules/original' }),
     });
 
 
@@ -72,7 +71,7 @@ export function RequestDetailView({
         isError     : isErrorProfessors,
     } = useQuery({
         queryKey    : [ KEY_QUERYS.PROFESSORS ],
-        queryFn     : () => fetchApi<Professor[]>({ url: `${ENV.ACADEMIC_SECTION}professors`, isApi: false }),
+        queryFn     : () => fetchApi<Professor[]>({ url: 'professors' }),
     });
 
 
@@ -96,9 +95,7 @@ export function RequestDetailView({
     }, [data, currentPage, itemsPerPage]);
 
 
-    const totalPages    = Math.ceil(( data?.length || 0 ) / itemsPerPage );
-    const startIndex    = ( currentPage - 1 ) * itemsPerPage;
-    const endIndex      = startIndex + itemsPerPage;
+    const totalPages = Math.ceil(( data?.length || 0 ) / itemsPerPage );
 
 
     function onEditRequesDetail( detail: RequestDetail ) {
@@ -234,12 +231,6 @@ export function RequestDetailView({
                     isOpen              = { isOpenEdit }
                     onClose             = { () => setIsOpenEdit( false )}
                     requestId           = { request.id }
-                    professors          = { professors ?? [] }
-                    isLoadingProfessors = { isLoadingProfessors }
-                    isErrorProfessors   = { isErrorProfessors }
-                    modules             = { modules ?? [] }
-                    isLoadingModules    = { isLoadingModules }
-                    isErrorModules      = { isErrorModules }
                 />
 
                 {/* Delete Confirmation Dialog */}
