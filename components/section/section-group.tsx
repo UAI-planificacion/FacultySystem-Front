@@ -26,12 +26,11 @@ import { SectionFormGroup }         from "@/components/section/section-form-grou
 import { SectionForm }              from "@/components/section/section-form"
 import { SessionShort }             from "@/components/section/session-short"
 
-import { Section }          from "@/types/section.model"
-import { fetchApi, Method } from "@/services/fetch"
-import { KEY_QUERYS }       from "@/consts/key-queries"
-
+import { Section }                  from "@/types/section.model"
+import { fetchApi, Method }         from "@/services/fetch"
+import { KEY_QUERYS }               from "@/consts/key-queries"
 import { errorToast, successToast } from "@/config/toast/toast.config"
-import { ENV }                      from "@/config/envs/env"
+
 
 
 interface PaginetedGroup {
@@ -50,21 +49,6 @@ interface Props {
     selectedSections            : Set<string>;
     onSelectedSectionsChange    : (selectedSections: Set<string>) => void;
 }
-
-
-const getDayAbbreviation = ( day: number ): string => {
-    const dayMap: { [key: number]: string } = {
-        1: 'L',
-        2: 'M',
-        3: 'X',
-        4: 'J',
-        5: 'V',
-        6: 'S',
-        7: 'D'
-    };
-
-    return dayMap[day] || 'N/A';
-};
 
 
 export function SectionGroupTable({
@@ -204,9 +188,8 @@ export function SectionGroupTable({
 
 
     const deleteGroupApi = async ( groupId: string ): Promise<void> =>
-        fetchApi<void>( {
-            isApi   : false,
-            url     : `${ENV.ACADEMIC_SECTION}Sections/groupId/${groupId}`,
+        fetchApi<void>({
+            url     : `Sections/groupId/${groupId}`,
             method  : Method.DELETE
         });
 

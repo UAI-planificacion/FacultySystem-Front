@@ -37,7 +37,6 @@ import { fetchApi, Method } from '@/services/fetch';
 import { KEY_QUERYS }       from '@/consts/key-queries';
 
 import { errorToast, successToast } from '@/config/toast/toast.config';
-import { ENV }                      from '@/config/envs/env';
 
 
 interface UpdateGroupRequest {
@@ -78,8 +77,7 @@ export function SectionFormGroup({
 
     const updateGroupApi = async ( updatedGroup: UpdateGroupRequest & { groupId: string } ): Promise<any> =>
         fetchApi({
-            isApi   : false,
-            url     : `${ENV.ACADEMIC_SECTION}Sections/groupId/${updatedGroup.groupId}`,
+            url     : `Sections/groupId/${updatedGroup.groupId}`,
             method  : Method.PATCH,
             body    : {
                 code        : updatedGroup.code,
@@ -136,6 +134,7 @@ export function SectionFormGroup({
                 type    : 'manual',
                 message : 'Ya existe un grupo con este número y período'
             });
+
             form.setError( 'period', {
                 type    : 'manual',
                 message : 'Ya existe un grupo con este número y período'

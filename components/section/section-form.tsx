@@ -39,11 +39,9 @@ import { DaySelect }        from '@/components/shared/item-select/days-select';
 import { SectionGroup }     from '@/components/section/types';
 import { SectionInfo }      from '@/components/section/section-info';
 
-import { fetchApi, Method } from '@/services/fetch';
-import { KEY_QUERYS }       from '@/consts/key-queries';
-
+import { fetchApi, Method }         from '@/services/fetch';
+import { KEY_QUERYS }               from '@/consts/key-queries';
 import { errorToast, successToast } from '@/config/toast/toast.config';
-import { ENV }                      from '@/config/envs/env';
 
 import {
     CreateSectionRequest,
@@ -111,17 +109,14 @@ export function SectionForm({
         isError,
     } = useQuery({
         queryKey    : [ KEY_QUERYS.MODULES, 'dayModule' ],
-        queryFn     : () => fetchApi<DayModule[]>({
-            url         : `${ENV.ACADEMIC_SECTION}modules/dayModule`,
-            isApi       : false
-        }),
+        queryFn     : () => fetchApi<DayModule[]>({ url: 'modules/dayModule' }),
+        enabled     : isOpen
     });
 
 
     const createSectionApi = async ( newSection: CreateSectionRequest ): Promise<Section> =>
         fetchApi({
-            isApi   : false,
-            url     : `${ENV.ACADEMIC_SECTION}Sections`,
+            url     : 'Sections',
             method  : Method.POST,
             body    : newSection
         });
@@ -129,8 +124,7 @@ export function SectionForm({
 
     const updateSectionApi = async ( updatedSection: UpdateMassiveSectionRequest | UpdateSectionRequest ): Promise<Section> =>
         fetchApi({
-            isApi   : false,
-            url     : `${ENV.ACADEMIC_SECTION}Sections/${ ids ? `massive/${ids.join(',')}` :  (updatedSection  as UpdateSectionRequest).id }`,
+            url     : `Sections/${ ids ? `massive/${ids.join(',')}` :  (updatedSection  as UpdateSectionRequest).id }`,
             method  : Method.PATCH,
             body    : updatedSection
         });

@@ -21,12 +21,10 @@ import { SectionForm }          from "@/components/section/section-form";
 import { SectionGroup }         from "@/components/section/types";
 import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
 
-import { Section }          from "@/types/section.model";
-import { fetchApi, Method } from "@/services/fetch";
-import { KEY_QUERYS }       from "@/consts/key-queries";
-
+import { Section }                  from "@/types/section.model";
+import { fetchApi, Method }         from "@/services/fetch";
+import { KEY_QUERYS }               from "@/consts/key-queries";
 import { errorToast, successToast } from "@/config/toast/toast.config";
-import { ENV }                      from "@/config/envs/env";
 
 
 interface Props {
@@ -80,8 +78,7 @@ export function SectionDetailExpanded({
 
     const deleteSectionApi = async ( sectionId: string ): Promise<void> =>
         fetchApi<void>( {
-            isApi   : false,
-            url     : `${ENV.ACADEMIC_SECTION}Sections/${sectionId}`,
+            url     : `Sections/${sectionId}`,
             method  : Method.DELETE
         });
 
