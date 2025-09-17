@@ -11,6 +11,9 @@ import {
 import { Day, Module }  from "@/types/request";
 import { CheckIcon }    from "@/icons/Check";
 import { NoCheckIcon }  from "@/icons/NoCheck";
+import { useQuery }     from "@tanstack/react-query";
+import { KEY_QUERYS }   from "@/consts/key-queries";
+import { fetchApi }     from "@/services/fetch";
 
 
 interface RequestDetailModule {
@@ -22,18 +25,38 @@ interface RequestDetailModule {
 
 interface RequestDetailModuleDaysProps {
     requestDetailModule : RequestDetailModule[];
-    days                : Day[];
-    modules             : Module[];
     onModuleToggle      : ( day: string, moduleId: string, isChecked: boolean ) => void;
+    enabled             : boolean;
 }
 
 
 export function RequestDetailModuleDays({
     requestDetailModule,
-    days,
-    modules,
-    onModuleToggle
+    onModuleToggle,
+    enabled
 }: RequestDetailModuleDaysProps ): JSX.Element {
+
+    const {
+        data        : days = [],
+        isLoading   : isLoadingDays,
+        isError     : isErrorDays,
+    } = useQuery({
+        queryKey    : [ KEY_QUERYS.DAYS ],
+        queryFn     : () => fetchApi<Day[]>({ url: 'days' }),
+        enabled
+    });
+
+    const {
+		data        : modules = [],
+		isLoading   : isLoadingModules,
+		isError     : isErrorModules,
+	} = useQuery({
+		queryKey    : [KEY_QUERYS.MODULES],
+        queryFn     : () => fetchApi<Module[]>({ url: 'modules/original' }),
+		enabled,
+	});
+
+
     const [animationKeys, setAnimationKeys] = useState<Record<string, number>>({});
 
 
