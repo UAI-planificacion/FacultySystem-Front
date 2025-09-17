@@ -1,6 +1,6 @@
 "use client"
 
-import { JSX, useEffect, useMemo, useState } from "react";
+import { JSX, useEffect, useState } from "react";
 
 import { z }                from "zod";
 import { zodResolver }      from "@hookform/resolvers/zod";
@@ -46,7 +46,6 @@ import {
 import { Button }                   from "@/components/ui/button";
 import { Input }                    from "@/components/ui/input";
 import { Switch }                   from "@/components/ui/switch";
-import { MultiSelectCombobox }      from "@/components/shared/Combobox";
 import { Badge }                    from "@/components/ui/badge";
 import { ProfessorForm }            from "@/components/professor/professor-form";
 import { CommentSection }           from "@/components/comment/comment-section";
@@ -55,12 +54,11 @@ import { Checkbox }                 from "@/components/ui/checkbox";
 import { Textarea }                 from "@/components/ui/textarea";
 import { GradeForm }                from "@/components/grade/grade-form";
 import { CostCenterSelect }         from "@/components/shared/item-select/cost-center";
+import { ProfessorSelect }          from "@/components/shared/item-select/professor-select";
+import { SpaceSelect }              from "@/components/shared/item-select/space-select";
+import { SizeSelect }               from "@/components/shared/item-select/size-select";
+import { SpaceTypeSelect }          from "@/components/shared/item-select/space-type-select";
 
-import {
-    SizeResponse,
-    Day,
-    Module,
-}                           from "@/types/request";
 import {
     type RequestDetail,
     UpdateRequestDetail,
@@ -69,11 +67,9 @@ import {
     Building,
     CreateRequestDetail
 }                           from "@/types/request-detail.model";
-import { cn, getSpaceType } from "@/lib/utils";
+import { cn }               from "@/lib/utils";
 import { KEY_QUERYS }       from "@/consts/key-queries";
 import { Method, fetchApi } from "@/services/fetch";
-import { Professor }        from "@/types/professor";
-import { useSpace }         from "@/hooks/use-space";
 import { Grade }            from "@/types/grade";
 import { useSession }       from "@/hooks/use-session";
 
@@ -81,7 +77,6 @@ import {
     errorToast,
     successToast
 }               from "@/config/toast/toast.config";
-import { ENV }  from "@/config/envs/env";
 
 
 const numberOrNull = z.union([
@@ -135,12 +130,6 @@ interface RequestDetailFormProps {
     isOpen              : boolean;
     onClose             : () => void;
     requestId           : string;
-    professors          : Professor[];
-    isLoadingProfessors : boolean;
-    isErrorProfessors   : boolean;
-    modules             : Module[];
-    isLoadingModules    : boolean;
-    isErrorModules      : boolean;
 }
 
 
@@ -189,15 +178,7 @@ export function RequestDetailForm({
     onClose,
     isOpen,
     requestId,
-    professors,
-    isLoadingProfessors,
-    isErrorProfessors,
-    modules,
-    isLoadingModules,
-    isErrorModules
 }: RequestDetailFormProps ): JSX.Element {
-    console.log("🚀 ~ file: request-detail-form.tsx:187 ~ requestDetail:", requestDetail)
-
     const [tab, setTab]                             = useState<Tab>( 'form' );
     const queryClient                               = useQueryClient();
     const [typeSpace, setTypeSpace]                 = useState<boolean[]>([ false, false, false ]);
@@ -209,12 +190,6 @@ export function RequestDetailForm({
     useEffect(() => {
         setTypeSpace( getTypeSpace( requestDetail ));
     },[requestDetail]);
-
-
-    const {
-        spaces,
-        isLoading: isLoadingSpaces,
-    } = useSpace({ enabled: true });
 
 
     const createRequestDetailApi = async ( newRequestDetail: CreateRequestDetail ): Promise<RequestDetail> =>
@@ -258,26 +233,6 @@ export function RequestDetailForm({
 
 
     const {
-        data        : sizes,
-        isLoading   : isLoadingSizes,
-        isError     : isErrorSizes,
-    } = useQuery({
-        queryKey    : [ KEY_QUERYS.SIZE ],
-        queryFn     : () => fetchApi<SizeResponse[]>({ url: `${ENV.ACADEMIC_SECTION}sizes`, isApi: false }),
-    });
-
-
-    const {
-        data        : days,
-        isLoading   : isLoadingDays,
-        isError     : isErrorDays,
-    } = useQuery({
-        queryKey    : [ KEY_QUERYS.DAYS ],
-        queryFn     : () => fetchApi<Day[]>({ url: `${ENV.ACADEMIC_SECTION}days`, isApi: false }),
-    });
-
-
-    const {
         data        : grades,
         isLoading   : isLoadingGrades,
         isError     : isErrorGrades,
@@ -285,15 +240,6 @@ export function RequestDetailForm({
         queryKey    : [ KEY_QUERYS.GRADES ],
         queryFn     : () => fetchApi<Grade[]>({ url: 'grades' }),
     });
-
-
-    const memoizedProfessorOptions = useMemo(() => {
-        return professors?.map( professor => ({
-            id      : professor.id,
-            label   : `${professor.id}-${professor.name}`,
-            value   : professor.id,
-        })) ?? [];
-    }, [professors]);
 
 
     const form = useForm<RequestDetailFormValues>({
@@ -376,7 +322,7 @@ export function RequestDetailForm({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                     <div className=" flex justify-between items-center gap-2">
                         <div className="space-y-1">
@@ -530,47 +476,28 @@ export function RequestDetailForm({
                                         name    = "professorId"
                                         render  = {({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Profesor</FormLabel>
-
-                                                { isErrorProfessors && !isLoadingProfessors
-                                                    ? <>
-                                                    <FormControl>
-                                                        <Input
-                                                            {...field}
-                                                            placeholder = "Ej: Juan Pérez"
-                                                            value       = { field.value || '' }
-                                                            onChange    = {( e: React.ChangeEvent<HTMLInputElement> ) => field.onChange( e.target.value )}
+                                                <div className="flex items-end gap-2">
+                                                    <div className="w-full">
+                                                        <ProfessorSelect
+                                                            label               = "Profesor"
+                                                            multiple            = { false }
+                                                            placeholder         = "Seleccionar profesor"
+                                                            defaultValues       = { field.value || '' }
+                                                            onSelectionChange   = {( value ) => field.onChange( value === undefined ? null : value )}
+                                                            enabled             = { isOpen }
                                                         />
-                                                    </FormControl>
-
-                                                    <FormDescription>
-                                                        Error al cargar los profesores. Ingrese el tamaño manualmente.
-                                                    </FormDescription>
-                                                </>
-                                                : (
-                                                    <div className="flex gap-2 items-center">
-                                                        <div className="flex-1 min-w-0">
-                                                            <MultiSelectCombobox
-                                                                multiple            = { false }
-                                                                placeholder         = "Seleccionar profesor"
-                                                                defaultValues       = { field.value || '' }
-                                                                onSelectionChange   = {( value ) => field.onChange( value === undefined ? null : value )}
-                                                                options             = { memoizedProfessorOptions }
-                                                                isLoading           = { isLoadingProfessors }
-                                                            />
-                                                        </div>
-
-                                                        <Button
-                                                            size        = {"icon"}
-                                                            type        = "button"
-                                                            variant     = {"outline"}
-                                                            className   = "flex-shrink-0"
-                                                            onClick     = {() => setIsOpenProfessor( true )}
-                                                        >
-                                                            <Plus className="w-5 h-5"/>
-                                                        </Button>
                                                     </div>
-                                                )}
+
+                                                    <Button
+                                                        size        = "icon"
+                                                        type        = "button"
+                                                        variant     = "outline"
+                                                        className   = "flex-shrink-0"
+                                                        onClick     = {() => setIsOpenProfessor( true )}
+                                                    >
+                                                        <Plus className="w-5 h-5"/>
+                                                    </Button>
+                                                </div>
 
                                                 <FormMessage />
                                             </FormItem>
@@ -596,15 +523,15 @@ export function RequestDetailForm({
                                                         onCheckedChange	= {( checked ) => setTypeSpace( [ checked as boolean, false, false ] )}
                                                     />
 
-                                                    <MultiSelectCombobox
-                                                        multiple            = { false }
-                                                        placeholder         = "Seleccionar"
-                                                        defaultValues       = { field.value || '' }
-                                                        onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
-                                                        options             = { spaces }
-                                                        isLoading           = { isLoadingSpaces }
-                                                        disabled            = { !typeSpace[0] }
-                                                    />
+                                                    <div className="w-full">
+                                                        <SpaceSelect
+                                                            multiple            = { false }
+                                                            placeholder         = "Seleccionar"
+                                                            defaultValues       = { field.value || '' }
+                                                            onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
+                                                            disabled            = { !typeSpace[0] }
+                                                        />
+                                                    </div>
                                                 </div>
 
                                                 <FormMessage />
@@ -628,27 +555,15 @@ export function RequestDetailForm({
                                                         onCheckedChange	= {( checked ) => setTypeSpace( [ false, checked as boolean, false ] )}
                                                     />
 
-                                                    <Select
-                                                        defaultValue    = { field.value ?? 'Sin especificar' }
-                                                        onValueChange   = {( value ) => field.onChange( value === "Sin especificar" ? null : value )}
-                                                        disabled        = { !typeSpace[1] }
-                                                    >
-                                                        <FormControl>
-                                                            <SelectTrigger>
-                                                                <SelectValue placeholder="Seleccionar tipo" />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-
-                                                        <SelectContent>
-                                                            <SelectItem value="Sin especificar">Sin especificar</SelectItem>
-
-                                                            {Object.values( SpaceType ).map( type => (
-                                                                <SelectItem key={type} value={type}>
-                                                                    { getSpaceType( type )}
-                                                                </SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
+                                                    <div className="w-full">
+                                                        <SpaceTypeSelect
+                                                            multiple            = { false }
+                                                            placeholder         = "Seleccionar tipo"
+                                                            defaultValues       = { field.value || '' }
+                                                            onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
+                                                            disabled            = { !typeSpace[1] }
+                                                        />
+                                                    </div>
                                                 </div>
 
                                                 <FormMessage />
@@ -666,51 +581,23 @@ export function RequestDetailForm({
                                                     Tamaño del espacio
                                                 </FormLabel>
 
-                                                {isErrorSizes ? (
-                                                    <>
-                                                        <FormControl>
-                                                            <Input
-                                                                placeholder = "Ej: XS (< 30)"
-                                                                value       = { field.value || '' }
-                                                                onChange    = {( e ) => field.onChange( e.target.value || null )}
-                                                            />
-                                                        </FormControl>
+                                                <div className="flex gap-2 items-center">
+                                                    <Checkbox
+                                                        className		= "cursor-default rounded-full p-[0.6rem] flex justify-center items-center"
+                                                        checked			= { typeSpace[2] }
+                                                        onCheckedChange	= {( checked ) => setTypeSpace([ false, false, checked as boolean ])}
+                                                    />
 
-                                                        <FormDescription>
-                                                            Error al cargar los tamaños. Ingrese el tamaño manualmente.
-                                                        </FormDescription>
-                                                    </>
-                                                ) : (
-                                                    <div className="flex gap-2 items-center">
-                                                        <Checkbox
-                                                            className		= "cursor-default rounded-full p-[0.6rem] flex justify-center items-center"
-                                                            checked			= { typeSpace[2] }
-                                                            onCheckedChange	= {( checked ) => setTypeSpace([ false, false, checked as boolean ])}
+                                                    <div className="w-full">
+                                                        <SizeSelect
+                                                            onSelectionChange   = {( value ) => field.onChange( value === "Sin especificar" ? null : value )}
+                                                            defaultValues    = { field.value || 'Sin especificar' }
+                                                            disabled        = { !typeSpace[2] }
+                                                            multiple        = { false }
+                                                            placeholder="Seleccionar tamaño"
                                                         />
-
-                                                        <Select
-                                                            onValueChange   = {( value ) => field.onChange( value === "Sin especificar" ? null : value )}
-                                                            defaultValue    = { field.value || 'Sin especificar' }
-                                                            disabled        = { isLoadingSizes || !typeSpace[2] }
-                                                        >
-                                                            <FormControl>
-                                                                <SelectTrigger>
-                                                                    <SelectValue placeholder="Seleccionar tamaño" />
-                                                                </SelectTrigger>
-                                                            </FormControl>
-
-                                                            <SelectContent>
-                                                                <SelectItem value="Sin especificar">Sin especificar</SelectItem>
-
-                                                                {sizes?.map( size => (
-                                                                    <SelectItem key={size.id} value={size.id}>
-                                                                        {size.id} ({size.detail})
-                                                                    </SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
                                                     </div>
-                                                )}
+                                                </div>
 
                                                 <FormMessage />
                                             </FormItem>
@@ -763,8 +650,7 @@ export function RequestDetailForm({
                                 {/* Tabla de módulos */}
                                 <RequestDetailModuleDays
                                     requestDetailModule = { form.watch( 'moduleDays' )}
-                                    days                = { days || [] }
-                                    modules             = { modules }
+                                    enabled             = { isOpen }
                                     onModuleToggle      = { handleModuleToggle }
                                 />
 
