@@ -14,7 +14,7 @@ import { Button }               from "@/components/ui/button";
 import { Input }                from "@/components/ui/input";
 import { SessionButton }        from "@/components/section/session-button";
 import { PeriodSelect }         from "@/components/shared/item-select/period-select";
-import { Props, sessionColors } from "./section.config";
+import { Props, sessionColors } from "@/components/section/section.config";
 
 import { SectionData, Session } from "@/types/section.model";
 
