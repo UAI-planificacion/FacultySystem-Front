@@ -53,6 +53,10 @@ export interface SubjectRequest {
     name    : string;
 }
 
+export interface OfferRequest {
+    id : string
+}
+
 
 export interface Request {
     id              : string;
@@ -65,7 +69,7 @@ export interface Request {
     createdAt       : Date;
     staffCreate     : StaffRequest;
     staffUpdate     : StaffRequest | null;
-    subject         : SubjectRequest;
+    offer           : OfferRequest;
     totalDetails    : number;
     facultyId       : string;
 }
