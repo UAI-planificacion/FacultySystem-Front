@@ -17,9 +17,9 @@ export interface BasicOffer {
     laboratory      : number;
     subjectId       : string;
     spaceType       : SpaceType | null;
-    spaceSize       : Size      | null;
+    spaceSizeId     : Size      | null;
     periodId        : string;
-    costCenter      : string | null;
+    costCenterId    : string;
 }
 
 
