@@ -34,7 +34,6 @@ import { SectionGroup }         from '@/components/section/types';
 import { Section, Session } from '@/types/section.model';
 import { KEY_QUERYS }       from '@/consts/key-queries';
 import { fetchApi }         from '@/services/fetch';
-import { ENV }              from '@/config/envs/env';
 
 
 interface Props {
@@ -49,6 +48,21 @@ const stateOptions = [
     { label: 'Abiertas', value: 'open' },
     { label: 'Cerradas', value: 'closed' }
 ];
+
+
+const getDayAbbreviation = ( day: number ): string => {
+    const dayMap: { [key: number]: string } = {
+        1: 'L',
+        2: 'M',
+        3: 'X',
+        4: 'J',
+        5: 'V',
+        6: 'S',
+        7: 'D'
+    };
+
+    return dayMap[day] || 'N/A';
+};
 
 
 export function SectionMain({
@@ -95,10 +109,7 @@ export function SectionMain({
     } = useQuery<Section[]>({
         enabled,
         queryKey: [ KEY_QUERYS.SECCTIONS ],
-        queryFn : () => fetchApi({
-            isApi   : false,
-            url     : `${ENV.ACADEMIC_SECTION}Sections`,
-        }),
+        queryFn : () => fetchApi({ url     : 'Sections' }),
     });
 
 
@@ -109,21 +120,6 @@ export function SectionMain({
 
         return codes.sort();
     }, [ sectionsData ]);
-
-
-    const getDayAbbreviation = ( day: number ): string => {
-        const dayMap: { [key: number]: string } = {
-            1: 'L',
-            2: 'M',
-            3: 'X',
-            4: 'J',
-            5: 'V',
-            6: 'S',
-            7: 'D'
-        };
-
-        return dayMap[day] || 'N/A';
-    };
 
 
     const groupedSections = useMemo(() => {
