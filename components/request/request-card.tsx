@@ -72,7 +72,7 @@ export function RequestCard({
                         <BookOpen className="h-4 w-4" />
 
                         <span className="font-medium max-w-full truncate overflow-hidden whitespace-nowrap">
-                            { request.subject.name }
+                            { request.offer.id }
                         </span>
                     </div>
 
@@ -111,14 +111,14 @@ export function RequestCard({
                 )}
 
                 <div className="flex items-center gap-2 justify-end">
-                    <Button
+                    {/* <Button
                         size        = "sm"
                         onClick     = { () => router.push( `/sections?subject=${request.subject.id}&period=${request.periodId}` )}
                         className   = "flex items-center"
                         variant     = "outline"
                     >
                         <Grid2x2 className="h-4 w-4" />
-                    </Button>
+                    </Button> */}
 
                     <ActionButton
                         item        = { request }
