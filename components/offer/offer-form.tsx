@@ -1,5 +1,8 @@
 "use client"
 
+import { SessionButton }    from "@/components/section/session-button";
+import { Session }          from "@/types/section.model";
+
 import { JSX, useEffect } from "react"
 
 import {
@@ -10,11 +13,6 @@ import { toast }        from "sonner";
 import { zodResolver }  from "@hookform/resolvers/zod";
 import { useForm }      from "react-hook-form";
 import * as z           from "zod";
-import {
-    Calendar as CalendarIcon,
-    Plus,
-    Trash
-}                       from "lucide-react";
 
 import {
     Dialog,
@@ -39,49 +37,33 @@ import {
     SelectTrigger,
     SelectValue
 }                           from "@/components/ui/select";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger
-}                           from "@/components/ui/popover";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow
-}                           from "@/components/ui/table";
-import { Input }            from "@/components/ui/input";
 import { Button }           from "@/components/ui/button";
 import { Switch }           from "@/components/ui/switch";
-import { Calendar }         from "@/components/ui/calendar";
-import { ScrollArea }       from "@/components/ui/scroll-area";
 import { PeriodSelect }     from "@/components/shared/item-select/period-select";
 import { SizeSelect }       from "@/components/shared/item-select/size-select";
 import { SubjectSelect }    from "@/components/shared/item-select/subject-select";
 import { CostCenterSelect } from "@/components/shared/item-select/cost-center";
+import { OfferDates }       from "@/components/offer/offer-dates";
 
 import {
     Building,
     Size,
     SpaceType
-}                           from "@/types/request-detail.model";
+}                                   from "@/types/request-detail.model";
 import {
     CreateOffer,
     Offer,
     UpdateOffer
-}                           from "@/types/offer.model";
-import { KEY_QUERYS }       from "@/consts/key-queries";
-import { Method, fetchApi } from "@/services/fetch";
-import { cn, getSpaceType } from "@/lib/utils";
-
+}                                   from "@/types/offer.model";
+import { KEY_QUERYS }               from "@/consts/key-queries";
+import { Method, fetchApi }         from "@/services/fetch";
+import { getSpaceType }             from "@/lib/utils";
 import { errorToast, successToast } from "@/config/toast/toast.config";
 
 
 // Form schema with Zod validation
 const formSchema = z.object({
-    startDate       : z.array( z.date() ).min( 1, "Al menos una fecha de inicio es requerida" ),
+    startDate       : z.array( z.date() ).min( 1, "Al menos una fecha es requerida" ),
     endDate         : z.array( z.date() ).min( 1, "Al menos una fecha de fin es requerida" ),
     building        : z.nativeEnum( Building ).nullable(),
     isEnglish       : z.boolean(),
@@ -89,19 +71,19 @@ const formSchema = z.object({
     lecture         : z.number().min( 0, "La conferencia debe ser mayor o igual a 0" ),
     tutoringSession : z.number().min( 0, "La sesión tutorial debe ser mayor o igual a 0" ),
     laboratory      : z.number().min( 0, "El laboratorio debe ser mayor o igual a 0" ),
-    subjectId       : z.string().min( 1, "La materia es requerida" ),
+    subjectId       : z.string().min( 1, "La asignatura es requerida" ),
     spaceType       : z.nativeEnum( SpaceType ).nullable(),
-    spaceSize       : z.nativeEnum( Size ).nullable(),
+    spaceSizeId     : z.nativeEnum( Size ).nullable(),
     periodId        : z.string().min( 1, "El período es requerido" ),
-    costCenter      : z.string().nullable(),
-}).refine(
-    ( data ) => {
-        const { workshop, lecture, tutoringSession, laboratory } = data;
-        return workshop > 0 || lecture > 0 || tutoringSession > 0 || laboratory > 0;
-    },
+    costCenterId    : z.string().min( 1, 'El centro de costo es requerido' ),
+}).refine(( data ) => {
+    const { workshop, lecture, tutoringSession, laboratory } = data;
+
+    return workshop > 0 || lecture > 0 || tutoringSession > 0 || laboratory > 0;
+},
     {
-        message : "Al menos uno de los campos (Taller, Cátedra, Ayudantía o Laboratorio) debe ser mayor que 0",
-        path    : [ "workshop" ], // This will show the error on the workshop field
+        message : "Al menos una sesión debe ser mayor que 0",
+        path    : [ "workshop" ],
     }
 );
 
@@ -140,15 +122,15 @@ function defaultOfferValues( offer?: Offer ): Partial<OfferFormValues> {
             laboratory      : 0,
             subjectId       : '',
             spaceType       : null,
-            spaceSize       : null,
+            spaceSizeId     : null,
             periodId        : '',
-            costCenter      : null,
+            costCenterId    : '',
         };
     }
 
     return {
-        startDate       : offer.startDate,
-        endDate         : offer.endDate,
+        startDate       : offer.startDate.map( date => date instanceof Date ? date : new Date( date )),
+        endDate         : offer.endDate.map( date => date instanceof Date ? date : new Date( date )),
         building        : offer.building,
         isEnglish       : offer.isEnglish,
         workshop        : offer.workshop,
@@ -157,9 +139,9 @@ function defaultOfferValues( offer?: Offer ): Partial<OfferFormValues> {
         laboratory      : offer.laboratory,
         subjectId       : offer.subjectId,
         spaceType       : offer.spaceType,
-        spaceSize       : offer.spaceSize,
+        spaceSizeId     : offer.spaceSizeId,
         periodId        : offer.periodId,
-        costCenter      : offer.costCenter,
+        costCenterId    : offer.costCenterId,
     };
 }
 
@@ -186,6 +168,20 @@ const updateOfferApi = async ( updatedOffer: UpdateOffer ): Promise<Offer> =>
     });
 
 
+/**
+ * Get form field name for session type
+ */
+function getSessionFieldName( session: Session ): keyof OfferFormValues {
+    switch ( session ) {
+        case Session.C: return 'lecture';
+        case Session.A: return 'tutoringSession';
+        case Session.T: return 'workshop';
+        case Session.L: return 'laboratory';
+        default: return 'lecture';
+    }
+}
+
+
 export function OfferForm({
     offer,
     isOpen,
@@ -202,9 +198,44 @@ export function OfferForm({
     });
 
 
-    const { watch, setValue } = form;
-    const dates = watch( 'startDate' )  || [];
-    const endDates = watch( 'endDate' ) || [];
+    /**
+     * Update session count by delta
+     */
+    function updateSessionCount( sectionId: string, session: Session, delta: number ): void {
+        const currentValue = form.getValues( getSessionFieldName( session ));
+        const newValue = Math.max( 0, (Number(currentValue) ?? 0) + delta );
+        form.setValue( getSessionFieldName( session ), newValue );
+    }
+
+
+    /**
+     * Set session count to specific value
+     */
+    function setSessionCount( sectionId: string, session: Session, value: string ): void {
+        const numValue = parseInt( value ) || 0;
+        form.setValue( getSessionFieldName( session ), Math.max( 0, numValue ));
+    }
+
+
+    /**
+     * Create mock section data for SessionButton
+     */
+    function createMockSection(): any {
+        const watchedValues = form.watch();
+        return {
+            id              : 'offer-form',
+            workshop        : watchedValues.workshop        || 0,
+            lecture         : watchedValues.lecture         || 0,
+            tutoringSession : watchedValues.tutoringSession || 0,
+            laboratory      : watchedValues.laboratory      || 0,
+            sessionCounts   : {
+                [Session.C]     : watchedValues.lecture         || 0,
+                [Session.A]     : watchedValues.tutoringSession || 0,
+                [Session.T]     : watchedValues.workshop        || 0,
+                [Session.L]     : watchedValues.laboratory      || 0,
+            }
+        };
+    }
 
 
     /**
@@ -261,52 +292,6 @@ export function OfferForm({
     }
 
 
-    /**
-     * Add a new date pair
-     */
-    function addDatePair(): void {
-        const newStartDates = [ ...dates, new Date() ];
-        const newEndDates = [ ...endDates, new Date() ];
-        setValue( 'startDate', newStartDates );
-        setValue( 'endDate', newEndDates );
-    }
-
-
-    /**
-     * Remove a date pair
-     */
-    function removeDatePair( index: number ): void {
-        const newStartDates = dates.filter( ( _, i ) => i !== index );
-        const newEndDates = endDates.filter( ( _, i ) => i !== index );
-        setValue( 'startDate', newStartDates );
-        setValue( 'endDate', newEndDates );
-    }
-
-
-    /**
-     * Update start date at specific index
-     */
-    function updateStartDate( index: number, date: Date | undefined ): void {
-        if ( !date ) return;
-
-        const newDates = [ ...dates ];
-        newDates[ index ] = date;
-        setValue( 'startDate', newDates );
-    }
-
-
-    /**
-     * Update end date at specific index
-     */
-    function updateEndDate( index: number, date: Date | undefined ): void {
-        if ( !date ) return;
-
-        const newDates = [ ...endDates ];
-        newDates[ index ] = date;
-        setValue( 'endDate', newDates );
-    }
-
-
     // Reset form when offer changes
     useEffect(() => {
         form.reset( defaultOfferValues( offer ));
@@ -315,7 +300,7 @@ export function OfferForm({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>
                         { offer ? 'Editar Oferta' : 'Crear Nueva Oferta' }
@@ -331,8 +316,25 @@ export function OfferForm({
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit( handleSubmit )} className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {/* Subject Selection */}
+                        {/* Building and Space Section */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <FormField
+                                control = { form.control }
+                                name    = "costCenterId"
+                                render  = {({ field }) => (
+                                    <FormItem>
+                                        <CostCenterSelect
+                                            label               = "Centro de Costos"
+                                            defaultValues       = { field.value || '' }
+                                            multiple            = { false }
+                                            onSelectionChange   = {( values ) => field.onChange( values || null )}
+                                        />
+
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
                             <FormField
                                 control = { form.control }
                                 name    = "subjectId"
@@ -368,114 +370,6 @@ export function OfferForm({
                                 )}
                             />
 
-                            {/* Cost Center Selection */}
-                            <FormField
-                                control = { form.control }
-                                name    = "costCenter"
-                                render  = {({ field }) => (
-                                    <FormItem>
-                                        <CostCenterSelect
-                                            label               = "Centro de Costos"
-                                            defaultValues       = { field.value || '' }
-                                            multiple            = { false }
-                                            onSelectionChange   = {( values ) => field.onChange( values || null )}
-                                        />
-
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-
-                        {/* Capacity and Numbers Section */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <FormField
-                                control = { form.control }
-                                name    = "workshop"
-                                render  = {({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Taller</FormLabel>
-
-                                        <FormControl>
-                                            <Input
-                                                type        = "number"
-                                                placeholder = "Taller"
-                                                {...field}
-                                                onChange    = {( e ) => field.onChange( parseInt( e.target.value ) || 0 )}
-                                            />
-                                        </FormControl>
-
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control = { form.control }
-                                name    = "lecture"
-                                render  = {({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Cátedra</FormLabel>
-
-                                        <FormControl>
-                                            <Input
-                                                type        = "number"
-                                                placeholder = "Cátedra"
-                                                {...field}
-                                                onChange    = {( e ) => field.onChange( parseInt( e.target.value ) || 0 )}
-                                            />
-                                        </FormControl>
-
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control = { form.control }
-                                name    = "tutoringSession"
-                                render  = {({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Ayudantía</FormLabel>
-
-                                        <FormControl>
-                                            <Input
-                                                type        = "number"
-                                                placeholder = "Ayudantía"
-                                                {...field}
-                                                onChange    = {( e ) => field.onChange( parseInt( e.target.value ) || 0 )}
-                                            />
-                                        </FormControl>
-
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control = { form.control }
-                                name    = "laboratory"
-                                render  = {({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Laboratorio</FormLabel>
-
-                                        <FormControl>
-                                            <Input
-                                                type        = "number"
-                                                placeholder = "Laboratorio"
-                                                {...field}
-                                                onChange    = {( e ) => field.onChange( parseInt( e.target.value ) || 0 )}
-                                            />
-                                        </FormControl>
-
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-
-                        {/* Building and Space Section */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <FormField
                                 control = { form.control }
                                 name    = "building"
@@ -543,7 +437,7 @@ export function OfferForm({
 
                             <FormField
                                 control = { form.control }
-                                name    = "spaceSize"
+                                name    = "spaceSizeId"
                                 render  = {({ field }) => (
                                     <FormItem>
                                         <SizeSelect
@@ -559,6 +453,44 @@ export function OfferForm({
                             />
                         </div>
 
+                        <div className="space-y-4">
+                            {/* <h3 className="text-lg font-medium">Sesiones</h3> */}
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <SessionButton
+                                    session             = { Session.C }
+                                    updateSessionCount  = { updateSessionCount }
+                                    setSessionCount     = { setSessionCount }
+                                    section             = { createMockSection() }
+                                    showLabel           = { true }
+                                />
+
+                                <SessionButton
+                                    session             = { Session.T }
+                                    updateSessionCount  = { updateSessionCount }
+                                    setSessionCount     = { setSessionCount }
+                                    section             = { createMockSection() }
+                                    showLabel           = { true }
+                                />
+
+                                <SessionButton
+                                    session             = { Session.A }
+                                    updateSessionCount  = { updateSessionCount }
+                                    setSessionCount     = { setSessionCount }
+                                    section             = { createMockSection() }
+                                    showLabel           = { true }
+                                />
+
+                                <SessionButton
+                                    session             = { Session.L }
+                                    updateSessionCount  = { updateSessionCount }
+                                    setSessionCount     = { setSessionCount }
+                                    section             = { createMockSection() }
+                                    showLabel           = { true }
+                                />
+                            </div>
+                        </div>
+
                         {/* English Switch */}
                         <FormField
                             control = { form.control }
@@ -569,10 +501,12 @@ export function OfferForm({
                                         <FormLabel className="text-base">
                                             Materia en Inglés
                                         </FormLabel>
+
                                         <FormDescription>
                                             Indica si la materia se imparte en inglés
                                         </FormDescription>
                                     </div>
+
                                     <FormControl>
                                         <Switch
                                             checked         = { field.value }
@@ -583,100 +517,14 @@ export function OfferForm({
                             )}
                         />
 
-                        {/* Dates Section */}
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <FormLabel className="text-base font-semibold">
-                                    Fechas de la Oferta *
-                                </FormLabel>
-
-                                <Button
-                                    type        = "button"
-                                    onClick     = { addDatePair }
-                                    className   = "gap-2"
-                                    size        = "sm"
-                                >
-                                    <Plus className="h-4 w-4" />
-                                    Agregar Fecha
-                                </Button>
-                            </div>
-
-                            {dates.length === 0 ? (
-                                <div className="text-center py-8 text-muted-foreground h-72">
-                                    No hay fechas configuradas. Haz clic en "Agregar Fecha" para comenzar.
-                                </div>
-                            ) : (
-                                <ScrollArea className="h-72">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Fecha de Inicio</TableHead>
-                                                <TableHead>Fecha de Fin</TableHead>
-                                                <TableHead className="w-[50px]">Acciones</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {dates.map( ( dateItem, index ) => (
-                                                <TableRow key={index}>
-                                                    <TableCell>
-                                                        <Popover>
-                                                            <PopoverTrigger asChild>
-                                                                <Button
-                                                                    variant     = "outline"
-                                                                    className   = "w-full justify-start text-left font-normal gap-2"
-                                                                >
-                                                                    <CalendarIcon className="h-4 w-4" />
-                                                                    {dateItem ? dateItem.toLocaleDateString() : "Seleccionar fecha"}
-                                                                </Button>
-                                                            </PopoverTrigger>
-                                                            <PopoverContent className="w-auto p-0">
-                                                                <Calendar
-                                                                    mode        = "single"
-                                                                    selected    = { dateItem }
-                                                                    onSelect    = {( selectedDate ) => updateStartDate( index, selectedDate )}
-                                                                    disabled    = {( date ) => date < new Date() }
-                                                                />
-                                                            </PopoverContent>
-                                                        </Popover>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Popover>
-                                                            <PopoverTrigger asChild>
-                                                                <Button
-                                                                    variant     = "outline"
-                                                                    className   = "w-full justify-start text-left font-normal gap-2"
-                                                                >
-                                                                    <CalendarIcon className="h-4 w-4" />
-                                                                    {endDates[index] ? endDates[index].toLocaleDateString() : "Seleccionar fecha"}
-                                                                </Button>
-                                                            </PopoverTrigger>
-                                                            <PopoverContent className="w-auto p-0">
-                                                                <Calendar
-                                                                    mode        = "single"
-                                                                    selected    = { endDates[index] }
-                                                                    onSelect    = {( selectedDate ) => updateEndDate( index, selectedDate )}
-                                                                    disabled    = {( date ) => date < dateItem || date < new Date() }
-                                                                />
-                                                            </PopoverContent>
-                                                        </Popover>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Button
-                                                            type    = "button"
-                                                            variant = "destructive"
-                                                            size    = "icon"
-                                                            onClick = {() => removeDatePair( index )}
-                                                        >
-                                                            <Trash className="h-4 w-4" />
-                                                        </Button>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </ScrollArea>
+                        {/* Start Dates Section */}
+                        <FormField
+                            control = { form.control }
+                            name    = "startDate"
+                            render  = {({ field, fieldState }) => (
+                                <OfferDates form={form} />
                             )}
-                        </div>
+                        />
 
                         {/* Form Actions */}
                         <div className="flex justify-between gap-2 pt-4 border-t">
