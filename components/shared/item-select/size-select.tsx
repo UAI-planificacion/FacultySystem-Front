@@ -6,27 +6,22 @@ import { useQuery } from "@tanstack/react-query";
 
 import { MultiSelectCombobox }  from "@/components/shared/Combobox";
 import { Label }                from "@/components/ui/label";
-import { KEY_QUERYS }           from "@/consts/key-queries";
-import { fetchApi }             from "@/services/fetch";
-import { SizeResponse }         from "@/types/request";
-import { ENV }                  from "@/config/envs/env";
+import { Input }                from "@/components/ui/input";
+import { Props }                from "@/components/shared/item-select/select-props";
 
-
-interface Props {
-    defaultValues       : string | string[] | undefined;
-    onSelectionChange?  : ( selectedValues: string[] | string | undefined ) => void;
-    multiple?           : boolean;
-    label?              : string;
-    placeholder?        : string;
-}
+import { KEY_QUERYS }   from "@/consts/key-queries";
+import { fetchApi }     from "@/services/fetch";
+import { SizeResponse } from "@/types/request";
 
 
 export function SizeSelect({
     defaultValues,
     onSelectionChange,
-    multiple    = true,
     label,
-    placeholder = 'Seleccionar Tamaños'
+    multiple    = true,
+    placeholder = 'Seleccionar Tamaños',
+    enabled     = true,
+    disabled    = false
 } : Props ): JSX.Element {
     const {
         data,
@@ -34,10 +29,8 @@ export function SizeSelect({
         isError,
     } = useQuery({
         queryKey    : [ KEY_QUERYS.SIZE ],
-        queryFn     : () => fetchApi<SizeResponse[]>({
-            url         : `${ENV.ACADEMIC_SECTION}sizes`,
-            isApi       : false
-        }),
+        queryFn     : () => fetchApi<SizeResponse[]>({ url: 'sizes' }),
+        enabled
     });
 
 
@@ -54,18 +47,28 @@ export function SizeSelect({
         <div className="space-y-2">
             { label && <Label htmlFor="size">{ label }</Label> }
 
-            <MultiSelectCombobox
-                options             = { memoizedSizes }
-                defaultValues       = { defaultValues }
-                onSelectionChange   = { onSelectionChange }
-                placeholder         = { placeholder }
-                disabled            = { isLoading }
-                multiple            = {  multiple }
-            />
+            { isError ? (
+                <div className="space-y-1">
+                    <Input
+                        placeholder = "ID del tamaño"
+                        onChange    = {( event ) => onSelectionChange? onSelectionChange( event.target.value ): undefined}
+                        className   = "h-8"
+                    />
 
-            { isError && 
-                <span className="text-sm text-red-500">Error al cargar tamaños</span>
-            }
+                    <span className="text-xs text-muted-foreground">
+                        Error al cargar los tamaños. Ingrese el ID manualmente.
+                    </span>
+                </div>
+            ) : (
+                <MultiSelectCombobox
+                    options             = { memoizedSizes }
+                    defaultValues       = { defaultValues }
+                    onSelectionChange   = { onSelectionChange }
+                    placeholder         = { placeholder }
+                    disabled            = { isLoading || disabled }
+                    multiple            = {  multiple }
+                />
+            )}
         </div>
     );
 }
