@@ -40,7 +40,6 @@ import {
 }                           from "@/config/toast/toast.config";
 import { KEY_QUERYS }       from '@/consts/key-queries';
 import { fetchApi, Method } from '@/services/fetch';
-import { ENV }              from '@/config/envs/env';
 import { useViewMode }      from "@/hooks/use-view-mode";
 
 
@@ -83,10 +82,10 @@ export default function SectionsPage() {
 
 
     const getNextAvailableSectionNumber = () => {
-        const usedNumbers = sections.map( section => section.sectionNumber ).sort( ( a, b ) => a - b );
+        const usedNumbers = sections.map( section => section.sectionNumber ).sort(( a, b ) => a - b );
 
         for ( let i = 1; i <= usedNumbers.length + 1; i++ ) {
-            if ( !usedNumbers.includes( i ) ) {
+            if ( !usedNumbers.includes( i )) {
                 return i;
             }
         }
@@ -95,7 +94,7 @@ export default function SectionsPage() {
     };
 
 
-    const getClosestAvailableNumber = ( targetNumber: number, excludeId?: string ) => {
+    function getClosestAvailableNumber( targetNumber: number, excludeId?: string ): number {
         const usedNumbers = sections
             .filter( section => excludeId ? section.id !== excludeId : true )
             .map( section => section.sectionNumber );
@@ -214,8 +213,7 @@ export default function SectionsPage() {
     const createSectionsMutation = useMutation({
         mutationFn: async ( sectionsToCreate: SectionToCreate[] ) => {
             return fetchApi({
-                isApi   : false,
-                url     : `${ENV.ACADEMIC_SECTION}Sections/create-massive-by-subject/${subjectId}`,
+                url     : `Sections/create-massive-by-subject/${subjectId}`,
                 method  : Method.POST,
                 body    : sectionsToCreate
             });
