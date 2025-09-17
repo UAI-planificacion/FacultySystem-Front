@@ -4,4 +4,6 @@ export interface Props {
     multiple?           : boolean;
     label?              : string;
     placeholder?        : string;
+    enabled?            : boolean;
+    disabled?           : boolean;
 }
