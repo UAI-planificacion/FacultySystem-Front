@@ -47,7 +47,6 @@ import {  Professor }               from "@/types/professor";
 import { KEY_QUERYS }               from "@/consts/key-queries";
 import { Method, fetchApi }         from "@/services/fetch";
 import { errorToast, successToast } from "@/config/toast/toast.config";
-import { ENV }                      from "@/config/envs/env";
 import { usePagination }            from "@/hooks/use-pagination";
 
 
@@ -65,12 +64,15 @@ export default function ProfessorsPage() {
 	const [editingProfessor, setEditingProfessor]       = useState<Professor | undefined>( undefined );
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen]   = useState( false );
 	const [deletingProfessorId, setDeletingProfessorId] = useState<string | undefined>( undefined );
-	const { data: professorList, isLoading, isError }   = useQuery({
+
+
+    const {
+        data: professorList,
+        isLoading,
+        isError
+    }   = useQuery({
 		queryKey: [ KEY_QUERYS.PROFESSORS ],
-		queryFn : () => fetchApi<Professor[]>({
-            url     : `${ENV.ACADEMIC_SECTION}${endpoint}`,
-            isApi   : false
-        }),
+		queryFn : () => fetchApi<Professor[]>({ url: endpoint }),
 	});
 
 
@@ -78,10 +80,10 @@ export default function ProfessorsPage() {
 	 * Filtra la lista de profesores según los criterios de búsqueda
 	 */
 	const filteredProfessors = professorList?.filter( professor => {
-		const matchesSearch = searchQuery === '' || 
-			professor.id.toLowerCase().includes( searchQuery.toLowerCase() ) ||
-			professor.name.toLowerCase().includes( searchQuery.toLowerCase() ) ||
-			professor.email?.toLowerCase().includes( searchQuery.toLowerCase() );
+		const matchesSearch = searchQuery === ''
+            || professor.id.toLowerCase().includes( searchQuery.toLowerCase() )
+            || professor.name.toLowerCase().includes( searchQuery.toLowerCase() )
+            || professor.email?.toLowerCase().includes( searchQuery.toLowerCase() );
 
         const matchesMock = {
             'mock'  : professor.isMock === true,
@@ -101,8 +103,6 @@ export default function ProfessorsPage() {
 		itemsPerPage,
 		totalItems,
 		totalPages,
-		startIndex,
-		endIndex,
 		paginatedData: paginatedProfessors,
 		setCurrentPage,
 		setItemsPerPage,
@@ -153,8 +153,7 @@ export default function ProfessorsPage() {
 	 */
 	const deleteProfessorApi = async ( professorId: string ): Promise<Professor> =>
 		fetchApi<Professor>({
-            isApi   : false,
-            url     : `${ENV.ACADEMIC_SECTION}${endpoint}/${professorId}`,
+            url     : `${endpoint}/${professorId}`,
             method  : Method.DELETE
         });
 
