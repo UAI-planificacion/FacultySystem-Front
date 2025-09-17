@@ -47,6 +47,7 @@ export function SessionButton({
                     onClick     = {() => updateSessionCount(section.id, session, -1 )}
                     disabled    = { section.sessionCounts[session] === 0 }
                     className   = { `px-2 h-8 ${sessionBorders[session] }`}
+                    type        = "button"
                 >
                     <Minus className="h-4 w-4" />
                 </Button>
@@ -57,6 +58,7 @@ export function SessionButton({
                     onChange    = {( e ) => setSessionCount( section.id, session, e.target.value )}
                     className   = { `${ showLabel ? 'w-full' : 'w-20' } text-center h-8 ${ sessionBorders[session] }`}
                     min         = "0"
+                    max         = "100"
                 />
 
                 <Button
@@ -64,6 +66,8 @@ export function SessionButton({
                     size        = "sm"
                     onClick     = {() => updateSessionCount( section.id, session, 1 )}
                     className   = {`px-2 h-8 ${sessionBorders[session]}`}
+                    type        = "button"
+                    disabled    = { section.sessionCounts[session] === 100 }
                 >
                     <Plus className="h-4 w-4" />
                 </Button>
