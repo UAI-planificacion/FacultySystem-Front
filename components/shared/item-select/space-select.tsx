@@ -13,15 +13,17 @@ import { useSpace } from "@/hooks/use-space";
 export function SpaceSelect({
     defaultValues,
     onSelectionChange,
-    multiple    = true,
     label,
-    placeholder = 'Seleccionar Espacios'
+    multiple    = true,
+    placeholder = 'Seleccionar Espacios',
+    enabled     = true,
+    disabled    = false
 } : Props ): JSX.Element {
     const {
         spaces,
         isLoading,
         isError
-    } = useSpace({ enabled: true });
+    } = useSpace({ enabled });
 
 
     return (
@@ -46,7 +48,7 @@ export function SpaceSelect({
                     defaultValues       = { defaultValues }
                     onSelectionChange   = { onSelectionChange }
                     placeholder         = { placeholder }
-                    disabled            = { isLoading }
+                    disabled            = { isLoading || disabled }
                     multiple            = {  multiple }
                 />
             )}
