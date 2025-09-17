@@ -1,10 +1,9 @@
 "use client"
 
-import { JSX, useEffect, useMemo, useState } from "react"
+import { JSX, useEffect, useState } from "react"
 
 import {
     useMutation,
-    useQuery,
     useQueryClient
 }                       from "@tanstack/react-query";
 import { toast }        from "sonner";
@@ -17,7 +16,6 @@ import {
 import { z }            from "zod";
 import { zodResolver }  from "@hookform/resolvers/zod";
 import { useForm }      from "react-hook-form";
-import { format }       from "@formkit/tempo";
 
 import {
     Dialog,
@@ -44,14 +42,15 @@ import {
     TabsContent,
     TabsList,
     TabsTrigger,
-}                               from "@/components/ui/tabs";
-import { Input }                from "@/components/ui/input";
-import { Button }               from "@/components/ui/button";
-import { ShowDateAt }           from "@/components/shared/date-at";
-import { MultiSelectCombobox }  from "@/components/shared/Combobox";
-import { CommentSection }       from "@/components/comment/comment-section";
-import { Switch }               from "@/components/ui/switch";
-import { Textarea }             from "@/components/ui/textarea";
+}                           from "@/components/ui/tabs";
+import { Input }            from "@/components/ui/input";
+import { Button }           from "@/components/ui/button";
+import { ShowDateAt }       from "@/components/shared/date-at";
+import { CommentSection }   from "@/components/comment/comment-section";
+import { Switch }           from "@/components/ui/switch";
+import { Textarea }         from "@/components/ui/textarea";
+import { PeriodSelect }     from "@/components/shared/item-select/period-select";
+import { SubjectSelect }    from "@/components/shared/item-select/subject-select";
 
 import {
     CreateRequest,
@@ -60,11 +59,8 @@ import {
     UpdateRequest
 }                                   from "@/types/request";
 import { KEY_QUERYS }               from "@/consts/key-queries";
-import { Subject }                  from "@/types/subject.model";
 import { Method, fetchApi }         from "@/services/fetch";
 import { errorToast, successToast } from "@/config/toast/toast.config";
-import { Period }                   from "@/types/periods.model";
-import { ENV }                      from "@/config/envs/env";
 import { cn }                       from "@/lib/utils";
 import LoaderMini                   from "@/icons/LoaderMini";
 import { useSession }               from "@/hooks/use-session";
@@ -101,10 +97,14 @@ const formSchema = z.object({
         .max(500, { message: "La descripción no puede tener más de 500 caracteres" })
         .nullable()
         .transform(val => val === "" ? null : val),
-    subjectId: z.string({
+    offerId: z.string({
         required_error: "Debe seleccionar una asignatura",
         invalid_type_error: "Asignatura no válida"
     }).min(1, { message: "Debe seleccionar una asignatura" })
+    // subjectId: z.string({
+    //     required_error: "Debe seleccionar una asignatura",
+    //     invalid_type_error: "Asignatura no válida"
+    // }).min(1, { message: "Debe seleccionar una asignatura" })
 })
 
 
@@ -114,18 +114,12 @@ const defaultRequest = ( data : Request | null ) => ({
     description     : data?.description     || '',
     periodId        : data?.periodId        || '',
     isConsecutive   : data?.isConsecutive   || false,
-    subjectId       : data?.subject?.id     || '',
+    // subjectId       : data?.subject?.id     || '',
+    offerId       : data?.offer?.id     || '',
 });
 
 
 type Tab = 'form' | 'comments';
-
-
-function formatDate( period : Period ) {
-    if ( !period.startDate || !period.endDate ) return '';
-
-    return ` (${format( period.startDate, 'short' )} - ${format( period.endDate, 'short' )})`;
-}
 
 
 export function RequestForm({
@@ -141,7 +135,11 @@ export function RequestForm({
 
 
     const createRequestApi = async ( request: CreateRequest ): Promise<Request> =>
-        fetchApi<Request>({ url: `requests`, method: Method.POST, body: request });
+        fetchApi<Request>({
+            url     : 'requests',
+            method  : Method.POST,
+            body    : request
+        });
 
 
     const updateRequestApi = async ( updatedRequest: UpdateRequest ): Promise<Request>  =>
@@ -173,44 +171,6 @@ export function RequestForm({
         },
         onError: ( mutationError ) => toast( `Error al actualizar la solicitud: ${mutationError.message}`, errorToast )
     });
-
-
-    const {
-        data: subjects,
-        isLoading,
-        isError
-    } = useQuery<Subject[]>({
-        queryKey: [KEY_QUERYS.SUBJECTS, facultyId],
-        queryFn: () => fetchApi( { url: `subjects/all/${facultyId}` } ),
-    });
-
-
-    const {
-        data        : periods,
-        isLoading   : isLoadingPeriods,
-        isError     : isErrorPeriods
-    } = useQuery<Period[]>({
-        queryKey: [KEY_QUERYS.PERIODS],
-        queryFn: () => fetchApi({ isApi: false, url: `${ENV.ACADEMIC_SECTION}periods` }),
-    });
-
-
-    const memoizedPeriods = useMemo(() => {
-        return periods?.map( period => ({
-            id      : period.id,
-            label   : `${period.id} - ${ period.name }${ formatDate( period )}`,
-            value   : period.id
-        }) ) ?? [];
-    }, [periods]);
-
-
-    const memoizedSubject = useMemo(() => {
-        return subjects?.map( subject => ({
-            id      : subject.id,
-            label   : `${subject.id}-${subject.name}`,
-            value   : subject.id,
-        })) ?? [];
-    }, [subjects]);
 
 
     const form = useForm<RequestFormValues>({
@@ -376,31 +336,15 @@ export function RequestForm({
                                             render  = {({ field }) => {
                                                 return (
                                                     <FormItem>
-                                                        <FormLabel>Periodo</FormLabel>
-
                                                         <FormControl>
-                                                            { isErrorPeriods ? (
-                                                                <>
-                                                                    <Input
-                                                                        placeholder = "ID del período"
-                                                                        value       = { field.value || '' }
-                                                                        onChange    = {field.onChange }
-                                                                    />
-
-                                                                    <FormDescription>
-                                                                        Error al cargar los períodos. Ingrese el ID manualmente.
-                                                                    </FormDescription>
-                                                                </>
-                                                            ) : (
-                                                                <MultiSelectCombobox
-                                                                    multiple            = { false }
-                                                                    placeholder         = "Seleccionar un período"
-                                                                    defaultValues       = { field.value || '' }
-                                                                    onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value )}
-                                                                    options             = { memoizedPeriods }
-                                                                    isLoading           = { isLoadingPeriods }
-                                                                />
-                                                            )}
+                                                            <PeriodSelect
+                                                                defaultValues       = { field.value || '' }
+                                                                onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value )}
+                                                                label               = "Período"
+                                                                multiple            = { false }
+                                                                placeholder         = "Seleccionar un período"
+                                                                enabled             = { isOpen }
+                                                            />
                                                         </FormControl>
 
                                                         <FormMessage />
@@ -412,36 +356,18 @@ export function RequestForm({
                                         {/* Subject */}
                                         <FormField
                                             control = { form.control }
-                                            name    = "subjectId"
+                                            name    = "offerId"
                                             render  = {({ field }) => {
                                                 return (
                                                     <FormItem>
-                                                        <FormLabel>Asignatura</FormLabel>
-
-                                                        <FormControl>
-                                                            { isError ? (
-                                                                <>
-                                                                    <Input
-                                                                        placeholder = "ID de la asignatura"
-                                                                        value       = { field.value || '' }
-                                                                        onChange    = { field.onChange }
-                                                                    />
-
-                                                                    <FormDescription>
-                                                                        Error al cargar las asignaturas. Ingrese el ID manualmente.
-                                                                    </FormDescription>
-                                                                </>
-                                                            ) : (
-                                                                <MultiSelectCombobox
-                                                                    multiple            = { false }
-                                                                    placeholder         = "Seleccionar una asignatura"
-                                                                    defaultValues       = { field.value || '' }
-                                                                    onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
-                                                                    options             = { memoizedSubject }
-                                                                    isLoading           = { isLoading }
-                                                                />
-                                                            )}
-                                                        </FormControl>
+                                                        <SubjectSelect
+                                                            defaultValues       = { field.value || '' }
+                                                            onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value )}
+                                                            label               = "Oferta"
+                                                            multiple            = { false }
+                                                            placeholder         = "Seleccionar una oferta"
+                                                            enabled             = { isOpen }
+                                                        />
 
                                                         <FormMessage />
                                                     </FormItem>
