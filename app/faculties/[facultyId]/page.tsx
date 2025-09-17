@@ -48,11 +48,12 @@ export default function FacultyDetailsPage(): JSX.Element {
     /**
      * Obtiene el nombre de la facultad desde la caché de TanStack Query
      */
-    const facultyName = useMemo(() => {
+    const faculty = useMemo(() => {
         const facultiesData = queryClient.getQueryData<FacultyResponse>([ KEY_QUERYS.FACULTIES ]);
         const faculty       = facultiesData?.faculties.find( f => f.id === facultyId );
-        return faculty?.name || facultyId;
+        return faculty;
     }, [ queryClient, facultyId ]);
+
 
     useEffect(() => {
         if ( !facultyId ) return;
@@ -74,7 +75,7 @@ export default function FacultyDetailsPage(): JSX.Element {
 
                 <div className="grid">
                     <h1 className="text-lg sm:text-xl md:text-2xl font-bold">
-                        Facultad { facultyName }
+                        Facultad { faculty?.name }
                     </h1>
 
                     <span className="text-[11px] text-muted-foreground">
@@ -89,16 +90,6 @@ export default function FacultyDetailsPage(): JSX.Element {
                 className       = "w-full"
             >
                 <TabsList className="grid grid-cols-4 mb-4 h-12">
-                    <TabsTrigger
-                        value       = { TabValue.REQUESTS }
-                        className   = "h-10 text-md gap-2"
-                        title       = "Solicitudes"
-                    >
-                        <BookCopy className="h-5 w-5" />
-
-                        <span className="hidden sm:block">Solicitudes</span>
-                    </TabsTrigger>
-
                     <TabsTrigger
                         value       = { TabValue.PERSONNEL }
                         className   = "h-10 text-md gap-2"
@@ -123,10 +114,22 @@ export default function FacultyDetailsPage(): JSX.Element {
                         value       = { TabValue.OFFERS }
                         className   = "h-10 text-md gap-2"
                         title       = "Ofertas"
+                        disabled    = { faculty?.totalSubjects === 0 }
                     >
                         <Album className="h-5 w-5" />
 
                         <span className="hidden sm:block">Ofertas</span>
+                    </TabsTrigger>
+
+                    <TabsTrigger
+                        value       = { TabValue.REQUESTS }
+                        className   = "h-10 text-md gap-2"
+                        title       = "Solicitudes"
+                        disabled    = { faculty?.totalOffers === 0 }
+                    >
+                        <BookCopy className="h-5 w-5" />
+
+                        <span className="hidden sm:block">Solicitudes</span>
                     </TabsTrigger>
                 </TabsList>
 
