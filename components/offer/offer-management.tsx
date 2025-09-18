@@ -1,13 +1,15 @@
 "use client"
 
 import { JSX, useState, useMemo } from "react";
+import { useRouter }            from 'next/navigation';
+
 
 import {
     useMutation,
     useQuery,
     useQueryClient
 }                       from "@tanstack/react-query";
-import { Plus, Search } from "lucide-react";
+import { Grid2x2, Plus, Search } from "lucide-react";
 import { toast }        from "sonner";
 
 import {
@@ -50,6 +52,7 @@ import { Method, fetchApi }         from "@/services/fetch";
 import { errorToast, successToast } from "@/config/toast/toast.config";
 import { usePagination }            from "@/hooks/use-pagination";
 import { getSpaceType }             from "@/lib/utils";
+import { SpaceSizeType } from "../shared/space-size-type";
 
 
 interface OfferManagementProps {
@@ -62,6 +65,8 @@ export function OfferManagement({
     facultyId,
     enabled
 }: OfferManagementProps ): JSX.Element {
+    const router                                        = useRouter();
+
     const queryClient                                   = useQueryClient();
     const [searchQuery, setSearchQuery]                 = useState( '' );
     const [buildingFilter, setBuildingFilter]           = useState<string>( 'all' );
@@ -293,14 +298,14 @@ export function OfferManagement({
                                     <Table>
                                         <TableHeader className="sticky top-0 z-10 bg-background">
                                             <TableRow>
-                                                <TableHead className="bg-background w-[120px]">Tipo/Tamaño</TableHead>
+                                                <TableHead className="bg-background w-[120px]">Espacio</TableHead>
                                                 <TableHead className="bg-background w-[140px]">Período</TableHead>
                                                 <TableHead className="bg-background w-[250px]">Asignatura</TableHead>
                                                 <TableHead className="bg-background w-[120px]">Sesiones</TableHead>
                                                 <TableHead className="bg-background w-[80px] text-center">Fechas</TableHead>
                                                 <TableHead className="bg-background w-[80px] text-center">Edificio</TableHead>
                                                 <TableHead className="bg-background w-[80px] text-center">Inglés</TableHead>
-                                                <TableHead className="text-right bg-background w-[100px]">Acciones</TableHead>
+                                                <TableHead className="text-right bg-background w-[150px]">Acciones</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -308,18 +313,10 @@ export function OfferManagement({
                                                 <TableRow key={offer.id}>
                                                     {/* Tipo/Tamaño */}
                                                     <TableCell className="w-[120px]">
-                                                        <div className="space-y-1">
-                                                            {offer.spaceType && (
-                                                                <Badge variant="outline" className="text-xs">
-                                                                    {getSpaceType(offer.spaceType)}
-                                                                </Badge>
-                                                            )}
-                                                            {offer.spaceSize && (
-                                                                <Badge variant="secondary" className="text-xs">
-                                                                    {offer.spaceSize}
-                                                                </Badge>
-                                                            )}
-                                                        </div>
+                                                        <SpaceSizeType
+                                                            spaceType   = { offer.spaceType }
+                                                            spaceSizeId = { offer.spaceSizeId }
+                                                        />
                                                     </TableCell>
 
                                                     {/* Periodo */}
@@ -375,12 +372,23 @@ export function OfferManagement({
                                                     </TableCell>
 
                                                     {/* Acciones */}
-                                                    <TableCell className="text-right w-[100px]">
-                                                        <ActionButton
-                                                            editItem    = { openEditOfferForm }
-                                                            deleteItem  = { () => onOpenDeleteOffer(offer) }
-                                                            item        = { offer }
-                                                        />
+                                                    <TableCell className="w-[150px]">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <Button
+                                                                title   = "Ver Secciones"
+                                                                size    = "icon"
+                                                                variant = "outline"
+                                                                onClick = { () => router.push( `/sections?subject=${offer.subjectId}` )}
+                                                            >
+                                                                <Grid2x2 className="w-4 h-4" />
+                                                            </Button>
+
+                                                            <ActionButton
+                                                                editItem    = { openEditOfferForm }
+                                                                deleteItem  = { () => onOpenDeleteOffer(offer) }
+                                                                item        = { offer }
+                                                            />
+                                                        </div>
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
