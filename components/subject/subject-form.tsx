@@ -71,8 +71,8 @@ const formSchema = z.object({
     }).max(200, {
         message: "El nombre de la asignatura debe tener como máximo 200 caracteres."
     }),
-    spaceTypeId : z.nativeEnum( SpaceType ).optional().nullable(),
-    spaceSize   : z.nativeEnum( Size ).nullable().optional(),
+    spaceType : z.nativeEnum( SpaceType ).optional().nullable(),
+    spaceSizeId   : z.nativeEnum( Size ).nullable().optional(),
     costCenterId: z.string().min(2, {
         message: "El código del centro de costos debe tener al menos 2 caracteres.",
     }),
@@ -82,12 +82,12 @@ const formSchema = z.object({
 
 const emptySubject = ( subject: Subject | undefined ): Partial<SubjectFormValues> => {
 	return {
-		id          : subject?.id           || "",
-		name        : subject?.name         || "",
-		spaceTypeId : subject?.spaceTypeId  || null,
-		spaceSize   : subject?.spaceSize    || null,
-		costCenterId: subject?.costCenterId || "",
-		isActive    : subject?.isActive     ?? true,
+		id              : subject?.id           || "",
+		name            : subject?.name         || "",
+		spaceType       : subject?.spaceType    || null,
+		spaceSizeId     : subject?.spaceSizeId  || null,
+		costCenterId    : subject?.costCenterId || "",
+		isActive        : subject?.isActive,
 	};
 };
 
@@ -203,13 +203,19 @@ export function SubjectForm({
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <FormField
                                         control = { form.control }
-                                        name    = "spaceTypeId"
+                                        name    = "spaceType"
                                         render  = {({ field }) => (
                                             <FormItem>
                                                 <SpaceTypeSelect
                                                     label               = "Tipo de Espacio"
                                                     defaultValues       = { field.value || "none" }
-                                                    onSelectionChange   = {( value ) => field.onChange( value === "none" ? null : value )}
+                                                    onSelectionChange   = {( value ) => {
+                                                        field.onChange( value === "none" ? null : value );
+
+                                                        if ( value !== SpaceType.ROOM ) {
+                                                            form.setValue("spaceSizeId", null);
+                                                        }
+                                                    }}
                                                 />
 
                                                 <FormMessage />
@@ -219,20 +225,28 @@ export function SubjectForm({
 
                                     <FormField
                                         control = { form.control }
-                                        name    = "spaceSize"
-                                        render  = {({ field }) => (
-                                            <FormItem>
-                                                <SizeSelect
-                                                    label               = "Tamaño del Espacio"
-                                                    placeholder         = "Seleciona un tamaño"
-                                                    onSelectionChange   = {( value ) => field.onChange( value === "none" ? null : value as string )}
-                                                    defaultValues       = { field.value || "none" }
-                                                    multiple            = { false }
-                                                />
+                                        name    = "spaceSizeId"
+                                        render  = {({ field }) => {
+                                            const spaceType     = form.watch( 'spaceType' );
+                                            const isDisabled    = spaceType !== SpaceType.ROOM;
 
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
+                                            return (
+                                                <FormItem>
+                                                    <SizeSelect
+                                                        label               = "Tamaño del Espacio"
+                                                        placeholder         = "Seleciona un tamaño"
+                                                        onSelectionChange   = {( value ) => {
+                                                            field.onChange( value === "none" ? null : value as string );
+                                                        }}
+                                                        defaultValues       = { field.value || "none" }
+                                                        multiple            = { false }
+                                                        disabled            = { isDisabled }
+                                                    />
+
+                                                    <FormMessage />
+                                                </FormItem>
+                                            );
+                                        }}
                                     />
                                 </div>
 
