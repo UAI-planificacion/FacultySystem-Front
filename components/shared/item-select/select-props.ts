@@ -6,4 +6,5 @@ export interface Props {
     placeholder?        : string;
     enabled?            : boolean;
     disabled?           : boolean;
+    className?          : string;
 }
