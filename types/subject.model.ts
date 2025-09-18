@@ -5,8 +5,8 @@ interface BaseSubject {
     id              : string;
     name            : string;
     costCenterId    : string;
-    spaceSize       : Size      | null;
-    spaceTypeId     : SpaceType | null;
+    spaceSizeId     : Size      | null;
+    spaceType       : SpaceType | null;
 }
 
 
