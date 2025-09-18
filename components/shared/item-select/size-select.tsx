@@ -66,7 +66,7 @@ export function SizeSelect({
                     onSelectionChange   = { onSelectionChange }
                     placeholder         = { placeholder }
                     disabled            = { isLoading || disabled }
-                    multiple            = {  multiple }
+                    multiple            = { multiple }
                 />
             )}
         </div>
