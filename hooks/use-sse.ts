@@ -6,12 +6,13 @@ import {
 }                   from '@tanstack/react-query';
 import { toast }    from 'sonner';
 
-import { Request, RequestDetail }           from '@/types/request';
+import { Request }                          from '@/types/request';
 import { EmitEvent, EnumAction, Type }      from '@/types/emit-event';
 import { Notification, NotificationState }  from '@/types/notification';
 import { KEY_QUERYS }                       from '@/consts/key-queries';
 import { errorToast, successToast }         from '@/config/toast/toast.config';
 import { ENV }                              from '@/config/envs/env';
+import { RequestDetail }                    from '@/types/request-detail.model';
 
 
 /**
