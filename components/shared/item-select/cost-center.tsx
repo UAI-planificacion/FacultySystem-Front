@@ -16,7 +16,8 @@ export function CostCenterSelect({
     onSelectionChange,
     label,
     multiple    = true,
-    placeholder = 'Seleccionar Centro de Costos'
+    placeholder = 'Seleccionar Centro de Costos',
+    className   = ''
 } : Props ): JSX.Element {
     const {
         costCenter,
@@ -26,7 +27,7 @@ export function CostCenterSelect({
 
 
     return (
-        <div className="space-y-2">
+        <div className={ `space-y-2 ${ className }` }>
             { label && <Label htmlFor="cost-center">{ label }</Label> }
 
             { isError ? (
