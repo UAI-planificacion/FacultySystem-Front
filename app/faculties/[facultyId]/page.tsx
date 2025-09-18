@@ -97,7 +97,7 @@ export default function FacultyDetailsPage(): JSX.Element {
                     >
                         <Users className="h-5 w-5" />
 
-                        <span className="hidden sm:block">Personal</span>
+                        <span className="hidden sm:block">Personal ({ faculty?.totalPersonnel || 0 })</span>
                     </TabsTrigger>
 
                     <TabsTrigger
@@ -107,29 +107,29 @@ export default function FacultyDetailsPage(): JSX.Element {
                     >
                         <BookOpen className="h-5 w-5" />
 
-                        <span className="hidden sm:block">Asignaturas</span>
+                        <span className="hidden sm:block">Asignaturas ({ faculty?.totalSubjects || 0 })</span>
                     </TabsTrigger>
 
                     <TabsTrigger
                         value       = { TabValue.OFFERS }
                         className   = "h-10 text-md gap-2"
                         title       = "Ofertas"
-                        disabled    = { faculty?.totalSubjects === 0 }
+                        disabled    = {(faculty?.totalSubjects ?? 0 ) === 0 }
                     >
                         <Album className="h-5 w-5" />
 
-                        <span className="hidden sm:block">Ofertas</span>
+                        <span className="hidden sm:block">Ofertas ({ faculty?.totalOffers || 0 })</span>
                     </TabsTrigger>
 
                     <TabsTrigger
                         value       = { TabValue.REQUESTS }
                         className   = "h-10 text-md gap-2"
                         title       = "Solicitudes"
-                        disabled    = { faculty?.totalOffers === 0 }
+                        disabled    = {( faculty?.totalOffers ?? 0 ) === 0 }
                     >
                         <BookCopy className="h-5 w-5" />
 
-                        <span className="hidden sm:block">Solicitudes</span>
+                        <span className="hidden sm:block">Solicitudes ({ faculty?.totalRequests || 0 })</span>
                     </TabsTrigger>
                 </TabsList>
 
