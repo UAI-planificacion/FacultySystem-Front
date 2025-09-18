@@ -9,7 +9,7 @@ import {
     useQueryClient
 }                       from "@tanstack/react-query";
 import {
-    Grid2x2,
+    Album,
     Plus,
     Search
 }                       from "lucide-react";
@@ -56,6 +56,8 @@ import { KEY_QUERYS }               from "@/consts/key-queries"
 import { Method, fetchApi }         from "@/services/fetch"
 import { errorToast, successToast } from "@/config/toast/toast.config"
 import { usePagination }            from "@/hooks/use-pagination";
+import { OfferForm } from "../offer/offer-form";
+import { SpaceSizeType } from "../shared/space-size-type";
 
 
 interface SubjectsManagementProps {
@@ -67,6 +69,8 @@ interface SubjectsManagementProps {
 export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementProps) {
     const queryClient                                   = useQueryClient();
     const [isFormOpen, setIsFormOpen]                   = useState( false );
+    const [isOfferOpen, setIsOfferOpen]                   = useState( false );
+
     const [editingSubject, setEditingSubject]           = useState<Subject | undefined>( undefined );
     const [searchQuery, setSearchQuery]                 = useState( '' );
     const [selectedCostCenter, setSelectedCostCenter]   = useState<string>( 'all' );
@@ -218,9 +222,9 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
 
     return (
         <div className="space-y-4">
-            <Card className="w-full">
+            <Card>
                 <CardHeader>
-                    <div className="lg:flex justify-between items-end gap-4 space-y-4">
+                    <div className="lg:flex lg:justify-between items-end gap-4 space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-4xl items-center">
                             <div className="grid space-y-2">
                                 <Label htmlFor="search">Buscar</Label>
@@ -245,8 +249,8 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                                 onSelectionChange   = {( value ) => handleFilterChange( 'costCenter', value as string )}
                                 defaultValues       = { '' }
                                 multiple            = { false }
+                                className           = "grid"
                             />
-
                         </div>
 
                         <Button
@@ -277,9 +281,7 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
 
                                         <TableHead className="bg-background w-[120px]">Centro de Costo</TableHead>
 
-                                        <TableHead className="bg-background w-[120px]">Tamaño Espacio</TableHead>
-
-                                        <TableHead className="bg-background w-[120px]">Tipo Espacio</TableHead>
+                                        <TableHead className="bg-background w-[120px]">Espacio</TableHead>
 
                                         <TableHead className="text-left bg-background w-[80px]">Estado</TableHead>
 
@@ -314,15 +316,10 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                                                     </TableCell>
 
                                                     <TableCell className="w-[120px] text-center">
-                                                        <Badge variant="outline">
-                                                            { subject.spaceSize ?? '-' }
-                                                        </Badge>
-                                                    </TableCell>
-
-                                                    <TableCell className="w-[120px] text-center">
-                                                        <Badge variant="outline">
-                                                            { subject.spaceTypeId ?? '-' }
-                                                        </Badge>
+                                                        <SpaceSizeType
+                                                            spaceType   = { subject.spaceType }
+                                                            spaceSizeId = { subject.spaceSizeId }
+                                                        />
                                                     </TableCell>
 
                                                     <TableCell className=" w-[80px]">
@@ -332,12 +329,15 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                                                     <TableCell className="text-right w-[160px]">
                                                         <div className="flex gap-2 items-center justify-end">
                                                             <Button
-                                                                title   = "Ver Secciones"
+                                                                title   = "Ofertas"
                                                                 size    = "icon"
                                                                 variant = "outline"
-                                                                onClick = { () => router.push( `/sections?subject=${subject.id}` )}
+                                                                onClick = { () => {
+                                                                    setEditingSubject( subject );
+                                                                    setIsOfferOpen( true );
+                                                                }}
                                                             >
-                                                                <Grid2x2 className="w-4 h-4" />
+                                                                <Album className="h-4 w-4" />
                                                             </Button>
 
                                                             <ActionButton
@@ -388,6 +388,16 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                 onSubmit    = { handleFormSubmit }
                 onClose     = { () => setIsFormOpen( false )}
                 isOpen      = { isFormOpen }
+            />
+
+            <OfferForm
+                offer       = { undefined }
+                isOpen      = { isOfferOpen }
+                facultyId   = { facultyId }
+                subject     = { editingSubject }
+                onClose     = {() => {
+                    setIsOfferOpen( false )
+                }}
             />
 
             <DeleteConfirmDialog
