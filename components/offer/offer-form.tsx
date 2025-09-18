@@ -55,6 +55,7 @@ import {
     Offer,
     UpdateOffer
 }                                   from "@/types/offer.model";
+import { Subject }                  from "@/types/subject.model";
 import { KEY_QUERYS }               from "@/consts/key-queries";
 import { Method, fetchApi }         from "@/services/fetch";
 import { getSpaceType }             from "@/lib/utils";
@@ -91,13 +92,6 @@ const formSchema = z.object({
 export type OfferFormValues = z.infer<typeof formSchema>;
 
 
-// Interface for date pairs
-interface DatePair {
-    startDate   : Date;
-    endDate     : Date;
-}
-
-
 // Props interface
 interface OfferFormProps {
     offer?      : Offer;
@@ -105,11 +99,12 @@ interface OfferFormProps {
     onClose     : () => void;
     onSubmit?   : ( offer: Offer ) => void;
     facultyId   : string;
+    subject?    : Subject | undefined;
 }
 
 
 // Default values function
-function defaultOfferValues( offer?: Offer ): Partial<OfferFormValues> {
+function defaultOfferValues( offer?: Offer, subject? : Subject ): Partial<OfferFormValues> {
     if ( !offer ) {
         return {
             startDate       : [],
@@ -120,11 +115,11 @@ function defaultOfferValues( offer?: Offer ): Partial<OfferFormValues> {
             lecture         : 0,
             tutoringSession : 0,
             laboratory      : 0,
-            subjectId       : '',
-            spaceType       : null,
-            spaceSizeId     : null,
+            subjectId       : subject?.id           || '',
+            spaceType       : subject?.spaceType  ||  null,
+            spaceSizeId     : subject?.spaceSizeId    || null,
             periodId        : '',
-            costCenterId    : '',
+            costCenterId    : subject?.costCenterId || '',
         };
     }
 
@@ -187,14 +182,15 @@ export function OfferForm({
     isOpen,
     onClose,
     onSubmit,
-    facultyId
+    facultyId,
+    subject
 }: OfferFormProps ): JSX.Element {
     const queryClient = useQueryClient();
 
 
     const form = useForm<OfferFormValues>({
         resolver        : zodResolver( formSchema ),
-        defaultValues   : defaultOfferValues( offer ),
+        defaultValues   : defaultOfferValues( offer, subject ),
     });
 
 
@@ -294,7 +290,7 @@ export function OfferForm({
 
     // Reset form when offer changes
     useEffect(() => {
-        form.reset( defaultOfferValues( offer ));
+        form.reset( defaultOfferValues( offer, subject ));
     }, [offer, isOpen]);
 
 
@@ -318,23 +314,6 @@ export function OfferForm({
                     <form onSubmit={form.handleSubmit( handleSubmit )} className="space-y-4">
                         {/* Building and Space Section */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <FormField
-                                control = { form.control }
-                                name    = "costCenterId"
-                                render  = {({ field }) => (
-                                    <FormItem>
-                                        <CostCenterSelect
-                                            label               = "Centro de Costos"
-                                            defaultValues       = { field.value || '' }
-                                            multiple            = { false }
-                                            onSelectionChange   = {( values ) => field.onChange( values || null )}
-                                        />
-
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
                             <FormField
                                 control = { form.control }
                                 name    = "subjectId"
@@ -372,6 +351,85 @@ export function OfferForm({
 
                             <FormField
                                 control = { form.control }
+                                name    = "costCenterId"
+                                render  = {({ field }) => (
+                                    <FormItem>
+                                        <CostCenterSelect
+                                            label               = "Centro de Costos *"
+                                            defaultValues       = { field.value || '' }
+                                            multiple            = { false }
+                                            onSelectionChange   = {( values ) => field.onChange( values || null )}
+                                        />
+
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control = { form.control }
+                                name    = "spaceType"
+                                render  = {({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Tipo de Espacio</FormLabel>
+
+                                        <Select
+                                            onValueChange   = {( value ) => {
+                                                field.onChange( value === "null" ? null : value );
+
+                                                if ( value !== SpaceType.ROOM ) {
+                                                    form.setValue("spaceSizeId", null);
+                                                }
+                                            }}
+                                            defaultValue    = { field.value || "null" }
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Seleccionar tipo" />
+                                                </SelectTrigger>
+                                            </FormControl>
+
+                                            <SelectContent>
+                                                <SelectItem value="null">Sin especificar</SelectItem>
+
+                                                {Object.values( SpaceType ).map( type => (
+                                                    <SelectItem key={type} value={type}>
+                                                        { getSpaceType( type )}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control = { form.control }
+                                name    = "spaceSizeId"
+                                render  = {({ field }) => {
+                                    const spaceType = form.watch("spaceType");
+                                    const isDisabled = spaceType !== SpaceType.ROOM;
+
+                                    return (
+                                        <FormItem>
+                                            <SizeSelect
+                                                label               = "Tamaño del Espacio"
+                                                defaultValues       = { field.value || '' }
+                                                multiple            = { false }
+                                                disabled            = { isDisabled }
+                                                onSelectionChange   = {( values ) => field.onChange( values === '' ? null : values )}
+                                            />
+
+                                            <FormMessage />
+                                        </FormItem>
+                                    );
+                                }}
+                            />
+
+                            <FormField
+                                control = { form.control }
                                 name    = "building"
                                 render  = {({ field }) => (
                                     <FormItem>
@@ -397,55 +455,6 @@ export function OfferForm({
                                                 ))}
                                             </SelectContent>
                                         </Select>
-
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control = { form.control }
-                                name    = "spaceType"
-                                render  = {({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Tipo de Espacio</FormLabel>
-
-                                        <Select
-                                            onValueChange   = {( value ) => field.onChange( value === "null" ? null : value )}
-                                            defaultValue    = { field.value || "null" }
-                                        >
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Seleccionar tipo" />
-                                                </SelectTrigger>
-                                            </FormControl>
-
-                                            <SelectContent>
-                                                <SelectItem value="null">Sin especificar</SelectItem>
-                                                {Object.values( SpaceType ).map( type => (
-                                                    <SelectItem key={type} value={type}>
-                                                        { getSpaceType( type )}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control = { form.control }
-                                name    = "spaceSizeId"
-                                render  = {({ field }) => (
-                                    <FormItem>
-                                        <SizeSelect
-                                            label               = "Tamaño del Espacio"
-                                            defaultValues       = { field.value || '' }
-                                            multiple            = { false }
-                                            onSelectionChange   = {( values ) => field.onChange( values === '' ? null : values )}
-                                        />
 
                                         <FormMessage />
                                     </FormItem>
@@ -489,6 +498,21 @@ export function OfferForm({
                                     showLabel           = { true }
                                 />
                             </div>
+
+                            {/* Error message for sessions validation */}
+                            <FormField
+                                control = { form.control }
+                                name    = "workshop"
+                                render  = {({ fieldState }) => (
+                                    <FormItem>
+                                        {fieldState.error && (
+                                            <FormMessage className="text-start">
+                                                {fieldState.error.message}
+                                            </FormMessage>
+                                        )}
+                                    </FormItem>
+                                )}
+                            />
                         </div>
 
                         {/* English Switch */}
