@@ -229,7 +229,7 @@ export function StaffManagement({
                                         id          = "search"
                                         type        = "search"
                                         placeholder = "Buscar personal..."
-                                        value       = {searchQuery}
+                                        value       = { searchQuery }
                                         className   = "pl-8"
                                         onChange    = {(e) => handleFilterChange( 'search', e.target.value )}
                                     />
