@@ -116,8 +116,8 @@ function defaultOfferValues( offer?: Offer, subject? : Subject ): Partial<OfferF
             tutoringSession : 0,
             laboratory      : 0,
             subjectId       : subject?.id           || '',
-            spaceType       : subject?.spaceType  ||  null,
-            spaceSizeId     : subject?.spaceSizeId    || null,
+            spaceType       : subject?.spaceType    ||  null,
+            spaceSizeId     : subject?.spaceSizeId  || null,
             periodId        : '',
             costCenterId    : subject?.costCenterId || '',
         };
@@ -132,10 +132,10 @@ function defaultOfferValues( offer?: Offer, subject? : Subject ): Partial<OfferF
         lecture         : offer.lecture,
         tutoringSession : offer.tutoringSession,
         laboratory      : offer.laboratory,
-        subjectId       : offer.subjectId,
+        subjectId       : offer.subject.id,
         spaceType       : offer.spaceType,
-        spaceSizeId     : offer.spaceSizeId,
-        periodId        : offer.periodId,
+        spaceSizeId     : offer.spaceSize?.id,
+        periodId        : offer.period.id,
         costCenterId    : offer.costCenterId,
     };
 }
@@ -177,6 +177,30 @@ function getSessionFieldName( session: Session ): keyof OfferFormValues {
 }
 
 
+export const updateSubjectOffersCount = ( 
+    queryClient: ReturnType<typeof useQueryClient>, 
+    facultyId: string, 
+    subjectId: string, 
+    increment: boolean 
+): void => {
+    queryClient.setQueryData<Subject[]>(
+        [ KEY_QUERYS.SUBJECTS, facultyId ],
+        ( oldSubjects: Subject[] | undefined ) => {
+            if ( !oldSubjects ) return oldSubjects;
+
+            return oldSubjects.map( ( subject: Subject ) => 
+                subject.id === subjectId
+                    ? {
+                        ...subject,
+                        offersCount: subject.offersCount + ( increment ? 1 : -1 )
+                    }
+                    : subject
+            );
+        }
+    );
+};
+
+
 export function OfferForm({
     offer,
     isOpen,
@@ -197,7 +221,7 @@ export function OfferForm({
     /**
      * Update session count by delta
      */
-    function updateSessionCount( sectionId: string, session: Session, delta: number ): void {
+    function updateSessionCount( _: string, session: Session, delta: number ): void {
         const currentValue = form.getValues( getSessionFieldName( session ));
         const newValue = Math.max( 0, (Number(currentValue) ?? 0) + delta );
         form.setValue( getSessionFieldName( session ), newValue );
@@ -207,7 +231,7 @@ export function OfferForm({
     /**
      * Set session count to specific value
      */
-    function setSessionCount( sectionId: string, session: Session, value: string ): void {
+    function setSessionCount( _: string, session: Session, value: string ): void {
         const numValue = parseInt( value ) || 0;
         form.setValue( getSessionFieldName( session ), Math.max( 0, numValue ));
     }
@@ -241,6 +265,7 @@ export function OfferForm({
         mutationFn: createOfferApi,
         onSuccess: ( newOffer ) => {
             queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.OFFERS, facultyId ]});
+            updateSubjectOffersCount( queryClient, facultyId, newOffer.subject.id, true );
             onClose();
             onSubmit?.( newOffer );
             toast( 'Oferta creada exitosamente', successToast );
