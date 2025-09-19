@@ -55,11 +55,11 @@ export function FacultyCard({
                 <Button 
                     variant   = "outline"
                     size      = "sm"
-                    onClick   = {() => router.push(`/faculties/${faculty.id}?tab=personnel`)}
+                    onClick   = {() => router.push(`/faculties/${faculty.id}?tab=staff`)}
                     className = "flex items-center gap-1.5"
                 >
                     <Users className="h-4 w-4" />
-                    {faculty.totalPersonnel || 0} Personal
+                    {faculty.totalStaff || 0} Personal
                 </Button>
 
                 <Button 
