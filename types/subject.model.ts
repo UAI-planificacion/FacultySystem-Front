@@ -15,6 +15,7 @@ export interface Subject extends BaseSubject {
     isActive    : boolean;
     createAt    : Date      | string;
     updateAt    : Date      | string;
+    offersCount : number;
 }
 
 
