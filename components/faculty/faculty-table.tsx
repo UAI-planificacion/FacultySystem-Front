@@ -183,11 +183,11 @@ export function FacultyTable({
                                         <Button
                                             variant		= "outline"
                                             size		= "default"
-                                            onClick		= {() => router.push( `/faculties/${faculty.id}?tab=personnel` )}
+                                            onClick		= {() => router.push( `/faculties/${faculty.id}?tab=staff` )}
                                             className	= "h-10 px-4 text-sm mx-auto flex items-center justify-center min-w-[80px]"
                                         >
                                             <Users className="h-4 w-4 mr-2" />
-                                            {faculty.totalPersonnel || 0}
+                                            {faculty.totalStaff || 0}
                                         </Button>
                                     </TableCell>
 
