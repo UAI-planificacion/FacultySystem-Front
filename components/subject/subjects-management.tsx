@@ -304,7 +304,10 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                                                         { subject.id }
                                                     </TableCell>
 
-                                                    <TableCell className="w-[300px] truncate" title={subject.name}>
+                                                    <TableCell
+                                                        className   = "w-[300px] truncate"
+                                                        title       = { subject.name }
+                                                    >
                                                         { subject.name }
                                                     </TableCell>
 
@@ -329,14 +332,17 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                                                     <TableCell className="text-right w-[160px]">
                                                         <div className="flex gap-2 items-center justify-end">
                                                             <Button
-                                                                title   = "Ofertas"
-                                                                size    = "icon"
-                                                                variant = "outline"
-                                                                onClick = { () => {
+                                                                title       = "Ofertas"
+                                                                size        = "sm"
+                                                                variant     = "outline"
+                                                                className   = "flex items-center gap-1.5"
+                                                                onClick     = { () => {
                                                                     setEditingSubject( subject );
                                                                     setIsOfferOpen( true );
                                                                 }}
                                                             >
+                                                                { subject.offersCount }
+
                                                                 <Album className="h-4 w-4" />
                                                             </Button>
 
