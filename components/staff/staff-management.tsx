@@ -88,8 +88,8 @@ export function StaffManagement({
             || ( roleFilter === 'viewer'    && staff.role === 'VIEWER' );
 
         const matchesStatus = statusFilter === 'all'
-            || ( statusFilter === 'active' && staff.isActive )
-            || ( statusFilter === 'inactive' && !staff.isActive );
+            || ( statusFilter === 'active'      && staff.isActive )
+            || ( statusFilter === 'inactive'    && !staff.isActive );
 
         return matchesSearch && matchesRole && matchesStatus;
     }) || [];
@@ -160,7 +160,7 @@ export function StaffManagement({
     const createStaffMutation = useMutation<Staff, Error, CreateStaff>({
         mutationFn: createStaffApi,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.STAFF, facultyId] });
+            queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.STAFF, facultyId ]});
             setIsFormOpen( false );
             setEditingStaff( undefined );
             toast( 'Personal creado exitosamente', successToast );
@@ -172,7 +172,7 @@ export function StaffManagement({
     const updateStaffMutation = useMutation<Staff, Error, UpdateStaff>({
         mutationFn: updateStaffApi,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.STAFF, facultyId] });
+            queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.STAFF, facultyId ]});
             setIsFormOpen( false );
             setEditingStaff( undefined );
             toast( 'Personal actualizado exitosamente', successToast );
@@ -184,7 +184,7 @@ export function StaffManagement({
     const deleteStaffMutation = useMutation<Staff, Error, string>({
         mutationFn: deleteStaffApi,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.STAFF, facultyId] });
+            queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.STAFF, facultyId ]});
             setIsDeleteDialogOpen( false );
             toast( 'Personal eliminado exitosamente', successToast );
         },
