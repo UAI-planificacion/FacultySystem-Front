@@ -18,15 +18,15 @@ export function SpaceSizeType({
     spaceType
 } : Props ): JSX.Element {
     return (
-        <div className="space-y-1">
+        <div className="flex items-center gap-1.5">
             { spaceType && (
-                <Badge variant="outline" className="text-xs">
+                <Badge className="text-xs">
                     { getSpaceType( spaceType )}
                 </Badge>
             )}
 
             { spaceSizeId && (
-                <Badge variant="secondary" className="text-xs">
+                <Badge className="text-xs">
                     { spaceSizeId }
                 </Badge>
             )}
