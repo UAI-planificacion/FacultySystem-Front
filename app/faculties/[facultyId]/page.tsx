@@ -9,8 +9,8 @@ import {
     BookCopy,
     BookOpen,
     Users
-}                           from "lucide-react";
-import { useQueryClient }   from '@tanstack/react-query';
+}                                   from "lucide-react";
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
     Tabs,
@@ -24,14 +24,15 @@ import { RequestsManagement }   from "@/components/request/request";
 import { Button }               from "@/components/ui/button";
 import { OfferManagement }      from "@/components/offer/offer-management";
 
-import { FacultyResponse }      from "@/types/faculty.model";
-import { KEY_QUERYS }           from "@/consts/key-queries";
+import { Faculty, FacultyResponse } from "@/types/faculty.model";
+import { KEY_QUERYS }               from "@/consts/key-queries";
+import { fetchApi }                 from "@/services/fetch";
 
 
 enum TabValue {
     SUBJECTS    = "subjects",
     OFFERS      = "offers",
-    PERSONNEL   = "personnel",
+    STAFF       = "staff",
     REQUESTS    = "requests"
 }
 
@@ -45,14 +46,25 @@ export default function FacultyDetailsPage(): JSX.Element {
     const initialTab                = searchParams.get( 'tab' ) as TabValue || TabValue.SUBJECTS;
     const [activeTab, setActiveTab] = useState<TabValue>( initialTab );
 
-    /**
-     * Obtiene el nombre de la facultad desde la caché de TanStack Query
-     */
-    const faculty = useMemo(() => {
+
+    const facultyFromCache = useMemo(() => {
         const facultiesData = queryClient.getQueryData<FacultyResponse>([ KEY_QUERYS.FACULTIES ]);
-        const faculty       = facultiesData?.faculties.find( f => f.id === facultyId );
-        return faculty;
+        return facultiesData?.faculties.find( f => f.id === facultyId );
     }, [ queryClient, facultyId ]);
+
+
+    const {
+        data        : individualFaculty,
+        isLoading   : isLoadingIndividual,
+    } = useQuery<Faculty>({
+        queryKey    : [ KEY_QUERYS.FACULTIES, facultyId ],
+        queryFn     : () => fetchApi({ url: `faculties/${facultyId}` }),
+        enabled     : !facultyFromCache,
+        staleTime   : 5 * 60 * 1000
+    });
+
+
+    const faculty = facultyFromCache || individualFaculty;
 
 
     useEffect(() => {
@@ -62,6 +74,7 @@ export default function FacultyDetailsPage(): JSX.Element {
         currentParams.set( 'tab', activeTab );
         router.replace( `?${currentParams.toString()}`, { scroll: false });
     }, [ activeTab, facultyId, router, searchParams ]);
+
 
     return (
         <main className="container mx-auto py-6 space-y-4 px-4 min-h-[calc(100vh-74px)]">
@@ -75,7 +88,7 @@ export default function FacultyDetailsPage(): JSX.Element {
 
                 <div className="grid">
                     <h1 className="text-lg sm:text-xl md:text-2xl font-bold">
-                        Facultad { faculty?.name }
+                        Facultad { faculty?.name || ( isLoadingIndividual ? 'Cargando...' : facultyId )}
                     </h1>
 
                     <span className="text-[11px] text-muted-foreground">
@@ -91,13 +104,13 @@ export default function FacultyDetailsPage(): JSX.Element {
             >
                 <TabsList className="grid grid-cols-4 mb-4 h-12">
                     <TabsTrigger
-                        value       = { TabValue.PERSONNEL }
+                        value       = { TabValue.STAFF }
                         className   = "h-10 text-md gap-2"
                         title       = "Personal"
                     >
                         <Users className="h-5 w-5" />
 
-                        <span className="hidden sm:block">Personal ({ faculty?.totalPersonnel || 0 })</span>
+                        <span className="hidden sm:block">Personal ({ faculty?.totalStaff || 0 })</span>
                     </TabsTrigger>
 
                     <TabsTrigger
@@ -147,10 +160,10 @@ export default function FacultyDetailsPage(): JSX.Element {
                     />
                 </TabsContent>
 
-                <TabsContent value={TabValue.PERSONNEL}>
+                <TabsContent value={TabValue.STAFF}>
                     <StaffManagement 
                         facultyId   = { facultyId }
-                        enabled     = { activeTab === TabValue.PERSONNEL }
+                        enabled     = { activeTab === TabValue.STAFF }
                     />
                 </TabsContent>
 
