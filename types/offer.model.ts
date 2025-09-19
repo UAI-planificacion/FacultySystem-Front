@@ -6,6 +6,24 @@ interface Id {
 }
 
 
+interface SubjectOffer {
+    id      : string;
+    name    : string;
+}
+
+
+interface PeriodOffer {
+    id      : string;
+    name    : string;
+}
+
+
+interface SizeOffer {
+    id      : Size;
+    detail  : string;
+}
+
+
 export interface BasicOffer {
     startDate       : Date[];
     endDate         : Date[];
@@ -15,20 +33,28 @@ export interface BasicOffer {
     lecture         : number;
     tutoringSession : number;
     laboratory      : number;
-    subjectId       : string;
     spaceType       : SpaceType | null;
-    spaceSizeId     : Size      | null;
-    periodId        : string;
     costCenterId    : string;
 }
 
 
-export interface Offer extends Id, BasicOffer {}
+export interface Offer extends Id, BasicOffer {
+    subject     : SubjectOffer;
+    period      : PeriodOffer;
+    spaceSize   : SizeOffer | null;
+}
 
 
-export interface CreateOffer extends BasicOffer {}
+interface SaveOffer {
+    periodId    : string;
+    spaceSizeId : Size | null;
+    subjectId   : string;
+}
 
 
-export interface UpdateOffer extends Partial<BasicOffer> {
+export interface CreateOffer extends BasicOffer, SaveOffer {}
+
+
+export interface UpdateOffer extends Partial<BasicOffer>, SaveOffer {
     id: string;
 }
