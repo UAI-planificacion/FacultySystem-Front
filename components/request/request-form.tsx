@@ -51,6 +51,7 @@ import { Switch }           from "@/components/ui/switch";
 import { Textarea }         from "@/components/ui/textarea";
 import { PeriodSelect }     from "@/components/shared/item-select/period-select";
 import { SubjectSelect }    from "@/components/shared/item-select/subject-select";
+import { OfferSelect }      from "@/components/offer/offer-select";
 
 import {
     CreateRequest,
@@ -207,7 +208,7 @@ export function RequestForm({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[700px] max-h-[80vh] transition-all duration-800">
+            <DialogContent className="max-w-xl max-h-[80vh] transition-all duration-800">
                 <DialogHeader>
                     <div className="space-y-1">
                         <DialogTitle>
@@ -328,8 +329,16 @@ export function RequestForm({
                                         />
                                     }
 
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        {/* Period */}
+                                    <OfferSelect
+                                        facultyId           = { facultyId }
+                                        value               = { '' }
+                                        placeholder         = "Seleccionar una oferta"
+                                        searchPlaceholder   = "Buscar por asignatura o período"
+                                        // onSelectionChange   = { ( value ) => form.setValue( 'offerId', value )}
+                                    />
+
+
+                                    {/* <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <FormField
                                             control = { form.control }
                                             name    = "periodId"
@@ -353,7 +362,6 @@ export function RequestForm({
                                             }}
                                         />
 
-                                        {/* Subject */}
                                         <FormField
                                             control = { form.control }
                                             name    = "offerId"
@@ -374,7 +382,7 @@ export function RequestForm({
                                                 );
                                             }}
                                         />
-                                    </div>
+                                    </div> */}
 
                                     {/* Is Consecutive */}
                                     <FormField
