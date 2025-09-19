@@ -193,7 +193,7 @@ export default function FacultiesPage() {
 
                 <StatisticCard
                     title   = "Total de Personal"
-                    value   = { data?.totalPersonnel }
+                    value   = { data?.totalStaff }
                     icon    = { <Users className="h-6 w-6" /> }
                 />
 
@@ -246,7 +246,7 @@ export default function FacultiesPage() {
 
                 {/* Faculty Content */}
                 <div className="space-y-4">
-                    {viewMode === 'cards' ? (
+                    { viewMode === 'cards' ? (
                         <FacultyList
                             faculties       = { paginatedFaculties }
                             isLoading       = { isLoading }
@@ -267,7 +267,7 @@ export default function FacultiesPage() {
                     )}
 
                     {/* Pagination */}
-                    {!isLoading && !isError && filteredFaculties.length > 0 && (
+                    { !isLoading && !isError && filteredFaculties.length > 0 && (
                         <DataPagination
                             currentPage             = { currentPage }
                             totalPages              = { totalPages }
