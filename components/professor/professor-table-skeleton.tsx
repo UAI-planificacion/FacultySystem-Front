@@ -1,5 +1,4 @@
-import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { TableCell, TableRow } from "@/components/ui/table";
 
 
 /**
