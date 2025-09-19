@@ -1,16 +1,16 @@
 "use client"
 
-import { JSX, useState, useMemo } from "react";
-import { useRouter }            from 'next/navigation';
+import { JSX, useState }    from "react";
+import { useRouter }        from 'next/navigation';
 
 
 import {
     useMutation,
     useQuery,
     useQueryClient
-}                       from "@tanstack/react-query";
-import { Grid2x2, Plus, Search } from "lucide-react";
-import { toast }        from "sonner";
+}                                   from "@tanstack/react-query";
+import { Grid2x2, Plus, Search }    from "lucide-react";
+import { toast }                    from "sonner";
 
 import {
     Select,
@@ -32,8 +32,11 @@ import {
     TableHeader,
     TableRow
 }                               from "@/components/ui/table"
+import {
+    OfferForm,
+    updateSubjectOffersCount
+}                               from "@/components/offer/offer-form"
 import { DataPagination }       from "@/components/ui/data-pagination";
-import { OfferForm }            from "@/components/offer/offer-form"
 import { Button }               from "@/components/ui/button"
 import { ScrollArea }           from "@/components/ui/scroll-area"
 import { ActionButton }         from "@/components/shared/action";
@@ -43,16 +46,13 @@ import { Label }                from "@/components/ui/label";
 import { Badge }                from "@/components/ui/badge";
 import { Skeleton }             from "@/components/ui/skeleton";
 import { SessionShort }         from "@/components/section/session-short";
+import { SpaceSizeType }        from "@/components/shared/space-size-type";
 
 import { Offer }                    from "@/types/offer.model";
-import { Subject }                  from "@/types/subject.model";
-import { Period }                   from "@/types/periods.model";
 import { KEY_QUERYS }               from "@/consts/key-queries";
 import { Method, fetchApi }         from "@/services/fetch";
 import { errorToast, successToast } from "@/config/toast/toast.config";
 import { usePagination }            from "@/hooks/use-pagination";
-import { getSpaceType }             from "@/lib/utils";
-import { SpaceSizeType } from "../shared/space-size-type";
 
 
 interface OfferManagementProps {
@@ -66,7 +66,6 @@ export function OfferManagement({
     enabled
 }: OfferManagementProps ): JSX.Element {
     const router                                        = useRouter();
-
     const queryClient                                   = useQueryClient();
     const [searchQuery, setSearchQuery]                 = useState( '' );
     const [buildingFilter, setBuildingFilter]           = useState<string>( 'all' );
@@ -75,42 +74,21 @@ export function OfferManagement({
     const [editingOffer, setEditingOffer]               = useState<Offer | undefined>( undefined );
     const [isDeleteDialogOpen, setIsDeleteDialogOpen]   = useState( false );
     const [deletingOfferId, setDeletingOfferId]         = useState<string | undefined>( undefined );
-    
+
     // Fetch offers
-    const { data: offerList, isLoading, isError }       = useQuery({
+    const {
+        data: offerList,
+        isLoading,
+        isError
+    } = useQuery({
         queryKey    : [ KEY_QUERYS.OFFERS, facultyId ],
-        queryFn     : () => fetchApi<Offer[]>( { url: `offers?facultyId=${facultyId}` } ),
-        enabled
-    });
-    
-    // Fetch subjects for display
-    const { data: subjects } = useQuery({
-        queryKey    : [ KEY_QUERYS.SUBJECTS, facultyId ],
-        queryFn     : () => fetchApi<Subject[]>( { url: `subjects?facultyId=${facultyId}` } ),
-        enabled
-    });
-    
-    // Fetch periods for display
-    const { data: periods } = useQuery({
-        queryKey    : [ KEY_QUERYS.PERIODS ],
-        queryFn     : () => fetchApi<Period[]>( { url: 'periods' } ),
+        queryFn     : () => fetchApi<Offer[]>({ url: `offers/facultyId/${facultyId}` }),
         enabled
     });
 
-
-    // Helper functions to get display names
-    const getSubjectName = ( subjectId: string ): string => {
-        const subject = subjects?.find( s => s.id === subjectId );
-        return subject ? `${subject.id} - ${subject.name}` : subjectId;
-    };
-    
-    const getPeriodName = ( periodId: string ): string => {
-        const period = periods?.find( p => p.id === periodId );
-        return period ? `${period.id} - ${period.name}` : periodId;
-    };
 
     const filteredOffers = offerList?.filter( offer => {
-        const subjectName = getSubjectName( offer.subjectId );
+        const subjectName = offer.subject.name;
         const matchesSearch = searchQuery === ''
             || subjectName.toLowerCase().includes( searchQuery.toLowerCase() )
             || offer.building?.toLowerCase().includes( searchQuery.toLowerCase() )
@@ -183,20 +161,14 @@ export function OfferManagement({
 
     const deleteOfferMutation = useMutation<Offer, Error, string>({
         mutationFn: deleteOfferApi,
-        onSuccess: () => {
+        onSuccess: ( deletedOffer ) => {
             queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.OFFERS, facultyId] });
+            updateSubjectOffersCount( queryClient, facultyId, deletedOffer.subject.id, false );
             setIsDeleteDialogOpen( false );
             toast( 'Oferta eliminada exitosamente', successToast );
         },
         onError: ( mutationError ) => toast( `Error al eliminar oferta: ${mutationError.message}`, errorToast )
     });
-
-
-    function handleOfferSubmit( offer: Offer ): void {
-        queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.OFFERS, facultyId] });
-        setIsFormOpen( false );
-        setEditingOffer( undefined );
-    }
 
 
     function onOpenDeleteOffer( offer: Offer ): void {
@@ -309,28 +281,29 @@ export function OfferManagement({
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {paginatedOffers.map((offer) => (
-                                                <TableRow key={offer.id}>
+                                            {paginatedOffers.map(( offer ) => (
+                                                <TableRow key={ offer.id }>
                                                     {/* Tipo/Tamaño */}
                                                     <TableCell className="w-[120px]">
                                                         <SpaceSizeType
                                                             spaceType   = { offer.spaceType }
-                                                            spaceSizeId = { offer.spaceSizeId }
+                                                            spaceSizeId = { offer.spaceSize?.id }
                                                         />
                                                     </TableCell>
 
                                                     {/* Periodo */}
                                                     <TableCell className="w-[140px]">
                                                         <Badge variant="outline">
-                                                            {getPeriodName(offer.periodId)}
+                                                            { offer.period.id } - { offer.period.name }
                                                         </Badge>
                                                     </TableCell>
 
                                                     {/* Asignatura */}
-                                                    <TableCell className="w-[250px]">
-                                                        <div className="truncate" title={getSubjectName(offer.subjectId)}>
-                                                            {getSubjectName(offer.subjectId)}
-                                                        </div>
+                                                    <TableCell
+                                                        className   = "w-[250px] truncate"
+                                                        title       = { `${offer.subject.id} - ${offer.subject.name}` }
+                                                    >
+                                                        { offer.subject.name }
                                                     </TableCell>
 
                                                     {/* Sesiones */}
@@ -378,14 +351,14 @@ export function OfferManagement({
                                                                 title   = "Ver Secciones"
                                                                 size    = "icon"
                                                                 variant = "outline"
-                                                                onClick = { () => router.push( `/sections?subject=${offer.subjectId}` )}
+                                                                onClick = { () => router.push( `/sections?subject=${ offer.subject.id }` )}
                                                             >
                                                                 <Grid2x2 className="w-4 h-4" />
                                                             </Button>
 
                                                             <ActionButton
                                                                 editItem    = { openEditOfferForm }
-                                                                deleteItem  = { () => onOpenDeleteOffer(offer) }
+                                                                deleteItem  = { onOpenDeleteOffer }
                                                                 item        = { offer }
                                                             />
                                                         </div>
