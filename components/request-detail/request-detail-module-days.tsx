@@ -95,7 +95,7 @@ export function RequestDetailModuleDays({
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-[12.2rem] px-3 border-r bg-background">
+                                    <TableHead className="w-[7.85rem] px-3 border-r bg-background">
                                         Módulos
                                     </TableHead>
 
@@ -114,7 +114,7 @@ export function RequestDetailModuleDays({
                 </div>
 
                 {/* Contenido con scroll */}
-                <div className="overflow-x-auto max-h-60 overflow-y-auto">
+                <div className="overflow-x-auto max-h-64 overflow-y-auto">
                     <Table>
                         <TableBody>
                             {modules.map((module) => (
