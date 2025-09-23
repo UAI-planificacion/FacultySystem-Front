@@ -23,7 +23,7 @@ import {
     DialogDescription,
     DialogHeader,
     DialogTitle
-}                               from "@/components/ui/dialog";
+}                           from "@/components/ui/dialog";
 import {
     Form,
     FormControl,
@@ -32,11 +32,11 @@ import {
     FormItem,
     FormLabel,
     FormMessage
-}                               from "@/components/ui/form";
+}                           from "@/components/ui/form";
 import {
     ToggleGroup,
     ToggleGroupItem,
-}                               from "@/components/ui/toggle-group"
+}                           from "@/components/ui/toggle-group"
 import {
     Tabs,
     TabsContent,
@@ -49,8 +49,6 @@ import { ShowDateAt }       from "@/components/shared/date-at";
 import { CommentSection }   from "@/components/comment/comment-section";
 import { Switch }           from "@/components/ui/switch";
 import { Textarea }         from "@/components/ui/textarea";
-import { PeriodSelect }     from "@/components/shared/item-select/period-select";
-import { SubjectSelect }    from "@/components/shared/item-select/subject-select";
 import { OfferSelect }      from "@/components/offer/offer-select";
 
 import {
@@ -70,7 +68,7 @@ import { useSession }               from "@/hooks/use-session";
 export type RequestFormValues = z.infer<typeof formSchema>;
 
 
-interface RequestFormProps {
+interface Props {
     isOpen      : boolean;
     onClose     : () => void;
     onSuccess?  : () => void;
@@ -89,23 +87,15 @@ const formSchema = z.object({
         required_error: "Debe seleccionar un estado",
         invalid_type_error: "Estado no válido"
     }),
-    periodId: z.string({
-        required_error: "Debe seleccionar un período",
-        invalid_type_error: "Período no válido"
-    }),
     isConsecutive: z.boolean(),
     description: z.string()
         .max(500, { message: "La descripción no puede tener más de 500 caracteres" })
         .nullable()
         .transform(val => val === "" ? null : val),
     offerId: z.string({
-        required_error: "Debe seleccionar una asignatura",
-        invalid_type_error: "Asignatura no válida"
-    }).min(1, { message: "Debe seleccionar una asignatura" })
-    // subjectId: z.string({
-    //     required_error: "Debe seleccionar una asignatura",
-    //     invalid_type_error: "Asignatura no válida"
-    // }).min(1, { message: "Debe seleccionar una asignatura" })
+        required_error: "Debe seleccionar una oferta",
+        invalid_type_error: "Oferta no válida"
+    }).min(1, { message: "Debe seleccionar una oferta" })
 })
 
 
@@ -113,10 +103,8 @@ const defaultRequest = ( data : Request | null ) => ({
     title           : data?.title           || '',
     status          : data?.status          || Status.PENDING,
     description     : data?.description     || '',
-    periodId        : data?.periodId        || '',
     isConsecutive   : data?.isConsecutive   || false,
-    // subjectId       : data?.subject?.id     || '',
-    offerId       : data?.offer?.id     || '',
+    offerId         : data?.offer?.id       || '',
 });
 
 
@@ -129,7 +117,7 @@ export function RequestForm({
     onSuccess,
     request,
     facultyId,
-}: RequestFormProps ): JSX.Element {
+}: Props ): JSX.Element {
     const queryClient   = useQueryClient();
     const [tab, setTab] = useState<Tab>( 'form' );
     const { staff }     = useSession();
@@ -143,7 +131,7 @@ export function RequestForm({
         });
 
 
-    const updateRequestApi = async ( updatedRequest: UpdateRequest ): Promise<Request>  =>
+    const updateRequestApi = async ( updatedRequest: UpdateRequest ): Promise<Request> =>
         fetchApi<Request>({
             url     : `requests/${updatedRequest.id}`,
             method  : Method.PATCH,
@@ -154,7 +142,7 @@ export function RequestForm({
     const createRequestMutation = useMutation<Request, Error, CreateRequest>({
         mutationFn: createRequestApi,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.REQUESTS] });
+            queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.REQUESTS ]});
             onClose();
             toast( 'Solicitud creada exitosamente', successToast );
         },
@@ -165,7 +153,7 @@ export function RequestForm({
     const updateRequestMutation = useMutation<Request, Error, UpdateRequest>({
         mutationFn: updateRequestApi,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.REQUESTS] });
+            queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.REQUESTS ]});
             onClose();
             toast( 'Solicitud actualizada exitosamente', successToast );
             onSuccess?.();
@@ -189,7 +177,10 @@ export function RequestForm({
     function handleSubmit( data: RequestFormValues ): void {
         console.log( "🚀 ~ file: request-form.tsx:200 ~ data:", data )
 
-        if ( !staff ) return;
+        if ( !staff ) {
+            toast( 'Por favor, inicie sesión para crear una solicitud', errorToast );
+            return;
+        }
 
         if ( request ) {
             updateRequestMutation.mutate({
@@ -246,7 +237,7 @@ export function RequestForm({
                         className   = { cn( "space-y-4", request ? "mt-4": "" )}
                     >
                         <Form {...form}>
-                            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+                            <form onSubmit={ form.handleSubmit( handleSubmit )} className="space-y-4">
                                 <div className="grid grid-cols-1 gap-4 max-h-[60vh]">
                                     {/* Title */}
                                     <FormField
@@ -255,12 +246,14 @@ export function RequestForm({
                                         render  = {({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Título</FormLabel>
+
                                                 <FormControl>
                                                     <Input 
                                                         placeholder="Ingrese el título de la solicitud"
                                                         {...field} 
                                                     />
                                                 </FormControl>
+
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -329,60 +322,29 @@ export function RequestForm({
                                         />
                                     }
 
-                                    <OfferSelect
-                                        facultyId           = { facultyId }
-                                        value               = { '' }
-                                        placeholder         = "Seleccionar una oferta"
-                                        searchPlaceholder   = "Buscar por asignatura o período"
-                                        // onSelectionChange   = { ( value ) => form.setValue( 'offerId', value )}
-                                    />
+                                    <FormField
+                                        control = { form.control }
+                                        name    = "offerId"
+                                        render  = {({ field }) => {
+                                            return (
+                                                <FormItem>
+                                                    <FormLabel className="text-base">Oferta</FormLabel>
 
-
-                                    {/* <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <FormField
-                                            control = { form.control }
-                                            name    = "periodId"
-                                            render  = {({ field }) => {
-                                                return (
-                                                    <FormItem>
-                                                        <FormControl>
-                                                            <PeriodSelect
-                                                                defaultValues       = { field.value || '' }
-                                                                onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value )}
-                                                                label               = "Período"
-                                                                multiple            = { false }
-                                                                placeholder         = "Seleccionar un período"
-                                                                enabled             = { isOpen }
-                                                            />
-                                                        </FormControl>
-
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                );
-                                            }}
-                                        />
-
-                                        <FormField
-                                            control = { form.control }
-                                            name    = "offerId"
-                                            render  = {({ field }) => {
-                                                return (
-                                                    <FormItem>
-                                                        <SubjectSelect
-                                                            defaultValues       = { field.value || '' }
-                                                            onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value )}
-                                                            label               = "Oferta"
-                                                            multiple            = { false }
+                                                    <FormControl>
+                                                        <OfferSelect
+                                                            facultyId           = { facultyId }
+                                                            value               = { field.value }
                                                             placeholder         = "Seleccionar una oferta"
-                                                            enabled             = { isOpen }
+                                                            searchPlaceholder   = "Buscar por asignatura o período"
+                                                            onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value )}
                                                         />
+                                                    </FormControl>
 
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                );
-                                            }}
-                                        />
-                                    </div> */}
+                                                    <FormMessage />
+                                                </FormItem>
+                                            );
+                                        }}
+                                    />
 
                                     {/* Is Consecutive */}
                                     <FormField
@@ -439,7 +401,6 @@ export function RequestForm({
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <div className="space-y-2">
                                                 <FormLabel>Creado por</FormLabel>
-                                                dfsd
 
                                                 <Input 
                                                     value = { request?.staffCreate?.name || '-' }
@@ -469,7 +430,11 @@ export function RequestForm({
                                 </div>
 
                                 <div className="flex justify-between space-x-4 pt-4 border-t">
-                                    <Button type="button" variant="outline" onClick={onClose}>
+                                    <Button
+                                        type    = "button"
+                                        variant = "outline"
+                                        onClick = { onClose }
+                                    >
                                         Cancelar
                                     </Button>
 
@@ -488,7 +453,7 @@ export function RequestForm({
 
                     { request &&
                         <TabsContent value="comments" className="mt-4">
-                            {request?.id && (
+                            { request?.id && (
                                 <CommentSection
                                     requestId   = { request.id }
                                     enabled     = { tab === 'comments' }
