@@ -225,12 +225,13 @@ export function RequestDetailView({
                 )}
 
                 <RequestDetailForm
-                    requestDetail       = { selectedDetail }
-                    onSuccess           = { onSuccess }
-                    onCancel            = { () => setIsOpenEdit( false )}
-                    isOpen              = { isOpenEdit }
-                    onClose             = { () => setIsOpenEdit( false )}
-                    requestId           = { request.id }
+                    requestDetail   = { selectedDetail }
+                    onSuccess       = { onSuccess }
+                    onCancel        = { () => setIsOpenEdit( false )}
+                    isOpen          = { isOpenEdit }
+                    onClose         = { () => setIsOpenEdit( false )}
+                    requestId       = { request.id }
+                    request         = { request }
                 />
 
                 {/* Delete Confirmation Dialog */}
