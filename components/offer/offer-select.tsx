@@ -1,32 +1,41 @@
 "use client"
 
-import type React from "react"
-import { useState, useMemo, useCallback, useRef, useLayoutEffect } from "react";
+import {
+    useState,
+    useMemo,
+    useCallback,
+    useRef,
+    useLayoutEffect,
+    JSX
+}                   from "react";
+import type React   from "react"
 
-import { Check, ChevronDown, Search } from "lucide-react";
-import { FixedSizeList as List } from "react-window";
-import { useQuery } from '@tanstack/react-query';
+import { Check, ChevronDown, Search }   from "lucide-react";
+import { FixedSizeList as List }        from "react-window";
+import { useQuery }                     from '@tanstack/react-query';
 
 import {
     Popover,
     PopoverContent,
     PopoverTrigger
-} from "@/components/ui/popover";
+}                           from "@/components/ui/popover";
+import {
+    SessionShort,
+    getSessionCounts
+}                           from "@/components/section/session-short";
 import { Button }           from "@/components/ui/button";
 import { Input }            from "@/components/ui/input";
 import { Badge }            from "@/components/ui/badge";
 import { SpaceSizeType }    from "@/components/shared/space-size-type";
-import { SessionShort }     from "@/components/section/session-short";
 
 import { Offer }            from "@/types/offer.model";
-import { SessionCount }     from "@/components/section/types";
 import { KEY_QUERYS }       from "@/consts/key-queries";
 import { fetchApi }         from "@/services/fetch";
 import { cn }               from "@/lib/utils";
 import LoaderMini           from "@/icons/LoaderMini";
 
 
-interface OfferSelectProps {
+interface Props {
     facultyId           : string;
     value?              : string;
     placeholder?        : string;
@@ -37,8 +46,8 @@ interface OfferSelectProps {
 }
 
 
-const ITEM_HEIGHT = 50;
-const MAX_HEIGHT = 400;
+const ITEM_HEIGHT   = 50;
+const MAX_HEIGHT    = 400;
 
 
 export function OfferSelect({
@@ -49,14 +58,14 @@ export function OfferSelect({
     className,
     onSelectionChange,
     disabled = false,
-}: OfferSelectProps) {
-    const [open, setOpen] = useState( false );
-    const [searchValue, setSearchValue] = useState( "" );
+}: Props ): JSX.Element {
+    const [open, setOpen]                   = useState( false );
+    const [searchValue, setSearchValue]     = useState( "" );
+    const listRef                           = useRef<List>( null );
+    const scrollContainerRef                = useRef<HTMLDivElement>( null );
+    const triggerRef                        = useRef<HTMLButtonElement>( null );
+    const [triggerWidth, setTriggerWidth]   = useState<number>( 0 );
 
-    const listRef = useRef<List>( null );
-    const scrollContainerRef = useRef<HTMLDivElement>( null );
-    const triggerRef = useRef<HTMLButtonElement>( null );
-    const [triggerWidth, setTriggerWidth] = useState<number>( 0 );
 
     useLayoutEffect(() => {
         if ( triggerRef.current ) {
@@ -104,14 +113,6 @@ export function OfferSelect({
         [ onSelectionChange ]
     );
 
-    // Convert offer sessions to SessionCount format
-    const getSessionCounts = ( offer: Offer ): SessionCount => ({
-        C: offer.lecture,
-        A: offer.tutoringSession,
-        T: offer.workshop,
-        L: offer.laboratory,
-    });
-
     // Render virtualized offer item
     const renderOfferItem = useCallback(
         ({ index, style }: { index: number; style: React.CSSProperties }) => {
@@ -144,8 +145,8 @@ export function OfferSelect({
 
                         {/* Sessions */}
                         <SessionShort 
-                            sessionCounts={ getSessionCounts( offer )}
-                            showZero={true }
+                            sessionCounts   = { getSessionCounts( offer )}
+                            showZero        = { true }
                         />
 
                         { isSelected && (
@@ -172,15 +173,25 @@ export function OfferSelect({
                     <div className="flex flex-wrap gap-1 flex-grow-0 min-w-0 mr-2">
                         { selectedOffer ? (
                             <div className="flex items-center gap-2 truncate">
+                                <SpaceSizeType
+                                    spaceType   = { selectedOffer.spaceType }
+                                    spaceSizeId = { selectedOffer.spaceSize?.id }
+                                />
+
+                                <Badge variant="outline" className="text-xs">
+                                    { selectedOffer.period.id } - { selectedOffer.period.name }
+                                </Badge>
+
+                                {/* Subject info */}
                                 <Badge variant="secondary" className="text-xs font-mono">
                                     { selectedOffer.subject.id }
                                 </Badge>
-                                <span className="truncate">
-                                    { selectedOffer.subject.name }
-                                </span>
-                                <Badge variant="outline" className="text-xs">
-                                    { selectedOffer.period.name }
-                                </Badge>
+
+                                {/* Sessions */}
+                                <SessionShort 
+                                    sessionCounts   = { getSessionCounts( selectedOffer )}
+                                    showZero        = { true }
+                                />
                             </div>
                         ) : (
                             <span className="truncate">{ placeholder }</span>
@@ -192,33 +203,33 @@ export function OfferSelect({
             </PopoverTrigger>
 
             <PopoverContent
-                className="w-full p-0 -mr-1.5 z-[9999]"
-                style={{ width: triggerWidth }}
-                align="start"
-                side="bottom"
-                sideOffset={ 4 }
-                avoidCollisions={ true }
-                onOpenAutoFocus={ ( e ) => e.preventDefault() }
-                onCloseAutoFocus={ ( e ) => e.preventDefault() }
-                onWheel={ ( e ) => e.stopPropagation() }
-                onPointerDownOutside={ ( e ) => e.stopPropagation() }
+                className               = "w-full p-0 -mr-1.5 z-[9999]"
+                style                   = {{ width: triggerWidth }}
+                align                   = "start"
+                side                    = "bottom"
+                sideOffset              = { 4 }
+                avoidCollisions         = { true }
+                onOpenAutoFocus         = { ( e ) => e.preventDefault() }
+                onCloseAutoFocus        = { ( e ) => e.preventDefault() }
+                onWheel                 = { ( e ) => e.stopPropagation() }
+                onPointerDownOutside    = { ( e ) => e.stopPropagation() }
             >
                 <div className="flex items-center border-b px-3 py-2 w-full">
                     <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
 
                     <Input
-                        placeholder={ searchPlaceholder }
-                        value={ searchValue }
-                        onChange={ ( e ) => setSearchValue( e.target.value )}
-                        className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-8"
-                        onWheel={ ( e ) => e.stopPropagation() }
+                        placeholder = { searchPlaceholder }
+                        value       = { searchValue }
+                        onChange    = {( e ) => setSearchValue( e.target.value )}
+                        className   = "border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-8"
+                        onWheel     = {( e ) => e.stopPropagation() }
                     />
                 </div>
 
                 <div
-                    ref={ scrollContainerRef }
-                    className="max-h-[400px] overflow-x-hidden overflow-y-auto mt-1"
-                    onWheel={ ( e ) => e.stopPropagation() }
+                    ref         ={ scrollContainerRef }
+                    className   = "max-h-[400px] overflow-x-hidden overflow-y-auto mt-1"
+                    onWheel     ={( e ) => e.stopPropagation() }
                 >
                     { isLoading ? (
                         <div className="py-6 px-4 flex flex-col items-center justify-center space-y-3">
@@ -235,11 +246,11 @@ export function OfferSelect({
                         </div>
                     ) : (
                         <List
-                            ref={ listRef }
-                            height={ Math.min( filteredOffers.length * ITEM_HEIGHT, MAX_HEIGHT )}
-                            itemCount={ filteredOffers.length }
-                            itemSize={ ITEM_HEIGHT }
-                            width="100%"
+                            ref         = { listRef }
+                            height      = { Math.min( filteredOffers.length * ITEM_HEIGHT, MAX_HEIGHT )}
+                            itemCount   = { filteredOffers.length }
+                            itemSize    = { ITEM_HEIGHT }
+                            width       = "100%"
                         >
                             { renderOfferItem }
                         </List>
