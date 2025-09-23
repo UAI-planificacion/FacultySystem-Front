@@ -24,7 +24,6 @@ import { ShowStatus }           from "@/components/shared/status";
 import { ScrollArea }           from "@/components/ui/scroll-area";
 import { ActionButton }         from "@/components/shared/action";
 
-import { usePeriods }   from "@/hooks/use-periods";
 import { type Request } from "@/types/request";
 
 
@@ -46,7 +45,7 @@ export function RequestTable({
     isLoading,
     isError
 }: RequestTableProps ): JSX.Element {
-    const { getPeriodName, isLoadingPeriods } = usePeriods();
+    // const { getPeriodName, isLoadingPeriods } = usePeriods();
 
     if ( isLoading ) {
         return <RequestCardSkeletonGrid count={6} />;
@@ -86,46 +85,52 @@ export function RequestTable({
                         <TableBody>
                             {requests.map(( request ) => (
                                 <TableRow key={request.id} className="hover:bg-muted/50">
-                                    <TableCell className="font-medium">
-                                        <div className="max-w-[200px] truncate" title={request.title}>
-                                            {request.title}
-                                        </div>
+                                    <TableCell
+                                        className   = "font-medium max-w-[200px] truncate"
+                                        title       = { request.title }
+                                    >
+                                        { request.title }
                                     </TableCell>
 
                                     <TableCell>
-                                        <ShowStatus status={request.status} />
+                                        <ShowStatus status={ request.status } />
                                     </TableCell>
 
                                     <TableCell>
-                                        <Consecutive isConsecutive={request.isConsecutive} />
+                                        <Consecutive isConsecutive={ request.isConsecutive } />
                                     </TableCell>
 
                                     <TableCell>
                                         <Badge variant="outline">
-                                            {isLoadingPeriods ? request.periodId : getPeriodName( request.periodId )}
+                                            { request.offer.period.id } - { request.offer.period.name }
                                         </Badge>
                                     </TableCell>
 
-                                    <TableCell>
-                                        <div className="max-w-[150px] truncate" title={request.staffCreate.name}>
-                                            {request.staffCreate.name}
-                                        </div>
+                                    <TableCell
+                                        className   = "max-w-[150px] truncate"
+                                        title       = { request.staffCreate.name }
+                                    >
+                                        { request.staffCreate.name }
                                     </TableCell>
 
                                     <TableCell>
-                                        {request.staffUpdate ? (
-                                            <div className="max-w-[150px] truncate" title={request.staffUpdate.name}>
-                                                {request.staffUpdate.name}
+                                        { request.staffUpdate ? (
+                                            <div
+                                                className   = "max-w-[150px] truncate"
+                                                title       = { request.staffUpdate.name }
+                                            >
+                                                { request.staffUpdate.name }
                                             </div>
                                         ) : (
                                             <span className="text-muted-foreground">-</span>
                                         )}
                                     </TableCell>
 
-                                    <TableCell>
-                                        <div className="max-w-[150px] truncate" title={request.offer.id}>
-                                            {request.offer.id}
-                                        </div>
+                                    <TableCell
+                                        className   = "max-w-[150px] truncate"
+                                        title       = {`${request.offer.subject.id} - ${request.offer.subject.name}`}
+                                    >
+                                        { request.offer.subject.name }
                                     </TableCell>
 
                                     <TableCell className="text-right">
