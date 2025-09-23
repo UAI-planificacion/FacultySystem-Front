@@ -72,6 +72,7 @@ import { KEY_QUERYS }       from "@/consts/key-queries";
 import { Method, fetchApi } from "@/services/fetch";
 import { Grade }            from "@/types/grade";
 import { useSession }       from "@/hooks/use-session";
+import { Request }          from "@/types/request";
 
 import {
     errorToast,
@@ -123,30 +124,34 @@ const formSchema = z.object({
 export type RequestDetailFormValues = z.infer<typeof formSchema>;
 
 
-interface RequestDetailFormProps {
-    requestDetail       : RequestDetail | undefined;
-    onSuccess?          : () => void;
-    onCancel            : () => void;
-    isOpen              : boolean;
-    onClose             : () => void;
-    requestId           : string;
+interface Props {
+    requestDetail   : RequestDetail | undefined;
+    onSuccess?      : () => void;
+    onCancel        : () => void;
+    isOpen          : boolean;
+    onClose         : () => void;
+    requestId       : string;
+    request?        : Request;
 }
 
 
-const defaultRequestDetail = ( data: RequestDetail | undefined ): RequestDetailFormValues => ({
-    minimum         : data?.minimum     || null,
-    maximum         : data?.maximum     || null,
-    spaceType       : data?.spaceType    as SpaceType,
-    spaceSize       : data?.spaceSize    as Size,
-    building        : data?.building     as Building,
-    costCenterId    : data?.costCenterId,
-    inAfternoon     : data?.inAfternoon || false,
-    description     : data?.description             || '',
-    isPriority      : data?.isPriority  || false,
-    gradeId         : data?.grade?.id,
-    professorId     : data?.professorId,
-    spaceId         : data?.spaceId || '',
-    moduleDays      : data?.moduleDays || [],
+const defaultRequestDetail = (
+    requestDetail   : RequestDetail | undefined,
+    request?        : Request       | undefined
+): RequestDetailFormValues => ({
+    minimum         : requestDetail?.minimum     || null,
+    maximum         : requestDetail?.maximum     || null,
+    spaceType       : request ? request.offer.spaceType : requestDetail?.spaceType,
+    spaceSize       : request ? ( request.offer.spaceSize as Size | null ) : requestDetail?.spaceSize,
+    building        : request ? request.offer.building : requestDetail?.building,
+    costCenterId    : request ? request.offer.costCenterId : requestDetail?.costCenterId,
+    inAfternoon     : requestDetail?.inAfternoon || false,
+    description     : requestDetail?.description             || '',
+    isPriority      : requestDetail?.isPriority  || false,
+    gradeId         : requestDetail?.grade?.id,
+    professorId     : requestDetail?.professorId,
+    spaceId         : requestDetail?.spaceId || '',
+    moduleDays      : requestDetail?.moduleDays || [],
 });
 
 
@@ -178,7 +183,8 @@ export function RequestDetailForm({
     onClose,
     isOpen,
     requestId,
-}: RequestDetailFormProps ): JSX.Element {
+    request,
+}: Props ): JSX.Element {
     const [tab, setTab]                             = useState<Tab>( 'form' );
     const queryClient                               = useQueryClient();
     const [typeSpace, setTypeSpace]                 = useState<boolean[]>([ false, false, false ]);
@@ -244,12 +250,12 @@ export function RequestDetailForm({
 
     const form = useForm<RequestDetailFormValues>({
         resolver        : zodResolver( formSchema ) as any,
-        defaultValues   : defaultRequestDetail( requestDetail ),
+        defaultValues   : defaultRequestDetail( requestDetail, request ),
     });
 
 
     useEffect(() => {
-        form.reset( defaultRequestDetail( requestDetail ));
+        form.reset( defaultRequestDetail( requestDetail, request ));
         setTab( 'form' );
     }, [requestDetail, isOpen]);
 
@@ -367,7 +373,26 @@ export function RequestDetailForm({
                         <Form {...form}>
                             <form onSubmit={form.handleSubmit( onSubmitForm )} className="space-y-4">
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <FormField
+                                    control = { form.control }
+                                    name    = "costCenterId"
+                                    render  = {({ field }) => (
+                                        <FormItem>
+                                            <CostCenterSelect
+                                                label               = "Centro de Costos"
+                                                placeholder         = "Seleccionar Centro de Costo"
+                                                defaultValues       = { field.value || '' }
+                                                onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
+                                                multiple            = { false }
+                                            />
+
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                                     {/* Mínimo de estudiantes */}
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
                                     <FormField
                                         control = { form.control }
                                         name    = "minimum"
@@ -421,6 +446,8 @@ export function RequestDetailForm({
                                             </FormItem>
                                         )}
                                     />
+                                </div>
+
 
                                     {/* Grade */}
                                     <FormField
@@ -611,7 +638,7 @@ export function RequestDetailForm({
                                     name    = "inAfternoon"
                                     render  = {({ field }) => (
                                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                                            <div className="space-y-0.5">
+                                            <div className="">
                                                 <FormLabel>Turno Tarde</FormLabel>
 
                                                 <p className="text-sm text-muted-foreground">
@@ -625,24 +652,6 @@ export function RequestDetailForm({
                                                     onCheckedChange = { field.onChange }
                                                 />
                                             </FormControl>
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <FormField
-                                    control = { form.control }
-                                    name    = "costCenterId"
-                                    render  = {({ field }) => (
-                                        <FormItem>
-                                            <CostCenterSelect
-                                                label               = "Centro de Costos"
-                                                placeholder         = "Seleccionar Centro de Costo"
-                                                defaultValues       = { field.value || '' }
-                                                onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
-                                                multiple            = { false }
-                                            />
-
-                                            <FormMessage />
                                         </FormItem>
                                     )}
                                 />
