@@ -1,25 +1,33 @@
 'use client';
 
+import { JSX } from "react";
+
 import { ShowDate } from "@/components/shared/date";
 
-interface ShowDateAtProps {
+
+interface Props {
     createdAt: Date | string | undefined;
     updatedAt: Date | string | undefined;
 }
 
-export function ShowDateAt({ createdAt, updatedAt }: ShowDateAtProps ) {
+
+export function ShowDateAt({
+    createdAt,
+    updatedAt
+}: Props ): JSX.Element {
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex items-center gap-2 border border-zinc-200 dark:border-zinc-800/70 p-2 rounded">
                 <span>Creado</span>
-                <ShowDate date={createdAt} />
+
+                <ShowDate date={ createdAt } />
             </div>
 
             <div className="flex items-center gap-2 border border-zinc-200 dark:border-zinc-800/70 p-2 rounded">
                 <span>Actualizado</span>
 
-                {updatedAt && updatedAt !== createdAt
-                    ? <ShowDate date={updatedAt} />
+                { updatedAt && updatedAt !== createdAt
+                    ? <ShowDate date={ updatedAt } />
                     : <span>-</span>
                 }
             </div>
