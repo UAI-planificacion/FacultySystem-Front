@@ -1,4 +1,6 @@
-import { Role } from "./staff.model";
+import { Offer }    from "@/types/offer.model";
+import { Role }     from "@/types/staff.model";
+
 
 export enum Status {
     PENDING     = "PENDING",
@@ -48,28 +50,17 @@ export interface StaffRequest {
 }
 
 
-export interface SubjectRequest {
-    id      : string;
-    name    : string;
-}
-
-export interface OfferRequest {
-    id : string
-}
-
-
 export interface Request {
     id              : string;
     title           : string;
     status          : Status;
     isConsecutive   : boolean;
     description     : string | null;
-    periodId        : string;
     updatedAt       : Date;
     createdAt       : Date;
     staffCreate     : StaffRequest;
     staffUpdate     : StaffRequest | null;
-    offer           : OfferRequest;
+    offer           : Offer;
     totalDetails    : number;
     facultyId       : string;
 }
