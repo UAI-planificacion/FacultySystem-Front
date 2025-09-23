@@ -1,14 +1,12 @@
 'use client'
 
-import { JSX }          from "react";
-import { useRouter }    from 'next/navigation';
+import { JSX } from "react";
 
 import {
     Eye,
     User,
     BookOpen,
     CalendarDays,
-    Grid2x2
 } from "lucide-react";
 
 import {
@@ -23,8 +21,6 @@ import { ShowDate }     from "@/components/shared/date";
 import { Consecutive }  from "@/components/shared/consecutive";
 import { ActionButton } from "@/components/shared/action";
 
-import LoaderMini       from "@/icons/LoaderMini";
-import { usePeriods }   from "@/hooks/use-periods";
 import { type Request } from "@/types/request";
 
 
@@ -42,14 +38,6 @@ export function RequestCard({
     onEdit,
     onDelete
 }: RequestCardProps ): JSX.Element {
-    const {
-        getPeriodName,
-        isLoadingPeriods,
-        isErrorPeriods
-    }               = usePeriods();
-    const router    = useRouter();
-
-
     return (
         <Card className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
@@ -72,7 +60,7 @@ export function RequestCard({
                         <BookOpen className="h-4 w-4" />
 
                         <span className="font-medium max-w-full truncate overflow-hidden whitespace-nowrap">
-                            { request.offer.id }
+                            { request.offer.subject.id } - { request.offer.subject.name }
                         </span>
                     </div>
 
@@ -87,18 +75,9 @@ export function RequestCard({
                     <div className="flex items-center gap-1.5">
                         <CalendarDays className="h-4 w-4" />
 
-                        { isLoadingPeriods
-                            ? <LoaderMini/>
-                            : <span className="max-w-full truncate overflow-hidden whitespace-nowrap">
-                                { getPeriodName( request.periodId )}
-                            </span>
-                        }
-
-                        { isErrorPeriods && (
-                            <span className="max-w-full truncate overflow-hidden whitespace-nowrap">
-                                Sin Peridodo
-                            </span>
-                        )}
+                        <span className="max-w-full truncate overflow-hidden whitespace-nowrap">
+                            { request.offer.period.id } - { request.offer.period.name }
+                        </span>
                     </div>
 
                     <ShowDate date={ request.createdAt } />
@@ -111,15 +90,6 @@ export function RequestCard({
                 )}
 
                 <div className="flex items-center gap-2 justify-end">
-                    {/* <Button
-                        size        = "sm"
-                        onClick     = { () => router.push( `/sections?subject=${request.subject.id}&period=${request.periodId}` )}
-                        className   = "flex items-center"
-                        variant     = "outline"
-                    >
-                        <Grid2x2 className="h-4 w-4" />
-                    </Button> */}
-
                     <ActionButton
                         item        = { request }
                         editItem    = { onEdit }
@@ -132,7 +102,7 @@ export function RequestCard({
                         className   = "flex items-center gap-1"
                         variant     = "secondary"
                     >
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-4 w-4 mt-0.5" />
 
                         { request.totalDetails } detalle{ request.totalDetails !== 1 ? "s" : "" }
                     </Button>
