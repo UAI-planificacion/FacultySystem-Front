@@ -19,15 +19,19 @@ export function SubjectSelect({
     label,
     multiple    = true,
     placeholder = 'Seleccionar asignaturas',
-    enabled     = true
+    enabled     = true,
+    queryKey    = [ KEY_QUERYS.SUBJECTS ],
+    url
 } : Props ): JSX.Element {
     const {
         data,
         isLoading,
         isError
     } = useQuery<Subject[]>({
-        queryKey: [ KEY_QUERYS.SUBJECTS ],
-        queryFn : () => fetchApi({ url: 'subjects' }),
+        queryKey,
+        queryFn : () => fetchApi({
+            url: url ? `subjects/all/${url}` : 'subjects'
+        }),
         enabled
     });
 
