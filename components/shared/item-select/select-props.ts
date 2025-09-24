@@ -7,4 +7,6 @@ export interface Props {
     enabled?            : boolean;
     disabled?           : boolean;
     className?          : string;
+    queryKey?           : string[];
+    url?                : string;
 }
