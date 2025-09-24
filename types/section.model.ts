@@ -48,13 +48,13 @@ export interface Section extends SectionBase {
     code        : number;
     period      : Period;
     subject     : Subject;
-    room        : string | null;
+    room        : string    | null;
     professor   : Professor | null;
     isClosed    : boolean;
     groupId     : string;
-    day         : Day | null;
-    module      : Module | null;
-    session                : Session;
+    day         : Day       | null;
+    module      : Module    | null;
+    session     : Session;
 
 }
 
