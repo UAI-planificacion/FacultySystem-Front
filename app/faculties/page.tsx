@@ -41,6 +41,36 @@ import { KEY_QUERYS }       from "@/consts/key-queries";
 import { useViewMode }      from "@/hooks/use-view-mode";
 
 
+export const updateFacultyTotal = ( 
+    queryClient : ReturnType<typeof useQueryClient>, 
+    facultyId   : string, 
+    increment   : boolean,
+    total       : string,
+    number      : number  = 1
+): void => {
+    queryClient.setQueryData<FacultyResponse | undefined>(
+        [ KEY_QUERYS.FACULTIES ],
+        ( data : FacultyResponse | undefined ) => {
+            if ( !data ) return data;
+
+            const updatedFaculties = data.faculties.map(( faculty: Faculty ) => 
+                faculty.id === facultyId
+                    ? {
+                        ...faculty,
+                        [total]: faculty[total] + ( increment ? number : -1 )
+                    }
+                    : faculty
+            );
+
+            return {
+                ...data,
+                faculties: updatedFaculties
+            };
+        }
+    );
+};
+
+
 export default function FacultiesPage() {
     const queryClient                   = useQueryClient();
     const { viewMode, onViewChange }    = useViewMode({ queryName: 'viewFaculty' });
@@ -78,7 +108,7 @@ export default function FacultiesPage() {
     const createFacultyMutation = useMutation<Faculty, Error, CreateFacultyInput>({
         mutationFn: createFacultyApi,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.FACULTIES] });
+            queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.FACULTIES ]});
             setIsFormOpen( false );
             setEditingFaculty( undefined );
             toast( 'Facultad creada exitosamente', successToast );
@@ -92,7 +122,7 @@ export default function FacultiesPage() {
     const updateFacultyMutation = useMutation<Faculty, Error, UpdateFacultyInput>({
         mutationFn: updateFacultyApi,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.FACULTIES] });
+            queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.FACULTIES ]});
             setIsFormOpen( false );
             setEditingFaculty( undefined );
             toast( 'Facultad actualizada exitosamente', successToast );
