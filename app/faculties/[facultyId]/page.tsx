@@ -20,7 +20,7 @@ import {
 }                               from "@/components/ui/tabs";
 import { StaffManagement }      from "@/components/staff/staff-management";
 import { SubjectsManagement }   from "@/components/subject/subjects-management";
-import { RequestsManagement }   from "@/components/request/request";
+import { RequestsManagement }   from "@/components/request/request-management";
 import { Button }               from "@/components/ui/button";
 import { OfferManagement }      from "@/components/offer/offer-management";
 
@@ -47,10 +47,34 @@ export default function FacultyDetailsPage(): JSX.Element {
     const [activeTab, setActiveTab] = useState<TabValue>( initialTab );
 
 
+    // Estado para forzar re-renders cuando cambie la caché
+    const [, forceUpdate] = useState({});
+
+    // Query para obtener datos de facultades
+    const { data: facultiesData } = useQuery<FacultyResponse>({
+        queryKey    : [ KEY_QUERYS.FACULTIES ],
+        queryFn     : () => fetchApi({ url: 'faculties' }),
+        staleTime   : 5 * 60 * 1000
+    });
+
+    // Suscribirse a cambios en la caché para forzar actualizaciones
+    useEffect(() => {
+        const unsubscribe = queryClient.getQueryCache().subscribe(( event ) => {
+            if ( 
+                event?.query?.queryKey?.[0] === KEY_QUERYS.FACULTIES && 
+                event?.type === 'updated' 
+            ) {
+                forceUpdate({});
+            }
+        });
+
+        return unsubscribe;
+    }, [ queryClient ]);
+
     const facultyFromCache = useMemo(() => {
-        const facultiesData = queryClient.getQueryData<FacultyResponse>([ KEY_QUERYS.FACULTIES ]);
-        return facultiesData?.faculties.find( f => f.id === facultyId );
-    }, [ queryClient, facultyId ]);
+        const currentData = queryClient.getQueryData<FacultyResponse>([ KEY_QUERYS.FACULTIES ]);
+        return currentData?.faculties.find( f => f.id === facultyId );
+    }, [ queryClient, facultyId, facultiesData ]);
 
 
     const {
@@ -146,10 +170,10 @@ export default function FacultyDetailsPage(): JSX.Element {
                     </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value={TabValue.REQUESTS}>
-                    <RequestsManagement
+                <TabsContent value={TabValue.STAFF}>
+                    <StaffManagement 
                         facultyId   = { facultyId }
-                        enabled     = { activeTab === TabValue.REQUESTS }
+                        enabled     = { activeTab === TabValue.STAFF }
                     />
                 </TabsContent>
 
@@ -160,17 +184,17 @@ export default function FacultyDetailsPage(): JSX.Element {
                     />
                 </TabsContent>
 
-                <TabsContent value={TabValue.STAFF}>
-                    <StaffManagement 
-                        facultyId   = { facultyId }
-                        enabled     = { activeTab === TabValue.STAFF }
-                    />
-                </TabsContent>
-
                 <TabsContent value={TabValue.OFFERS}>
                     <OfferManagement 
                         facultyId   = { facultyId }
                         enabled     = { activeTab === TabValue.OFFERS }
+                    />
+                </TabsContent>
+
+                <TabsContent value={TabValue.REQUESTS}>
+                    <RequestsManagement
+                        facultyId   = { facultyId }
+                        enabled     = { activeTab === TabValue.REQUESTS }
                     />
                 </TabsContent>
             </Tabs>
