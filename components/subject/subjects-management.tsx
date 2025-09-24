@@ -1,7 +1,6 @@
 "use client"
 
-import { useMemo, useState }    from "react";
-import { useRouter }            from 'next/navigation';
+import { useMemo, useState } from "react";
 
 import {
     useMutation,
@@ -12,8 +11,8 @@ import {
     Album,
     Plus,
     Search
-}                       from "lucide-react";
-import { toast }        from "sonner";
+}                   from "lucide-react";
+import { toast }    from "sonner";
 
 import {
     Table,
@@ -43,9 +42,10 @@ import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
 import { Input }                from "@/components/ui/input";
 import { Label }                from "@/components/ui/label";
 import { ActionButton }         from "@/components/shared/action";
-import { Badge }                from "@/components/ui/badge";
 import { CostCenterSelect }     from "@/components/shared/item-select/cost-center";
 import { ActiveBadge }          from "@/components/shared/active";
+import { OfferForm }            from "@/components/offer/offer-form";
+import { SpaceSizeType }        from "@/components/shared/space-size-type";
 
 import {
     CreateSubject,
@@ -56,8 +56,7 @@ import { KEY_QUERYS }               from "@/consts/key-queries"
 import { Method, fetchApi }         from "@/services/fetch"
 import { errorToast, successToast } from "@/config/toast/toast.config"
 import { usePagination }            from "@/hooks/use-pagination";
-import { OfferForm } from "../offer/offer-form";
-import { SpaceSizeType } from "../shared/space-size-type";
+import { updateFacultyTotal } from "@/app/faculties/page";
 
 
 interface SubjectsManagementProps {
@@ -69,14 +68,12 @@ interface SubjectsManagementProps {
 export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementProps) {
     const queryClient                                   = useQueryClient();
     const [isFormOpen, setIsFormOpen]                   = useState( false );
-    const [isOfferOpen, setIsOfferOpen]                   = useState( false );
-
+    const [isOfferOpen, setIsOfferOpen]                 = useState( false );
     const [editingSubject, setEditingSubject]           = useState<Subject | undefined>( undefined );
     const [searchQuery, setSearchQuery]                 = useState( '' );
     const [selectedCostCenter, setSelectedCostCenter]   = useState<string>( 'all' );
     const [isDeleteDialogOpen, setIsDeleteDialogOpen]   = useState( false );
     const [deletingSubjectId, setDeletingSubjectId]     = useState<string | undefined>( undefined );
-    const router                                        = useRouter();
 
 
     const {
@@ -157,6 +154,7 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
 
     function saveSuject( isCreated: boolean ): void {
         queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SUBJECTS, facultyId] });
+        if ( isCreated ) updateFacultyTotal( queryClient, facultyId, true, 'totalSubjects' );
         setIsFormOpen( false );
         setEditingSubject( undefined );
         toast( `Asignatura ${isCreated ? 'creada' : 'actualizada'} exitosamente`, successToast );
@@ -181,6 +179,7 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
         mutationFn: deleteSubjectApi,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SUBJECTS, facultyId] });
+            updateFacultyTotal( queryClient, facultyId, false, 'totalSubjects' );
             setIsDeleteDialogOpen( false );
             toast( 'Asignatura eliminada exitosamente', successToast );
         },

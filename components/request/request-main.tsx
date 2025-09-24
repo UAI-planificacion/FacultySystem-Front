@@ -20,6 +20,7 @@ import { Method, fetchApi }         from "@/services/fetch";
 import { errorToast, successToast } from "@/config/toast/toast.config";
 import { KEY_QUERYS }               from "@/consts/key-queries";
 import { useViewMode }              from "@/hooks/use-view-mode";
+import { updateFacultyTotal }       from "@/app/faculties/page";
 
 
 interface RequestMainProps {
@@ -68,6 +69,7 @@ export function RequestMain({
         mutationFn: deleteRequestApi,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.REQUESTS, facultyId] });
+            updateFacultyTotal( queryClient, facultyId, false, 'totalRequests' );
             setIsDeleteDialogOpen( false );
             setDeletingRequest( null );
             toast( 'Solicitud eliminada exitosamente', successToast );

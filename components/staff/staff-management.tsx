@@ -50,6 +50,7 @@ import { KEY_QUERYS }                       from "@/consts/key-queries";
 import { Method, fetchApi }                 from "@/services/fetch";
 import { errorToast, successToast }         from "@/config/toast/toast.config";
 import { usePagination }                    from "@/hooks/use-pagination";
+import { updateFacultyTotal }               from "@/app/faculties/page";
 
 
 interface StaffManagementProps {
@@ -161,6 +162,7 @@ export function StaffManagement({
         mutationFn: createStaffApi,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.STAFF, facultyId ]});
+            updateFacultyTotal( queryClient, facultyId, true, 'totalStaff' );
             setIsFormOpen( false );
             setEditingStaff( undefined );
             toast( 'Personal creado exitosamente', successToast );
@@ -185,6 +187,7 @@ export function StaffManagement({
         mutationFn: deleteStaffApi,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.STAFF, facultyId ]});
+            updateFacultyTotal( queryClient, facultyId, false, 'totalStaff' );
             setIsDeleteDialogOpen( false );
             toast( 'Personal eliminado exitosamente', successToast );
         },

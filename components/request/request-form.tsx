@@ -63,6 +63,7 @@ import { errorToast, successToast } from "@/config/toast/toast.config";
 import { cn }                       from "@/lib/utils";
 import LoaderMini                   from "@/icons/LoaderMini";
 import { useSession }               from "@/hooks/use-session";
+import { updateFacultyTotal }       from "@/app/faculties/page";
 
 
 export type RequestFormValues = z.infer<typeof formSchema>;
@@ -143,6 +144,7 @@ export function RequestForm({
         mutationFn: createRequestApi,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.REQUESTS ]});
+            updateFacultyTotal( queryClient, facultyId, true, 'totalRequests' );
             onClose();
             toast( 'Solicitud creada exitosamente', successToast );
         },

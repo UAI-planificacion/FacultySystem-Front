@@ -53,6 +53,7 @@ import { KEY_QUERYS }               from "@/consts/key-queries";
 import { Method, fetchApi }         from "@/services/fetch";
 import { errorToast, successToast } from "@/config/toast/toast.config";
 import { usePagination }            from "@/hooks/use-pagination";
+import { updateFacultyTotal }       from "@/app/faculties/page";
 
 
 interface OfferManagementProps {
@@ -164,6 +165,7 @@ export function OfferManagement({
         onSuccess: ( deletedOffer ) => {
             queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.OFFERS, facultyId] });
             updateSubjectOffersCount( queryClient, facultyId, deletedOffer.subject.id, false );
+            updateFacultyTotal( queryClient, facultyId, false, 'totalOffers' );
             setIsDeleteDialogOpen( false );
             toast( 'Oferta eliminada exitosamente', successToast );
         },
