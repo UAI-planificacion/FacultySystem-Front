@@ -77,6 +77,7 @@ export function FacultyCard({
                     size      = "sm"
                     onClick   = {() => router.push(`/faculties/${faculty.id}?tab=offers`)}
                     className = "flex items-center gap-1.5"
+                    disabled  = { faculty.totalSubjects === 0 }
                 >
                     <BookOpen className="h-4 w-4" />
                     {faculty.totalOffers || 0} Ofertas
@@ -87,6 +88,7 @@ export function FacultyCard({
                     size        = "sm"
                     onClick     = {() => router.push(`/faculties/${faculty.id}?tab=requests`)}
                     className   = "flex items-center gap-1.5"
+                    disabled    = { faculty.totalOffers === 0 }
                 >
                     <BookCopy className="h-4 w-4" />
                     {faculty.totalRequests || 0} Solicitudes
