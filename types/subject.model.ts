@@ -20,7 +20,7 @@ export interface Subject extends BaseSubject {
 
 
 export interface CreateSubject extends BaseSubject {
-    facultyId       : string;
+    facultyId: string;
 }
 
 

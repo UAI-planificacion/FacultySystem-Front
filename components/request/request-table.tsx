@@ -45,8 +45,6 @@ export function RequestTable({
     isLoading,
     isError
 }: RequestTableProps ): JSX.Element {
-    // const { getPeriodName, isLoadingPeriods } = usePeriods();
-
     if ( isLoading ) {
         return <RequestCardSkeletonGrid count={6} />;
     }

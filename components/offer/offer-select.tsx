@@ -90,11 +90,12 @@ export function OfferSelect({
         if ( !searchValue ) return offerList;
 
         const searchLower = searchValue.toLowerCase();
+
         return offerList.filter( offer => 
-            offer.subject.id.toLowerCase().includes( searchLower ) ||
-            offer.subject.name.toLowerCase().includes( searchLower ) ||
-            offer.period.id.toLowerCase().includes( searchLower ) ||
-            offer.period.name.toLowerCase().includes( searchLower )
+            offer.subject.id.toLowerCase().includes( searchLower )
+            || offer.subject.name.toLowerCase().includes( searchLower )
+            || offer.period.id.toLowerCase().includes( searchLower )
+            || offer.period.name.toLowerCase().includes( searchLower )
         );
     }, [ offerList, searchValue ]);
 

@@ -24,7 +24,7 @@ import { ActionButton } from "@/components/shared/action";
 import { type Request } from "@/types/request";
 
 
-export interface RequestCardProps {
+export interface Props {
     request         : Request;
     onViewDetails   : ( request: Request ) => void;
     onEdit          : ( request: Request ) => void;
@@ -37,7 +37,7 @@ export function RequestCard({
     onViewDetails,
     onEdit,
     onDelete
-}: RequestCardProps ): JSX.Element {
+}: Props ): JSX.Element {
     return (
         <Card className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
