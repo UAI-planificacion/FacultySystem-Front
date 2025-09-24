@@ -1,8 +1,5 @@
 "use client"
 
-import { SessionButton }    from "@/components/section/session-button";
-import { Session }          from "@/types/section.model";
-
 import { JSX, useEffect } from "react"
 
 import {
@@ -43,6 +40,7 @@ import { PeriodSelect }     from "@/components/shared/item-select/period-select"
 import { SizeSelect }       from "@/components/shared/item-select/size-select";
 import { SubjectSelect }    from "@/components/shared/item-select/subject-select";
 import { CostCenterSelect } from "@/components/shared/item-select/cost-center";
+import { SessionButton }    from "@/components/section/session-button";
 import { OfferDates }       from "@/components/offer/offer-dates";
 
 import {
@@ -60,6 +58,8 @@ import { KEY_QUERYS }               from "@/consts/key-queries";
 import { Method, fetchApi }         from "@/services/fetch";
 import { getSpaceType }             from "@/lib/utils";
 import { errorToast, successToast } from "@/config/toast/toast.config";
+import { updateFacultyTotal }       from "@/app/faculties/page";
+import { Session }                  from "@/types/section.model";
 
 
 // Form schema with Zod validation
@@ -81,12 +81,10 @@ const formSchema = z.object({
     const { workshop, lecture, tutoringSession, laboratory } = data;
 
     return workshop > 0 || lecture > 0 || tutoringSession > 0 || laboratory > 0;
-},
-    {
-        message : "Al menos una sesión debe ser mayor que 0",
-        path    : [ "workshop" ],
-    }
-);
+}, {
+    message : "Al menos una sesión debe ser mayor que 0",
+    path    : [ "workshop" ],
+});
 
 
 export type OfferFormValues = z.infer<typeof formSchema>;
@@ -266,6 +264,7 @@ export function OfferForm({
         onSuccess: ( newOffer ) => {
             queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.OFFERS, facultyId ]});
             updateSubjectOffersCount( queryClient, facultyId, newOffer.subject.id, true );
+            updateFacultyTotal( queryClient, facultyId, true, 'totalOffers' );
             onClose();
             onSubmit?.( newOffer );
             toast( 'Oferta creada exitosamente', successToast );
@@ -349,6 +348,9 @@ export function OfferForm({
                                             defaultValues       = { field.value }
                                             onSelectionChange   = { field.onChange }
                                             multiple            = { false }
+                                            queryKey            = {[ KEY_QUERYS.SUBJECTS, facultyId ]}
+                                            url                 = { facultyId }
+                                            enabled             = { isOpen }
                                         />
 
                                         <FormMessage />
@@ -367,6 +369,7 @@ export function OfferForm({
                                             defaultValues       = { field.value || '' }
                                             multiple            = { false }
                                             onSelectionChange   = {( values ) => field.onChange( values || '' )}
+                                            enabled             = { isOpen }
                                         />
 
                                         <FormMessage />
@@ -384,6 +387,7 @@ export function OfferForm({
                                             defaultValues       = { field.value || '' }
                                             multiple            = { false }
                                             onSelectionChange   = {( values ) => field.onChange( values || null )}
+                                            enabled             = { isOpen }
                                         />
 
                                         <FormMessage />
@@ -584,13 +588,14 @@ export function OfferForm({
                             >
                                 Cancelar
                             </Button>
+
                             <Button
                                 type        = "submit"
                                 disabled    = { createOfferMutation.isPending || updateOfferMutation.isPending }
                             >
-                                {createOfferMutation.isPending || updateOfferMutation.isPending
-                                    ? (offer ? 'Actualizando...' : 'Creando...')
-                                    : (offer ? 'Actualizar Oferta' : 'Crear Oferta')
+                                { createOfferMutation.isPending || updateOfferMutation.isPending
+                                    ? ( offer ? 'Actualizando...' : 'Creando...' )
+                                    : ( offer ? 'Actualizar Oferta' : 'Crear Oferta' )
                                 }
                             </Button>
                         </div>
