@@ -56,7 +56,7 @@ export function Login(): JSX.Element {
                                     className   = "rounded-full"
                                 />
 
-                                <span className="hidden md:flex">{ data.user?.name }</span>
+                                {/* <span className="hidden md:flex">{ data.user?.name.split( ' ' )[ 0 ] }</span> */}
                             </Button>
                         </DropdownMenuTrigger>
 
