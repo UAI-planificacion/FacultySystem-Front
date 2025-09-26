@@ -1,11 +1,17 @@
+export enum PeriodStatus {
+    Opened      = 'Opened',
+    InProgress  = 'InProgress',
+    Completed   = 'Completed'
+}
+
 export interface Period {
     id          : string;
     name        : string;
-    startDate   : string | null;
-    endDate     : string | null;
+    startDate   : string;
+    endDate     : string;
     openingDate : string | null;
     closingDate : string | null;
-    status      : string;
-    createdAt   : string;
-    updatedAt   : string;
+    status      : PeriodStatus;
+    createdAt   : Date
+    updatedAt   : Date;
 }
