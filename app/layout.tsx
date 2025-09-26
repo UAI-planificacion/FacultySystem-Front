@@ -3,49 +3,61 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 import { QueryProvider }    from '@/app/query-provider';
-import Header               from '@/components/header/Header';
+
+import {
+    SidebarProvider,
+    SidebarInset
+}                           from '@/components/ui/sidebar';
 import { ThemeProvider }    from '@/components/theme-provider';
-import { Toaster }          from '@/components/ui/sonner';
+import Header               from '@/components/header/Header';
 import { Footer }           from '@/components/footer';
+import { Toaster }          from '@/components/ui/sonner';
+import { AppSidebar }       from '@/components/navigation/app-sidebar';
 
 
 export const metadata: Metadata = {
-	title		: 'Sistema de Facultades',
-	description	: 'Sistema de Facultades',
-	icons		: {
-		icon	    : '/favicon.ico',
+	title       : 'Sistema de Facultades',
+	description : 'Sistema de Facultades',
+	icons       : {
+		icon        : '/favicon.ico',
 		shortcut    : '/favicon.ico',
-		apple	    : '/favicon.ico',
+		apple       : '/favicon.ico',
 	},
 };
 
 
 export default function RootLayout({
-    children,
+	children,
 }: {
-    children: React.ReactNode;
+	children: React.ReactNode;
 }) {
-    return (
-        <html lang="es" suppressHydrationWarning={true}>
-            <body>
-                <QueryProvider>
-                    <ThemeProvider
-                        attribute       = "class"
-                        defaultTheme    = "system"
-                        enableSystem 
-                    >
-                        <Header />
+	return (
+		<html lang="es" suppressHydrationWarning={ true }>
+			<body>
+				<QueryProvider>
+					<ThemeProvider
+						attribute       = "class"
+						defaultTheme    = "system"
+						enableSystem 
+					>
+						<SidebarProvider>
+							<AppSidebar />
+						
+							<SidebarInset className="flex flex-col min-h-screen">
+								<Header />
 
-                        <Toaster />
+								<main className="flex-1 p-6">
+									{ children }
+								</main>
 
-                        <main className="flex-grow">
-                            {children}
-                        </main>
+								<Footer />
+							</SidebarInset>
+						</SidebarProvider>
 
-                        <Footer />
-                    </ThemeProvider>
-                </QueryProvider>
-            </body>
-        </html>
-    );
+						<Toaster />
+					</ThemeProvider>
+				</QueryProvider>
+			</body>
+		</html>
+	);
 }
