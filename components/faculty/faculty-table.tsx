@@ -138,7 +138,7 @@ export function FacultyTable({
 	return (
         <Card>
             <CardContent>
-                <ScrollArea className="h-[calc(100vh-375px)]">
+                <ScrollArea className="h-[calc(100vh-400px)]">
                     <Table>
                         <TableHeader>
                             <TableRow>
