@@ -29,18 +29,18 @@ import { Label }                from "@/components/ui/label";
 import { ScrollArea }           from "@/components/ui/scroll-area";
 import { DataPagination }       from "@/components/ui/data-pagination";
 import { ActionButton }         from "@/components/shared/action";
+import { PageLayout }           from "@/components/layout/page-layout";
+import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
 
 import {
     errorToast,
     successToast
-}               from "@/config/toast/toast.config";
-
-import { SizeModal }            from "@/app/sizes/size-modal";
-import { Size }                 from "@/types/size.model";
-import { KEY_QUERYS }           from '@/consts/key-queries';
-import { Method, fetchApi }     from '@/services/fetch';
-import { useSizes }             from "@/hooks/use-sizes";
-import { DeleteConfirmDialog } from "@/components/dialog/DeleteConfirmDialog";
+}                           from "@/config/toast/toast.config";
+import { SizeModal }        from "@/app/sizes/size-modal";
+import { Size }             from "@/types/size.model";
+import { KEY_QUERYS }       from '@/consts/key-queries';
+import { Method, fetchApi } from '@/services/fetch';
+import { useSizes }         from "@/hooks/use-sizes";
 
 
 const endpoint = 'sizes';
@@ -142,67 +142,67 @@ export default function SizesPage() {
 
     if (isError) {
         return (
-            <main className="container mx-auto py-10">
+            <PageLayout title="Gestión de Tamaños">
                 <div className="flex items-center justify-center h-64">
                     <div className="text-center">
                         <p className="text-destructive mb-2">Error al cargar tamaños</p>
                         <p className="text-muted-foreground text-sm">{error?.message}</p>
                     </div>
                 </div>
-            </main>
+            </PageLayout>
         );
     }
 
     return (
-        <main className="container mx-auto py-10">
-            <header className="flex items-center justify-between mb-4">
-                <h1 className="text-4xl font-bold tracking-tight">
-                    Gestión de Tamaños
-                </h1>
-
+        <PageLayout 
+            title="Gestión de Tamaños"
+            actions={
                 <Button 
                     onClick={ openAddModal } 
-                    className="flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-200 px-6 py-3"
+                    className="flex items-center gap-2"
                 >
                     <Plus className="h-5 w-5" />
                     Crear Tamaño
                 </Button>
-            </header>
+            }
+        >
 
-            <div className="space-y-6">
+            <div className="flex flex-col h-full space-y-6 overflow-hidden">
                 {/* Filtros */}
-                <Card>
-                    <CardContent className="space-y-4 mt-4">
-                        <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="search">Buscar</Label>
+                <div className="flex-shrink-0">
+                    <Card>
+                        <CardContent className="space-y-4 mt-4">
+                            <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="search">Buscar</Label>
 
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
 
-                                    <Input
-                                        id          = "search"
-                                        placeholder = "Buscar por ID o detalle..."
-                                        value       = { searchQuery }
-                                        onChange    = { (e) => handleSearchChange( e.target.value ) }
-                                        className   = "pl-10"
-                                    />
+                                        <Input
+                                            id          = "search"
+                                            placeholder = "Buscar por ID o detalle..."
+                                            value       = { searchQuery }
+                                            onChange    = { (e) => handleSearchChange( e.target.value ) }
+                                            className   = "pl-10"
+                                        />
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
+                </div>
 
                 {/* Tabla de tamaños */}
-                <div className="space-y-4">
-                    <Card>
-                        <CardContent className="mt-5">
+                <div className="flex-1 flex flex-col space-y-4 overflow-hidden">
+                    <Card className="flex-1 overflow-hidden">
+                        <CardContent className="mt-5 h-full flex flex-col">
                             { sizes.length === 0 ? (
                                 <div className="text-center p-8 text-muted-foreground">
                                     No se han encontrado tamaños.
                                 </div>
                             ) : (
-                                <div>
+                                <div className="flex-1 overflow-hidden">
                                     <Table>
                                         <TableHeader className="sticky top-0 z-10 bg-background">
                                             <TableRow>
@@ -217,7 +217,7 @@ export default function SizesPage() {
                                         </TableHeader>
                                     </Table>
 
-                                    <ScrollArea className="h-[calc(100vh-500px)]">
+                                    <ScrollArea className="h-[calc(100vh-400px)]">
                                         <Table>
                                             <TableBody>
                                                 {paginatedSizes.map( size => (
@@ -271,14 +271,16 @@ export default function SizesPage() {
                     </Card>
 
                     {/* Paginación */}
-                    <DataPagination
-                        currentPage             = { currentPage }
-                        totalPages              = { totalPages }
-                        totalItems              = { totalItems }
-                        itemsPerPage            = { itemsPerPage }
-                        onPageChange            = { setCurrentPage }
-                        onItemsPerPageChange    = { setItemsPerPage }
-                    />
+                    <div className="flex-shrink-0">
+                        <DataPagination
+                            currentPage             = { currentPage }
+                            totalPages              = { totalPages }
+                            totalItems              = { totalItems }
+                            itemsPerPage            = { itemsPerPage }
+                            onPageChange            = { setCurrentPage }
+                            onItemsPerPageChange    = { setItemsPerPage }
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -296,6 +298,6 @@ export default function SizesPage() {
                 name        = { currentSize?.id || '' }
                 type        = "el Tamaño"
             />
-        </main>
+        </PageLayout>
     );
 }

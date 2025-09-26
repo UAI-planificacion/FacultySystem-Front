@@ -16,15 +16,16 @@ import {
 }                   from "@tanstack/react-query";
 import { toast }    from "sonner";
 
-import { FacultyForm }              from "@/components/faculty/faculty-form";
-import { FacultyList }              from "@/components/faculty/faculty-list";
-import { FacultyTable }             from "@/components/faculty/faculty-table";
-import { Button }                   from "@/components/ui/button";
-import { StatisticCard }            from "@/components/ui/statistic-card";
-import { DeleteConfirmDialog }      from "@/components/dialog/DeleteConfirmDialog";
-import { Input }                    from "@/components/ui/input";
-import { ViewMode }                 from "@/components/shared/view-mode";
-import { DataPagination }           from "@/components/ui/data-pagination";
+import { FacultyForm }          from "@/components/faculty/faculty-form";
+import { FacultyList }          from "@/components/faculty/faculty-list";
+import { FacultyTable }         from "@/components/faculty/faculty-table";
+import { Button }               from "@/components/ui/button";
+import { StatisticCard }        from "@/components/ui/statistic-card";
+import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
+import { Input }                from "@/components/ui/input";
+import { ViewMode }             from "@/components/shared/view-mode";
+import { DataPagination }       from "@/components/ui/data-pagination";
+import { PageLayout }           from "@/components/layout/page-layout";
 
 import {
     CreateFacultyInput,
@@ -212,103 +213,104 @@ export default function FacultiesPage() {
     }
 
     return (
-        <main className="container mx-auto py-6 px-4 sm:px-5 space-y-6 min-h-[calc(100vh-74px)]">
-            {/* Statistics Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-                <StatisticCard
-                    title   = "Total de Facultades"
-                    value   = { data?.faculties.length }
-                    icon    = { <Building className="h-6 w-6" /> }
-                />
-
-                <StatisticCard
-                    title   = "Total de Personal"
-                    value   = { data?.totalStaff }
-                    icon    = { <Users className="h-6 w-6" /> }
-                />
-
-                <StatisticCard
-                    title   = "Total de Asignaturas"
-                    value   = { data?.totalSubjects }
-                    icon    = { <BookOpen className="h-6 w-6" /> }
-                />
-
-                <StatisticCard
-                    title   = "Total de Ofertas"
-                    value   = { data?.totalOffers }
-                    icon    = { <BookCopy className="h-6 w-6" /> }
-                />
-
-                <StatisticCard
-                    title   = "Total de Solicitudes"
-                    value   = { data?.totalRequests }
-                    icon    = { <BookCopy className="h-6 w-6" /> }
-                />
-            </div>
-
-            {/* Faculty List */}
-            <div className="space-y-4">
-                <div className="w-full flex items-center justify-between gap-2">
-                    <Input
-                        type        = "search"
-                        placeholder = "Buscar facultad por nombre..."
-                        value       = { filterText }
-                        onChange    = {( e ) => setFilterText( e.target.value )}
-                        className   = "w-full max-w-md"
+        <PageLayout 
+            title   = "Gestión de Facultades"
+            actions = {
+                <Button onClick={ openNewFacultyForm }>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Crear Facultad
+                </Button>
+            }
+        >
+            <div className="flex flex-col h-full space-y-4 overflow-hidden">
+                {/* Statistics Cards */}
+                <div className="flex-shrink-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                    <StatisticCard
+                        title   = "Total de Facultades"
+                        value   = { data?.faculties.length }
+                        icon    = { <Building className="h-6 w-6" /> }
                     />
 
-                    <div className="flex items-center gap-2 sm:gap-4">
+                    <StatisticCard
+                        title   = "Total de Personal"
+                        value   = { data?.totalStaff }
+                        icon    = { <Users className="h-6 w-6" /> }
+                    />
+
+                    <StatisticCard
+                        title   = "Total de Asignaturas"
+                        value   = { data?.totalSubjects }
+                        icon    = { <BookOpen className="h-6 w-6" /> }
+                    />
+
+                    <StatisticCard
+                        title   = "Total de Ofertas"
+                        value   = { data?.totalOffers }
+                        icon    = { <BookCopy className="h-6 w-6" /> }
+                    />
+
+                    <StatisticCard
+                        title   = "Total de Solicitudes"
+                        value   = { data?.totalRequests }
+                        icon    = { <BookCopy className="h-6 w-6" /> }
+                    />
+                </div>
+
+                {/* Faculty List */}
+                <div className="flex-1 flex flex-col space-y-4 overflow-hidden">
+                    <div className="flex-shrink-0 w-full flex items-center justify-between gap-2">
+                        <Input
+                            type        = "search"
+                            placeholder = "Buscar facultad por nombre..."
+                            value       = { filterText }
+                            onChange    = {( e ) => setFilterText( e.target.value )}
+                            className   = "w-full max-w-md"
+                        />
+
                         <ViewMode
                             viewMode        = { viewMode }
                             onViewChange    = { onViewChange }
                         />
-
-                        <Button
-                            onClick     = { openNewFacultyForm }
-                            className   = "flex items-center"
-                        >
-                            <Plus className="h-4 w-4 mr-1" />
-
-                            <span className="hidden sm:flex">Crear Facultad</span>
-                        </Button>
                     </div>
-                </div>
 
-                {/* Faculty Content */}
-                <div className="space-y-4">
-                    { viewMode === 'cards' ? (
-                        <FacultyList
-                            faculties       = { paginatedFaculties }
-                            isLoading       = { isLoading }
-                            isError         = { isError }
-                            onEdit          = { openEditFacultyForm }
-                            onDelete        = { openDeleteDialog }
-                            onNewFaculty    = { openNewFacultyForm }
-                        />
-                    ) : (
-                        <FacultyTable
-                            faculties       = { paginatedFaculties }
-                            isLoading       = { isLoading }
-                            isError         = { isError }
-                            onEdit          = { openEditFacultyForm }
-                            onDelete        = { openDeleteDialog }
-                            onNewFaculty    = { openNewFacultyForm }
-                        />
-                    )}
+                    {/* Faculty Content */}
+                    <div className="flex-1 overflow-hidden">
+                        { viewMode === 'cards' ? (
+                            <FacultyList
+                                faculties       = { paginatedFaculties }
+                                isLoading       = { isLoading }
+                                isError         = { isError }
+                                onEdit          = { openEditFacultyForm }
+                                onDelete        = { openDeleteDialog }
+                                onNewFaculty    = { openNewFacultyForm }
+                            />
+                        ) : (
+                            <FacultyTable
+                                faculties       = { paginatedFaculties }
+                                isLoading       = { isLoading }
+                                isError         = { isError }
+                                onEdit          = { openEditFacultyForm }
+                                onDelete        = { openDeleteDialog }
+                                onNewFaculty    = { openNewFacultyForm }
+                            />
+                        )}
+                    </div>
 
                     {/* Pagination */}
                     { !isLoading && !isError && filteredFaculties.length > 0 && (
-                        <DataPagination
-                            currentPage             = { currentPage }
-                            totalPages              = { totalPages }
-                            totalItems              = { filteredFaculties.length }
-                            itemsPerPage            = { itemsPerPage }
-                            onPageChange            = { setCurrentPage }
-                            onItemsPerPageChange    = { ( newItemsPerPage ) => {
-                                setItemsPerPage( newItemsPerPage );
-                                setCurrentPage( 1 );
-                            }}
-                        />
+                        <div className="flex-shrink-0">
+                            <DataPagination
+                                currentPage             = { currentPage }
+                                totalPages              = { totalPages }
+                                totalItems              = { filteredFaculties.length }
+                                itemsPerPage            = { itemsPerPage }
+                                onPageChange            = { setCurrentPage }
+                                onItemsPerPageChange    = { ( newItemsPerPage ) => {
+                                    setItemsPerPage( newItemsPerPage );
+                                    setCurrentPage( 1 );
+                                }}
+                            />
+                        </div>
                     )}
                 </div>
             </div>
@@ -329,6 +331,6 @@ export default function FacultiesPage() {
                 name        = { deletingFacultyId || '' }
                 type        = "la Facultad"
             />
-        </main>
+        </PageLayout>
     );
 }

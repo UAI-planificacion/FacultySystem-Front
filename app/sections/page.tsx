@@ -7,7 +7,6 @@ import {
     Plus,
     Save,
     BrushCleaning,
-    ArrowLeft,
     Boxes
 }                       from 'lucide-react';
 import {
@@ -23,11 +22,11 @@ import {
     TabsList
 }                           from '@/components/ui/tabs';
 import { SectionCard }      from "@/components/section/section-card";
-import { SectionTable }     from "@/components/section/section.table";
 import { SectionMain }      from "@/components/section/section-main";
 import { ViewMode }         from "@/components/shared/view-mode";
 import { Button }           from "@/components/ui/button";
 import { SubjectSelect }    from '@/components/shared/item-select/subject-select';
+import { PageLayout }       from "@/components/layout/page-layout";
 
 import {
     Session,
@@ -256,22 +255,9 @@ export default function SectionsPage() {
 
 
 	return (
-        <main className="container mx-auto py-6 px-4 sm:px-5 min-h-[calc(100vh-74px)]">
-			<header className=" space-y-2 sm:space-y-0 sm:flex justify-between gap-4 items-center w-full">
-                <div className="flex items-center gap-4">
-                    <Button
-                        onClick = { () => router.back() }
-                        size    = "icon"
-                        variant = "secondary"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                    </Button>
-
-                    <h1 className="text-xl md:text-3xl font-bold">
-                        Administrador de Secciones
-                    </h1>
-                </div>
-
+        <PageLayout 
+            title="Administrador de Secciones"
+            actions={
                 <Tabs
                     value           = { tab }
                     onValueChange   = {( value ) => setTab( value as TabType )}
@@ -279,18 +265,17 @@ export default function SectionsPage() {
                     <TabsList>
                         <TabsTrigger value="show" className="gap-1.5">
                             <Boxes className="h-5 w-5" />
-
                             <span className='hidden md:flex'>Secciones</span>
                         </TabsTrigger>
 
                         <TabsTrigger value="add" className='gap-1.5'>
                             <Plus className="h-5 w-5" />
-
                             <span className='hidden md:flex'>Agregar</span>
                         </TabsTrigger>
                     </TabsList>
-                </Tabs> 
-			</header>
+                </Tabs>
+            }
+        >
 
             { tab === 'add' ? ( <>
                 <div className="flex items-center gap-2 justify-end mt-4">
@@ -306,90 +291,66 @@ export default function SectionsPage() {
                         />
                     </div>
 
+                    <Button
+                        onClick     = { handleSave }
+                        disabled    = { generatedSections.length === 0 }
+                        className   = "flex items-center gap-2"
+                    >
+                        <Save className="h-4 w-4" />
+                        Crear Secciones ({ generatedSections.length })
+                    </Button>
+                </div>
+
+                <div className="mt-4">
+                    <Button
+                        onClick     = { addSection }
+                        className   = "mb-4"
+                        variant     = "outline"
+                    >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Agregar Sección
+                    </Button>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {sections.map( section => (
+                            <SectionCard
+                                key                 = { section.id }
+                                section             = { section }
+                                updateSectionNumber = { updateSectionNumber }
+                                removeSection       = { removeSection }
+                                removeDisabled      = { sections.length === 1 }
+                                updateSectionPeriod = { updateSectionPeriod }
+                                updateSessionCount  = { updateSessionCount }
+                                setSessionCount     = { setSessionCount }
+                            />
+                        ))}
+                    </div>
+
+                    <div className="mt-4 pt-4 border-t">
+                        <Button
+                            onClick     = { () => setSections([ emptySection ])}
+                            disabled    = { sections.length === 1 }
+                            className   = "mr-2"
+                            variant     = "destructive"
+                        >
+                            <BrushCleaning className="h-4 w-4 mr-2" />
+                            Limpiar Secciones
+                        </Button>
+                    </div>
+                </div>
+            </> ) : (
+                <div className="mt-4">
                     <ViewMode
                         viewMode        = { viewMode }
                         onViewChange    = { onViewChange }
                     />
 
-                    <Button
-                        onClick     = { addSection }
-                        className   = "items-center gap-2 w-full sm:w-auto"
-                    >
-                        <Plus className="h-4 w-4" />
-                        Agregar Sección
-                    </Button>
-                </div>
-
-                <div className="h-[calc(100vh-350px)] sm:h-[calc(100vh-330px)] overflow-auto space-y-4 mt-4">
-                    { viewMode === 'cards' ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {sections.map( section => (
-                                <SectionCard
-                                    key                 = { section.id }
-                                    section             = { section }
-                                    updateSectionNumber = { updateSectionNumber }
-                                    removeSection       = { removeSection }
-                                    removeDisabled      = { sections.length === 1 }
-                                    updateSectionPeriod = { updateSectionPeriod }
-                                    updateSessionCount  = { updateSessionCount }
-                                    setSessionCount     = { setSessionCount }
-                                />
-                            ))}
-                        </div>
-                    ) : (
-                        <SectionTable
-                            section             = { sections }
-                            updateSectionNumber = { updateSectionNumber }
-                            removeSection       = { removeSection }
-                            removeDisabled      = { sections.length === 1 }
-                            updateSectionPeriod = { updateSectionPeriod }
-                            updateSessionCount  = { updateSessionCount }
-                            setSessionCount     = { setSessionCount }
-                        />
-                    )}
-                </div>
-
-                <div className="grid sm:flex sm:justify-between space-y-2 sm:space-y-0 sm:gap-4 border-t-2 items-center sm:pt-2 mt-2">
-                    <Button
-                        onClick     = { () => setSections([ emptySection ])}
-                        disabled    = { sections.length === 1 }
-                        className   = "flex items-center gap-2"
-                        variant     = "destructive"
-                    >
-                        <BrushCleaning className="h-4 w-4" />
-
-                        Limpiar Secciones
-                    </Button>
-
-                    <div className="flex gap-2 items-center">
-                        {/* <SubjectSelect
-                            placeholder         = "Seleccione una asignatura"
-                            defaultValues       = { subjectId }
-                            onSelectionChange   = {( value ) => {
-                                const newValues = value as string;
-                                setSubjectId(newValues);
-                            }}
-                            multiple = { false }
-                        /> */}
-
-                        <Button
-                            onClick     = { handleSave }
-                            disabled    = { generatedSections.length === 0 }
-                            className   = "flex items-center gap-2"
-                        >
-                            <Save className="h-4 w-4" />
-                            Crear Secciones ({ generatedSections.length })
-                        </Button>
-                    </div>
-                </div>
-                </> )
-                : (
                     <SectionMain
                         enabled         = { true }
                         searchParams    = { searchParams }
                     />
-                )
-            }
-		</main>
+                </div>
+            )}
+        </PageLayout>
 	);
 }

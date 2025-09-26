@@ -1,9 +1,8 @@
 'use client'
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
-import { Plus }     from 'lucide-react';
-import { toast }    from 'sonner';
+import { Plus } from 'lucide-react';
 
 import TableModules         from '@/app/modules/table-modules';
 import ModuleDay            from '@/app/modules/module-day';
@@ -14,13 +13,14 @@ import {
     TabsContent,
     TabsList,
     TabsTrigger
-}                   from "@/components/ui/tabs";
-import { Button }   from '@/components/ui/button';
+}                       from "@/components/ui/tabs";
+import { Button }       from '@/components/ui/button';
+import { PageLayout }   from '@/components/layout/page-layout';
 
 import { useModulesOriginal }   from '@/hooks/use-modules-original';
 import { useModules }           from '@/hooks/use-modules';
+import { useDays }              from '@/hooks/use-days';
 
-import { useDays }  from '@/hooks/use-days';
 import { Day } from '@/types/day.model';
 
 
@@ -31,11 +31,13 @@ export default function ModulesPage() {
         error: modulesOriginalErrorMessage
     } = useModulesOriginal();
 
+
     const {
         data: modules = [],
         isError: modulesError,
         error: modulesErrorMessage
     } = useModules();
+
 
     const {
         data: days = [],
@@ -43,17 +45,16 @@ export default function ModulesPage() {
         error: daysErrorMessage
     } = useDays();
 
+
     const [isModalOpen, setIsModalOpen] = useState(false);
+
 
     const availableDays = days.map((day: Day) => Number(day.id) - 1);
 
 
-
-
-
     if (modulesOriginalError || modulesError || daysError) {
         return (
-            <main className="container mx-auto py-10">
+            <PageLayout title="Gestión de Módulos">
                 <div className="flex items-center justify-center h-64">
                     <div className="text-center">
                         <p className="text-destructive mb-2">Error al cargar datos</p>
@@ -65,34 +66,31 @@ export default function ModulesPage() {
                         </p>
                     </div>
                 </div>
-            </main>
+            </PageLayout>
         );
     }
 
     return (
-        <main className="container mx-auto py-10">
-            <header className="flex items-center justify-between mb-4">
-                <h1 className="text-4xl font-bold tracking-tight">
-                    Gestión de Módulos
-                </h1>
-
+        <PageLayout 
+            title="Gestión de Módulos"
+            actions={
                 <Button 
                     onClick={ () => setIsModalOpen( true )} 
-                    className="flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-200 px-6 py-3"
+                    className="flex items-center gap-2"
                 >
                     <Plus className="h-5 w-5" />
                     Agregar Módulo
                 </Button>
-            </header>
+            }
+        >
 
-            <Tabs defaultValue="table">
-                <TabsList>
+            <Tabs defaultValue="table" className="flex-1 flex flex-col">
+                <TabsList className="grid grid-cols-2">
                     <TabsTrigger value="table">Tabla</TabsTrigger>
-
                     <TabsTrigger value="modules">Módulos</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="table">
+                <TabsContent value="table" className="flex-1 overflow-hidden">
                     <TableModules
                         modules = { modulesOriginal }
                         onSave  = { () => {} }
@@ -100,7 +98,7 @@ export default function ModulesPage() {
                     />
                 </TabsContent>
 
-                <TabsContent value="modules">
+                <TabsContent value="modules" className="flex-1 overflow-hidden">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 grid-rows-2 gap-6 h-full">
                         {days.map((day: Day, index: number) => (
                             <ModuleDay
@@ -119,6 +117,6 @@ export default function ModulesPage() {
                 onClose = { () => setIsModalOpen( false )}
                 days    = { availableDays }
             />
-        </main>
+        </PageLayout>
     );
 }

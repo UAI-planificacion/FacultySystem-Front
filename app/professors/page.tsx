@@ -42,8 +42,9 @@ import { Input }                from "@/components/ui/input";
 import { Label }                from "@/components/ui/label";
 import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
 import { Badge }                from "@/components/ui/badge";
+import { PageLayout }           from "@/components/layout/page-layout";
 
-import {  Professor }               from "@/types/professor";
+import { Professor }                from "@/types/professor";
 import { KEY_QUERYS }               from "@/consts/key-queries";
 import { Method, fetchApi }         from "@/services/fetch";
 import { errorToast, successToast } from "@/config/toast/toast.config";
@@ -198,15 +199,15 @@ export default function ProfessorsPage() {
 		);
 	}
 	return (
-		<main className="container mx-auto p-6 space-y-6 min-h-[calc(100vh-74px)]">
-			<header className="flex justify-between items-center">
-				<h1 className="text-3xl font-bold">Gestión de Profesores</h1>
-
+		<PageLayout 
+			title="Gestión de Profesores"
+			actions={
 				<Button onClick={ openNewProfessorForm }>
 					<Plus className="mr-2 h-4 w-4" />
 					Crear Profesor
 				</Button>
-			</header>
+			}
+		>
 
 			{/* Filtros */}
 			<Card>
@@ -348,11 +349,11 @@ export default function ProfessorsPage() {
 			{/* Delete Confirmation Dialog */}
 			<DeleteConfirmDialog
 				isOpen      = { isDeleteDialogOpen }
-				onClose     = { () => setIsDeleteDialogOpen( false )}
+				onClose     = { () => setIsDeleteDialogOpen( false ) }
 				onConfirm   = { () => deleteProfessorMutation.mutate( deletingProfessorId! ) }
-				name        = { deletingProfessorId! }
+				name        = { deletingProfessorId ? `el Profesor con ID ${ deletingProfessorId }` : '' }
 				type        = "el Profesor"
 			/>
-		</main>
+		</PageLayout>
 	);
 }

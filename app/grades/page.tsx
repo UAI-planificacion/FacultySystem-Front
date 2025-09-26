@@ -41,9 +41,9 @@ import { Label }                from "@/components/ui/label";
 import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
 import { DataPagination }       from "@/components/ui/data-pagination";
 import { GradeForm }            from "@/components/grade/grade-form";
+import { PageLayout }           from "@/components/layout/page-layout";
 import { ShowDate }             from "@/components/shared/date";
 import { Headquarter }          from "@/components/shared/headquarter";
-
 import { Grade, HeadquartersEnum }  from "@/types/grade";
 import { KEY_QUERYS }               from "@/consts/key-queries";
 import { Method, fetchApi }         from "@/services/fetch";
@@ -169,15 +169,15 @@ export default function GradesPage() {
 
 
 	return (
-		<main className="container mx-auto p-6 space-y-6 min-h-[calc(100vh-74px)]">
-			<header className="flex justify-between items-center">
-				<h1 className="text-3xl font-bold">Gestión de Grados</h1>
-
+		<PageLayout 
+			title="Gestión de Grados"
+			actions={
 				<Button onClick={ openNewGradeForm }>
 					<Plus className="mr-2 h-4 w-4" />
 					Crear Grado
 				</Button>
-			</header>
+			}
+		>
 
 			{/* Filtros */}
 			<Card>
@@ -328,6 +328,6 @@ export default function GradesPage() {
 				name        = { deletingGradeId! }
 				type        = "el Grado"
 			/>
-		</main>
+		</PageLayout>
 	);
 }

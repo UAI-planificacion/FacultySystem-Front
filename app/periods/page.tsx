@@ -42,12 +42,13 @@ import { Input }                from "@/components/ui/input";
 import { Label }                from "@/components/ui/label";
 import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
 import { Badge }                from "@/components/ui/badge";
+import { PageLayout }           from "@/components/layout/page-layout";
 
-import { Period, PeriodStatus } from "@/types/periods.model";
-import { KEY_QUERYS }           from "@/consts/key-queries";
-import { Method, fetchApi }     from "@/services/fetch";
+import { Period, PeriodStatus }     from "@/types/periods.model";
+import { KEY_QUERYS }               from "@/consts/key-queries";
+import { Method, fetchApi }         from "@/services/fetch";
 import { errorToast, successToast } from "@/config/toast/toast.config";
-import { usePagination }        from "@/hooks/use-pagination";
+import { usePagination }            from "@/hooks/use-pagination";
 
 
 const endpoint = 'periods';
@@ -220,155 +221,152 @@ export default function PeriodsPage() {
 
 
 	return (
-		<main className="container mx-auto p-6 space-y-6 min-h-[calc(100vh-74px)]">
-			<header className="flex justify-between items-center">
-				<h1 className="text-3xl font-bold">Gestión de Períodos</h1>
-
+		<PageLayout 
+			title="Gestión de Períodos"
+			actions={
 				<Button onClick={ openNewPeriodForm }>
 					<Plus className="mr-2 h-4 w-4" />
 					Crear Período
 				</Button>
-			</header>
+			}
+		>
 
-			{/* Filtros */}
-			<Card>
-				<CardContent className="space-y-4 mt-4">
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-						<div className="space-y-2">
-							<Label htmlFor="search">Buscar</Label>
+			<div className="flex flex-col h-full space-y-6 overflow-hidden">
+				{/* Filtros */}
+				<div className="flex-shrink-0">
+					<Card>
+						<CardContent className="space-y-4 mt-4">
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+								<div className="space-y-2">
+									<Label htmlFor="search">Buscar</Label>
 
-							<div className="relative">
-								<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+									<div className="relative">
+										<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
 
-								<Input
-									id          = "search"
-									placeholder = "Buscar por ID, nombre o fecha de inicio..."
-									value       = { searchQuery }
-									onChange    = { (e) => handleFilterChange( 'search', e.target.value ) }
-									className   = "pl-10"
-								/>
+										<Input
+											id          = "search"
+											placeholder = "Buscar por ID, nombre o fecha de inicio..."
+											value       = { searchQuery }
+											onChange    = { (e) => handleFilterChange( 'search', e.target.value ) }
+											className   = "pl-10"
+										/>
+									</div>
+								</div>
+
+								<div className="space-y-2">
+									<Label htmlFor="status-filter">Estado</Label>
+
+									<Select value={ statusFilter } onValueChange={ (value) => handleFilterChange( 'status', value ) }>
+										<SelectTrigger id="status-filter">
+											<SelectValue placeholder="Seleccionar estado" />
+										</SelectTrigger>
+
+										<SelectContent>
+											<SelectItem value="all">Todos</SelectItem>
+											<SelectItem value={ PeriodStatus.Opened }>Abierto</SelectItem>
+											<SelectItem value={ PeriodStatus.InProgress }>En Progreso</SelectItem>
+											<SelectItem value={ PeriodStatus.Completed }>Completado</SelectItem>
+										</SelectContent>
+									</Select>
+								</div>
 							</div>
-						</div>
+						</CardContent>
+					</Card>
+				</div>
 
-						<div className="space-y-2">
-							<Label htmlFor="status-filter">Estado</Label>
+				{/* Tabla de períodos */}
+				<div className="flex-1 flex flex-col space-y-4 overflow-hidden">
+					<Card className="flex-1 overflow-hidden">
+						<CardContent className="mt-5 h-full flex flex-col">
+							{ periodList?.length === 0 && !isLoading && !isError ? (
+								<div className="text-center p-8 text-muted-foreground">
+									No se han agregado períodos.
+								</div>
+							) : (
+								<div className="flex-1 overflow-hidden">
+									<Table>
+										<TableHeader className="sticky top-0 z-10 bg-background">
+											<TableRow>
+												<TableHead className="bg-background w-[100px]">ID</TableHead>
+												<TableHead className="bg-background w-[200px]">Nombre</TableHead>
+												<TableHead className="bg-background w-[150px]">Fecha Inicio</TableHead>
+												<TableHead className="bg-background w-[150px]">Fecha Fin</TableHead>
+												<TableHead className="bg-background w-[150px]">Fecha Apertura</TableHead>
+												<TableHead className="bg-background w-[150px]">Fecha Cierre</TableHead>
+												<TableHead className="bg-background w-[100px]">Estado</TableHead>
+												<TableHead className="bg-background w-[120px] text-end">Acciones</TableHead>
+											</TableRow>
+										</TableHeader>
+									</Table>
 
-							<Select value={ statusFilter } onValueChange={ (value) => handleFilterChange( 'status', value ) }>
-								<SelectTrigger id="status-filter">
-									<SelectValue placeholder="Seleccionar estado" />
-								</SelectTrigger>
+									{ isError ? (
+										<PeriodErrorMessage />
+									) : (
+										<ScrollArea className="h-[calc(100vh-400px)]">
+											<Table>
+												<TableBody>
+													{isLoading
+													? (
+														<PeriodTableSkeleton rows={10} />
+													)
+													: (
+														paginatedPeriods.map( period => (
+															<TableRow key={ period.id }>
+																<TableCell className="font-medium w-[100px]">{ period.id }</TableCell>
+																<TableCell className="w-[200px]">{ period.name }</TableCell>
+																<TableCell className="w-[150px]">{ formatDate( period.startDate ) }</TableCell>
+																<TableCell className="w-[150px]">{ formatDate( period.endDate ) }</TableCell>
+																<TableCell className="w-[150px]">{ formatDate( period.openingDate ) }</TableCell>
+																<TableCell className="w-[150px]">{ formatDate( period.closingDate ) }</TableCell>
+																<TableCell className="w-[100px]">
+																	{ renderStatusBadge( period.status ) }
+																</TableCell>
+																<TableCell className="w-[120px]">
+																	<ActionButton
+																		editItem={ openEditPeriodForm }
+																		deleteItem={ () => onOpenDeletePeriod(period) }
+																		item={ period }
+																	/>
+																</TableCell>
+															</TableRow>
+														))
+													)}
 
-								<SelectContent>
-									<SelectItem value="all">Todos</SelectItem>
-									<SelectItem value={ PeriodStatus.Opened }>Abierto</SelectItem>
-									<SelectItem value={ PeriodStatus.InProgress }>En Progreso</SelectItem>
-									<SelectItem value={ PeriodStatus.Completed }>Completado</SelectItem>
-								</SelectContent>
-							</Select>
-						</div>
+													{ filteredPeriods.length === 0 && searchQuery ? (
+														<TableRow>
+															<TableCell colSpan={ 8 } className="h-24 text-center">
+																No se encontraron resultados para &quot;{ searchQuery }&quot;
+															</TableCell>
+														</TableRow>
+													) : periodList?.length === 0 && !searchQuery ? (
+														<TableRow>
+															<TableCell colSpan={ 8 } className="h-24 text-center">
+																No hay períodos registrados
+															</TableCell>
+														</TableRow>
+													) : null }
+												</TableBody>
+											</Table>
+										</ScrollArea>
+									) }
+								</div>
+							) }
+						</CardContent>
+					</Card>
+
+					{/* Paginación */}
+					<div className="flex-shrink-0">
+						<DataPagination
+							currentPage             = { currentPage }
+							totalPages              = { totalPages }
+							totalItems              = { totalItems }
+							itemsPerPage            = { itemsPerPage }
+							onPageChange            = { setCurrentPage }
+							onItemsPerPageChange    = { setItemsPerPage }
+						/>
 					</div>
-				</CardContent>
-			</Card>
-
-			{/* Tabla de períodos */}
-            <div className="space-y-4">
-                <Card>
-                    <CardContent className="mt-5">
-                        { periodList?.length === 0 && !isLoading && !isError ? (
-                            <div className="text-center p-8 text-muted-foreground">
-                                No se han agregado períodos.
-                            </div>
-                        ) : (
-                            <div>
-                                <Table>
-                                    <TableHeader className="sticky top-0 z-10 bg-background">
-                                        <TableRow>
-                                            <TableHead className="bg-background w-[100px]">ID</TableHead>
-                                            <TableHead className="bg-background w-[200px]">Nombre</TableHead>
-                                            <TableHead className="bg-background w-[150px]">Fecha Inicio</TableHead>
-                                            <TableHead className="bg-background w-[150px]">Fecha Fin</TableHead>
-                                            <TableHead className="bg-background w-[150px]">Fecha Apertura</TableHead>
-                                            <TableHead className="bg-background w-[150px]">Fecha Cierre</TableHead>
-                                            <TableHead className="bg-background w-[100px]">Estado</TableHead>
-                                            <TableHead className="bg-background w-[120px] text-end">Acciones</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                </Table>
-
-                                { isError ? (
-                                    <PeriodErrorMessage />
-                                ) 
-                                : (
-                                    <ScrollArea className="h-[calc(100vh-500px)]">
-                                        <Table>
-                                            <TableBody>
-                                                {isLoading
-                                                ? (
-                                                    <PeriodTableSkeleton rows={10} />
-                                                )
-                                                : (
-                                                    paginatedPeriods.map( period => (
-                                                        <TableRow key={ period.id }>
-
-                                                            <TableCell className="font-medium w-[100px]">{ period.id }</TableCell>
-
-                                                            <TableCell className="w-[200px]">{ period.name }</TableCell>
-
-                                                            <TableCell className="w-[150px]">{ formatDate( period.startDate ) }</TableCell>
-
-                                                            <TableCell className="w-[150px]">{ formatDate( period.endDate ) }</TableCell>
-
-                                                            <TableCell className="w-[150px]">{ formatDate( period.openingDate ) }</TableCell>
-
-                                                            <TableCell className="w-[150px]">{ formatDate( period.closingDate ) }</TableCell>
-
-                                                            <TableCell className="w-[100px]">
-                                                                { renderStatusBadge( period.status ) }
-                                                            </TableCell>
-
-                                                            <TableCell className="w-[120px]">
-                                                                <ActionButton
-                                                                    editItem={ openEditPeriodForm }
-                                                                    deleteItem={ () => onOpenDeletePeriod(period) }
-                                                                    item={ period }
-                                                                />
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    ))
-                                                )}
-
-                                                { filteredPeriods.length === 0 && searchQuery ? (
-                                                    <TableRow>
-                                                        <TableCell colSpan={ 8 } className="h-24 text-center">
-                                                            No se encontraron resultados para &quot;{ searchQuery }&quot;
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ) : periodList?.length === 0 && !searchQuery ? (
-                                                    <TableRow>
-                                                        <TableCell colSpan={ 8 } className="h-24 text-center">
-                                                            No hay períodos registrados
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ) : null }
-                                            </TableBody>
-                                        </Table>
-                                    </ScrollArea>
-                                ) }
-                            </div>
-                        ) }
-                    </CardContent>
-                </Card>
-
-                {/* Paginación */}
-                <DataPagination
-                    currentPage             = { currentPage }
-                    totalPages              = { totalPages }
-                    totalItems              = { totalItems }
-                    itemsPerPage            = { itemsPerPage }
-                    onPageChange            = { setCurrentPage }
-                    onItemsPerPageChange    = { setItemsPerPage }
-                />
-            </div>
+				</div>
+			</div>
 
 			{/* Period Form Dialog */}
 			<PeriodForm
@@ -385,6 +383,6 @@ export default function PeriodsPage() {
 				name        = { deletingPeriodId! }
 				type        = "el Período"
 			/>
-		</main>
+		</PageLayout>
 	);
 }
