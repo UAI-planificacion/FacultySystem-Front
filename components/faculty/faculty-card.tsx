@@ -3,8 +3,6 @@
 import { useRouter } from 'next/navigation';
 
 import {
-    Pencil,
-    Trash2,
     Users,
     BookOpen,
     Building,
@@ -17,9 +15,11 @@ import {
     CardFooter,
     CardHeader,
     CardTitle
-}                   from "@/components/ui/card";
-import { Button }   from "@/components/ui/button";
-import { Faculty }  from "@/types/faculty.model";
+}                       from "@/components/ui/card";
+import { Button }       from "@/components/ui/button";
+import { ActionButton } from '@/components/shared/action';
+
+import { Faculty } from "@/types/faculty.model";
 
 
 interface FacultyCardProps {
@@ -40,7 +40,7 @@ export function FacultyCard({
         <Card className="w-full transition-all duration-300 shadow-lg">
             <CardHeader className="pb-2">
                 <div>
-                    <CardTitle className="text-xl font-bold flex items-center gap-2">
+                    <CardTitle className="text-lg font-bold flex items-center gap-2">
                         <Building className="h-5 w-5" />
                         {faculty.name}
                     </CardTitle>
@@ -51,72 +51,56 @@ export function FacultyCard({
                 </div>
             </CardHeader>
 
-            <CardFooter className="flex flex-wrap gap-2 pt-4">
-                <Button 
-                    variant   = "outline"
-                    size      = "sm"
-                    onClick   = {() => router.push(`/faculties/${faculty.id}?tab=staff`)}
-                    className = "flex items-center gap-1.5"
-                >
-                    <Users className="h-4 w-4" />
-                    {faculty.totalStaff || 0} Personal
-                </Button>
-
-                <Button 
-                    variant   = "outline"
-                    size      = "sm"
-                    onClick   = {() => router.push(`/faculties/${faculty.id}?tab=subjects`)}
-                    className = "flex items-center gap-1.5"
-                >
-                    <BookOpen className="h-4 w-4" />
-                    {faculty.totalSubjects || 0} Asignaturas
-                </Button>
-
-                <Button 
-                    variant   = "outline"
-                    size      = "sm"
-                    onClick   = {() => router.push(`/faculties/${faculty.id}?tab=offers`)}
-                    className = "flex items-center gap-1.5"
-                    disabled  = { faculty.totalSubjects === 0 }
-                >
-                    <BookOpen className="h-4 w-4" />
-                    {faculty.totalOffers || 0} Ofertas
-                </Button>
-
-                <Button 
-                    variant     = "outline"
-                    size        = "sm"
-                    onClick     = {() => router.push(`/faculties/${faculty.id}?tab=requests`)}
-                    className   = "flex items-center gap-1.5"
-                    disabled    = { faculty.totalOffers === 0 }
-                >
-                    <BookCopy className="h-4 w-4" />
-                    {faculty.totalRequests || 0} Solicitudes
-                </Button>
-
-                <div className="flex gap-2 ml-auto">
+            <CardFooter className="flex gap-2 pt-2 justify-between">
+                <div className="grid grid-cols-4 sm:grid-cols-2 md:grid-cols-4 gap-2">
                     <Button 
                         variant   = "outline"
                         size      = "sm"
-                        onClick   = {() => onEdit( faculty )}
-                        className = "flex items-center gap-1"
+                        onClick   = {() => router.push(`/faculties/${faculty.id}?tab=staff`)}
+                        className = "flex items-center gap-1.5"
                     >
-                        <Pencil className="h-4 w-4" />
-
-                        <span className="hidden 2xl:flex">Editar</span>
+                        <Users className="h-4 w-4" />
+                        {faculty.totalStaff || 0} Personal
                     </Button>
 
                     <Button 
-                        variant   = "destructive"
+                        variant   = "outline"
                         size      = "sm"
-                        onClick   = {() => onDelete( faculty.id )}
-                        className = "flex items-center gap-1"
+                        onClick   = {() => router.push(`/faculties/${faculty.id}?tab=subjects`)}
+                        className = "flex items-center gap-1.5"
                     >
-                        <Trash2 className="h-4 w-4" />
+                        <BookOpen className="h-4 w-4" />
+                        {faculty.totalSubjects || 0} Asignaturas
+                    </Button>
 
-                        <span className="hidden 2xl:flex">Eliminar</span>
+                    <Button 
+                        variant   = "outline"
+                        size      = "sm"
+                        onClick   = {() => router.push(`/faculties/${faculty.id}?tab=offers`)}
+                        className = "flex items-center gap-1.5"
+                        disabled  = { faculty.totalSubjects === 0 }
+                    >
+                        <BookOpen className="h-4 w-4" />
+                        {faculty.totalOffers || 0} Ofertas
+                    </Button>
+
+                    <Button 
+                        variant     = "outline"
+                        size        = "sm"
+                        onClick     = {() => router.push(`/faculties/${faculty.id}?tab=requests`)}
+                        className   = "flex items-center gap-1.5"
+                        disabled    = { faculty.totalOffers === 0 }
+                    >
+                        <BookCopy className="h-4 w-4" />
+                        {faculty.totalRequests || 0} Solicitudes
                     </Button>
                 </div>
+
+                <ActionButton
+                    editItem    = { () => onEdit( faculty ) }
+                    deleteItem  = { () => onDelete( faculty.id ) }
+                    item        = { faculty }
+                />
             </CardFooter>
         </Card>
     );
