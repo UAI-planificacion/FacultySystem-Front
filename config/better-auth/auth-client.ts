@@ -15,7 +15,12 @@ const authClient = createAuthClient({
     },
 });
 
-export const signIn = async () => await authClient.signIn.social({ provider: "microsoft", callbackURL: "/faculties" });
+
+export const signIn = async () => await authClient.signIn.social({
+    provider    : "microsoft",
+    callbackURL : "/",
+});
+
 
 export const signOut = async () => {
     try {
@@ -26,7 +31,9 @@ export const signOut = async () => {
     }
 };
 
+
 export const useSession = authClient.useSession;
+
 
 export const getSession = async () => {
     try {
