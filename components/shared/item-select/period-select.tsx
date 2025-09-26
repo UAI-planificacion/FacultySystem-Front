@@ -28,7 +28,8 @@ export function PeriodSelect({
     label,
     multiple    = true,
     placeholder = 'Seleccionar Periodos',
-    enabled     = true
+    enabled     = true,
+    className
 } : Props ): JSX.Element {
     const {
         data,
@@ -51,7 +52,7 @@ export function PeriodSelect({
 
 
     return (
-        <div className="space-y-2">
+        <div className={`space-y-2 ${className}`}>
             { label && <Label htmlFor="period">{ label }</Label> }
 
             { isError ? (
