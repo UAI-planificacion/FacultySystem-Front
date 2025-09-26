@@ -9,7 +9,7 @@ import {
     useQuery,
     useQueryClient
 }                                   from "@tanstack/react-query";
-import { Grid2x2, Plus, Search }    from "lucide-react";
+import { Grid2x2, Plus }    from "lucide-react";
 import { toast }                    from "sonner";
 
 import {
@@ -40,7 +40,10 @@ import { DataPagination }       from "@/components/ui/data-pagination";
 import { Button }               from "@/components/ui/button"
 import { ScrollArea }           from "@/components/ui/scroll-area"
 import { ActionButton }         from "@/components/shared/action";
-import { Input }                from "@/components/ui/input";
+import { PeriodSelect }         from "@/components/shared/item-select/period-select";
+import { SubjectSelect }        from "@/components/shared/item-select/subject-select";
+import { SizeSelect }           from "@/components/shared/item-select/size-select";
+import { SpaceTypeSelect }      from "@/components/shared/item-select/space-type-select";
 import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
 import { Label }                from "@/components/ui/label";
 import { Badge }                from "@/components/ui/badge";
@@ -68,7 +71,10 @@ export function OfferManagement({
 }: OfferManagementProps ): JSX.Element {
     const router                                        = useRouter();
     const queryClient                                   = useQueryClient();
-    const [searchQuery, setSearchQuery]                 = useState( '' );
+    const [periodFilter, setPeriodFilter]               = useState<string[]>( [] );
+    const [subjectFilter, setSubjectFilter]             = useState<string[]>( [] );
+    const [sizeFilter, setSizeFilter]                   = useState<string[]>( [] );
+    const [spaceTypeFilter, setSpaceTypeFilter]         = useState<string[]>( [] );
     const [buildingFilter, setBuildingFilter]           = useState<string>( 'all' );
     const [englishFilter, setEnglishFilter]             = useState<string>( 'all' );
     const [isFormOpen, setIsFormOpen]                   = useState( false );
@@ -89,11 +95,17 @@ export function OfferManagement({
 
 
     const filteredOffers = offerList?.filter( offer => {
-        const subjectName = offer.subject.name;
-        const matchesSearch = searchQuery === ''
-            || subjectName.toLowerCase().includes( searchQuery.toLowerCase() )
-            || offer.building?.toLowerCase().includes( searchQuery.toLowerCase() )
-            || offer.spaceType?.toLowerCase().includes( searchQuery.toLowerCase() );
+        const matchesPeriod = periodFilter.length === 0
+            || periodFilter.includes( offer.period.id );
+
+        const matchesSubject = subjectFilter.length === 0
+            || subjectFilter.includes( offer.subject.id );
+
+        const matchesSize = sizeFilter.length === 0
+            || ( offer.spaceSize && sizeFilter.includes( offer.spaceSize.id ) );
+
+        const matchesSpaceType = spaceTypeFilter.length === 0
+            || ( offer.spaceType && spaceTypeFilter.includes( offer.spaceType ) );
 
         const matchesBuilding = buildingFilter === 'all'
             || offer.building === buildingFilter;
@@ -102,7 +114,7 @@ export function OfferManagement({
             || ( englishFilter === 'english' && offer.isEnglish )
             || ( englishFilter === 'spanish' && !offer.isEnglish );
 
-        return matchesSearch && matchesBuilding && matchesEnglish;
+        return matchesPeriod && matchesSubject && matchesSize && matchesSpaceType && matchesBuilding && matchesEnglish;
     }) || [];
 
 
@@ -127,18 +139,37 @@ export function OfferManagement({
     /**
      * Resetea la página actual cuando cambian los filtros
      */
-    function handleFilterChange( filterType: 'search' | 'building' | 'english', value: string ): void {
+    function handleFilterChange( filterType: 'building' | 'english', value: string ): void {
         resetToFirstPage();
 
         switch ( filterType ) {
-            case 'search':
-                setSearchQuery( value );
-            break;
             case 'building':
                 setBuildingFilter( value );
             break;
             case 'english':
                 setEnglishFilter( value );
+            break;
+        }
+    };
+
+    /**
+     * Maneja cambios en filtros múltiples
+     */
+    function handleMultipleFilterChange( filterType: 'period' | 'subject' | 'size' | 'spaceType', values: string[] ): void {
+        resetToFirstPage();
+
+        switch ( filterType ) {
+            case 'period':
+                setPeriodFilter( values );
+            break;
+            case 'subject':
+                setSubjectFilter( values );
+            break;
+            case 'size':
+                setSizeFilter( values );
+            break;
+            case 'spaceType':
+                setSpaceTypeFilter( values );
             break;
         }
     };
@@ -184,23 +215,42 @@ export function OfferManagement({
             <Card>
                 <CardHeader>
                     <div className="lg:flex lg:justify-between items-end gap-4 space-y-4">
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full max-w-4xl items-center">
-                            <div className="grid space-y-2">
-                                <Label htmlFor="search">Buscar</Label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 w-full items-center">
+                            <PeriodSelect
+                                label               = "Períodos"
+                                defaultValues       = { periodFilter }
+                                onSelectionChange   = {( values ) => handleMultipleFilterChange( 'period', values as string[] )}
+                                placeholder         = "Seleccionar períodos"
+                                className           = "grid"
+                            />
 
-                                <div className="relative flex items-center">
-                                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <SubjectSelect
+                                label               = "Asignaturas"
+                                defaultValues       = { subjectFilter }
+                                onSelectionChange   = {( values ) => handleMultipleFilterChange( 'subject', values as string[] )}
+                                placeholder         = "Seleccionar asignaturas"
+                                queryKey            = {[ KEY_QUERYS.SUBJECTS, facultyId ]}
+                                url                 = { facultyId }
+                                className           = "grid"
+                            />
 
-                                    <Input
-                                        id          = "search"
-                                        type        = "search"
-                                        placeholder = "Buscar ofertas..."
-                                        value       = {searchQuery}
-                                        className   = "pl-8"
-                                        onChange    = {(e) => handleFilterChange( 'search', e.target.value )}
-                                    />
-                                </div>
-                            </div>
+                            <SpaceTypeSelect
+                                className           = "grid"
+                                label               = "Tipo de Espacio"
+                                defaultValues       = { spaceTypeFilter[0] || '' }
+                                placeholder         = "Tipo de espacio"
+                                onSelectionChange   = {( value ) => {
+                                    const newValues = value && value !== 'none' ? [value as string] : [];
+                                    handleMultipleFilterChange( 'spaceType', newValues );
+                                }}
+                            />
+
+                            {/* <SizeSelect
+                                label               = "Tamaños"
+                                defaultValues       = { sizeFilter }
+                                onSelectionChange   = {( values ) => handleMultipleFilterChange( 'size', values as string[] )}
+                                placeholder         = "Seleccionar tamaños"
+                            /> */}
 
                             <div className="grid space-y-2">
                                 <Label htmlFor="building">Edificio</Label>
@@ -242,7 +292,6 @@ export function OfferManagement({
                             className   = "flex items-center gap-1 w-full lg:w-40"
                         >
                             <Plus className="h-4 w-4" />
-
                             Crear Oferta
                         </Button>
                     </div>
@@ -368,15 +417,15 @@ export function OfferManagement({
                                                 </TableRow>
                                             ))}
 
-                                            { filteredOffers.length === 0 && searchQuery ? (
+                                            { filteredOffers.length === 0 && ( periodFilter.length > 0 || subjectFilter.length > 0 || sizeFilter.length > 0 || spaceTypeFilter.length > 0 || buildingFilter !== 'all' || englishFilter !== 'all' ) ? (
                                                 <TableRow>
-                                                    <TableCell colSpan={11} className="h-24 text-center">
-                                                        No se encontraron resultados para &quot;{searchQuery}&quot;
+                                                    <TableCell colSpan={8} className="h-24 text-center">
+                                                        No se encontraron ofertas con los filtros aplicados
                                                     </TableCell>
                                                 </TableRow>
-                                            ) : offerList?.length === 0 && !searchQuery ? (
+                                            ) : offerList?.length === 0 ? (
                                                 <TableRow>
-                                                    <TableCell colSpan={11} className="h-24 text-center">
+                                                    <TableCell colSpan={8} className="h-24 text-center">
                                                         No hay ofertas registradas
                                                     </TableCell>
                                                 </TableRow>
