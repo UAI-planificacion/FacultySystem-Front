@@ -2,7 +2,7 @@
 
 import { JSX } from "react";
 
-import { Pencil, Trash2 } from "lucide-react";
+import { Edit, Pencil, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
@@ -32,7 +32,7 @@ export function ActionButton({
                 disabled    = { isDisabledEdit }
                 onClick     = {() => editItem( item )}
             >
-                <Pencil className="h-4 w-4 text-blue-500" />
+                <Edit className="h-4 w-4 text-blue-500" />
             </Button>
 
             <Button
