@@ -4,7 +4,7 @@ import { useEffect, useState }  from "react";
 import { useRouter }            from "next/navigation";
 import Image                    from "next/image";
 
-import { Building, GraduationCap, Grid2X2, UsersRound } from "lucide-react";
+import { Building, Calendar, CalendarClock, Clock, GraduationCap, Grid2X2, Ruler, UsersRound } from "lucide-react";
 
 import {
     Menubar,
@@ -58,7 +58,7 @@ export default function Header() {
                             />
                         </a>
 
-                        <h1 className="hidden sm:flex text-2xl sm:text-xl lg:text-2xl xl:text-2xl 2xl:text-3xl font-bold text-white">
+                        <h1 className="hidden sm:flex text-2xl sm:text-xl lg:text-2xl xl:hidden 2xl:flex 2xl:text-3xl font-bold text-white">
                             Facultades Académicas
                         </h1>
                     </div>
@@ -71,6 +71,7 @@ export default function Header() {
                                         onClick     = {() => router.push( '/faculties' )}
                                         id          = "faculty"
                                         className   = "flex items-center gap-1.5"
+                                        title       = "Facultades"
                                     >
                                         <Building className="h-5 w-5" /> 
 
@@ -80,13 +81,63 @@ export default function Header() {
 
                                 <MenubarMenu>
                                     <MenubarTrigger
+                                        onClick     = {() => router.push('/modules')}
+                                        id          = "modules"
+                                        title       = "Módulos"
+                                        className   = "flex items-center gap-1.5"
+                                    >
+                                        <Clock className="h-5 w-5" />
+                                        <span className="hidden xl:block">Módulos</span>
+                                    </MenubarTrigger>
+                                </MenubarMenu>
+
+                                <MenubarMenu>
+                                    <MenubarTrigger
+                                        onClick     = {() => router.push('/days')}
+                                        id          = "days"
+                                        title       = "Días"
+                                        className   = "flex items-center gap-1.5"
+                                    >
+                                        <Calendar className="h-5 w-5" />
+                                        <span className="hidden xl:block">Días</span>
+                                    </MenubarTrigger>
+                                </MenubarMenu>
+
+                                <MenubarMenu>
+                                    <MenubarTrigger
+                                        onClick     = {() => router.push( '/periods' )}
+                                        id          = "periods"
+                                        title       = "Periodos"
+                                        className   = "flex items-center gap-1.5"
+                                    >
+                                        <CalendarClock className="h-5 w-5" />
+
+                                        <span className="hidden xl:block">Periodos</span>
+                                    </MenubarTrigger>
+                                </MenubarMenu>
+
+                                <MenubarMenu>
+                                    <MenubarTrigger
+                                        onClick     = {() => router.push('/sizes')}
+                                        id          = "sizes"
+                                        title       = "Tamaños"
+                                        className   = "flex items-center gap-1.5"
+                                    >
+                                        <Ruler className="h-5 w-5" />
+                                        <span className="hidden xl:block">Tamaños</span>
+                                    </MenubarTrigger>
+                                </MenubarMenu>
+
+                                <MenubarMenu>
+                                    <MenubarTrigger
                                         onClick     = {() => router.push( '/professors' )}
                                         id          = "professor"
+                                        title       = "Profesores"
                                         className   = "flex items-center gap-1.5"
                                     >
                                         <UsersRound className="h-5 w-5" />
 
-                                        <span className="hidden xl:flex">Profesores</span>
+                                        <span className="hidden xl:block">Profesores</span>
                                     </MenubarTrigger>
                                 </MenubarMenu>
 
@@ -94,11 +145,12 @@ export default function Header() {
                                     <MenubarTrigger
                                         onClick     = {() => router.push( '/grades' )}
                                         id          = "grade"
+                                        title       = "Grados"
                                         className   = "flex items-center gap-1.5"
                                     >
                                         <GraduationCap className="h-5 w-5" />
 
-                                        <span className="hidden xl:flex">Grados</span>
+                                        <span className="hidden xl:block">Grados</span>
                                     </MenubarTrigger>
                                 </MenubarMenu>
 
@@ -106,11 +158,12 @@ export default function Header() {
                                     <MenubarTrigger
                                         onClick     = {() => router.push( '/sections' )}
                                         id          = "section"
+                                        title       = "Secciones"
                                         className   = "flex items-center gap-1.5"
                                     >
                                         <Grid2X2 className="h-5 w-5" />
 
-                                        <span className="hidden xl:flex">Secciones</span>
+                                        <span className="hidden xl:block">Secciones</span>
                                     </MenubarTrigger>
                                 </MenubarMenu>
                             </Menubar>
@@ -125,7 +178,7 @@ export default function Header() {
                             </NotificationDialogManager>
                         </>)}
 
-                        <Theme />
+                        {/* <Theme /> */}
 
                         <Login />
                     </div>
