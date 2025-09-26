@@ -5,6 +5,7 @@ export const KEY_QUERYS = {
     REQUESTS        : 'requests',
     REQUEST_DETAIL  : 'request-detail',
     MODULES         : 'modules',
+    MODULES_ORIGINAL: 'modules-original',
     COMMENTS        : "comments",
     GRADES          : 'grades',
     OFFERS          : 'offers',
@@ -12,7 +13,7 @@ export const KEY_QUERYS = {
     SPACES          : 'spaces',
 
     DAYS            : 'days',
-    SIZE            : 'sizes',
+    SIZES           : 'sizes',
     PROFESSORS      : 'professors',
     PERIODS         : 'periods',
     SECCTIONS       : 'seccions',
