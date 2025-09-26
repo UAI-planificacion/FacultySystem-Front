@@ -5,6 +5,7 @@ import { JSX } from "react";
 import { FacultyCard }              from "@/components/faculty/faculty-card";
 import { FacultyCardSkeletonGrid }  from "@/components/faculty/faculty-card-skeleton";
 import { Button }                   from "@/components/ui/button";
+import { ScrollArea }               from "@/components/ui/scroll-area";
 
 import { Faculty } from "@/types/faculty.model";
 
@@ -38,7 +39,6 @@ export function FacultyList({
 	onDelete,
 	onNewFaculty
 }: FacultyListProps ): JSX.Element {
-
 	if ( isError ) {
 		return (
 			<div className="text-center p-8 text-muted-foreground">
@@ -47,11 +47,13 @@ export function FacultyList({
 		);
 	}
 
-	if ( isLoading ) {
+
+    if ( isLoading ) {
 		return <FacultyCardSkeletonGrid count={12} />;
 	}
 
-	if ( faculties.length === 0 ) {
+
+    if ( faculties.length === 0 ) {
 		return (
 			<div className="text-center p-12 border rounded-lg border-dashed">
 				<p className="text-muted-foreground">
@@ -65,16 +67,19 @@ export function FacultyList({
 		);
 	}
 
-	return (
-		<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-			{faculties.map( faculty => (
-				<FacultyCard
-					key			= { faculty.id }
-					faculty		= { faculty }
-					onEdit		= { onEdit }
-					onDelete	= { onDelete }
-				/>
-			))}
-		</div>
+
+    return (
+        <ScrollArea className="h-[calc(100vh-375px)]">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-1">
+                {faculties.map( faculty => (
+                    <FacultyCard
+                        key			= { faculty.id }
+                        faculty		= { faculty }
+                        onEdit		= { onEdit }
+                        onDelete	= { onDelete }
+                    />
+                ))}
+            </div>
+        </ScrollArea>
 	);
 }
