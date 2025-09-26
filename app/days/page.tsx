@@ -6,13 +6,13 @@ import {
 	useQuery,
 	useQueryClient
 }                       from "@tanstack/react-query";
-import { Search } from "lucide-react";
+import { Edit, Search } from "lucide-react";
 
-import { DataPagination }       from "@/components/ui/data-pagination";
+
 import {
 	Card,
 	CardContent,
-}                               from "@/components/ui/card";
+}                           from "@/components/ui/card";
 import {
 	Table,
 	TableBody,
@@ -20,22 +20,23 @@ import {
 	TableHead,
 	TableHeader,
 	TableRow
-}                               from "@/components/ui/table";
-import { DayForm }              from "@/components/days/day-form";
+}                           from "@/components/ui/table";
+import { DayForm }          from "@/components/days/day-form";
 import { 
 	DayErrorMessage,
     DayTableSkeleton, 
-}                               from "@/components/days/day-table-skeleton";
-import { Button }               from "@/components/ui/button";
-import { ScrollArea }           from "@/components/ui/scroll-area"
-import { Input }                from "@/components/ui/input";
-import { Label }                from "@/components/ui/label";
-import { Edit }                 from "lucide-react";
+}                           from "@/components/days/day-table-skeleton";
+import { DataPagination }   from "@/components/ui/data-pagination";
+import { Button }           from "@/components/ui/button";
+import { ScrollArea }       from "@/components/ui/scroll-area"
+import { Input }            from "@/components/ui/input";
+import { Label }            from "@/components/ui/label";
+import { PageLayout }       from "@/components/layout/page-layout";
 
-import { Day }                  from "@/types/day.model";
-import { KEY_QUERYS }           from "@/consts/key-queries";
-import { fetchApi }             from "@/services/fetch";
-import { usePagination }        from "@/hooks/use-pagination";
+import { Day }              from "@/types/day.model";
+import { KEY_QUERYS }       from "@/consts/key-queries";
+import { fetchApi }         from "@/services/fetch";
+import { usePagination }    from "@/hooks/use-pagination";
 
 
 const endpoint = 'days';
@@ -109,10 +110,9 @@ export default function DaysPage() {
 
 
 	return (
-		<main className="container mx-auto p-6 space-y-6 min-h-[calc(100vh-74px)]">
-			<header className="flex justify-between items-center">
-				<h1 className="text-3xl font-bold">Gestión de Días</h1>
-			</header>
+		<PageLayout 
+			title="Gestión de Días"
+		>
 
 			{/* Filtros */}
 			<Card>
@@ -185,12 +185,12 @@ export default function DaysPage() {
                                                             <TableCell className="w-[120px]">
                                                                 <div className="flex justify-end">
                                                                     <Button
-                                                                        variant="ghost"
-                                                                        size="sm"
+                                                                        title       = "Editar"
+                                                                        variant     = "outline"
+                                                                        size        = "icon"
                                                                         onClick={ () => openEditDayForm( day ) }
-                                                                        className="h-8 w-8 p-0"
                                                                     >
-                                                                        <Edit className="h-4 w-4" />
+                                                                        <Edit className="h-4 w-4 text-blue-500" />
                                                                     </Button>
                                                                 </div>
                                                             </TableCell>
@@ -237,6 +237,6 @@ export default function DaysPage() {
 				onClose = { () => setIsFormOpen( false )}
 				isOpen  = { isFormOpen }
 			/>
-		</main>
+		</PageLayout>
 	);
 }
