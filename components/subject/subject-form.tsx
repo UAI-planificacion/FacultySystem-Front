@@ -47,6 +47,9 @@ import { CostCenterSelect } from "@/components/shared/item-select/cost-center";
 
 import { Size, SpaceType }  from "@/types/request-detail.model";
 import { Subject }		    from "@/types/subject.model";
+import { SessionButton } from "../section/session-button";
+import { Session }                  from "@/types/section.model";
+
 
 
 export type SubjectFormValues = z.infer<typeof formSchema>;
@@ -116,10 +119,32 @@ export function SubjectForm({
 		form.reset();
 	};
 
+    function updateSessionCount( _: string, session: Session, delta: number ): void {
+    }
+
+    function setSessionCount( _: string, session: Session, value: string ): void {
+    }
+
+    function createMockSection(): any {
+        return {
+            id              : 'offer-form',
+            workshop        : 0,
+            lecture         : 0,
+            tutoringSession : 0,
+            laboratory      : 0,
+            sessionCounts   : {
+                [Session.C]     : 0,
+                [Session.A]     : 0,
+                [Session.T]     : 0,
+                [Session.L]     : 0,
+            }
+        };
+    }
+
 
 	return (
 		<Dialog open={ isOpen } onOpenChange={ onClose }>
-			<DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+			<DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle>
 						{ subject ? "Editar Asignatura" : "Crear Asignatura" }
@@ -247,6 +272,40 @@ export function SubjectForm({
                                                 </FormItem>
                                             );
                                         }}
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <SessionButton
+                                        session             = { Session.C }
+                                        updateSessionCount  = { updateSessionCount }
+                                        setSessionCount     = { setSessionCount }
+                                        section             = { createMockSection() }
+                                        showLabel           = { true }
+                                    />
+
+                                    <SessionButton
+                                        session             = { Session.T }
+                                        updateSessionCount  = { updateSessionCount }
+                                        setSessionCount     = { setSessionCount }
+                                        section             = { createMockSection() }
+                                        showLabel           = { true }
+                                    />
+
+                                    <SessionButton
+                                        session             = { Session.A }
+                                        updateSessionCount  = { updateSessionCount }
+                                        setSessionCount     = { setSessionCount }
+                                        section             = { createMockSection() }
+                                        showLabel           = { true }
+                                    />
+
+                                    <SessionButton
+                                        session             = { Session.L }
+                                        updateSessionCount  = { updateSessionCount }
+                                        setSessionCount     = { setSessionCount }
+                                        section             = { createMockSection() }
+                                        showLabel           = { true }
                                     />
                                 </div>
 

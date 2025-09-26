@@ -42,6 +42,7 @@ import { SubjectSelect }    from "@/components/shared/item-select/subject-select
 import { CostCenterSelect } from "@/components/shared/item-select/cost-center";
 import { SessionButton }    from "@/components/section/session-button";
 import { OfferDates }       from "@/components/offer/offer-dates";
+import { Input }            from "@/components/ui/input";
 
 import {
     Building,
@@ -56,7 +57,6 @@ import {
 import { Subject }                  from "@/types/subject.model";
 import { KEY_QUERYS }               from "@/consts/key-queries";
 import { Method, fetchApi }         from "@/services/fetch";
-import { getSpaceType }             from "@/lib/utils";
 import { errorToast, successToast } from "@/config/toast/toast.config";
 import { updateFacultyTotal }       from "@/app/faculties/page";
 import { Session }                  from "@/types/section.model";
@@ -323,21 +323,22 @@ export function OfferForm({
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>
-                        { offer ? 'Editar Oferta' : 'Crear Nueva Oferta' }
+                        {/* { offer ? 'Editar Oferta' : 'Crear Nueva Oferta' } */}
+                        { offer ? 'Editar Oferta' : 'Asignar Asignatura' }
                     </DialogTitle>
 
                     <DialogDescription>
-                        { offer
+                        {/* { offer
                             ? 'Modifica los datos de la oferta existente.'
                             : 'Completa los datos para crear una nueva oferta.'
-                        }
+                        } */}
                     </DialogDescription>
                 </DialogHeader>
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit( handleSubmit )} className="space-y-4">
                         {/* Building and Space Section */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4"> */}
                             <FormField
                                 control = { form.control }
                                 name    = "subjectId"
@@ -359,7 +360,7 @@ export function OfferForm({
                             />
 
                             {/* Period Selection */}
-                            <FormField
+                            {/* <FormField
                                 control = { form.control }
                                 name    = "periodId"
                                 render  = {({ field }) => (
@@ -389,6 +390,40 @@ export function OfferForm({
                                             onSelectionChange   = {( values ) => field.onChange( values || null )}
                                             enabled             = { isOpen }
                                         />
+
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <div></div>
+
+                            <FormField
+                                control = { form.control }
+                                name    = "building"
+                                render  = {({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Edificio</FormLabel>
+
+                                        <Select
+                                            onValueChange   = {( value ) => field.onChange( value === "null" ? null : value )}
+                                            defaultValue    = { field.value || "null" }
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Seleccionar edificio" />
+                                                </SelectTrigger>
+                                            </FormControl>
+
+                                            <SelectContent>
+                                                <SelectItem value="null">Sin especificar</SelectItem>
+
+                                                {Object.values( Building ).map( building => (
+                                                    <SelectItem key={building} value={building}>
+                                                        {building}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
 
                                         <FormMessage />
                                     </FormItem>
@@ -457,44 +492,21 @@ export function OfferForm({
                                 }}
                             />
 
-                            <FormField
-                                control = { form.control }
-                                name    = "building"
-                                render  = {({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Edificio</FormLabel>
+                        
+                        </div> */}
 
-                                        <Select
-                                            onValueChange   = {( value ) => field.onChange( value === "null" ? null : value )}
-                                            defaultValue    = { field.value || "null" }
-                                        >
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Seleccionar edificio" />
-                                                </SelectTrigger>
-                                            </FormControl>
-
-                                            <SelectContent>
-                                                <SelectItem value="null">Sin especificar</SelectItem>
-
-                                                {Object.values( Building ).map( building => (
-                                                    <SelectItem key={building} value={building}>
-                                                        {building}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-
-                        <div className="space-y-4">
                             {/* <h3 className="text-lg font-medium">Sesiones</h3> */}
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                                <div className="grid space-y-1">
+                                    <label htmlFor="">N° Secciones</label>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <Input
+                                        type="number"
+                                        placeholder="Número de Secciones"
+                                    />
+                                </div>
+
                                 <SessionButton
                                     session             = { Session.C }
                                     updateSessionCount  = { updateSessionCount }
@@ -526,9 +538,10 @@ export function OfferForm({
                                     section             = { createMockSection() }
                                     showLabel           = { true }
                                 />
+
+                              
                             </div>
 
-                            {/* Error message for sessions validation */}
                             <FormField
                                 control = { form.control }
                                 name    = "workshop"
