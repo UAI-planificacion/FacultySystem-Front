@@ -10,7 +10,6 @@ import {
     SelectValue
 }                       from "@/components/ui/select";
 import { Label }        from "@/components/ui/label";
-import { FormControl }  from "@/components/ui/form";
 import { Props }        from "./select-props";
 
 import { SpaceType }    from "@/types/request-detail.model";
@@ -23,9 +22,10 @@ export function SpaceTypeSelect({
     label,
     placeholder = 'Selecciona un tipo de espacio',
     disabled = false,
+    className
 } : Props ): JSX.Element {
     return (
-        <div className="space-y-2">
+        <div className={`space-y-2 ${className}`}>
             { label && <Label htmlFor="professors">{ label }</Label> }
 
             <Select
@@ -33,11 +33,9 @@ export function SpaceTypeSelect({
                 value           = { defaultValues as string }
                 disabled        = { disabled }
             >
-                <FormControl>
-                    <SelectTrigger>
-                        <SelectValue placeholder={ placeholder } />
-                    </SelectTrigger>
-                </FormControl>
+                <SelectTrigger>
+                    <SelectValue placeholder={ placeholder } />
+                </SelectTrigger>
 
                 <SelectContent>
                     <SelectItem value="none">Sin especificar</SelectItem>

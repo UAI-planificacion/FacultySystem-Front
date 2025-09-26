@@ -21,7 +21,8 @@ export function SubjectSelect({
     placeholder = 'Seleccionar asignaturas',
     enabled     = true,
     queryKey    = [ KEY_QUERYS.SUBJECTS ],
-    url
+    url,
+    className
 } : Props ): JSX.Element {
     const {
         data,
@@ -46,7 +47,7 @@ export function SubjectSelect({
 
 
     return (
-        <div className="space-y-2">
+        <div className={`space-y-2 ${className}`}>
             { label && <Label htmlFor="subject-filter">{ label }</Label> }
 
             <MultiSelectCombobox
