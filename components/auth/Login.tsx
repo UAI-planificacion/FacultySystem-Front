@@ -56,68 +56,11 @@ export function Login(): JSX.Element {
                                     className   = "rounded-full"
                                 />
 
-                                {/* <span className="hidden md:flex">{ data.user?.name.split( ' ' )[ 0 ] }</span> */}
+                                <span className="hidden md:flex">{ data.user?.name }</span>
                             </Button>
                         </DropdownMenuTrigger>
 
                         <DropdownMenuContent className="w-64" align="end">
-                            {/* Routes */}
-                            <DropdownMenuItem className="p-0">
-                                <Button
-                                    size        = "sm"
-                                    type        = "button"
-                                    variant     = "ghost"
-                                    onClick     = {() => router.push( '/faculties' )}
-                                    className   = "w-full flex justify-start lg:hidden"
-                                >
-                                    Facultades
-                                </Button>
-                            </DropdownMenuItem>
-
-                            <DropdownMenuSeparator className="lg:hidden" />
-
-                            <DropdownMenuItem className="p-0">
-                                <Button
-                                    size        = "sm"
-                                    type        = "button"
-                                    variant     = "ghost"
-                                    onClick     = {() => router.push( '/professors' )}
-                                    className   = "w-full flex justify-start lg:hidden"
-                                >
-                                    Profesores
-                                </Button>
-                            </DropdownMenuItem>
-
-                            <DropdownMenuSeparator className="lg:hidden" />
-
-                            <DropdownMenuItem className="p-0">
-                                <Button
-                                    size        = "sm"
-                                    type        = "button"
-                                    variant     = "ghost"
-                                    onClick     = {() => router.push( '/grades' )}
-                                    className   = "w-full flex justify-start lg:hidden"
-                                >
-                                    Grados
-                                </Button>
-                            </DropdownMenuItem>
-
-                            <DropdownMenuSeparator className="lg:hidden" />
-
-                            <DropdownMenuItem className="p-0">
-                                <Button
-                                    size        = "sm"
-                                    type        = "button"
-                                    variant     = "ghost"
-                                    onClick     = {() => router.push( '/sections' )}
-                                    className   = "w-full flex justify-start lg:hidden"
-                                >
-                                    Secciones
-                                </Button>
-                            </DropdownMenuItem>
-
-                            <DropdownMenuSeparator className="lg:hidden" />
-
 
                             {/* Profile */}
                             <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
