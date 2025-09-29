@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, JSX } from 'react';
 
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -29,11 +29,12 @@ import { Time } from '@/components/shared/Time';
 import { DaySelector } from '@/components/shared/DaySelector';
 
 
-interface ModuleModalProps {
+interface Props {
     isOpen  : boolean;
     onClose : () => void;
     module  : ModuleOriginal;
     days    : number[];
+    modules : ModuleOriginal[];
 }
 
 
@@ -53,7 +54,13 @@ const moduleEmpty: ModuleOriginal = {
 }
 
 
-export function ModuleModal({ isOpen, onClose, module, days }: ModuleModalProps) {
+export function ModuleModal({
+    isOpen,
+    onClose,
+    module,
+    days,
+    modules
+}: Props ): JSX.Element {
     const queryClient = useQueryClient();
     const [formData, setFormData] = useState<ModuleOriginal>(moduleEmpty);
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -96,6 +103,35 @@ export function ModuleModal({ isOpen, onClose, module, days }: ModuleModalProps)
             newErrors.days = 'Al menos debe seleccionar un día';
         }
 
+        // Validaciones de duplicados contra módulos existentes (excluyendo el módulo actual)
+        const hasBaseFieldErrors = Object.keys( newErrors ).length > 0;
+
+        // Solo validar duplicados si hay datos suficientes (evita ruidos)
+        const hasCode  = !!formData.code.trim();
+        const hasHours = !!formData.startHour && !!formData.endHour && formData.startHour < formData.endHour;
+
+        if ( !hasBaseFieldErrors ) {
+            // Filtrar módulos excluyendo el módulo actual que se está editando
+            const otherModules = modules.filter( m => m.id !== formData.id );
+
+            // Duplicados contra otros módulos existentes
+            if ( hasCode ) {
+                const existsSameCode = otherModules.some( other => other.code === formData.code );
+                if ( existsSameCode ) {
+                    newErrors.code = 'Ya existe otro módulo con el mismo código';
+                }
+            }
+
+            if ( hasHours ) {
+                const existsSameSchedule = otherModules.some( other => 
+                    other.startHour === formData.startHour && other.endHour === formData.endHour 
+                );
+                if ( existsSameSchedule ) {
+                    newErrors.startHour = 'Ya existe otro módulo con el mismo horario (inicio y fin)';
+                }
+            }
+        }
+
         setErrors( newErrors );
         return Object.keys( newErrors ).length === 0;
     };
@@ -129,11 +165,11 @@ export function ModuleModal({ isOpen, onClose, module, days }: ModuleModalProps)
 
     async function handleSubmit(e: React.FormEvent): Promise<void> {
         e.preventDefault();
-        if (!validateForm()) return;
-        updateModuleMutation.mutate(formData);
+
+        if ( !validateForm() ) return;
+
+        updateModuleMutation.mutate( formData );
     };
-
-
 
 
     function handleChange( field: string, value: any ): void {
@@ -147,7 +183,7 @@ export function ModuleModal({ isOpen, onClose, module, days }: ModuleModalProps)
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[600px]">
+            <DialogContent className="max-w-2xl">
                 <DialogHeader className="pb-6">
                     <DialogTitle className="text-2xl font-bold">
                         Editar Módulo
