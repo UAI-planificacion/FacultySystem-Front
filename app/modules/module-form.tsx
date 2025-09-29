@@ -1,42 +1,44 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { JSX, useEffect, useState } from 'react';
 
-import { Asterisk, Plus, X } from 'lucide-react';
-import { toast } from 'sonner';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Asterisk, Plus, X }            from 'lucide-react';
+import { toast }                        from 'sonner';
+import { useMutation, useQueryClient }  from '@tanstack/react-query';
 
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { DaySelector } from '@/components/shared/DaySelector';
-import { Time } from '@/components/shared/Time';
-import { Card } from '@/components/ui/card';
+}                       from '@/components/ui/dialog';
+import { Button }       from '@/components/ui/button';
+import { Input }        from '@/components/ui/input';
+import { Label }        from '@/components/ui/label';
+import { DaySelector }  from '@/components/shared/DaySelector';
+import { Time }         from '@/components/shared/Time';
+import { Card }         from '@/components/ui/card';
 
 import {
     errorToast,
     successToast
-} from '@/config/toast/toast.config';
-
+}                                       from '@/config/toast/toast.config';
 import { ModuleCreate, ModuleOriginal } from '@/types/module.model';
-import { KEY_QUERYS } from '@/consts/key-queries';
-import { Method, fetchApi } from '@/services/fetch';
-import LoaderMini from '@/icons/LoaderMini';
+import { KEY_QUERYS }                   from '@/consts/key-queries';
+import { Method, fetchApi }             from '@/services/fetch';
+import LoaderMini                       from '@/icons/LoaderMini';
 
 
-interface ModuleModalProps {
+interface Props {
     isOpen  : boolean;
     onClose : () => void;
     days    : number[];
+    modules : ModuleOriginal[];
 }
 
+
 const endpoint = 'modules';
+
 
 const moduleEmpty: ModuleCreate = {
     startHour   : '',
@@ -49,11 +51,18 @@ const moduleEmpty: ModuleCreate = {
 export function AddModuleModal({
     isOpen,
     onClose,
-    days
-}: ModuleModalProps) {
-    const queryClient = useQueryClient();
-    const [formData, setFormData] = useState<ModuleCreate[]>([moduleEmpty]);
-    const [errors, setErrors] = useState<Record<string, string[]>>({});
+    days,
+    modules
+}: Props ): JSX.Element {
+    const queryClient               = useQueryClient();
+    const [formData, setFormData]   = useState<ModuleCreate[]>([ moduleEmpty ]);
+    const [errors, setErrors]       = useState<Record<string, string[]>>( {} );
+
+
+    useEffect(() => {
+        setFormData([ moduleEmpty ]);
+        setErrors({});
+    }, [isOpen]);
 
 
     function validateForm(): boolean {
@@ -82,6 +91,45 @@ export function AddModuleModal({
 
             if ( !module.dayIds || module.dayIds.length === 0 ) {
                 moduleErrors.push( 'Debe seleccionar al menos un día' );
+            }
+
+            // Validaciones de duplicados contra módulos existentes y dentro del batch actual
+            const hasBaseFieldErrors = moduleErrors.length > 0;
+
+            // Solo validar duplicados si hay datos suficientes (evita ruidos)
+            const hasCode    = !!module.code.trim();
+            const hasHours   = !!module.startHour && !!module.endHour && module.startHour < module.endHour;
+
+            if ( !hasBaseFieldErrors ) {
+                // Duplicados contra módulos existentes
+                if ( hasCode ) {
+                    const existsSameCode = modules.some(( other ) => other.code === module.code );
+                    if ( existsSameCode ) {
+                        moduleErrors.push( 'Ya existe un módulo con el mismo código' );
+                    }
+                }
+
+                if ( hasHours ) {
+                    const existsSameSchedule = modules.some(( other ) => other.startHour === module.startHour && other.endHour === module.endHour );
+                    if ( existsSameSchedule ) {
+                        moduleErrors.push( 'Ya existe un módulo con el mismo horario (inicio y fin)' );
+                    }
+                }
+
+                // Duplicados dentro de los módulos a crear (formData)
+                if ( hasCode ) {
+                    const duplicatedCodeInBatch = formData.some(( m, i2 ) => i2 !== index && m.code === module.code );
+                    if ( duplicatedCodeInBatch ) {
+                        moduleErrors.push( 'Otro módulo en el formulario tiene el mismo código' );
+                    }
+                }
+
+                if ( hasHours ) {
+                    const duplicatedScheduleInBatch = formData.some(( m, i2 ) => i2 !== index && m.startHour === module.startHour && m.endHour === module.endHour );
+                    if ( duplicatedScheduleInBatch ) {
+                        moduleErrors.push( 'Otro módulo en el formulario tiene el mismo horario (inicio y fin)' );
+                    }
+                }
             }
 
             if ( moduleErrors.length > 0 ) {
@@ -122,13 +170,14 @@ export function AddModuleModal({
         },
     });
 
+
     async function handleSubmit(e: React.FormEvent): Promise<void> {
         e.preventDefault();
-        if (!validateForm()) return;
-        createModulesMutation.mutate(formData);
+
+        if ( !validateForm() ) return;
+
+        createModulesMutation.mutate( formData );
     };
-
-
 
 
     function handleChange( index: number, field: string, value: any ): void {
@@ -172,7 +221,7 @@ export function AddModuleModal({
                 <form onSubmit={handleSubmit} className="space-y-3">
                     <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 pt-2">
                         {formData.map((module, index) => (
-                            <Card key={index} className="grid grid-cols-3 gap-3 border border-zinc-300 dark:border-zinc-700 p-4 rounded-lg relative">
+                            <Card key={index} className="grid grid-cols-3 gap-x-2 gap-y-4 border border-zinc-300 dark:border-zinc-700 p-4 rounded-lg relative">
                                 {formData.length > 1 && (
                                     <Button
                                         type        = "button"
