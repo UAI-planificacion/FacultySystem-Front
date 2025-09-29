@@ -7,15 +7,24 @@ import {
     CheckCircle,
     XCircle,
     Search
-}                           from "lucide-react";
-import { toast }            from "sonner";
+}                   from "lucide-react";
+import { toast }    from "sonner";
+import {
+    useMutation,
+    useQueryClient
+}                   from "@tanstack/react-query";
 
-import { Button }               from "@/components/ui/button";
-import { Badge }                from "@/components/ui/badge";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
+}                           from "@/components/ui/select";
 import {
     Card,
     CardContent,
-}                               from "@/components/ui/card";
+}                           from "@/components/ui/card";
 import {
     Table,
     TableBody,
@@ -23,16 +32,23 @@ import {
     TableHead,
     TableHeader,
     TableRow
-}                               from "@/components/ui/table";
-import { Input }                from "@/components/ui/input";
-import { Label }                from "@/components/ui/label";
-import { ScrollArea }           from "@/components/ui/scroll-area";
-import { DataPagination }       from "@/components/ui/data-pagination";
-import { ActionButton }         from "@/components/shared/action";
+}                           from "@/components/ui/table";
+import { Input }            from "@/components/ui/input";
+import { Label }            from "@/components/ui/label";
+import { ScrollArea }       from "@/components/ui/scroll-area";
+import { DataPagination }   from "@/components/ui/data-pagination";
+import { ActionButton }     from "@/components/shared/action";
+import { Badge }            from "@/components/ui/badge";
 
-
-import { ModuleModal }      from "@/app/modules/ModuleModal";
-import { ModuleOriginal }   from "@/types/module.model";
+import {
+    errorToast,
+    successToast
+}                               from "@/config/toast/toast.config";
+import { ModuleModal }          from "@/app/modules/ModuleModal";
+import { ModuleOriginal }       from "@/types/module.model";
+import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
+import { KEY_QUERYS }           from "@/consts/key-queries";
+import { Method, fetchApi }     from "@/services/fetch";
 
 
 interface Props {
@@ -42,15 +58,21 @@ interface Props {
 }
 
 
+const endpoint = 'modules';
+
+
 export default function TableModules({
     modules,
     onSave,
     days
 }: Props ): JSX.Element {
+    const queryClient                               = useQueryClient();
     const [searchQuery, setSearchQuery]             = useState( '' );
+    const [selectedStatus, setSelectedStatus]       = useState<string>( 'all' );
     const [isModalOpen, setIsModalOpen]             = useState( false );
     const [isModalDeleteOpen, setIsModalDeleteOpen] = useState( false );
     const [currentModule, setCurrentModule]         = useState<ModuleOriginal>( modules[0] || {} as ModuleOriginal );
+    const [deletingModuleId, setDeletingModuleId]   = useState<string | undefined>( undefined );
     const [currentPage, setCurrentPage]             = useState( 1 );
     const [itemsPerPage, setItemsPerPage]           = useState( 10 );
 
@@ -63,21 +85,54 @@ export default function TableModules({
 
     function onOpenDeleteDialog( module: ModuleOriginal ): void {
         setCurrentModule( module );
+        setDeletingModuleId( module.id );
         setIsModalDeleteOpen( true );
     }
 
 
     /**
-     * Filtra la lista de módulos según los criterios de búsqueda
+     * API call para eliminar un módulo
+     */
+    const deleteModuleApi = async ( moduleId: string ): Promise<ModuleOriginal> =>
+        fetchApi<ModuleOriginal>({
+            url    : `${endpoint}/${moduleId}`,
+            method : Method.DELETE
+        });
+
+
+    /**
+     * Mutación para eliminar un módulo
+     */
+    const deleteModuleMutation = useMutation<ModuleOriginal, Error, string>({
+        mutationFn : deleteModuleApi,
+        onSuccess  : () => {
+            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.MODULES] });
+            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.MODULES_ORIGINAL] });
+            setIsModalDeleteOpen( false );
+            toast( 'Módulo eliminado exitosamente', successToast );
+        },
+        onError: (mutationError) => {
+            toast(`Error al eliminar módulo: ${mutationError.message}`, errorToast );
+        },
+    });
+
+
+    /**
+     * Filtra la lista de módulos según los criterios de búsqueda y estado
      */
     const filteredModules = modules.filter( module => {
         const matchesSearch = searchQuery === ''
-            || module.id.toLowerCase().includes( searchQuery.toLowerCase() )
             || module.code.toLowerCase().includes( searchQuery.toLowerCase() )
             || module.name.toLowerCase().includes( searchQuery.toLowerCase() )
-            || (module.difference && module.difference.toLowerCase().includes( searchQuery.toLowerCase() ));
+            || ( module.difference && module.difference.toLowerCase().includes( searchQuery.toLowerCase() ))
+            || ( module.startHour && module.startHour.toLowerCase().includes( searchQuery.toLowerCase() ))
+            || ( module.endHour && module.endHour.toLowerCase().includes( searchQuery.toLowerCase() ));
 
-        return matchesSearch;
+        const matchesStatus = selectedStatus === 'all' 
+            || ( selectedStatus === 'active' && module.isActive )
+            || ( selectedStatus === 'inactive' && !module.isActive );
+
+        return matchesSearch && matchesStatus;
     });
 
     /**
@@ -98,12 +153,21 @@ export default function TableModules({
     };
 
 
+    /**
+     * Maneja el cambio del filtro de estado
+     */
+    const handleStatusChange = ( value: string ) => {
+        setCurrentPage( 1 );
+        setSelectedStatus( value );
+    };
+
+
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             {/* Filtros */}
             <Card>
                 <CardContent className="space-y-4 mt-4">
-                    <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="search">Buscar</Label>
 
@@ -112,12 +176,32 @@ export default function TableModules({
 
                                 <Input
                                     id          = "search"
-                                    placeholder = "Buscar por ID, código, nombre o diferencia..."
+                                    placeholder = "Buscar por código, nombre, diferencia, horas..."
                                     value       = { searchQuery }
                                     onChange    = { (e) => handleSearchChange( e.target.value ) }
                                     className   = "pl-10"
+                                    type        = "search"
                                 />
                             </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="status">Filtrar por Estado</Label>
+
+                            <Select 
+                                onValueChange = { handleStatusChange }
+                                defaultValue  = "all"
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Todos los estados" />
+                                </SelectTrigger>
+
+                                <SelectContent>
+                                    <SelectItem value="all">Todos los estados</SelectItem>
+                                    <SelectItem value="active">Activo</SelectItem>
+                                    <SelectItem value="inactive">Inactivo</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
                 </CardContent>
@@ -148,7 +232,7 @@ export default function TableModules({
                                     </TableHeader>
                                 </Table>
 
-                                <ScrollArea className="h-[calc(100vh-500px)]">
+                                <ScrollArea className="h-[calc(100vh-555px)]">
                                     <Table>
                                         <TableBody>
                                             {paginatedModules.map( module => (
@@ -238,15 +322,16 @@ export default function TableModules({
                 onClose = { () => setIsModalOpen( false )}
                 module  = { currentModule }
                 days    = { days }
+                modules = { modules }
             />
 
-            {/* <DeleteConfirmDialog
+            <DeleteConfirmDialog
                 isOpen      = { isModalDeleteOpen }
                 onClose     = { () => setIsModalDeleteOpen( false )}
-                onConfirm   = { () => { handleDeleteModule( currentModule?.id || '' )}}
-                name        = { currentModule?.name || '' }
+                onConfirm   = { () => deleteModuleMutation.mutate( deletingModuleId! )}
+                name        = { currentModule?.name || currentModule?.code || deletingModuleId || '' }
                 type        = "el Módulo"
-            /> */}
+            />
         </div>
     );
 }
