@@ -194,15 +194,15 @@ export default function SizesPage() {
                 </div>
 
                 {/* Tabla de tamaños */}
-                <div className="flex-1 flex flex-col space-y-4 overflow-hidden">
-                    <Card className="flex-1 overflow-hidden">
-                        <CardContent className="mt-5 h-full flex flex-col">
+                <div className="space-y-4">
+                    <Card>
+                        <CardContent className="mt-5">
                             { sizes.length === 0 ? (
                                 <div className="text-center p-8 text-muted-foreground">
                                     No se han encontrado tamaños.
                                 </div>
                             ) : (
-                                <div className="flex-1 overflow-hidden">
+                                <div>
                                     <Table>
                                         <TableHeader className="sticky top-0 z-10 bg-background">
                                             <TableRow>
@@ -217,7 +217,7 @@ export default function SizesPage() {
                                         </TableHeader>
                                     </Table>
 
-                                    <ScrollArea className="h-[calc(100vh-400px)]">
+                                    <ScrollArea className="h-[calc(100vh-500px)]">
                                         <Table>
                                             <TableBody>
                                                 {paginatedSizes.map( size => (

@@ -231,7 +231,7 @@ export default function PeriodsPage() {
 			}
 		>
 
-			<div className="flex flex-col h-full space-y-6 overflow-hidden">
+			<div className="flex flex-col h-full space-y-4 overflow-hidden">
 				{/* Filtros */}
 				<div className="flex-shrink-0">
 					<Card>
@@ -275,15 +275,15 @@ export default function PeriodsPage() {
 				</div>
 
 				{/* Tabla de períodos */}
-				<div className="flex-1 flex flex-col space-y-4 overflow-hidden">
-					<Card className="flex-1 overflow-hidden">
-						<CardContent className="mt-5 h-full flex flex-col">
+				<div className="space-y-4">
+					<Card>
+						<CardContent className="mt-5">
 							{ periodList?.length === 0 && !isLoading && !isError ? (
 								<div className="text-center p-8 text-muted-foreground">
 									No se han agregado períodos.
 								</div>
 							) : (
-								<div className="flex-1 overflow-hidden">
+								<div>
 									<Table>
 										<TableHeader className="sticky top-0 z-10 bg-background">
 											<TableRow>
@@ -302,7 +302,7 @@ export default function PeriodsPage() {
 									{ isError ? (
 										<PeriodErrorMessage />
 									) : (
-										<ScrollArea className="h-[calc(100vh-400px)]">
+                                        <ScrollArea className="h-[calc(100vh-500px)]">
 											<Table>
 												<TableBody>
 													{isLoading

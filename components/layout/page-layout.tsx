@@ -29,7 +29,7 @@ export function PageLayout({
 	return (
 		<div className="container mx-auto flex flex-col h-[calc(100vh-125px)]">
 			{/* Header */}
-			<header className="flex-shrink-0 flex justify-between items-center gap-4 mb-6">
+			<header className="flex-shrink-0 flex justify-between items-center gap-4 mb-4">
 				<div className="flex items-center gap-4">
 					{showBack && (
 						<Button
@@ -54,7 +54,7 @@ export function PageLayout({
 			</header>
 
 			{/* Content */}
-			<div className="flex-1 overflow-hidden">
+			<div className="flex-1 overflow-hidden space-y-4">
 				{ children }
 			</div>
 		</div>
