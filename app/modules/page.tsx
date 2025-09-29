@@ -75,22 +75,23 @@ export default function ModulesPage() {
             title="Gestión de Módulos"
             actions={
                 <Button 
-                    onClick={ () => setIsModalOpen( true )} 
-                    className="flex items-center gap-2"
+                    onClick     = { () => setIsModalOpen( true )} 
+                    className   = "flex items-center gap-2"
                 >
                     <Plus className="h-5 w-5" />
+
                     Agregar Módulo
                 </Button>
             }
         >
 
-            <Tabs defaultValue="table" className="flex-1 flex flex-col">
-                <TabsList className="grid grid-cols-2">
-                    <TabsTrigger value="table">Tabla</TabsTrigger>
+            <Tabs defaultValue="modules" className="flex-1 flex flex-col">
+                <TabsList className="grid grid-cols-2 mb-2">
                     <TabsTrigger value="modules">Módulos</TabsTrigger>
+                    <TabsTrigger value="byDays">Módulos por Día</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="table" className="flex-1 overflow-hidden">
+                <TabsContent value="modules" className="flex-1 overflow-hidden">
                     <TableModules
                         modules = { modulesOriginal }
                         onSave  = { () => {} }
@@ -98,13 +99,13 @@ export default function ModulesPage() {
                     />
                 </TabsContent>
 
-                <TabsContent value="modules" className="flex-1 overflow-hidden">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 grid-rows-2 gap-6 h-full">
-                        {days.map((day: Day, index: number) => (
+                <TabsContent value="byDays" className="flex-1 overflow-hidden">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 grid-rows-2 gap-4 h-full">
+                        { days.map(( day: Day, index: number ) => (
                             <ModuleDay
                                 key     = { day.id }
                                 day     = { index + 1 }
-                                days    = { days.map((d: Day) => d.name) }
+                                days    = { days.map(( d: Day ) => d.name) }
                                 modules = { modules }
                             />
                         ))}
@@ -116,6 +117,7 @@ export default function ModulesPage() {
                 isOpen  = { isModalOpen }
                 onClose = { () => setIsModalOpen( false )}
                 days    = { availableDays }
+                modules = { modulesOriginal }
             />
         </PageLayout>
     );
