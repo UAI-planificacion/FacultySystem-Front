@@ -34,8 +34,9 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { CalendarSelect } from "@/components/ui/calendar-select";
+import { CostCenterSelect } from "@/components/shared/item-select/cost-center";
 
-import { Period, PeriodStatus } from "@/types/periods.model";
+import { Period, PeriodStatus, PeriodType } from "@/types/periods.model";
 import { KEY_QUERYS } from "@/consts/key-queries";
 import { Method, fetchApi } from "@/services/fetch";
 import { errorToast, successToast } from "@/config/toast/toast.config";
@@ -48,13 +49,15 @@ const endpoint = 'periods';
  * Schema de validación para el formulario de período
  */
 const periodSchema = z.object({
-	id          : z.string().min( 1, "El ID es requerido" ),
-	name        : z.string().min( 1, "El nombre es requerido" ),
-	startDate   : z.date({ required_error: "La fecha de inicio es requerida" }),
-	endDate     : z.date({ required_error: "La fecha de fin es requerida" }),
-	openingDate : z.date().optional(),
-	closingDate : z.date().optional(),
-	status      : z.nativeEnum( PeriodStatus ).optional(),
+	id            : z.string().min( 1, "El ID es requerido" ),
+	name          : z.string().min( 1, "El nombre es requerido" ),
+	startDate     : z.date({ required_error: "La fecha de inicio es requerida" }),
+	costCenterId  : z.string().min( 1, "El centro de costos es requerido" ),
+	endDate       : z.date({ required_error: "La fecha de fin es requerida" }),
+	openingDate   : z.date().optional(),
+	closingDate   : z.date().optional(),
+	status        : z.nativeEnum( PeriodStatus ).optional(),
+	type          : z.nativeEnum( PeriodType, { required_error: "El tipo es requerido" }),
 }).refine( ( data ) => {
 	// Validar que la fecha de fin sea posterior a la fecha de inicio
 	if ( data.startDate && data.endDate ) {
@@ -96,13 +99,15 @@ export function PeriodForm( { period, isOpen, onClose }: PeriodFormProps ) {
 	const form = useForm<PeriodFormData>({
 		resolver      : zodResolver( periodSchema ),
 		defaultValues : {
-			id          : '',
-			name        : '',
-			startDate   : undefined,
-			endDate     : undefined,
-			openingDate : undefined,
-			closingDate : undefined,
-			status      : PeriodStatus.Opened,
+			id            : '',
+			name          : '',
+			startDate     : undefined,
+			costCenterId  : '',
+			endDate       : undefined,
+			openingDate   : undefined,
+			closingDate   : undefined,
+			status        : PeriodStatus.Opened,
+			type          : undefined,
 		},
 	});
 
@@ -120,23 +125,27 @@ export function PeriodForm( { period, isOpen, onClose }: PeriodFormProps ) {
 				};
 
 				form.reset({
-					id          : period.id,
-					name        : period.name,
-					startDate   : parseDate( period.startDate ),
-					endDate     : parseDate( period.endDate ),
-					openingDate : parseDate( period.openingDate ),
-					closingDate : parseDate( period.closingDate ),
-					status      : period.status,
+					id            : period.id,
+					name          : period.name,
+					startDate     : parseDate( period.startDate ),
+					costCenterId  : period.costCenterId,
+					endDate       : parseDate( period.endDate ),
+					openingDate   : parseDate( period.openingDate ),
+					closingDate   : parseDate( period.closingDate ),
+					status        : period.status,
+					type          : period.type,
 				});
 			} else {
 				form.reset({
-					id          : '',
-					name        : '',
-					startDate   : undefined,
-					endDate     : undefined,
-					openingDate : undefined,
-					closingDate : undefined,
-					status      : PeriodStatus.Opened,
+					id            : '',
+					name          : '',
+					startDate     : undefined,
+					costCenterId  : '',
+					endDate       : undefined,
+					openingDate   : undefined,
+					closingDate   : undefined,
+					status        : PeriodStatus.Opened,
+					type          : undefined,
 				});
 			}
 		}
@@ -153,11 +162,13 @@ export function PeriodForm( { period, isOpen, onClose }: PeriodFormProps ) {
 			method : Method.POST,
 			body   : {
 				...periodData,
-				startDate   : periodData.startDate.toISOString(),
-				endDate     : periodData.endDate.toISOString(),
-				openingDate : periodData.openingDate?.toISOString() || null,
-				closingDate : periodData.closingDate?.toISOString() || null,
-				status      : PeriodStatus.Opened, // Siempre crear como Opened
+				startDate     : periodData.startDate.toISOString(),
+				costCenterId  : periodData.costCenterId,
+				endDate       : periodData.endDate.toISOString(),
+				openingDate   : periodData.openingDate?.toISOString() || null,
+				closingDate   : periodData.closingDate?.toISOString() || null,
+				status        : PeriodStatus.Opened, // Siempre crear como Opened
+				type          : periodData.type,
 			},
 		});
 	};
@@ -172,10 +183,11 @@ export function PeriodForm( { period, isOpen, onClose }: PeriodFormProps ) {
 			method : Method.PATCH,
 			body   : {
 				...data,
-				startDate   : data.startDate.toISOString(),
-				endDate     : data.endDate.toISOString(),
-				openingDate : data.openingDate?.toISOString() || null,
-				closingDate : data.closingDate?.toISOString() || null,
+				startDate     : data.startDate.toISOString(),
+				costCenterId  : data.costCenterId,
+				endDate       : data.endDate.toISOString(),
+				openingDate   : data.openingDate?.toISOString() || null,
+				closingDate   : data.closingDate?.toISOString() || null,
 			},
 		});
 
@@ -234,6 +246,17 @@ export function PeriodForm( { period, isOpen, onClose }: PeriodFormProps ) {
 	];
 
 
+	/**
+	 * Obtiene las opciones de tipo para el select
+	 */
+	const getTypeOptions = () => [
+		{ value: PeriodType.ANUAL, label: 'Anual' },
+		{ value: PeriodType.SEMESTRAL, label: 'Semestral' },
+		{ value: PeriodType.TRIMESTRAL, label: 'Trimestral' },
+		{ value: PeriodType.VERANO, label: 'Verano' },
+	];
+
+
 	return (
 		<Dialog open={ isOpen } onOpenChange={ onClose }>
 			<DialogContent className="sm:max-w-[600px]">
@@ -282,6 +305,54 @@ export function PeriodForm( { period, isOpen, onClose }: PeriodFormProps ) {
 											<Input
 												placeholder="Ingresa el nombre del período"
 												{ ...field }
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								) }
+							/>
+						</div>
+
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+							{/* Tipo */}
+							<FormField
+								control={ form.control }
+								name="type"
+								render={ ({ field }) => (
+									<FormItem>
+										<FormLabel>Tipo *</FormLabel>
+										<Select onValueChange={ field.onChange } value={ field.value }>
+											<FormControl>
+												<SelectTrigger>
+													<SelectValue placeholder="Selecciona el tipo de período" />
+												</SelectTrigger>
+											</FormControl>
+											<SelectContent>
+												{ getTypeOptions().map( ( option ) => (
+													<SelectItem key={ option.value } value={ option.value }>
+														{ option.label }
+													</SelectItem>
+												) ) }
+											</SelectContent>
+										</Select>
+										<FormMessage />
+									</FormItem>
+								) }
+							/>
+
+							{/* Centro de Costos */}
+							<FormField
+								control={ form.control }
+								name="costCenterId"
+								render={ ({ field }) => (
+									<FormItem>
+										<FormLabel>Centro de Costos *</FormLabel>
+										<FormControl>
+											<CostCenterSelect
+												defaultValues={ field.value }
+												onSelectionChange={ field.onChange }
+												multiple={ false }
+												placeholder="Selecciona el centro de costos"
 											/>
 										</FormControl>
 										<FormMessage />
@@ -408,7 +479,7 @@ export function PeriodForm( { period, isOpen, onClose }: PeriodFormProps ) {
 							/>
 						) }
 
-						<DialogFooter>
+						<DialogFooter className="flex justify-between items-center gap-4">
 							<Button
 								type="button"
 								variant="outline"
