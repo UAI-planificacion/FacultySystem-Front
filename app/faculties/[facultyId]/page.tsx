@@ -126,7 +126,7 @@ export default function FacultyDetailsPage(): JSX.Element {
                 onValueChange   = {( value: string ) => setActiveTab( value as TabValue )}
                 className       = "w-full"
             >
-                <TabsList className="grid grid-cols-4 mb-4 h-12">
+                <TabsList className="grid grid-cols-3 mb-4 h-12">
                     <TabsTrigger
                         value       = { TabValue.STAFF }
                         className   = "h-10 text-md gap-2"
@@ -147,7 +147,7 @@ export default function FacultyDetailsPage(): JSX.Element {
                         <span className="hidden sm:block">Asignaturas ({ faculty?.totalSubjects || 0 })</span>
                     </TabsTrigger>
 
-                    <TabsTrigger
+                    {/* <TabsTrigger
                         value       = { TabValue.OFFERS }
                         className   = "h-10 text-md gap-2"
                         title       = "Ofertas"
@@ -156,7 +156,7 @@ export default function FacultyDetailsPage(): JSX.Element {
                         <Album className="h-5 w-5" />
 
                         <span className="hidden sm:block">Ofertas ({ faculty?.totalOffers || 0 })</span>
-                    </TabsTrigger>
+                    </TabsTrigger> */}
 
                     <TabsTrigger
                         value       = { TabValue.REQUESTS }
