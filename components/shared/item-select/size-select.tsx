@@ -21,14 +21,15 @@ export function SizeSelect({
     multiple    = true,
     placeholder = 'Seleccionar Tamaños',
     enabled     = true,
-    disabled    = false
+    disabled    = false,
+    className   = ''
 } : Props ): JSX.Element {
     const {
         data,
         isLoading,
         isError,
     } = useQuery({
-        queryKey    : [ KEY_QUERYS.SIZE ],
+        queryKey    : [ KEY_QUERYS.SIZES ],
         queryFn     : () => fetchApi<SizeResponse[]>({ url: 'sizes' }),
         enabled
     });
@@ -44,7 +45,7 @@ export function SizeSelect({
 
 
     return (
-        <div className="space-y-2">
+        <div className={`space-y-2 ${className}`}>
             { label && <Label htmlFor="size">{ label }</Label> }
 
             { isError ? (
