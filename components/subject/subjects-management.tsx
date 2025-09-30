@@ -9,6 +9,7 @@ import {
 }                       from "@tanstack/react-query";
 import {
     Album,
+    BrushCleaning,
     Plus,
     Search
 }                   from "lucide-react";
@@ -45,7 +46,11 @@ import { ActionButton }         from "@/components/shared/action";
 import { CostCenterSelect }     from "@/components/shared/item-select/cost-center";
 import { ActiveBadge }          from "@/components/shared/active";
 import { OfferForm }            from "@/components/offer/offer-form";
+import { OfferSubjectForm }     from "@/components/subject/offer-subject-form";
 import { SpaceSizeType }        from "@/components/shared/space-size-type";
+import { SessionShort }         from "@/components/section/session-short";
+import { SpaceTypeSelect }      from "@/components/shared/item-select/space-type-select";
+import { SizeSelect }           from "@/components/shared/item-select/size-select";
 
 import {
     CreateSubject,
@@ -56,7 +61,7 @@ import { KEY_QUERYS }               from "@/consts/key-queries"
 import { Method, fetchApi }         from "@/services/fetch"
 import { errorToast, successToast } from "@/config/toast/toast.config"
 import { usePagination }            from "@/hooks/use-pagination";
-import { updateFacultyTotal } from "@/app/faculties/page";
+import { updateFacultyTotal }       from "@/app/faculties/page";
 
 
 interface SubjectsManagementProps {
@@ -69,9 +74,12 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
     const queryClient                                   = useQueryClient();
     const [isFormOpen, setIsFormOpen]                   = useState( false );
     const [isOfferOpen, setIsOfferOpen]                 = useState( false );
+    const [isOfferSubjectOpen, setIsOfferSubjectOpen]   = useState( false );
     const [editingSubject, setEditingSubject]           = useState<Subject | undefined>( undefined );
+    const [offeringSubject, setOfferingSubject]         = useState<Subject | undefined>( undefined );
     const [searchQuery, setSearchQuery]                 = useState( '' );
-    const [selectedCostCenter, setSelectedCostCenter]   = useState<string>( 'all' );
+    const [selectedSpaceTypes, setSelectedSpaceTypes]   = useState<string[]>( [] );
+    const [selectedSizes, setSelectedSizes]             = useState<string[]>( [] );
     const [isDeleteDialogOpen, setIsDeleteDialogOpen]   = useState( false );
     const [deletingSubjectId, setDeletingSubjectId]     = useState<string | undefined>( undefined );
 
@@ -96,13 +104,16 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
             const matchesSearch = subject.id.toLowerCase().includes( searchLower )
                 || subject.name.toLowerCase().includes( searchLower );
 
-            const matchesCostCenter = 
-                selectedCostCenter === 'all'
-                || subject.costCenterId === selectedCostCenter;
+            const matchesSpaceType = selectedSpaceTypes.length === 0 
+                || selectedSpaceTypes.includes('none') && !subject.spaceType
+                || (subject.spaceType && selectedSpaceTypes.includes(subject.spaceType));
 
-            return matchesSearch && matchesCostCenter;
+            const matchesSize = selectedSizes.length === 0 
+                || (subject.spaceSizeId && selectedSizes.includes(subject.spaceSizeId));
+
+            return matchesSearch && matchesSpaceType && matchesSize;
         });
-    }, [subjects, searchQuery, selectedCostCenter]);
+    }, [subjects, searchQuery, selectedSpaceTypes, selectedSizes]);
 
 
     /**
@@ -126,15 +137,18 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
     /**
      * Resetea la página actual cuando cambian los filtros
      */
-    const handleFilterChange = ( filterType: 'search' | 'costCenter', value: string = 'all' ) => {
+    const handleFilterChange = ( filterType: 'search' | 'spaceType' | 'size', value: string | string[] = 'all' ) => {
         resetToFirstPage();
 
         switch ( filterType ) {
             case 'search':
-                setSearchQuery( value );
+                setSearchQuery( value as string );
                 break;
-            case 'costCenter':
-                setSelectedCostCenter( value );
+            case 'spaceType':
+                setSelectedSpaceTypes( Array.isArray(value) ? value : [value] );
+                break;
+            case 'size':
+                setSelectedSizes( Array.isArray(value) ? value : [value] );
                 break;
         }
     };
@@ -199,6 +213,18 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
     }
 
 
+    const openOfferSubjectForm = ( subject?: Subject ) => {
+        setOfferingSubject( subject );
+        setIsOfferSubjectOpen( true );
+    }
+
+
+    const closeOfferSubjectForm = () => {
+        setOfferingSubject( undefined );
+        setIsOfferSubjectOpen( false );
+    }
+
+
     function handleFormSubmit( formData: SubjectFormValues ): void {
         if ( editingSubject ) {
             updateSubjectMutation.mutate({
@@ -210,7 +236,17 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                 facultyId,
             } as CreateSubject );
         }
-    };
+    }
+
+
+    function handleOfferSubjectSubmit( formData: any ): void {
+        // TODO: Implementar la lógica para crear la oferta de asignatura
+        console.log('Datos de oferta de asignatura:', formData);
+        
+        // Por ahora solo cerramos el formulario y mostramos un toast
+        closeOfferSubjectForm();
+        toast('Oferta de asignatura creada exitosamente', successToast);
+    }
 
 
     function onOpenDeleteSubject( subject: Subject ): void {
@@ -224,7 +260,7 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
             <Card>
                 <CardHeader>
                     <div className="lg:flex lg:justify-between items-end gap-4 space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-4xl items-center">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full max-w-6xl items-center">
                             <div className="grid space-y-2">
                                 <Label htmlFor="search">Buscar</Label>
 
@@ -242,23 +278,62 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                                 </div>
                             </div>
 
-                            <CostCenterSelect
-                                label               = "Centro de Costos"
-                                placeholder         = "Seleccionar centro de costo"
-                                onSelectionChange   = {( value ) => handleFilterChange( 'costCenter', value as string )}
-                                defaultValues       = { '' }
-                                multiple            = { false }
+                            <SpaceTypeSelect
+                                label               = "Tipo de Espacio"
+                                placeholder         = "Seleccionar tipos de espacio"
+                                onSelectionChange   = {( value ) => handleFilterChange( 'spaceType', value )}
+                                defaultValues       = { selectedSpaceTypes }
+                                multiple            = { true }
                                 className           = "grid"
                             />
+
+                            <SizeSelect
+                                label               = "Tamaño del Espacio"
+                                placeholder         = "Seleccionar tamaños"
+                                onSelectionChange   = {( value ) => handleFilterChange( 'size', value )}
+                                defaultValues       = { selectedSizes }
+                                multiple            = { true }
+                                className           = "grid"
+                            />
+
+                            <div className="grid space-y-2">
+                                <Label className="text-transparent">Acciones</Label>
+
+                                <Button
+                                    variant     = "outline"
+                                    type="button"
+                                    size="icon"
+                                    onClick     = {() => {
+                                        setSearchQuery('');
+                                        setSelectedSpaceTypes([]);
+                                        setSelectedSizes([]);
+                                        resetToFirstPage();
+                                    }}
+                                >
+                                    <BrushCleaning className="h-4 w-4" />
+                                </Button>
+                            </div>
                         </div>
 
-                        <Button
-                            onClick     = { openNewSubjectForm }
-                            className   = "flex items-center gap-1 w-full lg:w-40"
-                        >
-                            <Plus className="h-4 w-4" />
-                            Crear Asignatura
-                        </Button>
+                        <div className="flex items-center gap-4">
+                            <Button
+                                onClick     = { () => openOfferSubjectForm() }
+                                className   = "flex items-center gap-1.5"
+                            >
+                                {/* <Plus className="h-4 w-4" /> */}
+                                <Album className="h-4 w-4" />
+
+                                Ofertar Asignaturas
+                            </Button>
+
+                            <Button
+                                onClick     = { openNewSubjectForm }
+                                className   = "flex items-center gap-1 w-full lg:w-40"
+                            >
+                                <Plus className="h-4 w-4" />
+                                Crear Asignatura
+                            </Button>
+                        </div>
                     </div>
                 </CardHeader>
             </Card>
@@ -274,17 +349,12 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                             <Table>
                                 <TableHeader className="sticky top-0 z-10 bg-background">
                                     <TableRow>
-                                        <TableHead className="bg-background w-[100px]">Sigla</TableHead>
-
-                                        <TableHead className="bg-background w-[300px]">Nombre</TableHead>
-
-                                        <TableHead className="bg-background w-[120px]">Centro de Costo</TableHead>
-
-                                        <TableHead className="bg-background w-[120px]">Espacio</TableHead>
-
-                                        <TableHead className="text-left bg-background w-[80px]">Estado</TableHead>
-
-                                        <TableHead className="text-right bg-background w-[160px]">Acciones</TableHead>
+                                        <TableHead className="bg-background w-[90px]">Sigla</TableHead>
+                                        <TableHead className="bg-background w-[400px]">Nombre</TableHead>
+                                        <TableHead className="bg-background w-[110px] text-start">Espacio</TableHead>
+                                        <TableHead className="bg-background w-[140px] text-start">Sesiones</TableHead>
+                                        <TableHead className="bg-background w-[100px] text-start">Estado</TableHead>
+                                        <TableHead className="bg-background w-[120px] text-right">Acciones</TableHead>
                                     </TableRow>
                                 </TableHeader>
                             </Table>
@@ -299,46 +369,53 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                                         <TableBody>
                                             {paginatedSubjects.map((subject) => (
                                                 <TableRow key={subject.id}>
-                                                    <TableCell className="font-medium w-[100px] truncate">
+                                                    <TableCell className="font-medium w-[90px] truncate">
                                                         { subject.id }
                                                     </TableCell>
 
                                                     <TableCell
-                                                        className   = "w-[300px] truncate"
+                                                        className   = "w-[400px] truncate"
                                                         title       = { subject.name }
                                                     >
                                                         { subject.name }
                                                     </TableCell>
 
-                                                    <TableCell
-                                                        className   = "text-center w-[120px] truncate"
-                                                        title       = { subject.costCenterId }
-                                                    >
-                                                        { subject.costCenterId }
+                                                    <TableCell className="w-[110px]">
+                                                        <div className="flex justify-end">
+                                                            <SpaceSizeType
+                                                                spaceType   = { subject.spaceType }
+                                                                spaceSizeId = { subject.spaceSizeId }
+                                                            />
+                                                        </div>
                                                     </TableCell>
 
-                                                    <TableCell className="w-[120px] text-center">
-                                                        <SpaceSizeType
-                                                            spaceType   = { subject.spaceType }
-                                                            spaceSizeId = { subject.spaceSizeId }
-                                                        />
+                                                    {/* Sesiones */}
+                                                    <TableCell className="w-[140px]">
+                                                        <div className="flex justify-center">
+                                                            <SessionShort
+                                                                showZero        = { true }
+                                                                sessionCounts   = {{
+                                                                    C: subject.lecture,
+                                                                    T: subject.workshop,
+                                                                    A: subject.tutoringSession,
+                                                                    L: subject.laboratory,
+                                                                }}
+                                                            />
+                                                        </div>
                                                     </TableCell>
 
-                                                    <TableCell className=" w-[80px]">
+                                                    <TableCell className="w-[100px] text-end">
                                                         <ActiveBadge isActive={ subject.isActive } />
                                                     </TableCell>
 
-                                                    <TableCell className="text-right w-[160px]">
+                                                    <TableCell className="w-[120px] text-right">
                                                         <div className="flex gap-2 items-center justify-end">
                                                             <Button
                                                                 title       = "Ofertas"
                                                                 size        = "sm"
                                                                 variant     = "outline"
                                                                 className   = "flex items-center gap-1.5"
-                                                                onClick     = { () => {
-                                                                    setEditingSubject( subject );
-                                                                    setIsOfferOpen( true );
-                                                                }}
+                                                                onClick     = { () => openOfferSubjectForm( subject ) }
                                                             >
                                                                 { subject.offersCount }
 
@@ -395,7 +472,15 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                 isOpen      = { isFormOpen }
             />
 
-            <OfferForm
+            <OfferSubjectForm
+                facultyId   = { facultyId }
+                subject     = { offeringSubject }
+                onSubmit    = { handleOfferSubjectSubmit }
+                onClose     = { closeOfferSubjectForm }
+                isOpen      = { isOfferSubjectOpen }
+            />
+
+            {/* <OfferForm
                 offer       = { undefined }
                 isOpen      = { isOfferOpen }
                 facultyId   = { facultyId }
@@ -403,7 +488,7 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                 onClose     = {() => {
                     setIsOfferOpen( false )
                 }}
-            />
+            /> */}
 
             <DeleteConfirmDialog
                 isOpen      = { isDeleteDialogOpen }
