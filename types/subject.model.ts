@@ -4,9 +4,12 @@ import { Size, SpaceType } from "@/types/request-detail.model";
 interface BaseSubject {
     id              : string;
     name            : string;
-    costCenterId    : string;
     spaceSizeId     : Size      | null;
     spaceType       : SpaceType | null;
+    workshop        : number;
+    lecture         : number;
+    tutoringSession : number;
+    laboratory      : number;
 }
 
 
