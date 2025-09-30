@@ -242,12 +242,12 @@ export default function FacultiesPage() {
                         value   = { data?.totalSubjects }
                         icon    = { <BookOpen className="h-6 w-6" /> }
                     />
-
+{/* 
                     <StatisticCard
                         title   = "Total de Ofertas"
                         value   = { data?.totalOffers }
                         icon    = { <BookCopy className="h-6 w-6" /> }
-                    />
+                    /> */}
 
                     <StatisticCard
                         title   = "Total de Solicitudes"
