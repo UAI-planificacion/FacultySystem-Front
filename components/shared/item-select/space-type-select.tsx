@@ -1,6 +1,6 @@
 'use client'
 
-import { JSX } from "react";
+import { JSX, useMemo } from "react";
 
 import {
     Select,
@@ -8,25 +8,59 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue
-}                       from "@/components/ui/select";
-import { Label }        from "@/components/ui/label";
-import { Props }        from "./select-props";
+}                           from "@/components/ui/select";
+import { Label }            from "@/components/ui/label";
+import { MultiSelectCombobox } from "@/components/shared/Combobox";
+import { Props }            from "./select-props";
 
-import { SpaceType }    from "@/types/request-detail.model";
-import { getSpaceType } from "@/lib/utils";
+import { SpaceType }        from "@/types/request-detail.model";
+import { getSpaceType }     from "@/lib/utils";
 
 
 export function SpaceTypeSelect({
     defaultValues,
     onSelectionChange,
     label,
+    multiple = false,
     placeholder = 'Selecciona un tipo de espacio',
     disabled = false,
     className
 } : Props ): JSX.Element {
+    
+    const spaceTypeOptions = useMemo(() => {
+        const options = Object.values( SpaceType ).map(( spaceType ) => ({
+            id      : spaceType,
+            label   : getSpaceType( spaceType ),
+            value   : spaceType
+        }));
+        
+        // Agregar opción "Sin especificar" al inicio
+        return [
+            { id: 'none', label: 'Sin especificar', value: 'none' },
+            ...options
+        ];
+    }, []);
+
+    if ( multiple ) {
+        return (
+            <div className={`space-y-2 ${className}`}>
+                { label && <Label htmlFor="spaceType">{ label }</Label> }
+
+                <MultiSelectCombobox
+                    options             = { spaceTypeOptions }
+                    defaultValues       = { defaultValues }
+                    onSelectionChange   = { onSelectionChange }
+                    placeholder         = { placeholder }
+                    disabled            = { disabled }
+                    multiple            = { true }
+                />
+            </div>
+        );
+    }
+
     return (
         <div className={`space-y-2 ${className}`}>
-            { label && <Label htmlFor="professors">{ label }</Label> }
+            { label && <Label htmlFor="spaceType">{ label }</Label> }
 
             <Select
                 onValueChange   = { onSelectionChange }
