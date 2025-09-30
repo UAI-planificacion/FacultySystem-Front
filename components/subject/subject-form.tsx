@@ -43,12 +43,11 @@ import { Switch }			from "@/components/ui/switch";
 import { SubjectUpload }    from "@/components/subject/subject-upload";
 import { SizeSelect }       from "@/components/shared/item-select/size-select";
 import { SpaceTypeSelect }  from "@/components/shared/item-select/space-type-select";
-import { CostCenterSelect } from "@/components/shared/item-select/cost-center";
+import { SessionButton }    from "@/components/section/session-button";
 
 import { Size, SpaceType }  from "@/types/request-detail.model";
 import { Subject }		    from "@/types/subject.model";
-import { SessionButton } from "../section/session-button";
-import { Session }                  from "@/types/section.model";
+import { Session }          from "@/types/section.model";
 
 
 
@@ -74,23 +73,34 @@ const formSchema = z.object({
     }).max(200, {
         message: "El nombre de la asignatura debe tener como máximo 200 caracteres."
     }),
-    spaceType : z.nativeEnum( SpaceType ).optional().nullable(),
-    spaceSizeId   : z.nativeEnum( Size ).nullable().optional(),
-    costCenterId: z.string().min(2, {
-        message: "El código del centro de costos debe tener al menos 2 caracteres.",
-    }),
-    isActive: z.boolean().default(true),
+    spaceType       : z.nativeEnum( SpaceType ).optional().nullable(),
+    spaceSizeId     : z.nativeEnum( Size ).nullable().optional(),
+    workshop        : z.number().min( 0, "El taller debe ser mayor o igual a 0" ),
+    lecture         : z.number().min( 0, "La conferencia debe ser mayor o igual a 0" ),
+    tutoringSession : z.number().min( 0, "La sesión tutorial debe ser mayor o igual a 0" ),
+    laboratory      : z.number().min( 0, "El laboratorio debe ser mayor o igual a 0" ),
+    isActive        : z.boolean(),
+}).refine(( data ) => {
+    const { workshop, lecture, tutoringSession, laboratory } = data;
+
+    return workshop > 0 || lecture > 0 || tutoringSession > 0 || laboratory > 0;
+}, {
+    message : "Al menos una sesión debe ser mayor que 0",
+    path    : [ "workshop" ],
 });
 
 
-const emptySubject = ( subject: Subject | undefined ): Partial<SubjectFormValues> => {
+const emptySubject = ( subject: Subject | undefined ): SubjectFormValues => {
 	return {
 		id              : subject?.id           || "",
 		name            : subject?.name         || "",
 		spaceType       : subject?.spaceType    || null,
 		spaceSizeId     : subject?.spaceSizeId  || null,
-		costCenterId    : subject?.costCenterId || "",
-		isActive        : subject?.isActive,
+		workshop        : subject?.workshop        || 0,
+		lecture         : subject?.lecture         || 0,
+		tutoringSession : subject?.tutoringSession || 0,
+		laboratory      : subject?.laboratory      || 0,
+		isActive        : subject?.isActive ?? true,
 	};
 };
 
@@ -119,27 +129,55 @@ export function SubjectForm({
 		form.reset();
 	};
 
-    function updateSessionCount( _: string, session: Session, delta: number ): void {
-    }
+	/**
+	 * Get form field name for session type
+	 */
+	function getSessionFieldName( session: Session ): keyof SubjectFormValues {
+		switch ( session ) {
+			case Session.C: return 'lecture';
+			case Session.A: return 'tutoringSession';
+			case Session.T: return 'workshop';
+			case Session.L: return 'laboratory';
+			default: return 'lecture';
+		}
+	}
 
-    function setSessionCount( _: string, session: Session, value: string ): void {
-    }
+	/**
+	 * Update session count by delta
+	 */
+	function updateSessionCount( _: string, session: Session, delta: number ): void {
+		const currentValue = form.getValues( getSessionFieldName( session ));
+		const newValue = Math.max( 0, (Number(currentValue) ?? 0) + delta );
+		form.setValue( getSessionFieldName( session ), newValue );
+	}
 
-    function createMockSection(): any {
-        return {
-            id              : 'offer-form',
-            workshop        : 0,
-            lecture         : 0,
-            tutoringSession : 0,
-            laboratory      : 0,
-            sessionCounts   : {
-                [Session.C]     : 0,
-                [Session.A]     : 0,
-                [Session.T]     : 0,
-                [Session.L]     : 0,
-            }
-        };
-    }
+	/**
+	 * Set session count to specific value
+	 */
+	function setSessionCount( _: string, session: Session, value: string ): void {
+		const numValue = parseInt( value ) || 0;
+		form.setValue( getSessionFieldName( session ), Math.max( 0, numValue ));
+	}
+
+	/**
+	 * Create mock section data for SessionButton
+	 */
+	function createMockSection(): any {
+		const watchedValues = form.watch();
+		return {
+			id              : 'subject-form',
+			workshop        : watchedValues.workshop        || 0,
+			lecture         : watchedValues.lecture         || 0,
+			tutoringSession : watchedValues.tutoringSession || 0,
+			laboratory      : watchedValues.laboratory      || 0,
+			sessionCounts   : {
+				[Session.C]     : watchedValues.lecture         || 0,
+				[Session.A]     : watchedValues.tutoringSession || 0,
+				[Session.T]     : watchedValues.workshop        || 0,
+				[Session.L]     : watchedValues.laboratory      || 0,
+			}
+		};
+	}
 
 
 	return (
@@ -201,24 +239,6 @@ export function SubjectForm({
                                                     {...field}
                                                 />
                                             </FormControl>
-
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <FormField
-                                    control = { form.control }
-                                    name    = "costCenterId"
-                                    render  = {({ field }) => (
-                                        <FormItem>
-                                            <CostCenterSelect
-                                                label               = "Centro de Costos"
-                                                placeholder         = "Seleccionar un centro de costos"
-                                                defaultValues       = { field.value || '' }
-                                                onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value ) }
-                                                multiple            = { false }
-                                            />
 
                                             <FormMessage />
                                         </FormItem>
@@ -308,6 +328,20 @@ export function SubjectForm({
                                         showLabel           = { true }
                                     />
                                 </div>
+
+                                <FormField
+                                    control = { form.control }
+                                    name    = "workshop"
+                                    render  = {({ fieldState }) => (
+                                        <FormItem>
+                                            {fieldState.error && (
+                                                <FormMessage className="text-start">
+                                                    {fieldState.error.message}
+                                                </FormMessage>
+                                            )}
+                                        </FormItem>
+                                    )}
+                                />
 
                                 { subject && 
                                     <FormField
