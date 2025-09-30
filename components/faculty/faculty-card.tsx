@@ -73,7 +73,7 @@ export function FacultyCard({
                         {faculty.totalSubjects || 0} Asignaturas
                     </Button>
 
-                    <Button 
+                    {/* <Button 
                         variant   = "outline"
                         size      = "sm"
                         onClick   = {() => router.push(`/faculties/${faculty.id}?tab=offers`)}
@@ -82,7 +82,7 @@ export function FacultyCard({
                     >
                         <BookOpen className="h-4 w-4" />
                         {faculty.totalOffers || 0} Ofertas
-                    </Button>
+                    </Button> */}
 
                     <Button 
                         variant     = "outline"
