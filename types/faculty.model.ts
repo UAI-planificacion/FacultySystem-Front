@@ -3,7 +3,7 @@ interface Total {
     totalSubjects   : number;
     totalStaff      : number;
     totalRequests   : number;
-    totalOffers     : number;
+    // totalOffers     : number;
 }
 
 
