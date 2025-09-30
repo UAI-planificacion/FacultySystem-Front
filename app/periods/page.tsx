@@ -287,14 +287,16 @@ export default function PeriodsPage() {
 									<Table>
 										<TableHeader className="sticky top-0 z-10 bg-background">
 											<TableRow>
-												<TableHead className="bg-background w-[100px]">ID</TableHead>
-												<TableHead className="bg-background w-[200px]">Nombre</TableHead>
-												<TableHead className="bg-background w-[150px]">Fecha Inicio</TableHead>
-												<TableHead className="bg-background w-[150px]">Fecha Fin</TableHead>
-												<TableHead className="bg-background w-[150px]">Fecha Apertura</TableHead>
-												<TableHead className="bg-background w-[150px]">Fecha Cierre</TableHead>
-												<TableHead className="bg-background w-[100px]">Estado</TableHead>
-												<TableHead className="bg-background w-[120px] text-end">Acciones</TableHead>
+												<TableHead className="bg-background w-[80px]">ID</TableHead>
+												<TableHead className="bg-background w-[180px]">Nombre</TableHead>
+												<TableHead className="bg-background w-[120px]">Tipo</TableHead>
+												<TableHead className="bg-background w-[130px]">Centro de Costos</TableHead>
+												<TableHead className="bg-background w-[130px]">Fecha Inicio</TableHead>
+												<TableHead className="bg-background w-[130px]">Fecha Fin</TableHead>
+												<TableHead className="bg-background w-[130px]">Fecha Apertura</TableHead>
+												<TableHead className="bg-background w-[130px]">Fecha Cierre</TableHead>
+												<TableHead className="bg-background w-[140px]">Estado</TableHead>
+												<TableHead className="bg-background w-[100px] text-end">Acciones</TableHead>
 											</TableRow>
 										</TableHeader>
 									</Table>
@@ -312,16 +314,18 @@ export default function PeriodsPage() {
 													: (
 														paginatedPeriods.map( period => (
 															<TableRow key={ period.id }>
-																<TableCell className="font-medium w-[100px]">{ period.id }</TableCell>
-																<TableCell className="w-[200px]">{ period.name }</TableCell>
-																<TableCell className="w-[150px]">{ formatDate( period.startDate ) }</TableCell>
-																<TableCell className="w-[150px]">{ formatDate( period.endDate ) }</TableCell>
-																<TableCell className="w-[150px]">{ formatDate( period.openingDate ) }</TableCell>
-																<TableCell className="w-[150px]">{ formatDate( period.closingDate ) }</TableCell>
-																<TableCell className="w-[100px]">
+																<TableCell className="font-medium w-[80px]">{ period.id }</TableCell>
+																<TableCell className="w-[180px]">{ period.name }</TableCell>
+																<TableCell className="w-[120px]">{ period.type }</TableCell>
+																<TableCell className="w-[130px]">{ period.costCenterId }</TableCell>
+																<TableCell className="w-[130px]">{ formatDate( period.startDate ) }</TableCell>
+																<TableCell className="w-[130px]">{ formatDate( period.endDate ) }</TableCell>
+																<TableCell className="w-[130px]">{ formatDate( period.openingDate ) }</TableCell>
+																<TableCell className="w-[130px]">{ formatDate( period.closingDate ) }</TableCell>
+																<TableCell className="w-[140px]">
 																	{ renderStatusBadge( period.status ) }
 																</TableCell>
-																<TableCell className="w-[120px]">
+																<TableCell className="w-[100px]">
 																	<ActionButton
 																		editItem={ openEditPeriodForm }
 																		deleteItem={ () => onOpenDeletePeriod(period) }
