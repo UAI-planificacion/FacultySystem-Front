@@ -102,12 +102,12 @@ export function AddModuleModal({
 
             if ( !hasBaseFieldErrors ) {
                 // Duplicados contra módulos existentes
-                if ( hasCode ) {
-                    const existsSameCode = modules.some(( other ) => other.code === module.code );
-                    if ( existsSameCode ) {
-                        moduleErrors.push( 'Ya existe un módulo con el mismo código' );
-                    }
-                }
+                // if ( hasCode ) {
+                //     const existsSameCode = modules.some(( other ) => other.code === module.code );
+                //     if ( existsSameCode ) {
+                //         moduleErrors.push( 'Ya existe un módulo con el mismo código' );
+                //     }
+                // }
 
                 if ( hasHours ) {
                     const existsSameSchedule = modules.some(( other ) => other.startHour === module.startHour && other.endHour === module.endHour );
@@ -117,12 +117,12 @@ export function AddModuleModal({
                 }
 
                 // Duplicados dentro de los módulos a crear (formData)
-                if ( hasCode ) {
-                    const duplicatedCodeInBatch = formData.some(( m, i2 ) => i2 !== index && m.code === module.code );
-                    if ( duplicatedCodeInBatch ) {
-                        moduleErrors.push( 'Otro módulo en el formulario tiene el mismo código' );
-                    }
-                }
+                // if ( hasCode ) {
+                //     const duplicatedCodeInBatch = formData.some(( m, i2 ) => i2 !== index && m.code === module.code );
+                //     if ( duplicatedCodeInBatch ) {
+                //         moduleErrors.push( 'Otro módulo en el formulario tiene el mismo código' );
+                //     }
+                // }
 
                 if ( hasHours ) {
                     const duplicatedScheduleInBatch = formData.some(( m, i2 ) => i2 !== index && m.startHour === module.startHour && m.endHour === module.endHour );

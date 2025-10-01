@@ -115,12 +115,12 @@ export function ModuleModal({
             const otherModules = modules.filter( m => m.id !== formData.id );
 
             // Duplicados contra otros módulos existentes
-            if ( hasCode ) {
-                const existsSameCode = otherModules.some( other => other.code === formData.code );
-                if ( existsSameCode ) {
-                    newErrors.code = 'Ya existe otro módulo con el mismo código';
-                }
-            }
+            // if ( hasCode ) {
+            //     const existsSameCode = otherModules.some( other => other.code === formData.code );
+            //     if ( existsSameCode ) {
+            //         newErrors.code = 'Ya existe otro módulo con el mismo código';
+            //     }
+            // }
 
             if ( hasHours ) {
                 const existsSameSchedule = otherModules.some( other => 
