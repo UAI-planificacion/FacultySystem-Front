@@ -224,7 +224,7 @@ export default function FacultiesPage() {
         >
             <div className="flex flex-col h-full space-y-4 overflow-hidden">
                 {/* Statistics Cards */}
-                <div className="flex-shrink-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                <div className="flex-shrink-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     <StatisticCard
                         title   = "Total de Facultades"
                         value   = { data?.faculties.length }
