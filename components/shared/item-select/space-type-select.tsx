@@ -8,13 +8,13 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue
-}                           from "@/components/ui/select";
-import { Label }            from "@/components/ui/label";
-import { MultiSelectCombobox } from "@/components/shared/Combobox";
-import { Props }            from "./select-props";
+}                               from "@/components/ui/select";
+import { Label }                from "@/components/ui/label";
+import { MultiSelectCombobox }  from "@/components/shared/Combobox";
+import { Props }                from "@/components/shared/item-select/select-props";
 
-import { SpaceType }        from "@/types/request-detail.model";
-import { getSpaceType }     from "@/lib/utils";
+import { SpaceType }    from "@/types/request-detail.model";
+import { getSpaceType } from "@/lib/utils";
 
 
 export function SpaceTypeSelect({
