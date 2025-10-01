@@ -2,15 +2,18 @@ import { Grade }        from "@/types/grade";
 import { StaffRequest } from "@/types/request";
 
 
+//Communic & garage are multipurpose
 export enum SpaceType {
-    ROOM        = "ROOM",
-    AUDITORIO   = "AUDITORIO",
-    COMMUNIC    = "COMMUNIC",
-    LAB         = "LAB",
-    LABPC       = "LABPC",
-    DIS         = "DIS",
-    GARAGE      = "GARAGE",
-    CORE        = "CORE",
+    ROOM                = "ROOM",
+    AUDITORIO           = "AUDITORIO",
+    LAB                 = "LAB",
+    LABPC               = "LABPC",
+    DIS                 = "DIS",
+    CORE                = "CORE",
+    STUDY_ROOM          = "STUDY_ROOM",
+    MEETING_ROOM        = "MEETING_ROOM",
+    POSTGRADUATE_ROOM   = "POSTGRADUATE_ROOM",
+    MULTIPURPOSE        = "MULTIPURPOSE"
 }
 
 
