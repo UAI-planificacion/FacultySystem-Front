@@ -40,7 +40,7 @@ export function SubjectSelect({
     const memoizedSubjects = useMemo(() => {
         return data?.map( subject => ({
             id      : subject.id,
-            label   : `${subject.id} ${subject.name}`,
+            label   : `${subject.id} - ${subject.name}`,
             value   : subject.id
         }) ) ?? [];
     }, [data]);
