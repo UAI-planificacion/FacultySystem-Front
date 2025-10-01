@@ -34,12 +34,14 @@ export const getStatusName = ( status: Status ) : string => ({
 
 
 export const getSpaceType = ( spaceType: SpaceType ) => ({
-    [SpaceType.ROOM]        : "Sala",
-    [SpaceType.AUDITORIO]   : "Auditorio",
-    [SpaceType.COMMUNIC]    : "Comunicación",
-    [SpaceType.CORE]        : "Core",
-    [SpaceType.DIS]         : "Diseño",
-    [SpaceType.GARAGE]      : "Garage",
-    [SpaceType.LAB]         : "Laboratorio",
-    [SpaceType.LABPC]       : "Laboratorio de Computadoras",
+    [SpaceType.ROOM]                : "Sala",
+    [SpaceType.LABPC]               : "Laboratorio de Computación",
+    [SpaceType.AUDITORIO]           : "Auditorio",
+    [SpaceType.STUDY_ROOM]          : "Sala Estudio",
+    [SpaceType.MEETING_ROOM]        : "Sala Reuniones",
+    [SpaceType.DIS]                 : "Sala Diseño",
+    [SpaceType.LAB]                 : "Laboratorio Investigación",
+    [SpaceType.CORE]                : "Sala Core",
+    [SpaceType.POSTGRADUATE_ROOM]   : "Sala Postgrado",
+    [SpaceType.MULTIPURPOSE]        : "Multiuso",
 })[spaceType];
