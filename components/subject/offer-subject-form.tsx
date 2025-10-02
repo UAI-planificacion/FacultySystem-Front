@@ -3,9 +3,17 @@
 import { JSX, useEffect, useMemo }  from "react";
 import { useForm }                  from "react-hook-form";
 
+import { useRouter } from "next/navigation";
+
+
+import {
+	useQuery,
+	useMutation,
+	useQueryClient
+}                       from "@tanstack/react-query";
+import { toast }        from "sonner";
 import { zodResolver }  from "@hookform/resolvers/zod";
 import { z }            from "zod";
-import { useQuery }     from "@tanstack/react-query";
 
 import {
 	Dialog,
@@ -31,41 +39,14 @@ import { ProfessorSelect }  from "@/components/shared/item-select/professor-sele
 import { SpaceTypeSelect }  from "@/components/shared/item-select/space-type-select";
 import { SizeSelect }       from "@/components/shared/item-select/size-select";
 import { SessionButton }    from "@/components/section/session-button";
+import { offerSubjectSchema } from "./offer-subject-schema";
 
-import { Subject }          from "@/types/subject.model";
-import { Period }           from "@/types/periods.model";
-import { SpaceType, Size }  from "@/types/request-detail.model";
-import { Session }          from "@/types/section.model";
-import { KEY_QUERYS }       from "@/consts/key-queries";
-import { fetchApi }         from "@/services/fetch";
-
-// Schema de validación
-const offerSubjectSchema = z.object({
-	subjectId       : z.string().min(1, "Debe seleccionar una asignatura"),
-	periodId        : z.string().min(1, "Debe seleccionar un período"),
-	professorId     : z.string().nullable().optional(),
-	numberOfSections: z.number().min(1, "El número de secciones debe ser mayor o igual a 1").max(100, "El número de secciones no puede ser mayor a 100"),
-	spaceType       : z.string().nullable().optional(),
-	spaceSizeId     : z.string().nullable().optional(),
-	workshop        : z.number().min(0, "El taller debe ser mayor o igual a 0"),
-	lecture         : z.number().min(0, "La conferencia debe ser mayor o igual a 0"),
-	tutoringSession : z.number().min(0, "La sesión tutorial debe ser mayor o igual a 0"),
-	laboratory      : z.number().min(0, "El laboratorio debe ser mayor o igual a 0"),
-	startDate       : z.date({ required_error: "La fecha de inicio es requerida" }).nullable().refine(( date ) => date !== null, {
-		message: "La fecha de inicio es requerida"
-	}),
-	endDate         : z.date({ required_error: "La fecha de fin es requerida" }).nullable().refine(( date ) => date !== null, {
-		message: "La fecha de fin es requerida"
-	}),
-}).refine(( data ) => {
-	if ( data.startDate && data.endDate ) {
-		return data.endDate > data.startDate;
-	}
-	return true;
-}, {
-	message: "La fecha de fin debe ser posterior a la fecha de inicio",
-	path: ["endDate"]
-});
+import { CreateOfferSubject, Subject }  from "@/types/subject.model";
+import { Period }                       from "@/types/periods.model";
+import { Session }                      from "@/types/section.model";
+import { KEY_QUERYS }                   from "@/consts/key-queries";
+import { Method, fetchApi }             from "@/services/fetch";
+import { errorToast, successToast }     from "@/config/toast/toast.config";
 
 
 type OfferSubjectFormValues = z.infer<typeof offerSubjectSchema>;
@@ -74,28 +55,43 @@ type OfferSubjectFormValues = z.infer<typeof offerSubjectSchema>;
 interface Props {
 	facultyId       : string;
 	subject?        : Subject;
-	onSubmit        : (data: OfferSubjectFormValues) => void;
+	onSubmit        : ( data: OfferSubjectFormValues ) => void;
 	isOpen          : boolean;
 	onClose         : () => void;
 }
 
+/**
+ * API call to create offer subjects
+ */
+const createOfferSubjectApi = async ( dataFrom: CreateOfferSubject ): Promise<any[]> =>
+	fetchApi<any[]>({
+		url     : 'sections/offer',
+		method  : Method.POST,
+		body    : dataFrom
+	});
 
-const emptyOfferSubject = (subject: Subject | undefined): OfferSubjectFormValues => {
+
+const emptyOfferSubject = ( subject: Subject | undefined ): OfferSubjectFormValues => {
 	return {
-		subjectId       : subject?.id || "",
-		periodId        : "",
-		professorId     : "",
-		numberOfSections: 1,
-		spaceType       : subject?.spaceType || "",
-		spaceSizeId     : subject?.spaceSizeId || "",
-		workshop        : subject?.workshop || 0,
-		lecture         : subject?.lecture || 0,
-		tutoringSession : subject?.tutoringSession || 0,
-		laboratory      : subject?.laboratory || 0,
-		startDate       : null,
-		endDate         : null,
+        periodId            : "",
+		professorId         : "",
+		numberOfSections    : 1,
+		startDate           : new Date(),
+        endDate             : new Date(),
+		subjectId           : subject?.id               || "",
+		spaceType           : subject?.spaceType        || "",
+		spaceSizeId         : subject?.spaceSizeId      || "",
+		workshop            : subject?.workshop         || 0,
+		lecture             : subject?.lecture          || 0,
+		tutoringSession     : subject?.tutoringSession  || 0,
+		laboratory          : subject?.laboratory       || 0,
 	};
 };
+
+
+const validString = (
+    value: string | undefined | null
+): string | null  => value ?? null;
 
 
 export function OfferSubjectForm({
@@ -105,65 +101,63 @@ export function OfferSubjectForm({
 	isOpen,
 	onClose,
 }: Props): JSX.Element {
-	const form = useForm<OfferSubjectFormValues>({
-		resolver: zodResolver(offerSubjectSchema),
-		defaultValues: emptyOfferSubject(subject),
+	const router        = useRouter();
+	const queryClient   = useQueryClient();
+	const form          = useForm<OfferSubjectFormValues>({
+		resolver        : zodResolver( offerSubjectSchema ),
+		defaultValues   : emptyOfferSubject( subject ),
 	});
 
 	// Query para obtener asignaturas de la facultad
 	const { data: subjects } = useQuery<Subject[]>({
-		queryKey: [KEY_QUERYS.SUBJECTS, facultyId],
-		queryFn: () => fetchApi({ url: `subjects/all/${facultyId}` }),
-		enabled: isOpen,
+		queryKey    : [KEY_QUERYS.SUBJECTS, facultyId],
+		queryFn     : () => fetchApi({ url: `subjects/all/${facultyId}` }),
+		enabled     : isOpen,
 	});
 
 	// Query para obtener períodos
 	const { data: periods } = useQuery<Period[]>({
-		queryKey: [KEY_QUERYS.PERIODS],
-		queryFn: () => fetchApi<Period[]>({ url: 'periods' }),
-		enabled: isOpen,
+		queryKey    : [KEY_QUERYS.PERIODS],
+		queryFn     : () => fetchApi<Period[]>({ url: 'periods' }),
+		enabled     : isOpen,
 	});
 
 	// Resetear formulario cuando cambia la asignatura prop
 	useEffect(() => {
-		form.reset(emptyOfferSubject(subject));
-	}, [subject, form, isOpen]);
+		form.reset( emptyOfferSubject( subject ));
+	}, [ subject, form, isOpen ]);
 
 	// Obtener asignatura seleccionada
 	const selectedSubject = useMemo(() => {
-		const subjectId = form.watch('subjectId');
-		return subjects?.find(s => s.id === subjectId);
-	}, [subjects, form.watch('subjectId')]);
+		const subjectId = form.watch( 'subjectId' );
+
+        return subjects?.find( s => s.id === subjectId );
+	}, [subjects, form.watch( 'subjectId' )]);
 
 	// Obtener período seleccionado
 	const selectedPeriod = useMemo(() => {
-		const periodId = form.watch('periodId');
+		const periodId = form.watch( 'periodId' );
 
-        return periods?.find(p => p.id === periodId);
-	}, [periods, form.watch('periodId')]);
+        return periods?.find( p => p.id === periodId );
+	}, [periods, form.watch( 'periodId' )]);
 
 	// Cargar datos de la asignatura seleccionada
 	useEffect(() => {
 		if ( selectedSubject ) {
-			form.setValue('spaceType', selectedSubject.spaceType || "");
-			form.setValue('spaceSizeId', selectedSubject.spaceSizeId || "");
-			form.setValue('workshop', selectedSubject.workshop);
-			form.setValue('lecture', selectedSubject.lecture);
-			form.setValue('tutoringSession', selectedSubject.tutoringSession);
-			form.setValue('laboratory', selectedSubject.laboratory);
+			form.setValue('spaceType',          selectedSubject.spaceType || "" );
+			form.setValue('spaceSizeId',        selectedSubject.spaceSizeId || "" );
+			form.setValue('workshop',           selectedSubject.workshop );
+			form.setValue('lecture',            selectedSubject.lecture );
+			form.setValue('tutoringSession',    selectedSubject.tutoringSession );
+			form.setValue('laboratory',         selectedSubject.laboratory );
 		}
 	}, [selectedSubject, form]);
 
 	// Cargar fechas del período seleccionado
 	useEffect(() => {
 		if ( selectedPeriod ) {
-			const startDate = selectedPeriod.startDate
-                ? new Date( selectedPeriod.startDate )
-                : null;
-
-            const endDate = selectedPeriod.endDate
-                ? new Date( selectedPeriod.endDate )
-                : null;
+            const startDate = new Date( selectedPeriod.startDate );
+            const endDate   = new Date( selectedPeriod.endDate );
 
 			form.setValue( 'startDate', startDate );
 			form.setValue( 'endDate', endDate );
@@ -202,6 +196,26 @@ export function OfferSubjectForm({
 	}
 
 	/**
+	 * Mutation to create offer subjects
+	 */
+	const createOfferSubjectMutation = useMutation<any[], Error, CreateOfferSubject>({
+		mutationFn: createOfferSubjectApi,
+		onSuccess: ( createdOffers ) => {
+			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.SECCTIONS ]});
+			onClose();
+			form.reset();
+            // TODO: mejorar el filtro
+			router.push(`/sections?subject=${createdOffers[0].subjectId}`);
+
+			toast( `${createdOffers.length} ofertas creadas exitosamente`, successToast );
+		},
+		onError: ( mutationError ) => {
+			toast( `Error al crear ofertas: ${mutationError.message}`, errorToast );
+		},
+	});
+
+
+	/**
 	 * Create mock section data for SessionButton
 	 */
 	function createMockSection(): any {
@@ -223,21 +237,14 @@ export function OfferSubjectForm({
 
 
     const handleSubmit = (data: OfferSubjectFormValues) => {
-		console.log('🚀 ~ file: offer-subject-form.tsx:223 ~ data:', data);
-		
-		// Transformar cadenas vacías a null antes de enviar
-		const transformedData = {
+		const transformedData: CreateOfferSubject = {
 			...data,
-			professorId: data.professorId === "" ? null : data.professorId,
-			spaceType: data.spaceType === "" ? null : data.spaceType,
-			spaceSizeId: data.spaceSizeId === "" ? null : data.spaceSizeId,
+			professorId : validString( data.professorId ),
+			spaceType   : validString( data.spaceType ),
+			spaceSizeId : validString( data.spaceSizeId ),
 		};
 
-		console.log('🚀 ~ file: offer-subject-form.tsx:227 ~ transformedData:', transformedData)
-
-		
-		// onSubmit(transformedData as any);
-		// form.reset();
+		createOfferSubjectMutation.mutate( transformedData );
 	};
 
 
@@ -255,7 +262,7 @@ export function OfferSubjectForm({
 				</DialogHeader>
 
 				<Form {...form}>
-					<form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+					<form onSubmit={ form.handleSubmit( handleSubmit )} className="space-y-4">
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							{/* Selección de Asignatura */}
 							<FormField
@@ -369,64 +376,78 @@ export function OfferSubjectForm({
 								</div>
 
 								{/* Sesiones */}
-								{/* <Label>Sesiones</Label> */}
-								<div className="space-y-4">
-									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                                <div className="space-y-1">
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                                            <FormField
+                                                control = { form.control }
+                                                name    = "numberOfSections"
+                                                render  = {({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>N° Secciones *</FormLabel>
+                                                        <FormControl>
+                                                            <Input
+                                                                type        = "number"
+                                                                min         = "1"
+                                                                max         = "100"
+                                                                placeholder = "Número de Secciones"
+                                                                {...field}
+                                                                onChange    = {(e) => field.onChange(parseInt(e.target.value) || 1)}
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
 
-                                        <FormField
-											control = { form.control }
-											name    = "numberOfSections"
-											render  = {({ field }) => (
-												<FormItem>
-													<FormLabel>N° Secciones *</FormLabel>
-													<FormControl>
-														<Input
-															type        = "number"
-															min         = "1"
-															max         = "100"
-															placeholder = "Número de Secciones"
-															{...field}
-															onChange    = {(e) => field.onChange(parseInt(e.target.value) || 1)}
-														/>
-													</FormControl>
-													<FormMessage />
-												</FormItem>
-											)}
-										/>
+                                            <SessionButton
+                                                session             = { Session.C }
+                                                updateSessionCount  = { updateSessionCount }
+                                                setSessionCount     = { setSessionCount }
+                                                section             = { createMockSection() }
+                                                showLabel           = { true }
+                                            />
 
-										<SessionButton
-											session             = { Session.C }
-											updateSessionCount  = { updateSessionCount }
-											setSessionCount     = { setSessionCount }
-											section             = { createMockSection() }
-											showLabel           = { true }
-										/>
+                                            <SessionButton
+                                                session             = { Session.T }
+                                                updateSessionCount  = { updateSessionCount }
+                                                setSessionCount     = { setSessionCount }
+                                                section             = { createMockSection() }
+                                                showLabel           = { true }
+                                            />
 
-										<SessionButton
-											session             = { Session.T }
-											updateSessionCount  = { updateSessionCount }
-											setSessionCount     = { setSessionCount }
-											section             = { createMockSection() }
-											showLabel           = { true }
-										/>
+                                            <SessionButton
+                                                session             = { Session.A }
+                                                updateSessionCount  = { updateSessionCount }
+                                                setSessionCount     = { setSessionCount }
+                                                section             = { createMockSection() }
+                                                showLabel           = { true }
+                                            />
 
-										<SessionButton
-											session             = { Session.A }
-											updateSessionCount  = { updateSessionCount }
-											setSessionCount     = { setSessionCount }
-											section             = { createMockSection() }
-											showLabel           = { true }
-										/>
+                                            <SessionButton
+                                                session             = { Session.L }
+                                                updateSessionCount  = { updateSessionCount }
+                                                setSessionCount     = { setSessionCount }
+                                                section             = { createMockSection() }
+                                                showLabel           = { true }
+                                            />
+                                        </div>
+                                    </div>
 
-										<SessionButton
-											session             = { Session.L }
-											updateSessionCount  = { updateSessionCount }
-											setSessionCount     = { setSessionCount }
-											section             = { createMockSection() }
-											showLabel           = { true }
-										/>
-									</div>
-								</div>
+                                    <FormField
+                                        control = { form.control }
+                                        name    = "workshop"
+                                        render  = {({ fieldState }) => (
+                                            <FormItem>
+                                                { fieldState.error && (
+                                                    <FormMessage className="text-start">
+                                                        { fieldState.error.message }
+                                                    </FormMessage>
+                                                )}
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
                             </div>
 						)}
 
@@ -450,9 +471,10 @@ export function OfferSubjectForm({
 													disabled    = {( date ) => {
 														if ( !selectedPeriod ) return true;
 
-														const periodStart   = selectedPeriod.startDate ? new Date( selectedPeriod.startDate ) : null;
-														const periodEnd     = selectedPeriod.endDate ? new Date( selectedPeriod.endDate ) : null;
-
+														const periodStart   = new Date( selectedPeriod.startDate );
+														const periodEnd     = new Date( selectedPeriod.endDate );
+														// const periodStart   = selectedPeriod.startDate ? new Date( selectedPeriod.startDate ) : null;
+														// const periodEnd     = selectedPeriod.endDate ? new Date( selectedPeriod.endDate ) : null;
 														if ( periodStart && date < periodStart )    return true;
 														if ( periodEnd && date > periodEnd )        return true;
 
@@ -483,8 +505,10 @@ export function OfferSubjectForm({
 													disabled    = {( date ) => {
 														if ( !selectedPeriod ) return true;
 
-														const periodStart   = selectedPeriod.startDate ? new Date( selectedPeriod.startDate ) : null;
-														const periodEnd     = selectedPeriod.endDate ? new Date( selectedPeriod.endDate ) : null;
+														const periodStart   = new Date( selectedPeriod.startDate );
+														const periodEnd     = new Date( selectedPeriod.endDate );
+														// const periodStart   = selectedPeriod.startDate ? new Date( selectedPeriod.startDate ) : null;
+														// const periodEnd     = selectedPeriod.endDate ? new Date( selectedPeriod.endDate ) : null;
 														const startDate     = form.getValues( 'startDate' );
 
 														// Deshabilitar fechas fuera del rango del período
@@ -517,14 +541,17 @@ export function OfferSubjectForm({
 
 							<Button
 								type        = "submit"
-								disabled    = { !hasSelectedSubject || !hasSelectedPeriod || !hasStartDate || !hasEndDate }
+								disabled    = { !hasSelectedSubject || !hasSelectedPeriod || !hasStartDate || !hasEndDate || createOfferSubjectMutation.isPending }
 							>
-								Crear Oferta
+								{ createOfferSubjectMutation.isPending
+									? 'Creando Ofertas...'
+									: 'Crear Ofertas'
+								}
 							</Button>
                         </DialogFooter>
 					</form>
 				</Form>
 			</DialogContent>
 		</Dialog>
-	);
+    );
 }
