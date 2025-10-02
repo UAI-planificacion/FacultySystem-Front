@@ -30,10 +30,12 @@ import { ProfessorSelect }      from '@/components/shared/item-select/professor-
 import { DaySelect }            from '@/components/shared/item-select/days-select';
 import { SectionForm }          from '@/components/section/section-form';
 import { SectionGroup }         from '@/components/section/types';
+import { OfferSectionTable }    from '@/components/section/offer-section-table';
 
 import { Section, Session } from '@/types/section.model';
 import { KEY_QUERYS }       from '@/consts/key-queries';
 import { fetchApi }         from '@/services/fetch';
+import { OfferSection }     from '@/types/offer-section.model';
 
 
 interface Props {
@@ -107,6 +109,17 @@ export function SectionMain({
         isLoading   : isLoadingSections,
         isError     : isErrorSections
     } = useQuery<Section[]>({
+        enabled,
+        queryKey: [ KEY_QUERYS.SECCTIONS ],
+        queryFn : () => fetchApi({ url     : 'Sections' }),
+    });
+
+
+    const {
+        data        : sectionsData2 = [],
+        isLoading   : isLoadingSections2,
+        isError     : isErrorSections2
+    } = useQuery<OfferSection[]>({
         enabled,
         queryKey: [ KEY_QUERYS.SECCTIONS ],
         queryFn : () => fetchApi({ url     : 'Sections' }),
@@ -224,7 +237,7 @@ export function SectionMain({
                 {/* Table */}
                 <Card className="flex-1">
                     <CardContent className="mt-5 overflow-x-auto overflow-y-auto h-[calc(100vh-300px)] w-full">
-                        <SectionGroupTable
+                        {/* <SectionGroupTable
                             filteredAndPaginatedGroups  = { filteredAndPaginatedGroups }
                             sectionsData                = { sectionsData }
                             isLoadingSections           = { isLoadingSections }
@@ -232,6 +245,15 @@ export function SectionMain({
                             groupedSections             = { groupedSections }
                             selectedSections            = { selectedSections }
                             onSelectedSectionsChange    = { setSelectedSections }
+                        /> */}
+
+                        <OfferSectionTable
+                            sections               = { sectionsData2 }
+                            isLoading           = { isLoadingSections2 }
+                            isError             = { isErrorSections2 }
+                            // groupedSections             = { groupedSections }
+                            selectedSessions            = { selectedSections }
+                            onSelectedSessionsChange    = { setSelectedSections }
                         />
                     </CardContent>
 
