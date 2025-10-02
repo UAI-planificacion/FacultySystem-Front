@@ -28,3 +28,19 @@ export interface CreateSubject extends BaseSubject {
 
 
 export interface UpdateSubject extends Partial<BaseSubject> {}
+
+
+export interface CreateOfferSubject {
+	subjectId       : string;
+	periodId        : string;
+	professorId     : string | null;
+	numberOfSections: number;
+	spaceType       : string | null;
+	spaceSizeId     : string | null;
+	workshop        : number;
+	lecture         : number;
+	tutoringSession : number;
+	laboratory      : number;
+	startDate       : Date;
+	endDate         : Date;
+}
