@@ -16,11 +16,11 @@ export enum PeriodType {
 export interface Period {
     id              : string;
     name            : string;
-    startDate       : string;
+    startDate       : Date;
+    endDate         : Date;
     costCenterId    : string;
-    endDate         : string;
-    openingDate     : string | null;
-    closingDate     : string | null;
+    openingDate     : Date | null;
+    closingDate     : Date | null;
     status          : PeriodStatus;
     type            : PeriodType;
     createdAt       : Date
