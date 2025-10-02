@@ -538,8 +538,6 @@ export function OfferForm({
                                     section             = { createMockSection() }
                                     showLabel           = { true }
                                 />
-
-                              
                             </div>
 
                             <FormField

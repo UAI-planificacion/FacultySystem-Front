@@ -103,8 +103,8 @@ export default function SectionsPage() {
         }
 
         for ( let offset = 1; offset <= sections.length + 1; offset++ ) {
-            const lower = targetNumber - offset;
-            const higher = targetNumber + offset;
+            const lower     = targetNumber - offset;
+            const higher    = targetNumber + offset;
 
             if ( lower > 0 && !usedNumbers.includes( lower )) {
                 return lower;
