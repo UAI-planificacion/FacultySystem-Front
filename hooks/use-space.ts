@@ -16,7 +16,7 @@ export const memoizedSpaceData = (
 	return spaceData?.lov_vals?.map( space => ({
 		id		: space.idlovvals.toString(),
 		label	: space.description,
-		value	: space.idlovvals.toString(),
+		value	: space.description,
 	})) ?? [];
 }, [spaceData]);
 
