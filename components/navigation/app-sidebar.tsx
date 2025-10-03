@@ -13,7 +13,8 @@ import {
 	Home, 
 	Ruler, 
 	UsersRound,
-	ChevronLeft
+	ChevronLeft,
+    Album
 } from "lucide-react";
 
 import {
@@ -43,35 +44,29 @@ interface NavigationItem {
 
 
 const navigationItems: NavigationItem[] = [
-	{
+    {
 		id      : 'home',
 		title   : 'Inicio',
 		url     : '/',
 		icon    : Home,
 	},
-	{
-		id      : 'faculties',
-		title   : 'Facultades',
-		url     : '/faculties',
-		icon    : Building,
+    {
+		id      : 'periods',
+		title   : 'Períodos',
+		url     : '/periods',
+		icon    : CalendarClock,
 	},
-	{
-		id      : 'modules',
-		title   : 'Módulos',
-		url     : '/modules',
-		icon    : Clock,
-	},
-	{
+    {
 		id      : 'days',
 		title   : 'Días',
 		url     : '/days',
 		icon    : Calendar,
 	},
 	{
-		id      : 'periods',
-		title   : 'Períodos',
-		url     : '/periods',
-		icon    : CalendarClock,
+		id      : 'modules',
+		title   : 'Módulos',
+		url     : '/modules',
+		icon    : Clock,
 	},
 	{
 		id      : 'sizes',
@@ -91,6 +86,18 @@ const navigationItems: NavigationItem[] = [
 		url     : '/grades',
 		icon    : GraduationCap,
 	},
+    {
+		id      : 'faculties',
+		title   : 'Facultades',
+		url     : '/faculties',
+		icon    : Building,
+	},
+	{
+		id      : 'offers',
+		title   : 'Ofertas',
+		url     : '/offers',
+		icon    : Album,
+	},
 	{
 		id      : 'sections',
 		title   : 'Secciones',
@@ -104,24 +111,25 @@ const navigationItems: NavigationItem[] = [
  * Application sidebar component with navigation menu
  */
 export function AppSidebar() {
-	const router        = useRouter();
-	const pathname      = usePathname();
-	const { staff }     = useSession();
+	const router            = useRouter();
+	const pathname          = usePathname();
+	const { staff }         = useSession();
 	const { toggleSidebar } = useSidebar();
 
 
-	const handleNavigation = ( url: string ) => {
+	function handleNavigation( url: string ): void {
 		if ( staff || url === '/' ) {
 			router.push( url );
 		}
 	};
 
 
-	const isActive = ( url: string ) => {
+	function isActive( url: string ): boolean {
 		if ( url === '/' ) {
 			return pathname === '/';
 		}
-		return pathname.startsWith( url );
+
+        return pathname.startsWith( url );
 	};
 
 
