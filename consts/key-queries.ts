@@ -20,4 +20,5 @@ export const KEY_QUERYS = {
 
     COST_CENTERS    : 'cost-centers',
     NOTIFICATIONS   : 'notifications',
+    AVAILABLE_DATES : 'available-dates',
 }
