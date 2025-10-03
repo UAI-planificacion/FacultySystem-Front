@@ -17,6 +17,7 @@ interface CalendarSelectProps {
 	placeholder ?: string;
 	disabled    ?: ( date: Date ) => boolean;
 	className   ?: string;
+    disabledButton?: boolean;
 }
 
 
@@ -28,6 +29,7 @@ export function CalendarSelect( {
 	onSelect,
 	placeholder = "Seleccionar fecha",
 	disabled,
+    disabledButton = false,
 	className = "w-full"
 }: CalendarSelectProps ) {
 
@@ -60,6 +62,7 @@ export function CalendarSelect( {
 				<Button
 					variant   = "outline"
 					className = { `${className} justify-start text-left font-normal gap-2` }
+					disabled  = { disabledButton }
 				>
 					<CalendarIcon className="h-4 w-4" />
 					{ getDisplayValue() }
