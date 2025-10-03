@@ -1,3 +1,5 @@
+import { Session } from "./section.model";
+
 export interface OfferSectionProffesor {
     id  : string;
     name: string;
@@ -18,6 +20,7 @@ export interface OfferSectionPeriod {
 
 export interface OfferModule {
     id          : string;
+    code        : string;
     name        : string;
     startHour   : string;
     endHour     : string;
@@ -33,7 +36,7 @@ export interface OfferDay {
 
 export interface OfferSession {
     id                      : string;
-    name                    : string;
+    name                    : Session;
     spaceId                 : string;
     isEnglish               : boolean;
     chairsAvailable         : number;
@@ -42,7 +45,8 @@ export interface OfferSession {
     plannedBuilding         : string;
     professor               : OfferSectionProffesor;
     module                  : OfferModule;
-    day                     : OfferDay;
+    date                    : Date;
+    dayId                   : number;
 }
 
 
