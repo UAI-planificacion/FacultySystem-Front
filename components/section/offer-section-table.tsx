@@ -2,7 +2,7 @@
 
 import React, { useState } from "react"
 
-import { ChevronDown, ChevronRight, Plus }  from "lucide-react"
+import { Album, ChevronDown, ChevronRight, Plus }  from "lucide-react"
 import { useMutation, useQueryClient }      from "@tanstack/react-query"
 import { toast }                            from "sonner"
 
@@ -21,13 +21,15 @@ import { ActionButton }             from "@/components/shared/action"
 import { ChangeStatusSection }      from "@/components/section/change-status"
 import { DeleteConfirmDialog }      from "@/components/dialog/DeleteConfirmDialog"
 import { SectionForm }              from "@/components/section/section-form"
+import { CreateSessionForm }        from "@/components/section/create-session-form"
 import { SessionShort }             from "@/components/section/session-short"
 import { SessionName }              from "@/components/section/session-name"
 
-import { OfferSection }             from "@/types/offer-section.model"
+import { OfferSection, OfferSession }             from "@/types/offer-section.model"
 import { fetchApi, Method }         from "@/services/fetch"
 import { KEY_QUERYS }               from "@/consts/key-queries"
 import { errorToast, successToast } from "@/config/toast/toast.config"
+import { tempoFormat } from "@/lib/utils"
 
 
 interface Props {
@@ -51,7 +53,10 @@ export function OfferSectionTable({
 	const [ selectedSections, setSelectedSections ]         = useState<Set<string>>( new Set() );
 	const [ isEditSection, setIsEditSection ]               = useState<boolean>( false );
 	const [ createSessionSection, setCreateSessionSection ] = useState<OfferSection | null>( null );
+	const [ isCreateSessionOpen, setIsCreateSessionOpen ]   = useState<boolean>( false );
 	const [ selectedSectionEdit, setSelectedSectionEdit ]   = useState<OfferSection | null>( null );
+	const [ selectedSessionEdit, setSelectedSesionEdit ]   = useState<OfferSession | null>( null );
+
 	const [ isOpenDelete, setIsOpenDelete ]                 = useState( false );
 	const [ selectedSection, setSelectedSection ]           = useState<OfferSection | undefined>( undefined );
 
@@ -256,12 +261,12 @@ export function OfferSectionTable({
 					<TableRow>
 						<TableHead className="w-8"></TableHead>
 						<TableHead className="w-14"></TableHead>
-						<TableHead>Número</TableHead>
-						<TableHead>Asignatura</TableHead>
+						<TableHead>SSEC</TableHead>
+						{/* <TableHead>Asignatura</TableHead> */}
+						<TableHead>Período</TableHead>
 						<TableHead>Sesiones</TableHead>
 						<TableHead>Fecha Inicio</TableHead>
 						<TableHead>Fecha Fin</TableHead>
-						<TableHead>Período</TableHead>
 						<TableHead>Estado</TableHead>
 						<TableHead className="text-right">Acciones</TableHead>
 					</TableRow>
@@ -315,21 +320,25 @@ export function OfferSectionTable({
 										/>
 									</TableCell>
 
-									<TableCell className="font-medium">{ section.code }</TableCell>
+									<TableCell className="font-medium" title={ `${section.subject.id}-${section.subject.name}` }>
+                                        { section.subject.id }-{ section.code }
+                                    </TableCell>
 
-									<TableCell className="font-medium" title={ section.subject.name }>
+									<TableCell title={ `${section.period.id}-${section.period.name}` }>
+                                        { section.period.id }
+                                    </TableCell>
+
+									{/* <TableCell className="font-medium" title={ section.subject.name }>
 										{ section.subject.id }
-									</TableCell>
+									</TableCell> */}
 
 									<TableCell>
 										<SessionShort sessionCounts={ getSessionCounts( section ) } />
 									</TableCell>
 
-									<TableCell>{ formatDate( section.startDate ) }</TableCell>
+									<TableCell>{ section.startDate ? tempoFormat( section.startDate ) : "-" }</TableCell>
 
-									<TableCell>{ formatDate( section.endDate ) }</TableCell>
-
-									<TableCell>{ section.period.id }</TableCell>
+									<TableCell>{ section.endDate ? tempoFormat( section.endDate ) : "-" }</TableCell>
 
 									<TableCell>
 										<ActiveBadge
@@ -340,19 +349,35 @@ export function OfferSectionTable({
 									</TableCell>
 
 									<TableCell className="text-right">
-										<div className="flex items-center justify-end gap-2">
-											<Button
-												title       = "Agregar Sesión"
-												size        = "icon"
-												variant     = "outline"
-												disabled    = { section.isClosed }
-												onClick     = { () => {
-													setCreateSessionSection( section );
-													setIsEditSection( true );
-												}}
-											>
-												<Plus className="w-4 h-4" />
-											</Button>
+										<div className="flex items-center justify-end gap-1.5">
+											{ section.sessions.length === 0
+												? <Button
+													title       = "Asignar Sesiones"
+													size        = "icon"
+													variant     = "outline"
+													disabled    = { section.isClosed }
+													onClick     = { () => {
+														setCreateSessionSection( section );
+                                                        setSelectedSectionEdit( section );
+														setIsCreateSessionOpen( true );
+													}}
+												>
+													<Album className="w-4 h-4" />
+												</Button>
+
+                                                : <Button
+													title       = "Agregar Sesión"
+													size        = "icon"
+													variant     = "outline"
+													disabled    = { section.isClosed }
+													onClick     = { () => {
+														setCreateSessionSection( section );
+														setIsCreateSessionOpen( true );
+													}}
+												>
+													<Plus className="w-4 h-4" />
+												</Button>
+											}
 
 											<ActionButton
 												editItem        = {() => handleEditSection( section )}
@@ -361,7 +386,10 @@ export function OfferSectionTable({
 												isDisabledEdit  = { section.isClosed }
 											/>
 
-											<ChangeStatusSection group = {{ groupId: section.groupId, isOpen: !section.isClosed } as any} />
+											<ChangeStatusSection group={{
+                                                groupId: section.groupId,
+                                                isOpen: !section.isClosed } as any}
+                                            />
 										</div>
 									</TableCell>
 								</TableRow>
@@ -374,12 +402,13 @@ export function OfferSectionTable({
 												<Table>
 													<TableHeader>
 														<TableRow className="">
-															<TableHead className="w-12">Seleccionar</TableHead>
+															<TableHead className="w-10">Seleccionar</TableHead>
 															<TableHead className="pl-12">Sesión</TableHead>
 															<TableHead>Sala</TableHead>
 															<TableHead>Profesor</TableHead>
-															<TableHead>Día</TableHead>
+															{/* <TableHead>Día</TableHead> */}
 															<TableHead>Módulo</TableHead>
+															<TableHead>Fecha</TableHead>
 															<TableHead className="text-right">Acciones</TableHead>
 														</TableRow>
 													</TableHeader>
@@ -387,7 +416,7 @@ export function OfferSectionTable({
 													<TableBody>
 														{section.sessions.map(( session ) => (
 															<TableRow key={session.id} className="border-l-4 border-transparent">
-																<TableCell className="w-12">
+																<TableCell className="w-10">
 																	<Checkbox
 																		checked         = { selectedSessions.has( session.id ) }
 																		onCheckedChange = {() => handleSessionSelection( session.id, section.id )}
@@ -398,22 +427,33 @@ export function OfferSectionTable({
 																</TableCell>
 
 																<TableCell className="pl-12">
-																	<SessionName session={ session.name as any } />
+																	<SessionName session={ session.name } />
 																</TableCell>
 
 																<TableCell>{ session.spaceId ?? '-' }</TableCell>
 
-																<TableCell>{ session.professor?.name ?? '-' }</TableCell>
+																<TableCell title={ `${session.professor?.id} - ${session.professor?.name}` }>
+                                                                    { session.professor?.name ?? '-' }
+                                                                </TableCell>
 
-																<TableCell>{ session.day?.name ?? '-' }</TableCell>
+																{/* <TableCell>{ dayName[session.dayId - 1] ?? '-' }</TableCell> */}
 
-																<TableCell title={ session.module?.name ? `M${session.module.id}${ session.module.diference ? `-${session.module.diference}` : '' } ${session.module.startHour}:${session.module.endHour}` : '' }>
-																	{ session.module?.id ? `M${session.module.id} ${ session.module.diference ? `-${session.module.diference}` : '' }` : '-' }
+																<TableCell 
+                                                                // title={ session.module.name }
+                                                                >
+                                                                    { session.module.name }
+																	{/* { `M${ session.module.code } ${ session.module.diference ? `-${session.module.diference}` : '' }` } */}
 																</TableCell>
+
+																<TableCell>{ session.date ? tempoFormat( session.date ) : '-' }</TableCell>
 
 																<TableCell className="text-right">
 																	<ActionButton
-																		editItem            = {() => {}}
+																		editItem            = {() => {
+                                                                            setSelectedSesionEdit( session )
+                                                                            console.log('🚀 ~ file: offer-section-table.tsx:457 ~ session:', session)
+                                                                            setIsEditSection( true )
+                                                                        }}
 																		deleteItem          = {() => {}}
 																		item                = { session }
 																		isDisabledEdit      = { section.isClosed }
@@ -440,6 +480,12 @@ export function OfferSectionTable({
 				onClose = { () => setIsEditSection( false )}
 				section = { null }
 				onSave  = { () => setIsEditSection( false )}
+			/>
+
+			<CreateSessionForm
+				section = { createSessionSection }
+				isOpen  = { isCreateSessionOpen }
+				onClose = { () => setIsCreateSessionOpen( false )}
 			/>
 
 			{/* Delete Confirmation Dialog */}
