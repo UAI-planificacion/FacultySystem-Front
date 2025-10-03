@@ -10,6 +10,13 @@ export enum Status {
 }
 
 
+export interface DayModule {
+    id          : number;
+    dayId       : number;
+    moduleId    : number;
+}
+
+
 export interface Module {
     id          : number;
     code        : string;
