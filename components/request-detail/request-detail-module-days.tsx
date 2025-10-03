@@ -8,7 +8,10 @@ import {
     TableHeader,
     TableRow
 }                       from "@/components/ui/table"
-import { Module }       from "@/types/request";
+import {
+	Module,
+	DayModule
+}						from "@/types/request";
 import { CheckIcon }    from "@/icons/Check";
 import { NoCheckIcon }  from "@/icons/NoCheck";
 import { useQuery }     from "@tanstack/react-query";
@@ -27,13 +30,17 @@ interface Props {
     requestDetailModule : RequestDetailModule[];
     onModuleToggle      : ( day: string, moduleId: string, isChecked: boolean ) => void;
     enabled             : boolean;
+    multiple            ?: boolean;
+    onDayModuleSelect   ?: ( dayModuleId: number | null ) => void;
 }
 
 
 export function RequestDetailModuleDays({
     requestDetailModule,
     onModuleToggle,
-    enabled
+    enabled,
+    multiple = true,
+    onDayModuleSelect
 }: Props ): JSX.Element {
     const {
 		data        : modules = [],
@@ -43,6 +50,16 @@ export function RequestDetailModuleDays({
 		queryKey    : [KEY_QUERYS.MODULES],
         queryFn     : () => fetchApi<Module[]>({ url: 'modules/original' }),
 		enabled,
+	});
+
+
+	const {
+		data        : dayModules = [],
+		isLoading   : isLoadingDayModules,
+	} = useQuery({
+		queryKey    : [KEY_QUERYS.MODULES, 'dayModule'],
+		queryFn     : () => fetchApi<DayModule[]>({ url: 'modules/dayModule' }),
+		enabled     : enabled && !multiple,
 	});
 
 
@@ -96,8 +113,23 @@ export function RequestDetailModuleDays({
             [key]: (prev[key] || 0) + 1
         }));
 
+        // Si es modo single, buscar el dayModuleId
+        if ( !multiple && onDayModuleSelect ) {
+            if ( checked ) {
+                const dayId = parseInt( day );
+                const modId = parseInt( moduleId );
+                
+                const dayModule = dayModules.find( dm => dm.dayId === dayId && dm.moduleId === modId );
+                if ( dayModule ) {
+                    onDayModuleSelect( dayModule.id );
+                }
+            } else {
+                onDayModuleSelect( null );
+            }
+        }
+
         onModuleToggle( day, moduleId, checked );
-    }, [onModuleToggle]);
+    }, [ onModuleToggle, multiple, onDayModuleSelect, dayModules ]);
 
 
     if ( isLoadingModules ) {
@@ -154,7 +186,7 @@ export function RequestDetailModuleDays({
                 </div>
 
                 {/* Contenido con scroll */}
-                <div className="overflow-x-auto max-h-64 overflow-y-auto">
+                <div className="overflow-x-auto ">
                     <Table>
                         <TableBody>
                             {modulesWithDays.map((module) => (
@@ -169,7 +201,7 @@ export function RequestDetailModuleDays({
                                     {availableDays.map( day => {
                                         // Verificar si este módulo está disponible en este día
                                         const isModuleAvailableOnDay = module.days.includes( day.id );
-                                        
+
                                         return (
                                             <TableCell
                                                 key         = { `${ module.id }-${ day.id }` }
@@ -182,6 +214,15 @@ export function RequestDetailModuleDays({
                                                     if ( !isModuleAvailableOnDay ) return;
                                                     
                                                     const currentChecked = isChecked( day.id.toString(), module.id.toString() );
+                                                    
+                                                    // Si es modo single, limpiar selecciones previas
+                                                    if ( !multiple && !currentChecked ) {
+                                                        // Desmarcar todas las celdas
+                                                        requestDetailModule.forEach( item => {
+                                                            onModuleToggle( item.day, item.moduleId, false );
+                                                        });
+                                                    }
+                                                    
                                                     handleCheckboxChange( day.id.toString(), module.id.toString(), !currentChecked );
                                                 }}
                                             >
