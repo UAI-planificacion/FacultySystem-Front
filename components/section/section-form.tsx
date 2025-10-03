@@ -349,7 +349,7 @@ export function SectionForm({
                             />
 
                             {/* Size Field */}
-                            <FormField
+                            {/* <FormField
                                 control = { form.control }
                                 name    = "size"
                                 render  = {({ field }) => (
@@ -367,7 +367,7 @@ export function SectionForm({
                                         <FormMessage />
                                     </FormItem>
                                 )}
-                            />
+                            /> */}
 
                             {/* Corrected Registrants Field */}
                             <FormField
@@ -502,7 +502,7 @@ export function SectionForm({
                             />
 
                             {/* Day Field */}
-                            <FormField
+                            {/* <FormField
                                 control = { form.control }
                                 name    = "day"
                                 render  = {({ field }) => (
@@ -520,10 +520,10 @@ export function SectionForm({
                                         <FormMessage />
                                     </FormItem>
                                 )}
-                            />
+                            /> */}
 
                             {/* Module Field */}
-                            <FormField
+                            {/* <FormField
                                 control = { form.control }
                                 name    = "moduleId"
                                 render  = {({ field }) => (
@@ -540,7 +540,7 @@ export function SectionForm({
                                         <FormMessage />
                                     </FormItem>
                                 )}
-                            />
+                            /> */}
                         </div>
 
                         {/* Action Buttons */}
