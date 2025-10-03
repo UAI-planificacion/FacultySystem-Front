@@ -47,6 +47,7 @@ export interface OfferSession {
     module                  : OfferModule;
     date                    : Date;
     dayId                   : number;
+    dayModuleId             : number;
 }
 
 
