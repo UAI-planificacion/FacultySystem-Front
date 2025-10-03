@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { useForm }      from 'react-hook-form';
 import { zodResolver }  from '@hookform/resolvers/zod';
@@ -11,12 +11,14 @@ import {
     useQuery,
     useQueryClient
 }                   from '@tanstack/react-query';
+import { Calendar } from 'lucide-react';
 import { toast }    from 'sonner';
 
 import {
     Dialog,
     DialogContent,
     DialogDescription,
+    DialogFooter,
     DialogHeader,
     DialogTitle
 }                               from '@/components/ui/dialog';
@@ -27,21 +29,19 @@ import {
     FormItem,
     FormLabel,
     FormMessage
-}                           from '@/components/ui/form';
-import { Input }            from '@/components/ui/input';
-import { Button }           from '@/components/ui/button';
-import { SizeSelect }       from '@/components/shared/item-select/size-select';
-import { SpaceSelect }      from '@/components/shared/item-select/space-select';
-import { ModuleSelect }     from '@/components/shared/item-select/module-select';
-import { ProfessorSelect }  from '@/components/shared/item-select/professor-select';
-import { SessionSelect }    from '@/components/shared/item-select/session-select';
-import { DaySelect }        from '@/components/shared/item-select/days-select';
-import { SectionGroup }     from '@/components/section/types';
-import { SectionInfo }      from '@/components/section/section-info';
-
-import { fetchApi, Method }         from '@/services/fetch';
-import { KEY_QUERYS }               from '@/consts/key-queries';
-import { errorToast, successToast } from '@/config/toast/toast.config';
+}                                   from '@/components/ui/form';
+import { Input }                    from '@/components/ui/input';
+import { Button }                   from '@/components/ui/button';
+import { SizeSelect }               from '@/components/shared/item-select/size-select';
+import { SpaceSelect }              from '@/components/shared/item-select/space-select';
+import { ModuleSelect }             from '@/components/shared/item-select/module-select';
+import { ProfessorSelect }          from '@/components/shared/item-select/professor-select';
+import { SessionSelect }            from '@/components/shared/item-select/session-select';
+import { DaySelect }                from '@/components/shared/item-select/days-select';
+import { SectionGroup }             from '@/components/section/types';
+import { SectionInfo }              from '@/components/section/section-info';
+import { RequestDetailModuleDays }  from '@/components/request-detail/request-detail-module-days';
+import { CalendarSelect }           from '@/components/ui/calendar-select';
 
 import {
     CreateSectionRequest,
@@ -49,9 +49,13 @@ import {
     Session,
     UpdateMassiveSectionRequest,
     UpdateSectionRequest
-}                       from '@/types/section.model';
-import { Size }         from '@/types/request-detail.model';
-import { DayModule }    from '@/types/day-module.model';
+}                                   from '@/types/section.model';
+import { Size }                     from '@/types/request-detail.model';
+import { DayModule }                from '@/types/day-module.model';
+import { fetchApi, Method }         from '@/services/fetch';
+import { KEY_QUERYS }               from '@/consts/key-queries';
+import { errorToast, successToast } from '@/config/toast/toast.config';
+import { useAvailableDates }        from '@/hooks/use-available-dates';
 
 
 interface Props {
@@ -67,15 +71,16 @@ interface Props {
 
 const formSchema = z.object({
     session                 : z.nativeEnum( Session ).nullable().optional(),
-    size                    : z.nativeEnum( Size ).nullable().optional(),
+    // size                    : z.nativeEnum( Size ).nullable().optional(),
     correctedRegistrants    : z.number().nullable().optional(),
     realRegistrants         : z.number().nullable().optional(),
     plannedBuilding         : z.string().nullable().optional(),
     chairsAvailable         : z.number().nullable().optional(),
-    room                    : z.string().nullable().optional(),
+    spaceId                 : z.string().nullable().optional(),
     professorId             : z.string().nullable().optional(),
     day                     : z.number().min(1).max(7).nullable().optional(),
-    moduleId                : z.number().nullable().optional()
+    moduleId                : z.number().nullable().optional(),
+    date                    : z.date().nullable().optional()
 }).refine(( data ) => {
     const hasDaySelected    = data.day      !== null && data.day        !== undefined;
     const hasModuleSelected = data.moduleId !== null && data.moduleId   !== undefined;
@@ -101,6 +106,10 @@ export function SectionForm({
 }: Props ) {
     const queryClient = useQueryClient();
     const [ sessionRequired, setSessionRequired ] = useState<boolean>( false );
+    const [ selectedDayModuleId, setSelectedDayModuleId ] = useState<number | null>( null );
+    const [ showCalendar, setShowCalendar ] = useState<boolean>( false );
+    const [ moduleDaySelections, setModuleDaySelections ] = useState<{ day: string; moduleId: string }[]>([]);
+    const [ shouldFetchDates, setShouldFetchDates ] = useState<boolean>( false );
 
 
     const {
@@ -167,15 +176,16 @@ export function SectionForm({
         resolver    : zodResolver( formSchema ),
         defaultValues: {
             session                 : section?.session              || null,
-            size                    : section?.size                 || null,
+            // size                    : section?.size                 || null,
             correctedRegistrants    : section?.correctedRegistrants || null,
             realRegistrants         : section?.realRegistrants      || null,
             plannedBuilding         : section?.plannedBuilding      || null,
             chairsAvailable         : section?.chairsAvailable      || null,
-            room                    : section?.room                 || null,
+            // spaceId                 : section?.space?.id            || null,
             professorId             : section?.professor?.id        || null,
             day                     : section?.day?.id              || null,
-            moduleId                : section?.module?.id           || null
+            moduleId                : section?.module?.id           || null,
+            date                    : null
         }
     });
 
@@ -184,20 +194,97 @@ export function SectionForm({
         if ( section ) {
             form.reset({
                 session                 : section.session,
-                size                    : section.size,
+                // size                    : section.size,
                 correctedRegistrants    : section.correctedRegistrants,
                 realRegistrants         : section.realRegistrants,
                 plannedBuilding         : section.plannedBuilding,
                 chairsAvailable         : section.chairsAvailable,
-                room                    : section.room,
+                // room                    : section.room,
                 professorId             : section.professor?.id,
                 day                     : section.day?.id,
-                moduleId                : section.module?.id
+                moduleId                : section.module?.id,
+                date                    : null
             });
         }
 
-        setSessionRequired( false )
+        setSessionRequired( false );
+        setSelectedDayModuleId( null );
+        setShowCalendar( false );
+        setModuleDaySelections([]);
+        setShouldFetchDates( false );
     }, [ section, form, isOpen ]);
+
+
+    const handleModuleToggle = useCallback(( day: string, moduleId: string, isChecked: boolean ) => {
+        setModuleDaySelections( prev => {
+            if ( isChecked ) {
+                return [{ day, moduleId }];
+            }
+            return prev.filter( item => !( item.day === day && item.moduleId === moduleId ));
+        });
+    }, []);
+
+
+    const handleDayModuleSelect = useCallback(( dayModuleId: number | null ) => {
+        setSelectedDayModuleId( dayModuleId );
+        setShouldFetchDates( false );
+        
+        // Limpiar calendario cuando se deselecciona
+        if ( !dayModuleId ) {
+            setShowCalendar( false );
+            form.setValue( 'date', null );
+        }
+    }, [ form ]);
+
+
+    // TanStack Query para obtener fechas disponibles
+    const sessionId = "01K6KFPCJA07Y7AXJX869C1K9J";
+    const spaceId = form.watch( 'spaceId' );
+
+    const {
+        data            : availableDates = [],
+        isLoading       : isLoadingDates,
+        isError         : isErrorDates,
+        error           : errorDates
+    } = useAvailableDates({
+        sessionId,
+        dayModuleId : selectedDayModuleId,
+        spaceId,
+        enabled     : shouldFetchDates
+    });
+
+
+    // Efecto para manejar el resultado de la query
+    useEffect(() => {
+        if ( !shouldFetchDates ) return;
+
+        if ( isErrorDates ) {
+            toast( `Error al obtener fechas disponibles: ${( errorDates as any )?.message || 'Error desconocido'}`, errorToast );
+            setShowCalendar( false );
+            setShouldFetchDates( false );
+            return;
+        }
+
+        if ( !isLoadingDates && availableDates ) {
+            if ( availableDates.length === 0 ) {
+                toast( 'No hay fechas disponibles. Prueba con otra sala.', errorToast );
+                setShowCalendar( false );
+            } else {
+                setShowCalendar( true );
+            }
+            setShouldFetchDates( false );
+        }
+    }, [ shouldFetchDates, isLoadingDates, isErrorDates, errorDates, availableDates ]);
+
+
+    const handleFetchAvailableDates = () => {
+        if ( !sessionId || !selectedDayModuleId || !spaceId ) {
+            toast( 'Debe seleccionar una sesión, un módulo-día y un espacio', errorToast );
+            return;
+        }
+
+        setShouldFetchDates( true );
+    };
 
 
     function onSubmit( data: FormData ): void {
@@ -227,22 +314,22 @@ export function SectionForm({
 
         const {
             session,
-            size,
+            // size,
             correctedRegistrants,
             realRegistrants,
             plannedBuilding,
             chairsAvailable,
-            room,
+            // room,
             professorId,
         } = data;
 
         const sectionData = {
-            ...(size && { size }),
+            // ...(size && { size }),
             ...(correctedRegistrants && { correctedRegistrants }),
             ...(realRegistrants && { realRegistrants }),
             ...(plannedBuilding && { plannedBuilding }),
             ...(chairsAvailable && { chairsAvailable }),
-            ...(room && { roomId: room }),
+            // ...(room && { roomId: room }),
             ...(professorId && { professorId }),
             ...(dayModuleId && { dayModuleId }),
         };
@@ -287,16 +374,18 @@ export function SectionForm({
         }
     };
 
-
     function handleClose(): void {
         form.reset();
+        setSelectedDayModuleId( null );
+        setShowCalendar( false );
+        setModuleDaySelections( [] );
+        setShouldFetchDates( false );
         onClose();
     };
 
-
     return (
         <Dialog open={isOpen} onOpenChange={handleClose}>
-            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[700px] max-h-[90vh]">
                 <DialogHeader>
                     <DialogTitle>
                         { ids
@@ -321,7 +410,7 @@ export function SectionForm({
                 </DialogHeader>
 
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit( onSubmit )} className="space-y-6">
+                    <form onSubmit={form.handleSubmit( onSubmit )} className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Session Field */}
                             <FormField
@@ -343,6 +432,28 @@ export function SectionForm({
                                         </FormControl>
 
                                         { sessionRequired && <span className='text-red-700'>Debe seleccionar una sesión</span>  }
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            
+                            {/* Professor Field */}
+                            <FormField
+                                control = { form.control }
+                                name    = "professorId"
+                                render  = {({ field }) => (
+                                    <FormItem>
+                                        <FormControl>
+                                            <ProfessorSelect
+                                                label               = "Profesor"
+                                                defaultValues       = { field.value ? [field.value] : [] }
+                                                onSelectionChange   = {( values ) => field.onChange( values as string || null )}
+                                                multiple            = { false }
+                                                placeholder         = "Seleccionar profesor"
+                                            />
+                                        </FormControl>
+
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -460,47 +571,6 @@ export function SectionForm({
                                 )}
                             />
 
-                            {/* Room Field */}
-                            <FormField
-                                control = { form.control }
-                                name    = "room"
-                                render  = {({ field }) => (
-                                    <FormItem>
-                                        <FormControl>
-                                            <SpaceSelect 
-                                                label               = "Sala"
-                                                defaultValues       = { field.value ? [field.value] : [] }
-                                                onSelectionChange   = {( values ) => field.onChange( values as string || null )}
-                                                multiple            = { false }
-                                            />
-                                        </FormControl>
-
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Professor Field */}
-                            <FormField
-                                control = { form.control }
-                                name    = "professorId"
-                                render  = {({ field }) => (
-                                    <FormItem>
-                                        <FormControl>
-                                            <ProfessorSelect
-                                                label               = "Profesor"
-                                                defaultValues       = { field.value ? [field.value] : [] }
-                                                onSelectionChange   = {( values ) => field.onChange( values as string || null )}
-                                                multiple            = { false }
-                                                placeholder         = "Seleccionar profesor"
-                                            />
-                                        </FormControl>
-
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
                             {/* Day Field */}
                             {/* <FormField
                                 control = { form.control }
@@ -543,8 +613,71 @@ export function SectionForm({
                             /> */}
                         </div>
 
+                        <RequestDetailModuleDays
+                            requestDetailModule = { moduleDaySelections.map( item => ({ day: item.day, moduleId: item.moduleId })) }
+                            enabled             = { isOpen }
+                            onModuleToggle      = { handleModuleToggle }
+                            multiple            = { false }
+                            onDayModuleSelect   = { handleDayModuleSelect }
+                        />
+
+                          {/* Space Field */}
+                        <FormField
+                            control = { form.control }
+                            name    = "spaceId"
+                            render  = {({ field }) => (
+                                <FormItem>
+                                    <FormControl>
+                                        <SpaceSelect 
+                                            label               = "Espacio"
+                                            defaultValues       = { field.value ? [field.value] : [] }
+                                            onSelectionChange   = {( values ) => field.onChange( values as string || null )}
+                                            multiple            = { false }
+                                        />
+                                    </FormControl>
+
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <Button
+                            type        = "button"
+                            onClick     = { handleFetchAvailableDates }
+                            className   = "w-full gap-2"
+                            disabled    = { !selectedDayModuleId || !spaceId || isLoadingDates }
+                        >
+                            <Calendar className="h-4 w-4" />
+                            { isLoadingDates ? 'Buscando...' : 'Buscar fechas disponibles' }
+                        </Button>
+
+                        {/* Calendar Select */}
+                        { showCalendar && (
+                            <FormField
+                                control = { form.control }
+                                name    = "date"
+                                render  = {({ field }) => (
+                                    <FormItem>
+                                        <FormControl>
+                                            <CalendarSelect
+                                                value       = { field.value }
+                                                onSelect    = {( date ) => field.onChange( date )}
+                                                placeholder = "Seleccionar fecha"
+                                                disabled    = {( date ) => {
+                                                    const dateStr = date.toISOString().split( 'T' )[0];
+                                                    return !availableDates.some( d => d.toISOString().split( 'T' )[0] === dateStr );
+                                                }}
+                                            />
+                                        </FormControl>
+
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
+
                         {/* Action Buttons */}
-                        <div className="flex justify-between space-x-2 pt-4">
+                        <DialogFooter className="flex items-center justify-between border-t pt-4">
                             <Button
                                 type        = "button"
                                 variant     = "outline"
@@ -556,7 +689,11 @@ export function SectionForm({
 
                             <Button
                                 type        = "submit"
-                                disabled    = { createSectionMutation.isPending || updateSectionMutation.isPending }
+                                disabled    = { 
+                                    createSectionMutation.isPending || 
+                                    updateSectionMutation.isPending || 
+                                    ( selectedDayModuleId !== null && !form.watch( 'date' )) 
+                                }
                             >
                                 {( createSectionMutation.isPending || updateSectionMutation.isPending )
                                     ? 'Guardando...' 
@@ -566,7 +703,7 @@ export function SectionForm({
                                     )
                                 }
                             </Button>
-                        </div>
+                        </DialogFooter>
                     </form>
                 </Form>
             </DialogContent>
