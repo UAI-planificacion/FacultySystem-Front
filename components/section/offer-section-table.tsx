@@ -13,23 +13,24 @@ import {
 	TableHead,
 	TableHeader,
 	TableRow
-}                                   from "@/components/ui/table"
-import { Button }                   from "@/components/ui/button"
-import { Checkbox }                 from "@/components/ui/checkbox"
-import { ActiveBadge }              from "@/components/shared/active"
-import { ActionButton }             from "@/components/shared/action"
-import { ChangeStatusSection }      from "@/components/section/change-status"
-import { DeleteConfirmDialog }      from "@/components/dialog/DeleteConfirmDialog"
-import { SectionForm }              from "@/components/section/section-form"
-import { CreateSessionForm }        from "@/components/section/create-session-form"
-import { SessionShort }             from "@/components/section/session-short"
-import { SessionName }              from "@/components/section/session-name"
+}                               from "@/components/ui/table"
+import { Button }               from "@/components/ui/button"
+import { Checkbox }             from "@/components/ui/checkbox"
+import { ActiveBadge }          from "@/components/shared/active"
+import { ActionButton }         from "@/components/shared/action"
+import { ChangeStatusSection }  from "@/components/section/change-status"
+import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog"
+import { SectionForm }          from "@/components/section/section-form"
+import { CreateSessionForm }    from "@/components/section/create-session-form"
+import { SessionShort }         from "@/components/section/session-short"
+import { SessionName }          from "@/components/section/session-name"
+import { SessionForm }          from "@/components/session/session-form"
 
-import { OfferSection, OfferSession }             from "@/types/offer-section.model"
-import { fetchApi, Method }         from "@/services/fetch"
-import { KEY_QUERYS }               from "@/consts/key-queries"
-import { errorToast, successToast } from "@/config/toast/toast.config"
-import { tempoFormat } from "@/lib/utils"
+import { OfferSection, OfferSession }   from "@/types/offer-section.model"
+import { fetchApi, Method }             from "@/services/fetch"
+import { KEY_QUERYS }                   from "@/consts/key-queries"
+import { errorToast, successToast }     from "@/config/toast/toast.config"
+import { tempoFormat }                  from "@/lib/utils"
 
 
 interface Props {
@@ -452,7 +453,8 @@ export function OfferSectionTable({
 																		editItem            = {() => {
                                                                             setSelectedSesionEdit( session )
                                                                             console.log('🚀 ~ file: offer-section-table.tsx:457 ~ session:', session)
-                                                                            setIsEditSection( true )
+                                                                            setIsEditSection( true );
+                                                                            setSelectedSectionEdit( section );
                                                                         }}
 																		deleteItem          = {() => {}}
 																		item                = { session }
@@ -475,12 +477,20 @@ export function OfferSectionTable({
 			</Table>
 
 			{/* Edit Section Dialog */}
-			<SectionForm
+			{/* <SectionForm
 				isOpen  = { isEditSection }
 				onClose = { () => setIsEditSection( false )}
 				section = { null }
 				onSave  = { () => setIsEditSection( false )}
-			/>
+			/> */}
+
+            <SessionForm
+                isOpen  = { isEditSection }
+                onClose = { () => setIsEditSection( false )}
+                session = { selectedSessionEdit }
+                section = { selectedSectionEdit }
+                onSave  = { () => setIsEditSection( false )}
+            />
 
 			<CreateSessionForm
 				section = { createSessionSection }
