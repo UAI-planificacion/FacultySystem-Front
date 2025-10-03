@@ -248,10 +248,9 @@ export function SectionMain({
                         /> */}
 
                         <OfferSectionTable
-                            sections               = { sectionsData2 }
-                            isLoading           = { isLoadingSections2 }
-                            isError             = { isErrorSections2 }
-                            // groupedSections             = { groupedSections }
+                            sections                    = { sectionsData2 }
+                            isLoading                   = { isLoadingSections2 }
+                            isError                     = { isErrorSections2 }
                             selectedSessions            = { selectedSections }
                             onSelectedSessionsChange    = { setSelectedSections }
                         />
