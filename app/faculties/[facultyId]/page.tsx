@@ -162,7 +162,7 @@ export default function FacultyDetailsPage(): JSX.Element {
                         value       = { TabValue.REQUESTS }
                         className   = "h-10 text-md gap-2"
                         title       = "Solicitudes"
-                        disabled    = {( faculty?.totalOffers ?? 0 ) === 0 }
+                        // disabled    = {( faculty?.totalOffers ?? 0 ) === 0 }
                     >
                         <BookCopy className="h-5 w-5" />
 
