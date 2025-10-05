@@ -53,6 +53,7 @@ import { useAvailableDates }            from '@/hooks/use-available-dates';
 import { Session }                      from '@/types/section.model';
 import { DayModule }                    from '@/types/day-module.model';
 import { OfferSection, OfferSession }   from '@/types/offer-section.model';
+import { ENV } from '@/config/envs/env';
 
 
 interface Props {
@@ -112,6 +113,63 @@ export function SessionForm({
     const [ isUpdateDateSpace, setIsUpdateDateSpace  ]      = useState<boolean>( false );
 
 
+    const form = useForm<FormData>({
+        resolver    : zodResolver( formSchema ),
+        defaultValues: {
+            name                    : session?.name                 || null,
+            spaceId                 : session?.spaceId              || null,
+            isEnglish               : session?.isEnglish            || false,
+            correctedRegistrants    : session?.correctedRegistrants || null,
+            realRegistrants         : session?.realRegistrants      || null,
+            plannedBuilding         : session?.plannedBuilding      || null,
+            chairsAvailable         : session?.chairsAvailable      || null,
+            professorId             : session?.professor?.id        || null,
+            day                     : session?.dayId                || null,
+            date                    : session?.date                 || null,
+            moduleId                : session?.module ? Number( session.module.id ) : null,
+        }
+    });
+
+
+    useEffect(() => {
+        if ( session ) {
+            form.reset({
+                name                    : session.name,
+                spaceId                 : session.spaceId,
+                isEnglish               : session.isEnglish,
+                correctedRegistrants    : session.correctedRegistrants,
+                realRegistrants         : session.realRegistrants,
+                plannedBuilding         : session.plannedBuilding,
+                chairsAvailable         : session.chairsAvailable,
+                professorId             : session.professor?.id,
+                day                     : session.dayId,
+                moduleId                : session.module ? Number( session.module.id ) : null,
+                date                    : session.date
+            });
+
+            // Marcar el módulo-día por defecto si existe
+            if ( session.dayId && session.module?.id ) {
+                setModuleDaySelections([{
+                    day         : session.dayId.toString(),
+                    moduleId    : session.module.id.toString()
+                }]);
+                setSelectedDayModuleId( session.dayModuleId );
+            } else {
+                setModuleDaySelections([]);
+                setSelectedDayModuleId( null );
+            }
+        } else {
+            setModuleDaySelections([]);
+            setSelectedDayModuleId( null );
+        }
+
+        setSessionRequired( false );
+        setShowCalendar( false );
+        setShouldFetchDates( false );
+        setIsUpdateDateSpace( !session );
+    }, [ session, form, isOpen ]);
+
+
     const {
         data : dayModulesData,
         isLoading,
@@ -123,9 +181,53 @@ export function SessionForm({
     });
 
 
+    // TanStack Query para obtener fechas disponibles
+    // const sessionId = session?.id || null;
+    const spaceId = form.watch( 'spaceId' );
+
+
+    const {
+        data            : availableDates = [],
+        isLoading       : isLoadingDates,
+        isError         : isErrorDates,
+        error           : errorDates
+    } = useAvailableDates({
+        // sessionId,
+        sectionId : section?.id || null,
+        dayModuleId : selectedDayModuleId,
+        spaceId,
+        enabled     : shouldFetchDates
+    });
+
+
+    // Efecto para manejar el resultado de la query
+    useEffect(() => {
+        if ( !shouldFetchDates ) return;
+
+        if ( isErrorDates ) {
+            toast( `Error al obtener fechas disponibles: ${( errorDates as any )?.message || 'Error desconocido'}`, errorToast );
+            setShowCalendar( false );
+            setShouldFetchDates( false );
+            return;
+        }
+
+        if ( !isLoadingDates && availableDates ) {
+            if ( availableDates.length === 0 ) {
+                toast( 'No hay fechas disponibles. Prueba con otra sala.', errorToast );
+                setShowCalendar( false );
+            } else {
+                setShowCalendar( true );
+            }
+
+            setShouldFetchDates( false );
+        }
+    }, [ shouldFetchDates, isLoadingDates, isErrorDates, errorDates, availableDates ]);
+
+
     const createSessionApi = async ( newSession: CreateSessionRequest ): Promise<OfferSession> =>
         fetchApi({
-            url     : 'Sessions',
+            // url     : 'Sessions',
+            url     : 'sessions',
             method  : Method.POST,
             body    : newSession
         });
@@ -143,6 +245,27 @@ export function SessionForm({
     const createSessionMutation = useMutation({
         mutationFn: createSessionApi,
         onSuccess: ( createdSession ) => {
+            // Actualizar la caché de secciones agregando la nueva sesión
+            queryClient.setQueryData<OfferSection[]>(
+                [ KEY_QUERYS.SECCTIONS ],
+                ( oldData ) => {
+                    if ( !oldData || !section ) return oldData;
+
+                    return oldData.map( sec => {
+                        // Si esta es la sección donde se creó la sesión
+                        if ( sec.id === section.id ) {
+                            // Agregar la nueva sesión al array de sesiones
+                            return {
+                                ...sec,
+                                sessions: [ ...sec.sessions, createdSession ]
+                            };
+                        }
+
+                        return sec;
+                    });
+                }
+            );
+
             queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.OFFERS] });
             onSave( createdSession );
             onClose();
@@ -200,62 +323,6 @@ export function SessionForm({
     });
 
 
-    const form = useForm<FormData>({
-        resolver    : zodResolver( formSchema ),
-        defaultValues: {
-            name                    : session?.name                 || null,
-            spaceId                 : session?.spaceId              || null,
-            isEnglish               : session?.isEnglish            || false,
-            correctedRegistrants    : session?.correctedRegistrants || null,
-            realRegistrants         : session?.realRegistrants      || null,
-            plannedBuilding         : session?.plannedBuilding      || null,
-            chairsAvailable         : session?.chairsAvailable      || null,
-            professorId             : session?.professor?.id        || null,
-            day                     : session?.dayId                || null,
-            date                    : session?.date                 || null,
-            moduleId                : session?.module ? Number( session.module.id ) : null,
-        }
-    });
-
-
-    useEffect(() => {
-        if ( session ) {
-            form.reset({
-                name                    : session.name,
-                spaceId                 : session.spaceId,
-                isEnglish               : session.isEnglish,
-                correctedRegistrants    : session.correctedRegistrants,
-                realRegistrants         : session.realRegistrants,
-                plannedBuilding         : session.plannedBuilding,
-                chairsAvailable         : session.chairsAvailable,
-                professorId             : session.professor?.id,
-                day                     : session.dayId,
-                moduleId                : session.module ? Number( session.module.id ) : null,
-                date                    : session.date
-            });
-
-            // Marcar el módulo-día por defecto si existe
-            if ( session.dayId && session.module?.id ) {
-                setModuleDaySelections([{
-                    day         : session.dayId.toString(),
-                    moduleId    : session.module.id.toString()
-                }]);
-                setSelectedDayModuleId( session.dayModuleId );
-            } else {
-                setModuleDaySelections([]);
-                setSelectedDayModuleId( null );
-            }
-        } else {
-            setModuleDaySelections([]);
-            setSelectedDayModuleId( null );
-        }
-
-        setSessionRequired( false );
-        setShowCalendar( false );
-        setShouldFetchDates( false );
-    }, [ session, form, isOpen ]);
-
-
     const handleModuleToggle = useCallback(( day: string, moduleId: string, isChecked: boolean ) => {
         setModuleDaySelections( prev => {
             if ( isChecked ) {
@@ -278,49 +345,11 @@ export function SessionForm({
     }, [ form ]);
 
 
-    // TanStack Query para obtener fechas disponibles
-    const sessionId = session?.id || null;
-    const spaceId = form.watch( 'spaceId' );
-
-    const {
-        data            : availableDates = [],
-        isLoading       : isLoadingDates,
-        isError         : isErrorDates,
-        error           : errorDates
-    } = useAvailableDates({
-        sessionId,
-        dayModuleId : selectedDayModuleId,
-        spaceId,
-        enabled     : shouldFetchDates
-    });
-
-
-    // Efecto para manejar el resultado de la query
-    useEffect(() => {
-        if ( !shouldFetchDates ) return;
-
-        if ( isErrorDates ) {
-            toast( `Error al obtener fechas disponibles: ${( errorDates as any )?.message || 'Error desconocido'}`, errorToast );
-            setShowCalendar( false );
-            setShouldFetchDates( false );
-            return;
-        }
-
-        if ( !isLoadingDates && availableDates ) {
-            if ( availableDates.length === 0 ) {
-                toast( 'No hay fechas disponibles. Prueba con otra sala.', errorToast );
-                setShowCalendar( false );
-            } else {
-                setShowCalendar( true );
-            }
-
-            setShouldFetchDates( false );
-        }
-    }, [ shouldFetchDates, isLoadingDates, isErrorDates, errorDates, availableDates ]);
-
-
     const handleFetchAvailableDates = () => {
-        if ( !sessionId || !selectedDayModuleId || !spaceId ) {
+        console.log('🚀 ~ file: session-form.tsx:327 ~ sessionId:', section?.id)
+        console.log('🚀 ~ file: session-form.tsx:328 ~ selectedDayModuleId:', selectedDayModuleId)
+        console.log('🚀 ~ file: session-form.tsx:329 ~ spaceId:', spaceId)
+        if ( !section?.id || !selectedDayModuleId || !spaceId ) {
             toast( 'Debe seleccionar un módulo-día y un espacio', errorToast );
             return;
         }
@@ -381,6 +410,9 @@ export function SessionForm({
             ...(date && { date }),
         };
 
+        console.log('🚀 ~ file: session-form.tsx:377 ~ sessionData:', sessionData)
+
+
         // console.log('🚀 ~ file: session-form.tsx:343 ~ sessionData:', sessionData)
 
 
@@ -407,12 +439,13 @@ export function SessionForm({
 
             updateSessionMutation.mutate( updatedSession );
         } else {
-            if ( !offerId ) return;
+            // if ( !offerId ) return;
 
             const createSession : CreateSessionRequest = {
                 ...sessionData,
                 name        : data.name!,
-                offerId     : offerId,
+                sectionId   : section?.id!,
+                // offerId     : offerId,
             }
 
             console.log("🚀 ~ file: session-form.tsx ~ createSession:", createSession)
@@ -424,10 +457,10 @@ export function SessionForm({
 
     function handleClose(): void {
         form.reset();
-        setSelectedDayModuleId( null );
-        setShowCalendar( false );
-        setModuleDaySelections( [] );
-        setShouldFetchDates( false );
+        // setSelectedDayModuleId( null );
+        // setShowCalendar( false );
+        // setModuleDaySelections( [] );
+        // setShouldFetchDates( false );
         onClose();
     };
 
@@ -707,13 +740,14 @@ export function SessionForm({
                                             <FormLabel>Fecha</FormLabel>
                                             <FormControl>
                                                 <CalendarSelect
-                                                    disabledButton = {!showCalendar }
-                                                    value       = { field.value }
-                                                    onSelect    = {( date ) => field.onChange( date )}
-                                                    placeholder = "Seleccionar fecha"
-                                                    disabled    = {( date ) => {
+                                                    disabledButton  = { !showCalendar }
+                                                    value           = { field.value }
+                                                    onSelect        = {( date ) => field.onChange( date )}
+                                                    placeholder     = "Seleccionar fecha"
+                                                    disabled        = {( date ) => {
                                                         const dateStr = date.toISOString().split( 'T' )[0];
                                                         return !availableDates.some( d => d.toISOString().split( 'T' )[0] === dateStr );
+                                                        // return !availableDates.some( d => d === date );
                                                     }}
                                                 />
                                             </FormControl>
@@ -725,15 +759,16 @@ export function SessionForm({
                             </div>
 
                             <div className="flex gap-2">
-                                <Button
-                                    type        = "button"
-                                    variant="outline"
-                                    onClick     = { () => setIsUpdateDateSpace( false ) }
-                                    className   = "w-full gap-2"
-                                >
-                                    Cancelar
-                                </Button>
-
+                                { !!session &&
+                                    <Button
+                                        type        = "button"
+                                        variant     = "outline"
+                                        onClick     = { () => setIsUpdateDateSpace( false ) }
+                                        className   = "w-full gap-2"
+                                    >
+                                        Cancelar
+                                    </Button>
+                                }
 
                                 <Button
                                     type        = "button"
