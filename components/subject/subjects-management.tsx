@@ -43,12 +43,10 @@ import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
 import { Input }                from "@/components/ui/input";
 import { Label }                from "@/components/ui/label";
 import { ActionButton }         from "@/components/shared/action";
-import { CostCenterSelect }     from "@/components/shared/item-select/cost-center";
 import { ActiveBadge }          from "@/components/shared/active";
-import { OfferForm }            from "@/components/offer/offer-form";
 import { OfferSubjectForm }     from "@/components/subject/offer-subject-form";
 import { SpaceSizeType }        from "@/components/shared/space-size-type";
-import { SessionShort }         from "@/components/section/session-short";
+import { SessionShort }         from "@/components/session/session-short";
 import { SpaceTypeSelect }      from "@/components/shared/item-select/space-type-select";
 import { SizeSelect }           from "@/components/shared/item-select/size-select";
 
@@ -73,7 +71,6 @@ interface SubjectsManagementProps {
 export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementProps) {
     const queryClient                                   = useQueryClient();
     const [isFormOpen, setIsFormOpen]                   = useState( false );
-    const [isOfferOpen, setIsOfferOpen]                 = useState( false );
     const [isOfferSubjectOpen, setIsOfferSubjectOpen]   = useState( false );
     const [editingSubject, setEditingSubject]           = useState<Subject | undefined>( undefined );
     const [offeringSubject, setOfferingSubject]         = useState<Subject | undefined>( undefined );
@@ -479,16 +476,6 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                 onClose     = { closeOfferSubjectForm }
                 isOpen      = { isOfferSubjectOpen }
             />
-
-            {/* <OfferForm
-                offer       = { undefined }
-                isOpen      = { isOfferOpen }
-                facultyId   = { facultyId }
-                subject     = { editingSubject }
-                onClose     = {() => {
-                    setIsOfferOpen( false )
-                }}
-            /> */}
 
             <DeleteConfirmDialog
                 isOpen      = { isDeleteDialogOpen }
