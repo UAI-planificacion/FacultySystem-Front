@@ -17,7 +17,6 @@ export interface SessionBase {
 export interface CreateSessionRequest extends SessionBase {
 	name        : Session;
     sectionId   : string;
-	// offerId     : string;
 }
 
 
