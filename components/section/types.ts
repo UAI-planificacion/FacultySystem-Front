@@ -1,4 +1,4 @@
-import { Section, Session } from "@/types/section.model";
+import { Session } from "@/types/section.model";
 
 
 export interface Option {
@@ -13,17 +13,4 @@ export interface SessionCount {
     [Session.A] : number;
     [Session.T] : number;
     [Session.L] : number;
-}
-
-
-export interface SectionGroup {
-    groupId         : string;
-    code            : number;
-    period          : string;
-    subjectId       : string;
-    subjectName     : string;
-    sessionCounts   : SessionCount;
-    schedule        : string;
-    isOpen          : boolean;
-    sections        : Section[];
 }
