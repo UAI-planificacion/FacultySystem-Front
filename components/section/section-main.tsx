@@ -19,7 +19,6 @@ import { DataPagination }       from '@/components/ui/data-pagination';
 import { Label }                from '@/components/ui/label';
 import { Button }               from '@/components/ui/button';
 import { MultiSelectCombobox }  from '@/components/shared/Combobox';
-import { SectionGroupTable }    from '@/components/section/section-group';
 import { SubjectSelect }        from '@/components/shared/item-select/subject-select';
 import { SizeSelect }           from '@/components/shared/item-select/size-select';
 import { PeriodSelect }         from '@/components/shared/item-select/period-select';
@@ -28,19 +27,17 @@ import { SessionSelect }        from '@/components/shared/item-select/session-se
 import { ModuleSelect }         from '@/components/shared/item-select/module-select';
 import { ProfessorSelect }      from '@/components/shared/item-select/professor-select';
 import { DaySelect }            from '@/components/shared/item-select/days-select';
-import { SectionForm }          from '@/components/section/section-form';
-import { SectionGroup }         from '@/components/section/types';
-import { OfferSectionTable }    from '@/components/section/offer-section-table';
+import { SectionTable }         from '@/components/section/section-table';
+import { SessionForm }          from '@/components/session/session-form';
 
-import { Section, Session } from '@/types/section.model';
 import { KEY_QUERYS }       from '@/consts/key-queries';
 import { fetchApi }         from '@/services/fetch';
 import { OfferSection }     from '@/types/offer-section.model';
 
 
 interface Props {
-    onEdit?         : ( section: Section ) => void;
-    onDelete?       : ( section: Section ) => void;
+    onEdit?         : ( section: OfferSection ) => void;
+    onDelete?       : ( section: OfferSection ) => void;
     enabled         : boolean;
     searchParams    : URLSearchParams;
 }
@@ -50,21 +47,6 @@ const stateOptions = [
     { label: 'Abiertas', value: 'open' },
     { label: 'Cerradas', value: 'closed' }
 ];
-
-
-const getDayAbbreviation = ( day: number ): string => {
-    const dayMap: { [key: number]: string } = {
-        1: 'L',
-        2: 'M',
-        3: 'X',
-        4: 'J',
-        5: 'V',
-        6: 'S',
-        7: 'D'
-    };
-
-    return dayMap[day] || 'N/A';
-};
 
 
 export function SectionMain({
@@ -91,124 +73,54 @@ export function SectionMain({
     const [isEditSection, setIsEditSection]         = useState<boolean>( false );
 
     // Function to update URL with filter parameters
-    const updateUrlParams = (filterName: string, values: string[]) => {
-        const params = new URLSearchParams(searchParams.toString());
+    const updateUrlParams = ( filterName: string, values: string[] ) => {
+        const params = new URLSearchParams( searchParams.toString() );
 
-        if (values.length > 0) {
-            params.set(filterName, values.join(','));
+        if ( values.length > 0 ) {
+            params.set( filterName, values.join( ',' ));
         } else {
-            params.delete(filterName);
+            params.delete( filterName );
         }
 
-        router.push(`/sections?${params.toString()}`);
+        router.push( `/sections?${params.toString()}` );
     };
 
 
     const {
-        data        : sectionsData,
+        data        : sectionsData = [],
         isLoading   : isLoadingSections,
         isError     : isErrorSections
-    } = useQuery<Section[]>({
-        enabled,
-        queryKey: [ KEY_QUERYS.SECCTIONS ],
-        queryFn : () => fetchApi({ url     : 'Sections' }),
-    });
-
-
-    const {
-        data        : sectionsData2 = [],
-        isLoading   : isLoadingSections2,
-        isError     : isErrorSections2
     } = useQuery<OfferSection[]>({
-        enabled,
         queryKey: [ KEY_QUERYS.SECCTIONS ],
         queryFn : () => fetchApi({ url     : 'Sections' }),
+        enabled,
     });
 
 
     const uniqueCodes = useMemo(() => {
-        if ( !sectionsData ) return [];
+        if ( !sectionsData || sectionsData.length === 0 ) return [];
 
-        const codes = Array.from(new Set( sectionsData.map( section => section.code.toString() )));
+        const codes = Array.from( new Set( sectionsData.map( section => section.code.toString() )));
 
         return codes.sort();
     }, [ sectionsData ]);
 
-
-    const groupedSections = useMemo(() => {
-        const groups: { [key: string]: SectionGroup } = {};
-
-        sectionsData?.forEach(( section ) => {
-            const groupId = section.groupId;
-
-            if ( !groups[groupId] ) {
-                groups[groupId] = {
-                    groupId         : groupId,
-                    code            : section.code,
-                    period          : `${section.period.id}-${section.period.name}`,
-                    subjectId       : section.subject.id,
-                    subjectName     : section.subject.name,
-                    sessionCounts   : {
-                        [Session.C] : 0,
-                        [Session.A] : 0,
-                        [Session.T] : 0,
-                        [Session.L] : 0
-                    },
-                    schedule        : '',
-                    isOpen          : !section.isClosed,
-                    sections        : []
-                };
-            }
-
-            groups[groupId].sections.push( section );
-            groups[groupId].sessionCounts[section.session]++;
-        } );
-
-        // Generate schedule for each group
-        Object.values( groups ).forEach(( group ) => {
-            const validSchedules = group.sections
-                .filter( section => section?.day?.id && section.module?.code )
-                .map( section => {
-                    const dayAbbr = getDayAbbreviation(section?.day?.id || 0);
-                    return `${dayAbbr}-${section.module?.code}`;
-                });
-
-            const uniqueSchedules   = Array.from( new Set( validSchedules )).sort();
-            const length            = uniqueSchedules.length;
-            const maxSlice          = 3;
-
-            let schedule = '-';
-
-            if ( length > 0 ) {
-                const slicedSchedule    = uniqueSchedules.slice( 0, maxSlice ).join( ', ' );
-                const remaining         = length - maxSlice;
-
-                schedule = `${slicedSchedule}${remaining > 0 ? ` +${remaining}` : ''}`;
-            }
-
-            group.schedule = schedule;
-        });
-
-        return Object.values( groups );
-    }, [ sectionsData ] );
-
-
-    // Filter and paginate groups
-    const filteredAndPaginatedGroups = useMemo(() => {
-        if ( !groupedSections ) return { groups: [], totalItems: 0, totalPages: 0 };
+    // Filter and paginate sections
+    const filteredAndPaginatedSections = useMemo(() => {
+        if ( !sectionsData || sectionsData.length === 0 ) return { sections: [], totalItems: 0, totalPages: 0 };
 
         // Apply filters
-        const filtered = groupedSections.filter(( group ) => {
-            const matchesCode       = codeFilter.length         === 0 || codeFilter.includes( group.code.toString() );
-            const matchesRoom       = roomFilter.length         === 0 || group.sections.some( section => roomFilter.includes( section.room || '' ));
-            const matchesDay        = dayFilter.length          === 0 || group.sections.some( section => dayFilter.includes( section.day?.toString() || '' ));
-            const matchesPeriod     = periodFilter.length       === 0 || periodFilter.includes( group.period?.split( '-' )[0] || '' );
-            const matchesStatus     = statusFilter.length       === 0 || statusFilter.includes( group.isOpen ? 'open' : 'closed' );
-            const matchesSubject    = subjectFilter.length      === 0 || group.sections.some( section => subjectFilter.includes( section.subject?.id || '' ));
-            const matchesSize       = sizeFilter.length         === 0 || group.sections.some( section => sizeFilter.includes( section.size || '' ));
-            const matchesSession    = sessionFilter.length      === 0 || group.sections.some( section => sessionFilter.includes( section.session ));
-            const matchesModule     = moduleFilter.length       === 0 || group.sections.some( section => moduleFilter.includes( section.module?.id?.toString() || '' ));
-            const matchesProfessor  = professorFilter.length    === 0 || group.sections.some( section => professorFilter.includes( section.professor?.id || '' ));
+        const filtered = sectionsData.filter(( section ) => {
+            const matchesCode       = codeFilter.length         === 0 || codeFilter.includes( section.code.toString() );
+            const matchesRoom       = roomFilter.length         === 0 || section.sessions.some( session => roomFilter.includes( session.spaceId || '' ));
+            const matchesDay        = dayFilter.length          === 0 || section.sessions.some( session => dayFilter.includes( session.dayId?.toString() || '' ));
+            const matchesPeriod     = periodFilter.length       === 0 || periodFilter.includes( section.period.id );
+            const matchesStatus     = statusFilter.length       === 0 || statusFilter.includes( section.isClosed ? 'closed' : 'open' );
+            const matchesSubject    = subjectFilter.length      === 0 || subjectFilter.includes( section.subject.id );
+            const matchesSize       = sizeFilter.length         === 0 || sizeFilter.includes( section.spaceSizeId || '' );
+            const matchesSession    = sessionFilter.length      === 0 || section.sessions.some( session => sessionFilter.includes( session.name ));
+            const matchesModule     = moduleFilter.length       === 0 || section.sessions.some( session => moduleFilter.includes( session.module.id ));
+            const matchesProfessor  = professorFilter.length    === 0 || section.sessions.some( session => professorFilter.includes( session.professor?.id || '' ));
 
             return matchesCode && matchesRoom && matchesDay && matchesPeriod && matchesStatus && matchesSubject && matchesSize && matchesSession && matchesModule && matchesProfessor;
         });
@@ -219,10 +131,10 @@ export function SectionMain({
         // Apply pagination
         const startIndex = ( currentPage - 1 ) * itemsPerPage;
         const endIndex   = startIndex + itemsPerPage;
-        const groups     = filtered.slice( startIndex, endIndex );
+        const sections   = filtered.slice( startIndex, endIndex );
 
-        return { groups, totalItems, totalPages };
-    }, [ groupedSections, codeFilter, roomFilter, dayFilter, periodFilter, statusFilter, subjectFilter, sizeFilter, sessionFilter, moduleFilter, professorFilter, currentPage, itemsPerPage ]);
+        return { sections, totalItems, totalPages };
+    }, [ sectionsData, codeFilter, roomFilter, dayFilter, periodFilter, statusFilter, subjectFilter, sizeFilter, sessionFilter, moduleFilter, professorFilter, currentPage, itemsPerPage ]);
 
 
     useEffect(() => {
@@ -237,32 +149,22 @@ export function SectionMain({
                 {/* Table */}
                 <Card className="flex-1">
                     <CardContent className="mt-5 overflow-x-auto overflow-y-auto h-[calc(100vh-300px)] w-full">
-                        {/* <SectionGroupTable
-                            filteredAndPaginatedGroups  = { filteredAndPaginatedGroups }
-                            sectionsData                = { sectionsData }
-                            isLoadingSections           = { isLoadingSections }
-                            isErrorSections             = { isErrorSections }
-                            groupedSections             = { groupedSections }
-                            selectedSections            = { selectedSections }
-                            onSelectedSectionsChange    = { setSelectedSections }
-                        /> */}
-
-                        <OfferSectionTable
-                            sections                    = { sectionsData2 }
-                            isLoading                   = { isLoadingSections2 }
-                            isError                     = { isErrorSections2 }
+                        <SectionTable
+                            sections                    = { filteredAndPaginatedSections.sections }
+                            isLoading                   = { isLoadingSections }
+                            isError                     = { isErrorSections }
                             selectedSessions            = { selectedSections }
                             onSelectedSessionsChange    = { setSelectedSections }
                         />
                     </CardContent>
 
                     {/* Pagination */}
-                    {filteredAndPaginatedGroups.totalItems > 0 && (
+                    {filteredAndPaginatedSections.totalItems > 0 && (
                         <div className="p-4 border-t">
                             <DataPagination
                                 currentPage             = { currentPage }
-                                totalPages              = { filteredAndPaginatedGroups.totalPages }
-                                totalItems              = { filteredAndPaginatedGroups.totalItems }
+                                totalPages              = { filteredAndPaginatedSections.totalPages }
+                                totalItems              = { filteredAndPaginatedSections.totalItems }
                                 itemsPerPage            = { itemsPerPage }
                                 onPageChange            = { setCurrentPage }
                                 onItemsPerPageChange    = { setItemsPerPage }
@@ -404,6 +306,7 @@ export function SectionMain({
                                 setSessionFilter([]);
                                 setModuleFilter([]);
                                 setProfessorFilter([]);
+                                router.push( '/sections' );
                             }}
                         >
                             <BrushCleaning className="w-5 h-5" />
@@ -426,11 +329,11 @@ export function SectionMain({
             </div>
         </div>
 
-         {/* Edit Section Dialog */}
-        <SectionForm
+        <SessionForm
+            section = { null }
+            session = { null }
             isOpen  = { isEditSection }
             onClose = { () => setIsEditSection( false ) }
-            section = { null }
             onSave  = { () => {} }
             ids     = { Array.from( selectedSections )}
         />
