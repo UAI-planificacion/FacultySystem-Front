@@ -11,17 +11,17 @@ import { toast }                        from "sonner";
 import { Button }               from "@/components/ui/button";
 import { PageLayout }           from "@/components/layout/page-layout";
 import { SubjectSelect }        from '@/components/shared/item-select/subject-select';
-import { SectionData, Session } from "@/types/section.model";
-import { SectionCard }          from "@/components/section/section-card";
+import { OfferCard }            from "@/components/offer/offer-card";
 
 import {
     errorToast,
     successToast
-}                           from "@/config/toast/toast.config";
-import { SectionToCreate }  from '@/types/section.model';
-import { KEY_QUERYS }       from '@/consts/key-queries';
-import { fetchApi, Method } from '@/services/fetch';
-import { useViewMode }      from "@/hooks/use-view-mode";
+}                               from "@/config/toast/toast.config";
+import { SectionToCreate }      from '@/types/section.model';
+import { SectionData, Session } from "@/types/section.model";
+import { KEY_QUERYS }           from '@/consts/key-queries';
+import { fetchApi, Method }     from '@/services/fetch';
+import { useViewMode }          from "@/hooks/use-view-mode";
 
 
 const emptySection: SectionData = {
@@ -275,7 +275,7 @@ export default function OffersPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {sections.map( section => (
-                        <SectionCard
+                        <OfferCard
                             key                 = { section.id }
                             section             = { section }
                             updateSectionNumber = { updateSectionNumber }
