@@ -49,7 +49,6 @@ import { ShowDateAt }       from "@/components/shared/date-at";
 import { CommentSection }   from "@/components/comment/comment-section";
 import { Switch }           from "@/components/ui/switch";
 import { Textarea }         from "@/components/ui/textarea";
-import { OfferSelect }      from "@/components/offer/offer-select";
 
 import {
     CreateRequest,
@@ -93,10 +92,6 @@ const formSchema = z.object({
         .max(500, { message: "La descripción no puede tener más de 500 caracteres" })
         .nullable()
         .transform(val => val === "" ? null : val),
-    offerId: z.string({
-        required_error: "Debe seleccionar una oferta",
-        invalid_type_error: "Oferta no válida"
-    }).min(1, { message: "Debe seleccionar una oferta" })
 })
 
 
@@ -105,7 +100,6 @@ const defaultRequest = ( data : Request | null ) => ({
     status          : data?.status          || Status.PENDING,
     description     : data?.description     || '',
     isConsecutive   : data?.isConsecutive   || false,
-    offerId         : data?.offer?.id       || '',
 });
 
 
@@ -323,30 +317,6 @@ export function RequestForm({
                                             )}
                                         />
                                     }
-
-                                    <FormField
-                                        control = { form.control }
-                                        name    = "offerId"
-                                        render  = {({ field }) => {
-                                            return (
-                                                <FormItem>
-                                                    <FormLabel className="text-base">Oferta</FormLabel>
-
-                                                    <FormControl>
-                                                        <OfferSelect
-                                                            facultyId           = { facultyId }
-                                                            value               = { field.value }
-                                                            placeholder         = "Seleccionar una oferta"
-                                                            searchPlaceholder   = "Buscar por asignatura o período"
-                                                            onSelectionChange   = { ( value ) => field.onChange( value === undefined ? null : value )}
-                                                        />
-                                                    </FormControl>
-
-                                                    <FormMessage />
-                                                </FormItem>
-                                            );
-                                        }}
-                                    />
 
                                     {/* Is Consecutive */}
                                     <FormField
