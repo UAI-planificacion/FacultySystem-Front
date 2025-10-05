@@ -38,7 +38,7 @@ import { PeriodSelect }     from "@/components/shared/item-select/period-select"
 import { ProfessorSelect }  from "@/components/shared/item-select/professor-select";
 import { SpaceTypeSelect }  from "@/components/shared/item-select/space-type-select";
 import { SizeSelect }       from "@/components/shared/item-select/size-select";
-import { SessionButton }    from "@/components/section/session-button";
+import { SessionButton }    from "@/components/session/session-button";
 import { offerSubjectSchema } from "./offer-subject-schema";
 
 import { CreateOfferSubject, Subject }  from "@/types/subject.model";
