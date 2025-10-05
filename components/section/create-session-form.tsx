@@ -22,14 +22,14 @@ import {
 import { Button }                       from "@/components/ui/button";
 import { Label }                        from "@/components/ui/label";
 import { Checkbox }                     from "@/components/ui/checkbox";
-import { SessionDayModuleSelector }     from "./session-day-module-selector";
+import { SessionDayModuleSelector }     from "@/components/session/session-day-module-selector";
 import { ProfessorSelect }              from "@/components/shared/item-select/professor-select";
 import { SpaceSelect }                  from "@/components/shared/item-select/space-select";
-import { SessionName }                  from "@/components/section/session-name";
+import { SessionName }                  from "@/components/session/session-name";
+import { sessionLabels, sessionColors } from "@/components/section/section.config";
 
 import { OfferSection }                 from "@/types/offer-section.model";
 import { Session }                      from "@/types/section.model";
-import { sessionLabels, sessionColors } from "./section.config";
 import { fetchApi, Method }             from "@/services/fetch";
 import { KEY_QUERYS }                   from "@/consts/key-queries";
 import { errorToast, successToast }     from "@/config/toast/toast.config";
