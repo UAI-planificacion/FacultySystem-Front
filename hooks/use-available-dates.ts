@@ -5,7 +5,7 @@ import { KEY_QUERYS }   from '@/consts/key-queries';
 
 
 interface UseAvailableDatesParams {
-	sessionId       : string | null;
+	sectionId       : string | null;
 	dayModuleId     : number | null;
 	spaceId         : string | null | undefined;
 	enabled?        : boolean;
@@ -15,22 +15,19 @@ interface UseAvailableDatesParams {
 /**
  * Hook to fetch available dates for a specific session, day-module, and space combination
  */
-export function useAvailableDates({ sessionId, dayModuleId, spaceId, enabled = true }: UseAvailableDatesParams ) {
+export function useAvailableDates({ sectionId, dayModuleId, spaceId, enabled = true }: UseAvailableDatesParams ) {
 	return useQuery({
-		queryKey    : [ KEY_QUERYS.AVAILABLE_DATES, sessionId, dayModuleId, spaceId ],
+		queryKey    : [ KEY_QUERYS.AVAILABLE_DATES, sectionId, dayModuleId, spaceId ],
 		queryFn     : async () => {
-			if ( !sessionId || !dayModuleId || !spaceId ) {
-				return [];
-			}
-
 			const dates = await fetchApi<string[]>({
-				url : `sessions/availables/${sessionId}/${dayModuleId}/${spaceId}`
+				url : `sessions/availables/${sectionId}/${dayModuleId}/${spaceId}`
 			});
 
-			// Parse string dates to Date objects
+            if ( !dates ) return [];
+
 			return dates.map( dateStr => new Date( dateStr ));
 		},
-		enabled     : enabled && !!sessionId && !!dayModuleId && !!spaceId,
+		enabled     : enabled && !!sectionId && !!dayModuleId && !!spaceId,
 		staleTime   : 1000 * 60 * 5, // 5 minutes
 	});
 }
