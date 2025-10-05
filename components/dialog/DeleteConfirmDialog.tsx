@@ -43,7 +43,7 @@ export function DeleteConfirmDialog({
                     <AlertDialogDescription>
                         { isDeleted 
                             ? `Esta acción no se puede deshacer. Se eliminará permanentemente ${ type } `
-                            : `Esta acción ${ isClosed ? 'abrirá' : 'cerrará' } todo el grupo `
+                            : `Esta acción ${ isClosed ? 'abrirá' : 'cerrará' } la sección `
                         }
 
                         <span className="font-semibold">"{ name }"</span> del sistema.
