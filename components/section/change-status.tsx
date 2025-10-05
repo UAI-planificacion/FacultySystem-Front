@@ -8,59 +8,60 @@ import { toast }                        from "sonner";
 
 import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
 import { Button }               from "@/components/ui/button";
-import { SectionGroup }         from "@/components/section/types";
 
 import { fetchApi, Method }         from "@/services/fetch";
 import { KEY_QUERYS }               from "@/consts/key-queries";
 import { errorToast, successToast } from "@/config/toast/toast.config";
+import { OfferSection }             from "@/types/offer-section.model";
+import { ENV }                      from "@/config/envs/env";
 
 
 interface Props {
-    group: SectionGroup;
+    section : OfferSection;
 }
 
 
 export function ChangeStatusSection({
-    group
+    section
 }: Props ) {
     const queryClient                       = useQueryClient();
     const [ isOpenAlert, setIsOpenAlert ]   = useState( false );
 
 
-    const updateGroupApi = async (): Promise<any> =>
+    const updateSectionApi = async (): Promise<any> =>
         fetchApi({
-            url     : `Sections/changeStatus/${group.groupId}`,
+            url     : `${ENV.ENDPOINT_SECTIONS}changeStatus/${section.id}`,
             method  : Method.PATCH,
         });
 
 
-    const updateGroupMutation = useMutation({
-        mutationFn  : updateGroupApi,
+    const updateSectionMutation = useMutation({
+        mutationFn  : updateSectionApi,
         onSuccess   : () => {
             queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECCTIONS] });
-            const isOpen = group.isOpen
-            toast( `Grupo ${ isOpen ? 'Cerrado' : 'Abierto' } exitosamente`, successToast );
+            const isOpen = section.isClosed
+            toast( `Sección ${ isOpen ? 'Cerrada' : 'Abierta' } exitosamente`, successToast );
             setIsOpenAlert( false );
         },
-        onError: ( mutationError: any ) => toast( `Error al actualizar el grupo: ${mutationError.message}`, errorToast )
+        onError: ( mutationError: any ) => toast( `Error al cambiar el estado de la sección: ${mutationError.message}`, errorToast )
     });
 
 
-    const handleToggleGroupStatus = ( ) => {
-        updateGroupMutation.mutate();
+    const handleToggleSectionStatus = ( ) => {
+        updateSectionMutation.mutate();
     };
 
 
     return (
         <>
             <Button
-                title       = { group.isOpen ? "Cerrar Grupo" : "Abrir Grupo" }
+                title       = { section.isClosed ? "Abrir Sección" : "Cerrar Sección" }
                 variant     = "outline"
                 size        = "icon"
                 onClick     = { () => setIsOpenAlert( true )}
-                aria-label  = { group.isOpen ? "Cerrar grupo" : "Abrir grupo" }
+                aria-label  = { section.isClosed ? "Abrir sección" : "Cerrar sección" }
             >
-                { group.isOpen
+                { !section.isClosed
                     ? <Ban className="h-4 w-4 text-red-500" />
                     : <CircleCheckBig className="h-4 w-4 text-green-500" />
                 }
@@ -69,11 +70,11 @@ export function ChangeStatusSection({
             <DeleteConfirmDialog
                 isOpen      = { isOpenAlert }
                 onClose     = { () => setIsOpenAlert( false )}
-                onConfirm   = { handleToggleGroupStatus }
-                name        = { `${ group.code } ${ group.period }` }
-                type        = { "el Grupo" }
+                onConfirm   = { handleToggleSectionStatus }
+                name        = { `SSEC: ${ section.subject.id }-${ section.code }` }
+                type        = { "la Sección" }
                 isDeleted   = { false }
-                isClosed    = { !group.isOpen }
+                isClosed    = { section.isClosed }
             />
         </>
     );
