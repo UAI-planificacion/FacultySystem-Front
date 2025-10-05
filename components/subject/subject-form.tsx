@@ -43,7 +43,7 @@ import { Switch }			from "@/components/ui/switch";
 import { SubjectUpload }    from "@/components/subject/subject-upload";
 import { SizeSelect }       from "@/components/shared/item-select/size-select";
 import { SpaceTypeSelect }  from "@/components/shared/item-select/space-type-select";
-import { SessionButton }    from "@/components/section/session-button";
+import { SessionButton }    from "@/components/session/session-button";
 
 import { Size, SpaceType }  from "@/types/request-detail.model";
 import { Subject }		    from "@/types/subject.model";
