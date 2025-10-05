@@ -25,7 +25,7 @@ import {
 import {
     SessionShort,
     getSessionCounts
-}                       from "@/components/section/session-short";
+}                       from "@/components/session/session-short";
 import { Button }       from "@/components/ui/button";
 import { ShowStatus }   from "@/components/shared/status";
 import { ShowDate }     from "@/components/shared/date";
