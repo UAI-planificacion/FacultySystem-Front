@@ -22,7 +22,6 @@ import { StaffManagement }      from "@/components/staff/staff-management";
 import { SubjectsManagement }   from "@/components/subject/subjects-management";
 import { RequestsManagement }   from "@/components/request/request-management";
 import { Button }               from "@/components/ui/button";
-import { OfferManagement }      from "@/components/offer/offer-management";
 
 import { Faculty, FacultyResponse } from "@/types/faculty.model";
 import { KEY_QUERYS }               from "@/consts/key-queries";
@@ -31,7 +30,6 @@ import { fetchApi }                 from "@/services/fetch";
 
 enum TabValue {
     SUBJECTS    = "subjects",
-    OFFERS      = "offers",
     STAFF       = "staff",
     REQUESTS    = "requests"
 }
@@ -147,22 +145,10 @@ export default function FacultyDetailsPage(): JSX.Element {
                         <span className="hidden sm:block">Asignaturas ({ faculty?.totalSubjects || 0 })</span>
                     </TabsTrigger>
 
-                    {/* <TabsTrigger
-                        value       = { TabValue.OFFERS }
-                        className   = "h-10 text-md gap-2"
-                        title       = "Ofertas"
-                        disabled    = {(faculty?.totalSubjects ?? 0 ) === 0 }
-                    >
-                        <Album className="h-5 w-5" />
-
-                        <span className="hidden sm:block">Ofertas ({ faculty?.totalOffers || 0 })</span>
-                    </TabsTrigger> */}
-
                     <TabsTrigger
                         value       = { TabValue.REQUESTS }
                         className   = "h-10 text-md gap-2"
                         title       = "Solicitudes"
-                        // disabled    = {( faculty?.totalOffers ?? 0 ) === 0 }
                     >
                         <BookCopy className="h-5 w-5" />
 
@@ -181,13 +167,6 @@ export default function FacultyDetailsPage(): JSX.Element {
                     <SubjectsManagement 
                         facultyId   = { facultyId }
                         enabled     = { activeTab === TabValue.SUBJECTS }
-                    />
-                </TabsContent>
-
-                <TabsContent value={TabValue.OFFERS}>
-                    <OfferManagement 
-                        facultyId   = { facultyId }
-                        enabled     = { activeTab === TabValue.OFFERS }
                     />
                 </TabsContent>
 
