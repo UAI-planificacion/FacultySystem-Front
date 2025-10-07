@@ -12,7 +12,7 @@ import {
     useQueryClient
 }                               from '@tanstack/react-query';
 import { toast }                from 'sonner';
-import { Calendar, RefreshCcw } from 'lucide-react';
+import { BookCopy, Calendar, ExternalLinkIcon, Plus, RefreshCcw } from 'lucide-react';
 
 import {
     Dialog,
@@ -53,7 +53,7 @@ import { useAvailableDates }            from '@/hooks/use-available-dates';
 import { Session }                      from '@/types/section.model';
 import { DayModule }                    from '@/types/day-module.model';
 import { OfferSection, OfferSession }   from '@/types/offer-section.model';
-import { ENV } from '@/config/envs/env';
+import { SessionInfoRequest } from './session-info-request';
 
 
 interface Props {
@@ -63,7 +63,6 @@ interface Props {
     section     : OfferSection | null;
     onSave      : ( updatedSession: OfferSession ) => void;
     onSuccess?  : () => void;
-    offerId?    : string | null;
     ids?        : string[] | null;
 }
 
@@ -101,7 +100,6 @@ export function SessionForm({
     section,
     onSave,
     onSuccess,
-    offerId,
     ids
 }: Props ) {
     const queryClient                                       = useQueryClient();
@@ -111,6 +109,7 @@ export function SessionForm({
     const [ moduleDaySelections, setModuleDaySelections ]   = useState<{ day: string; moduleId: string }[]>([]);
     const [ shouldFetchDates, setShouldFetchDates ]         = useState<boolean>( false );
     const [ isUpdateDateSpace, setIsUpdateDateSpace  ]      = useState<boolean>( false );
+    const [ englishForAll, setEnglishForAll ]               = useState<boolean>( false );
 
 
     const form = useForm<FormData>({
@@ -125,7 +124,7 @@ export function SessionForm({
             chairsAvailable         : session?.chairsAvailable      || null,
             professorId             : session?.professor?.id        || null,
             day                     : session?.dayId                || null,
-            date                    : session?.date                 || null,
+            date                    : session?.date ? new Date( session.date ) : null,
             moduleId                : session?.module ? Number( session.module.id ) : null,
         }
     });
@@ -144,7 +143,7 @@ export function SessionForm({
                 professorId             : session.professor?.id,
                 day                     : session.dayId,
                 moduleId                : session.module ? Number( session.module.id ) : null,
-                date                    : session.date
+                date                    : session.date ? new Date( session.date ) : null
             });
 
             // Marcar el módulo-día por defecto si existe
@@ -166,8 +165,12 @@ export function SessionForm({
         setSessionRequired( false );
         setShowCalendar( false );
         setShouldFetchDates( false );
-        setIsUpdateDateSpace( !session );
-    }, [ session, form, isOpen ]);
+        setEnglishForAll( false );
+
+        const isShowDayModules = ids ? false : !session;
+
+        setIsUpdateDateSpace( isShowDayModules );
+    }, [ session, form, isOpen, ids ]);
 
 
     const {
@@ -182,7 +185,6 @@ export function SessionForm({
 
 
     // TanStack Query para obtener fechas disponibles
-    // const sessionId = session?.id || null;
     const spaceId = form.watch( 'spaceId' );
 
 
@@ -226,7 +228,6 @@ export function SessionForm({
 
     const createSessionApi = async ( newSession: CreateSessionRequest ): Promise<OfferSession> =>
         fetchApi({
-            // url     : 'Sessions',
             url     : 'sessions',
             method  : Method.POST,
             body    : newSession
@@ -235,7 +236,7 @@ export function SessionForm({
 
     const updateSessionApi = async ( updatedSession: UpdateMassiveSessionRequest | UpdateSessionRequest ): Promise<OfferSession> =>
         fetchApi({
-            url     : `sessions/${ ids ? `massive/${ids.join(',')}` :  (updatedSession  as UpdateSessionRequest).id }`,
+            url     : `sessions/${ ids ? 'update/massive' : ( updatedSession as UpdateSessionRequest ).id }`,
             method  : Method.PATCH,
             body    : updatedSession
         });
@@ -245,16 +246,13 @@ export function SessionForm({
     const createSessionMutation = useMutation({
         mutationFn: createSessionApi,
         onSuccess: ( createdSession ) => {
-            // Actualizar la caché de secciones agregando la nueva sesión
             queryClient.setQueryData<OfferSection[]>(
                 [ KEY_QUERYS.SECCTIONS ],
                 ( oldData ) => {
                     if ( !oldData || !section ) return oldData;
 
                     return oldData.map( sec => {
-                        // Si esta es la sección donde se creó la sesión
                         if ( sec.id === section.id ) {
-                            // Agregar la nueva sesión al array de sesiones
                             return {
                                 ...sec,
                                 sessions: [ ...sec.sessions, createdSession ]
@@ -279,18 +277,15 @@ export function SessionForm({
     const updateSessionMutation = useMutation({
         mutationFn: updateSessionApi,
         onSuccess: ( updatedSession ) => {
-            // Actualizar la caché de secciones de manera optimista
             queryClient.setQueryData<OfferSection[]>(
                 [ KEY_QUERYS.SECCTIONS ],
                 ( oldData ) => {
                     if ( !oldData ) return oldData;
 
                     return oldData.map( section => {
-                        // Si esta sección contiene la sesión actualizada
                         const sessionIndex = section.sessions.findIndex( s => s.id === updatedSession.id );
 
                         if ( sessionIndex !== -1 ) {
-                            // Crear una copia de la sección con la sesión actualizada
                             return {
                                 ...section,
                                 sessions: section.sessions.map( s =>
@@ -304,7 +299,6 @@ export function SessionForm({
                 }
             );
 
-            // También invalidar para refrescar desde el servidor
             queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECCTIONS] });
             queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.OFFERS] });
 
@@ -337,7 +331,6 @@ export function SessionForm({
         setSelectedDayModuleId( dayModuleId );
         setShouldFetchDates( false );
 
-        // Limpiar calendario cuando se deselecciona
         if ( !dayModuleId ) {
             setShowCalendar( false );
             form.setValue( 'date', null );
@@ -346,9 +339,6 @@ export function SessionForm({
 
 
     const handleFetchAvailableDates = () => {
-        console.log('🚀 ~ file: session-form.tsx:327 ~ sessionId:', section?.id)
-        console.log('🚀 ~ file: session-form.tsx:328 ~ selectedDayModuleId:', selectedDayModuleId)
-        console.log('🚀 ~ file: session-form.tsx:329 ~ spaceId:', spaceId)
         if ( !section?.id || !selectedDayModuleId || !spaceId ) {
             toast( 'Debe seleccionar un módulo-día y un espacio', errorToast );
             return;
@@ -398,9 +388,9 @@ export function SessionForm({
 
         const sessionData = {
             // name,
-            dayModuleId : selectedDayModuleId,
-            ...(spaceId && { spaceId }),
-            ...(isEnglish !== null && isEnglish !== undefined && { isEnglish }),
+            // dayModuleId : selectedDayModuleId,
+            // ...(spaceId && { spaceId }),
+            // ...(isEnglish !== null && isEnglish !== undefined && { isEnglish }),
             ...(correctedRegistrants && { correctedRegistrants }),
             ...(realRegistrants && { realRegistrants }),
             ...(plannedBuilding && { plannedBuilding }),
@@ -412,17 +402,19 @@ export function SessionForm({
 
         console.log('🚀 ~ file: session-form.tsx:377 ~ sessionData:', sessionData)
 
-
-        // console.log('🚀 ~ file: session-form.tsx:343 ~ sessionData:', sessionData)
-
-
         if ( ids  ) {
             const updateMassiveSession : UpdateMassiveSessionRequest = {
                 ...sessionData,
                 ...(name && { name }),
+                ...( englishForAll && { isEnglish } ),
+                ids
             }
-
             console.log("🚀 ~ file: session-form.tsx ~ updateMassiveSession:", updateMassiveSession)
+
+            if ( Object.keys( updateMassiveSession ).length === 1 && "ids" in updateMassiveSession ) {
+                toast( 'Debe seleccionar al menos un valor para actualizar', errorToast );
+                return;
+            }
 
             updateSessionMutation.mutate( updateMassiveSession );
             return;
@@ -431,7 +423,10 @@ export function SessionForm({
         if ( session ) {
             const updatedSession: UpdateSessionRequest = {
                 ...sessionData,
-                ...(name && { name }),
+                dayModuleId : selectedDayModuleId,
+                ...( spaceId && { spaceId }),
+                ...( name && { name }),
+                ...( isEnglish !== null && isEnglish !== undefined && { isEnglish }),
                 id: session.id,
             };
 
@@ -439,13 +434,13 @@ export function SessionForm({
 
             updateSessionMutation.mutate( updatedSession );
         } else {
-            // if ( !offerId ) return;
-
             const createSession : CreateSessionRequest = {
                 ...sessionData,
                 name        : data.name!,
                 sectionId   : section?.id!,
-                // offerId     : offerId,
+                ...(spaceId && { spaceId }),
+                dayModuleId : selectedDayModuleId,
+                ...( isEnglish !== null && isEnglish !== undefined && { isEnglish }),
             }
 
             console.log("🚀 ~ file: session-form.tsx ~ createSession:", createSession)
@@ -456,7 +451,7 @@ export function SessionForm({
 
 
     function handleClose(): void {
-        form.reset();
+        form.reset({});
         // setSelectedDayModuleId( null );
         // setShowCalendar( false );
         // setModuleDaySelections( [] );
@@ -480,16 +475,18 @@ export function SessionForm({
 
                     <DialogDescription>
                         { ids
-                            ? 'Modifica los datos de todas las sesiones seleccionadas.'
+                            ? 'Modifica los datos de todas las sesiones seleccionadas, modifica un valor y se aplicará para todas.'
                             : session
                                 ? 'Modifica los datos de la sesión individual.'
                                 : 'Completa los datos para crear una nueva sesión.'
                         }
                     </DialogDescription>
 
-                    <Card>
-                        <CardContent className="mt-4">
-                            <div className=" gap-2 text-sm">
+                    { !ids 
+                        ? 
+                        <>
+                        <Card>
+                            <CardContent className="mt-4">
                                 <div className="grid grid-cols-4 gap-4">
                                     <span className="font-medium">SSEC</span>
                                     <span className="font-medium">Periodo</span>
@@ -500,16 +497,28 @@ export function SessionForm({
                                 <hr className="my-2" />
 
                                 <div className="grid grid-cols-4 gap-4">
-                                    <span>{ section?.subject.id  }-{ section?.code }</span>
+                                    <span>{ section?.subject.id }-{ section?.code }</span>
                                     <span>{ section?.period?.name }</span>
-                                    <span>{ section?.startDate && tempoFormat( section.startDate )  }</span>
-                                    <span>{ section?.endDate && tempoFormat( section.endDate )  }</span>
+                                    <span>{ section?.startDate && tempoFormat( section.startDate )}</span>
+                                    <span>{ section?.endDate && tempoFormat( section.endDate )}</span>
                                 </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                            </CardContent>
+                        </Card>
 
-                    { !isUpdateDateSpace &&
+                        {/* Mostrar info de la solicitud */}
+                        { session && <SessionInfoRequest /> }
+                        </>
+                        : <Card>
+                            <CardContent className="mt-5">
+                                <div className="flex items-center gap-2">
+                                    <span className="font-medium w-48">Sessiones seleccionadas:</span>
+                                    <span className="">{ids.length}</span>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    }
+
+                    {  !!ids || !isUpdateDateSpace &&
                         <Card>
                             <CardContent className="mt-4">
                                 <div className="grid grid-cols-3 gap-4">
@@ -533,9 +542,9 @@ export function SessionForm({
                                 <hr className="my-2" />
 
                                 <div className="grid grid-cols-3 gap-4">
-                                    <span className="font-medium">{ session?.spaceId }</span>
-                                    <span className="font-medium">{ session?.date && tempoFormat( session?.date )  }</span>
-                                    <span className="font-medium">{ session?.module.name }</span>
+                                    <span>{ session?.spaceId }</span>
+                                    <span>{ session?.date && tempoFormat( session?.date )  }</span>
+                                    <span>{ session?.module.name }</span>
                                 </div>
                             </CardContent>
                         </Card>
@@ -689,12 +698,30 @@ export function SessionForm({
                             name    = "isEnglish"
                             render  = {({ field }) => (
                                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                                    <FormLabel className="text-base">Clase en Inglés</FormLabel>
+                                    { ids  && <>
+                                        <FormLabel
+                                            className="text-base items-center flex gap-2"
+                                            title="Si se selecciona, se aplicará o se quitará el inglés para todas las sesiones seleccionadas"
+                                        >
+                                            Aplicar para todos
+                                        </FormLabel>
+
+                                            <Switch
+                                                checked         = { englishForAll || false }
+                                                onCheckedChange = { setEnglishForAll }
+                                            />
+                                        </>
+                                    }
+
+                                    <FormLabel className="text-base items-center flex gap-2">
+                                        Sección en Inglés
+                                    </FormLabel>
 
                                     <FormControl>
                                         <Switch
                                             checked         = { field.value || false }
                                             onCheckedChange = { field.onChange }
+                                            disabled        = { !!ids && !englishForAll }
                                         />
                                     </FormControl>
                                 </FormItem>
@@ -747,7 +774,6 @@ export function SessionForm({
                                                     disabled        = {( date ) => {
                                                         const dateStr = date.toISOString().split( 'T' )[0];
                                                         return !availableDates.some( d => d.toISOString().split( 'T' )[0] === dateStr );
-                                                        // return !availableDates.some( d => d === date );
                                                     }}
                                                 />
                                             </FormControl>
@@ -779,6 +805,15 @@ export function SessionForm({
                                     <Calendar className="h-4 w-4" />
                                     { isLoadingDates ? 'Buscando...' : 'Buscar fechas disponibles' }
                                 </Button>
+
+                                <Button
+                                    onClick = {() => setIsUpdateDateSpace( true )}
+                                    title   = "Abrir solicitud"
+                                    className="w-full gap-2"
+                                >
+                                    <BookCopy className="h-4 w-4" />
+                                    Crear Solicitud
+                                </Button>
                             </div>
                         </>
                         }
@@ -804,9 +839,12 @@ export function SessionForm({
                             >
                                 {( createSessionMutation.isPending || updateSessionMutation.isPending )
                                     ? 'Guardando...' 
-                                    : ( session
-                                        ? 'Guardar Cambios'
-                                        : 'Crear Sesión'
+                                    : ( 
+                                        ids
+                                            ? 'Actualizar Sesiones'
+                                            : session
+                                                ? 'Guardar Cambios'
+                                                : 'Crear Sesión'
                                     )
                                 }
                             </Button>
