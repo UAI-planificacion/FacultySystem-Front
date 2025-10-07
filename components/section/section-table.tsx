@@ -2,9 +2,17 @@
 
 import React, { useState } from "react"
 
-import { Album, ChevronDown, ChevronRight, Plus }  from "lucide-react"
-import { useMutation, useQueryClient }      from "@tanstack/react-query"
-import { toast }                            from "sonner"
+import {
+    Album,
+    ChevronDown,
+    ChevronRight,
+    Plus
+}                   from "lucide-react"
+import {
+    useMutation,
+    useQueryClient
+}                   from "@tanstack/react-query"
+import { toast }    from "sonner"
 
 import {
 	Table,
@@ -22,16 +30,15 @@ import { ChangeStatusSection }  from "@/components/section/change-status"
 import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog"
 import { CreateSessionForm }    from "@/components/section/create-session-form"
 import { SessionShort }         from "@/components/session/session-short"
-import { SessionName }          from "@/components/session/session-name"
 import { SessionForm }          from "@/components/session/session-form"
+import { SessionTable }         from "@/components/session/session-table"
+import { SectionForm }          from "@/components/section/section-form"
 
-import { OfferSection, OfferSession }   from "@/types/offer-section.model"
-import { fetchApi, Method }             from "@/services/fetch"
-import { KEY_QUERYS }                   from "@/consts/key-queries"
-import { errorToast, successToast }     from "@/config/toast/toast.config"
-import { tempoFormat }                  from "@/lib/utils"
-import { SessionTable } from "../session/session-table"
-import { SectionForm } from "./section-form"
+import { OfferSection }             from "@/types/offer-section.model"
+import { fetchApi, Method }         from "@/services/fetch"
+import { KEY_QUERYS }               from "@/consts/key-queries"
+import { errorToast, successToast } from "@/config/toast/toast.config"
+import { tempoFormat }              from "@/lib/utils"
 
 
 interface Props {
@@ -54,23 +61,13 @@ export function SectionTable({
 	const queryClient                                       = useQueryClient();
 	const [ expandedSections, setExpandedSections ]         = useState<Set<string>>( new Set() );
 	const [ selectedSections, setSelectedSections ]         = useState<Set<string>>( new Set() );
-	const [ isEditSection, setIsEditSection ]               = useState<boolean>( false );
 	const [ createSessionSection, setCreateSessionSection ] = useState<OfferSection | null>( null );
 	const [ isCreateSessionOpen, setIsCreateSessionOpen ]   = useState<boolean>( false );
 	const [ selectedSectionEdit, setSelectedSectionEdit ]   = useState<OfferSection | null>( null );
-	const [ selectedSessionEdit, setSelectedSesionEdit ]   = useState<OfferSession | null>( null );
-
 	const [ isOpenDelete, setIsOpenDelete ]                 = useState( false );
-    
-    
 	const [ isOpenSessionForm, setIsOpenSessionForm ]       = useState<boolean>( false );
 	const [ isOpenSectionForm, setIsOpenSectionForm ]       = useState<boolean>( false );
-    
-    const [ selectedSession, setSelectedSession ]           = useState<OfferSession | undefined>( undefined );
 	const [ selectedSection, setSelectedSection ]           = useState<OfferSection | undefined>( undefined );
-
-
-
 
 	/**
 	 * Toggle section expansion
@@ -251,20 +248,6 @@ export function SectionTable({
 	}
 
 
-	/**
-	 * Format date
-	 */
-	function formatDate( date: Date | null ): string {
-		if ( !date ) return '-';
-
-		return new Date( date ).toLocaleDateString( 'es-CL', {
-			day     : '2-digit',
-			month   : '2-digit',
-			year    : 'numeric'
-		});
-	}
-
-
 	return (
 		<>
 			<Table className="min-w-full">
@@ -273,7 +256,6 @@ export function SectionTable({
 						<TableHead className="w-8"></TableHead>
 						<TableHead className="w-14"></TableHead>
 						<TableHead>SSEC</TableHead>
-						{/* <TableHead>Asignatura</TableHead> */}
 						<TableHead>Período</TableHead>
 						<TableHead>Sesiones</TableHead>
 						<TableHead>Fecha Inicio</TableHead>
@@ -313,8 +295,9 @@ export function SectionTable({
 											size        = "sm"
 											onClick     = {() => toggleSectionExpansion( section.id )}
 											className   = "p-1 h-8 w-8"
+                                            disabled = { section.sessions.length === 0 }
 										>
-											{expandedSections.has( section.id )
+											{ expandedSections.has( section.id )
 												? <ChevronDown className="h-4 w-4" />
 												: <ChevronRight className="h-4 w-4" />
 											}
@@ -327,7 +310,7 @@ export function SectionTable({
 											onCheckedChange = {( checked ) => handleSectionSelection( section.id, checked as boolean )}
 											className       = { isSectionPartiallySelected( section ) ? "data-[state=unchecked]:bg-blue-100 w-5 h-5" : " w-5 h-5" }
 											aria-label      = "Seleccionar sección"
-											disabled        = { section.isClosed }
+											disabled        = { section.isClosed || section.sessions.length === 0 }
 										/>
 									</TableCell>
 
@@ -339,12 +322,8 @@ export function SectionTable({
                                         { section.period.id }
                                     </TableCell>
 
-									{/* <TableCell className="font-medium" title={ section.subject.name }>
-										{ section.subject.id }
-									</TableCell> */}
-
 									<TableCell>
-										<SessionShort sessionCounts={ getSessionCounts( section ) } />
+										<SessionShort sessionCounts={ getSessionCounts( section )} />
 									</TableCell>
 
 									<TableCell>{ section.startDate ? tempoFormat( section.startDate ) : "-" }</TableCell>
@@ -367,6 +346,7 @@ export function SectionTable({
 													size        = "icon"
 													variant     = "outline"
 													disabled    = { section.isClosed }
+                                                    className   = "bg-green-500 hover:bg-green-600"
 													onClick     = { () => {
 														setCreateSessionSection( section );
                                                         setSelectedSectionEdit( section );
@@ -378,7 +358,7 @@ export function SectionTable({
 
                                                 // *Crear una nueva sesión
                                                 : <Button
-													title       = "Agregar Sesión"
+													title       = "Crear una Sesión"
 													size        = "icon"
 													variant     = "outline"
 													disabled    = { section.isClosed }
@@ -445,7 +425,7 @@ export function SectionTable({
 				isOpen      = { isOpenDelete }
 				onClose     = { () => setIsOpenDelete( false )}
 				onConfirm   = { handleConfirmDeleteSection }
-				name        = { `${selectedSection?.code} - ${selectedSection?.subject.name}` }
+				name        = { `SSEC ${selectedSection?.subject.id}-${selectedSection?.code}` }
 				type        = { "la Sección" }
 			/>
 		</>
