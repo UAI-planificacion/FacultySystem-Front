@@ -6,9 +6,15 @@ import { useRouter }                            from 'next/navigation';
 import {
     BrushCleaning,
     Filter,
-    Pencil
+    Pencil,
+    Trash
 }                   from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import {
+	useMutation,
+	useQuery,
+	useQueryClient
+}                   from '@tanstack/react-query';
+import { toast }    from 'sonner';
 
 import {
     Card,
@@ -30,9 +36,11 @@ import { DaySelect }            from '@/components/shared/item-select/days-selec
 import { SectionTable }         from '@/components/section/section-table';
 import { SessionForm }          from '@/components/session/session-form';
 
-import { KEY_QUERYS }       from '@/consts/key-queries';
-import { fetchApi }         from '@/services/fetch';
-import { OfferSection }     from '@/types/offer-section.model';
+import { KEY_QUERYS }               from '@/consts/key-queries';
+import { fetchApi, Method }         from '@/services/fetch';
+import { OfferSection }             from '@/types/offer-section.model';
+import { errorToast, successToast } from '@/config/toast/toast.config';
+import { DeleteConfirmDialog }      from '@/components/dialog/DeleteConfirmDialog';
 
 
 interface Props {
@@ -55,8 +63,8 @@ export function SectionMain({
     enabled,
     searchParams,
 }: Props ) {
-    const router = useRouter();
-    // Initialize filters from URL search params
+    const router                                    = useRouter();
+    const queryClient                               = useQueryClient();
     const [codeFilter, setCodeFilter]               = useState<string[]>(() => searchParams.get('code')?.split(',').filter(Boolean) || []);
     const [roomFilter, setRoomFilter]               = useState<string[]>(() => searchParams.get('room')?.split(',').filter(Boolean) || []);
     const [dayFilter, setDayFilter]                 = useState<string[]>(() => searchParams.get('day')?.split(',').filter(Boolean) || []);
@@ -71,6 +79,7 @@ export function SectionMain({
     const [currentPage, setCurrentPage]             = useState<number>( 1 );
     const [itemsPerPage, setItemsPerPage]           = useState<number>( 10 );
     const [isEditSection, setIsEditSection]         = useState<boolean>( false );
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>( false );
 
     // Function to update URL with filter parameters
     const updateUrlParams = ( filterName: string, values: string[] ) => {
@@ -142,6 +151,51 @@ export function SectionMain({
     }, [ codeFilter, roomFilter, dayFilter, periodFilter, statusFilter, subjectFilter, sizeFilter, sessionFilter, moduleFilter, professorFilter, itemsPerPage ]);
 
 
+	/**
+	 * API call para eliminar sesiones masivamente
+	 */
+	const deleteSessionsApi = async ( sessionIds: string ): Promise<void> =>
+		fetchApi<void>({
+			url     : `sessions/massive/${sessionIds}`,
+			method  : Method.DELETE
+		});
+
+
+	/**
+	 * Mutación para eliminar sesiones masivamente
+	 */
+	const deleteSessionsMutation = useMutation<void, Error, string>({
+		mutationFn: deleteSessionsApi,
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECCTIONS] });
+			setIsDeleteDialogOpen( false );
+			setSelectedSections( new Set() );
+			toast( 'Sesiones eliminadas exitosamente', successToast );
+		},
+		onError: ( mutationError ) => {
+			toast( `Error al eliminar sesiones: ${mutationError.message}`, errorToast );
+		},
+	});
+
+
+	/**
+	 * Abre el diálogo de confirmación para eliminar sesiones
+	 */
+	function handleOpenDeleteSessions(): void {
+		if ( selectedSections.size === 0 ) return;
+		setIsDeleteDialogOpen( true );
+	}
+
+
+	/**
+	 * Confirma y ejecuta la eliminación masiva de sesiones
+	 */
+	function handleConfirmDeleteSessions(): void {
+		const sessionIds = Array.from( selectedSections ).join( ',' );
+		deleteSessionsMutation.mutate( sessionIds );
+	}
+
+
     return (
         <>
         <div className="w-full mt-4">
@@ -175,7 +229,7 @@ export function SectionMain({
 
                 {/* Filters Sidebar */}
                 <Card className="w-80 flex-shrink-0">
-                    <CardContent className="p-4 h-[calc(100vh-280px)] overflow-y-auto space-y-4">
+                    <CardContent className="p-4 h-[calc(100vh-380px)] overflow-y-auto space-y-4">
                         <div className="flex items-center gap-2">
                             <Filter className="w-5 h-5" />
 
@@ -186,7 +240,7 @@ export function SectionMain({
                             <Label htmlFor="code-filter">Filtrar por Números</Label>
 
                             <MultiSelectCombobox
-                                options             = { uniqueCodes.map(code => ({ label: code, value: code })) }
+                                options             = { uniqueCodes.map( code => ({ label: code, value: code }))}
                                 defaultValues       = { codeFilter }
                                 placeholder         = "Seleccionar Números"
                                 onSelectionChange   = {( value ) => {
@@ -310,19 +364,30 @@ export function SectionMain({
                             }}
                         >
                             <BrushCleaning className="w-5 h-5" />
-
                             Limpiar filtros
                         </Button>
                     </CardContent>
 
-                    <CardFooter>
+                    <CardFooter className="grid space-y-4">
+                        <Button
+                            onClick     = { handleOpenDeleteSessions }
+                            className   = "gap-2 w-full"
+                            disabled    = { selectedSections.size === 0 }
+                            variant     = "destructive"
+                        >
+                            <Trash className="w-4 h-4" />
+
+                            Eliminar sesiones ({ selectedSections.size })
+                        </Button>
+
                         <Button
                             onClick     = {() => setIsEditSection( true )}
                             className   = "gap-2 w-full"
+                            disabled    = { selectedSections.size === 0 }
                         >
                             <Pencil className="w-4 h-4" />
 
-                            Modificar secciones ({ selectedSections.size })
+                            Modificar sesiones ({ selectedSections.size })
                         </Button>
                     </CardFooter>
                 </Card>
@@ -335,9 +400,17 @@ export function SectionMain({
             isOpen  = { isEditSection }
             onClose = { () => setIsEditSection( false ) }
             onSave  = { () => {} }
-            ids     = { Array.from( selectedSections )}
+            ids     = { Array.from( selectedSections ) }
         />
 
-        </>
-    );
+		{/* Delete Confirmation Dialog */}
+		<DeleteConfirmDialog
+			isOpen      = { isDeleteDialogOpen }
+			onClose     = { () => setIsDeleteDialogOpen( false ) }
+			onConfirm   = { handleConfirmDeleteSessions }
+			name        = { `${selectedSections.size} sesiones seleccionadas` }
+			type        = "las sesiones"
+		/>
+		</>
+	);
 }
