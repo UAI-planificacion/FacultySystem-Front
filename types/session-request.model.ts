@@ -27,5 +27,6 @@ export interface UpdateSessionRequest extends SessionBase {
 
 
 export interface UpdateMassiveSessionRequest extends SessionBase {
-	name?       : Session | null;
+	name?   : Session | null;
+    ids     : string[];
 }
