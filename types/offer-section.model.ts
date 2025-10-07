@@ -56,8 +56,8 @@ export interface OfferSection {
     code            : number;
     isClosed        : boolean;
     groupId         : string;
-    startDate       : Date | null;
-    endDate         : Date | null;
+    startDate       : Date;
+    endDate         : Date;
     spaceSizeId     : string | null;
     spaceType       : string | null;
     workshop        : number;
