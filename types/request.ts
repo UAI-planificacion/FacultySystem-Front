@@ -1,5 +1,4 @@
-import { Offer }    from "@/types/offer.model";
-import { Role }     from "@/types/staff.model";
+import { Role } from "@/types/staff.model";
 
 
 export enum Status {
@@ -57,19 +56,57 @@ export interface StaffRequest {
 }
 
 
+export interface RequestProfessor {
+    id      : string;
+    name    : string;
+    email   : string;
+    role    : Role;
+}
+
+
+export interface PeriodRequest {
+    id          : string;
+    code        : number;
+    startDate   : Date;
+    endDate     : Date;
+}
+
+export interface RequestSubject {
+    id          : string;
+    name        : string;
+}
+
+
+export interface RequestSection {
+    id              : string;
+    code            : number;
+    startDate       : Date;
+    endDate         : Date;
+    isClosed        : boolean;
+    laboratory      : number;
+    workshop        : number;
+    lecture         : number;
+    tutoringSession : number;
+    professor       : RequestProfessor;
+    period          : PeriodRequest;
+    subject         : RequestSubject;
+    countSessions   : number;
+}
+
+
 export interface Request {
     id              : string;
     title           : string;
     status          : Status;
     isConsecutive   : boolean;
     description     : string | null;
-    updatedAt       : Date;
     createdAt       : Date;
+    updatedAt       : Date;
     staffCreate     : StaffRequest;
     staffUpdate     : StaffRequest | null;
-    offer           : Offer;
     totalDetails    : number;
     facultyId       : string;
+    section        : RequestSection
 }
 
 
