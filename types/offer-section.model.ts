@@ -1,3 +1,4 @@
+import { RequestProfessor, Status } from "./request";
 import { Session } from "./section.model";
 
 export interface OfferSectionProffesor {
@@ -48,6 +49,28 @@ export interface OfferSession {
     date                    : Date;
     dayId                   : number;
     dayModuleId             : number;
+    requestSession?         : RequestSession;
+}
+
+
+interface RequestSessionGrade {
+    id: string;
+    name: string;
+}
+
+
+export interface RequestSession {
+    id          : string;
+    title       : string;
+    spaceId     : string | null;
+    isEnglish   : boolean;
+    isAfternoon : boolean;
+    description : string | null;
+    building    : string | null;
+    professor   : RequestProfessor;
+    moduleId    : number;
+    grade       : RequestSessionGrade;
+    status      : Status;
 }
 
 
