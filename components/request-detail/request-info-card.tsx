@@ -78,50 +78,50 @@ export function RequestInfoCard({
                     <div className="space-y-1">
                         <p className="text-sm font-medium text-muted-foreground">Asignatura</p>
 
-                        <div className="flex items-center gap-2">
+                        {/* <div className="flex items-center gap-2">
                             <BookOpen className="h-4 w-4 text-muted-foreground" />
 
                             <p className="max-w-full truncate overflow-hidden whitespace-nowrap">
                                 { request.offer.subject.id }-{ request.offer.subject.name }
                             </p>
-                        </div>
+                        </div> */}
                     </div>
 
                     <div className="space-y-1">
                         <p className="text-sm font-medium text-muted-foreground">Periodo</p>
 
-                        <div className="flex items-center gap-2">
+                        {/* <div className="flex items-center gap-2">
                             <CalendarRange className="h-4 w-4 text-muted-foreground" />
 
                             <p className="max-w-full truncate overflow-hidden whitespace-nowrap">
                                 { request.offer.period.id } - { request.offer.period.name }
                             </p>
-                        </div>
+                        </div> */}
                     </div>
 
                     <div className="space-y-1">
                         <p className="text-sm font-medium text-muted-foreground">Sesiones</p>
 
-                        <div className="flex items-center gap-2">
+                        {/* <div className="flex items-center gap-2">
                             <SquareLibrary className="h-4 w-4 text-muted-foreground" />
 
                             <SessionShort 
                                 sessionCounts   = { getSessionCounts( request.offer )}
                                 showZero        = { true }
                             />
-                        </div>
+                        </div> */}
                     </div>
 
                     <div className="space-y-1">
                         <p className="text-sm font-medium text-muted-foreground">Tipo Espacio</p>
 
-                        <div className="flex items-center gap-2">
+                        {/* <div className="flex items-center gap-2">
                             <Cuboid className="h-4 w-4 text-muted-foreground" />
 
                             <p className="max-w-full truncate overflow-hidden whitespace-nowrap">
                                 { request.offer.spaceType ? getSpaceType( request.offer.spaceType ) : "-" }
                             </p>
-                        </div>
+                        </div> */}
                     </div>
 
                     <div className="space-y-1">
@@ -130,61 +130,61 @@ export function RequestInfoCard({
                         <div className="flex items-center gap-2">
                             <Proportions className="h-4 w-4 text-muted-foreground" />
 
-                            <p className="max-w-full truncate overflow-hidden whitespace-nowrap">
+                            {/* <p className="max-w-full truncate overflow-hidden whitespace-nowrap">
                                 { request.offer.spaceSize 
                                     ? `${request.offer.spaceSize.id} ${request.offer.spaceSize.detail}`
                                     : "-"
                                 }
-                            </p>
+                            </p> */}
                         </div>
                     </div>
 
                     <div className="space-y-1">
                         <p className="text-sm font-medium text-muted-foreground">Centro de Costos</p>
 
-                        <div className="flex items-center gap-2">
+                        {/* <div className="flex items-center gap-2">
                             <WalletCards className="h-4 w-4 text-muted-foreground" />
 
                             <p className="max-w-full truncate overflow-hidden whitespace-nowrap">
                                 { request.offer.costCenterId }
                             </p>
-                        </div>
+                        </div> */}
                     </div>
 
                     <div className="space-y-1">
                         <p className="text-sm font-medium text-muted-foreground">Edificio</p>
 
-                        <div className="flex items-center gap-2">
+                        {/* <div className="flex items-center gap-2">
                             <Building className="h-4 w-4 text-muted-foreground" />
 
                             <p className="max-w-full truncate overflow-hidden whitespace-nowrap">
                                 { request.offer.building || '-' }
                             </p>
-                        </div>
+                        </div> */}
                     </div>
 
                     <div className="space-y-1">
                         <p className="text-sm font-medium text-muted-foreground">Idioma</p>
 
-                        <div className="flex items-center gap-2">
+                        {/* <div className="flex items-center gap-2">
                             <Languages className="h-4 w-4 text-muted-foreground" />
 
                             <p className="max-w-full truncate overflow-hidden whitespace-nowrap">
                                 { request.offer.isEnglish ? 'Inglés' : 'Español' }
                             </p>
-                        </div>
+                        </div> */}
                     </div>
 
                     <div className="space-y-1">
                         <p className="text-sm font-medium text-muted-foreground">Fechas</p>
-
+{/* 
                         <div className="flex items-center gap-2">
                             <CalendarDays className="h-4 w-4 text-muted-foreground" />
 
                             <p className="max-w-full truncate overflow-hidden whitespace-nowrap">
                                 { request.offer.startDate.length }
                             </p>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
 
