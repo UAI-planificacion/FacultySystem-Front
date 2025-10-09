@@ -1,5 +1,7 @@
-import { RequestProfessor, Status } from "./request";
-import { Session } from "./section.model";
+import { Module, Status }   from "@/types/request";
+import { Session }          from "@/types/section.model";
+import { Role }             from "@/types/staff.model";
+
 
 export interface OfferSectionProffesor {
     id  : string;
@@ -59,18 +61,54 @@ interface RequestSessionGrade {
 }
 
 
-export interface RequestSession {
+interface Staff {
+    id: string;
+    name: string;
+    email: string;
+    role: Role;
+    facultyId: string;
+}
+
+
+interface SpaceSize {
     id          : string;
-    title       : string;
-    spaceId     : string | null;
-    isEnglish   : boolean;
-    isAfternoon : boolean;
-    description : string | null;
-    building    : string | null;
-    professor   : RequestProfessor;
-    moduleId    : number;
-    grade       : RequestSessionGrade;
-    status      : Status;
+    detail      : string;
+}
+
+
+interface SessionDayModule {
+    id      : string;
+    dayId   : number;
+    module  : Module;
+}
+
+
+interface RequestSessionDetail {
+    id                  : string;
+    session             : Session;
+    spaceId             : string;
+    isEnglish           : boolean;
+    isConsecutive       : boolean;
+    isAfternoon         : boolean;
+    description         : string | null;
+    professor           : OfferSectionProffesor | null;
+    spaceSize           : SpaceSize | null;
+    staffUpdate         : Staff;
+    sessionDayModules   : SessionDayModule[];
+    createdAt           : Date;
+    updatedAt           : Date;
+}
+
+
+export interface RequestSession {
+    id              : string;
+    title           : string;
+    status          : Status;
+    staffCreate     : Staff;
+    staffUpdated    : Staff;
+    createdAt       : Date;
+    updatedAt       : Date;
+    requestSessions : RequestSessionDetail[];
 }
 
 
