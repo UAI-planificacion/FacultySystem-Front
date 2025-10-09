@@ -26,6 +26,7 @@ import { ProfessorSelect }              from "@/components/shared/item-select/pr
 import { SpaceSelect }                  from "@/components/shared/item-select/space-select";
 import { SessionName }                  from "@/components/session/session-name";
 import { sessionLabels, sessionColors } from "@/components/section/section.config";
+import { SessionInfoRequest }           from "@/components/session/session-info-request";
 
 import { OfferSection }             from "@/types/offer-section.model";
 import { Session }                  from "@/types/section.model";
@@ -406,7 +407,7 @@ export function CreateSessionForm({ section, isOpen, onClose, onSuccess }: Props
 			<DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle>
-						Crear Sesiones para Sección {section.subject.id}-{ section.code }
+						Crear Planificación para Sección { section.subject.id }-{ section.code }
 					</DialogTitle>
 
 					<DialogDescription>
@@ -461,6 +462,10 @@ export function CreateSessionForm({ section, isOpen, onClose, onSuccess }: Props
 						</CardContent>
 					</Card>
 
+                    <SessionInfoRequest
+                        section = { section }
+                        enabled = { isOpen }
+                    />
 
 					{/* Selector de dayModules */}
 					<Card>
