@@ -41,10 +41,11 @@ export function RequestCard({
     return (
         <Card className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
-                <div className="space-y-1.5">
-                    <CardTitle className="text-md font-medium max-w-full">{ request.title }</CardTitle>
-
-                    <p className="text-[11px] text-muted-foreground">{ request.id }</p>
+                <div className="space-y-2">
+                    <CardTitle className="text-md font-medium max-w-full">
+                        { request.title }
+                        <p className="text-[11px] text-muted-foreground">{ request.id }</p>
+                    </CardTitle>
 
                     <div className="flex items-center gap-2">
                         <ShowStatus status={ request.status } />
@@ -56,13 +57,13 @@ export function RequestCard({
 
             <CardContent className="space-y-3">
                 <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-1.5">
+                    {/* <div className="flex items-center gap-1.5">
                         <BookOpen className="h-4 w-4" />
 
                         <span className="font-medium max-w-full truncate overflow-hidden whitespace-nowrap">
                             { request.offer.subject.id } - { request.offer.subject.name }
                         </span>
-                    </div>
+                    </div> */}
 
                     <div className="flex items-center gap-1.5">
                         <User className="h-4 w-4" />
@@ -72,13 +73,13 @@ export function RequestCard({
                         </span>
                     </div>
 
-                    <div className="flex items-center gap-1.5">
+                    {/* <div className="flex items-center gap-1.5">
                         <CalendarDays className="h-4 w-4" />
 
                         <span className="max-w-full truncate overflow-hidden whitespace-nowrap">
                             { request.offer.period.id } - { request.offer.period.name }
                         </span>
-                    </div>
+                    </div> */}
 
                     <ShowDate date={ request.createdAt } />
                 </div>
