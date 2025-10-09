@@ -46,7 +46,7 @@ export function RequestTable({
     isError
 }: RequestTableProps ): JSX.Element {
     if ( isLoading ) {
-        return <RequestCardSkeletonGrid count={6} />;
+        return <RequestCardSkeletonGrid count={8} />;
     }
 
     if ( isError ) {
@@ -98,11 +98,11 @@ export function RequestTable({
                                         <Consecutive isConsecutive={ request.isConsecutive } />
                                     </TableCell>
 
-                                    <TableCell>
+                                    {/* <TableCell>
                                         <Badge variant="outline">
                                             { request.offer.period.id } - { request.offer.period.name }
                                         </Badge>
-                                    </TableCell>
+                                    </TableCell> */}
 
                                     <TableCell
                                         className   = "max-w-[150px] truncate"
@@ -124,12 +124,12 @@ export function RequestTable({
                                         )}
                                     </TableCell>
 
-                                    <TableCell
+                                    {/* <TableCell
                                         className   = "max-w-[150px] truncate"
                                         title       = {`${request.offer.subject.id} - ${request.offer.subject.name}`}
                                     >
                                         { request.offer.subject.name }
-                                    </TableCell>
+                                    </TableCell> */}
 
                                     <TableCell className="text-right">
                                         <div className="flex items-center justify-end gap-2">
