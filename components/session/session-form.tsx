@@ -53,7 +53,7 @@ import { useAvailableDates }            from '@/hooks/use-available-dates';
 import { Session }                      from '@/types/section.model';
 import { DayModule }                    from '@/types/day-module.model';
 import { OfferSection, OfferSession }   from '@/types/offer-section.model';
-import { SessionInfoRequest } from './session-info-request';
+import { SessionInfoRequest }           from './session-info-request';
 
 
 interface Props {
@@ -506,7 +506,7 @@ export function SessionForm({
                         </Card>
 
                         {/* Mostrar info de la solicitud */}
-                        { session && <SessionInfoRequest /> }
+                        {/* { session && <SessionInfoRequest /> } */}
                         </>
                         : <Card>
                             <CardContent className="mt-5">
