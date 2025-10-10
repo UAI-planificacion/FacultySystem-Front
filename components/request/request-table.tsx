@@ -72,7 +72,7 @@ export function RequestTable({
                             <TableRow>
                                 <TableHead>Título</TableHead>
                                 <TableHead>Estado</TableHead>
-                                <TableHead>Consecutivo</TableHead>
+                                {/* <TableHead>Consecutivo</TableHead> */}
                                 <TableHead>Período</TableHead>
                                 <TableHead>Creado por</TableHead>
                                 <TableHead>Actualizado por</TableHead>
@@ -93,10 +93,10 @@ export function RequestTable({
                                     <TableCell>
                                         <ShowStatus status={ request.status } />
                                     </TableCell>
-
+{/* 
                                     <TableCell>
                                         <Consecutive isConsecutive={ request.isConsecutive } />
-                                    </TableCell>
+                                    </TableCell> */}
 
                                     {/* <TableCell>
                                         <Badge variant="outline">
