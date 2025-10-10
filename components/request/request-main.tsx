@@ -12,7 +12,6 @@ import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
 import { RequestFilter }        from "@/components/request/request-filter";
 import { RequestList }          from "@/components/request/request-list";
 import { RequestTable }         from "@/components/request/request-table";
-import { RequestForm }          from "@/components/request/request-form";
 import { DataPagination }       from "@/components/ui/data-pagination";
 
 import { type Request, Status }     from "@/types/request";
@@ -21,6 +20,7 @@ import { errorToast, successToast } from "@/config/toast/toast.config";
 import { KEY_QUERYS }               from "@/consts/key-queries";
 import { useViewMode }              from "@/hooks/use-view-mode";
 import { updateFacultyTotal }       from "@/app/faculties/page";
+import { RequestForm } from "./request-form";
 
 
 interface RequestMainProps {
@@ -82,23 +82,24 @@ export function RequestMain({
         const filtered = requests.filter( request => {
             const matchesTitle = title === "" || request.title.toLowerCase().includes( title.toLowerCase() );
             const matchesStatus = statusFilter === "ALL" || request.status === statusFilter;
-            const matchesConsecutive =
-                consecutiveFilter === "ALL" ||
-                ( consecutiveFilter === "TRUE" && request.isConsecutive ) ||
-                ( consecutiveFilter === "FALSE" && !request.isConsecutive );
+            // const matchesConsecutive =
+            //     consecutiveFilter === "ALL" ||
+            //     ( consecutiveFilter === "TRUE" && request.isConsecutive ) ||
+            //     ( consecutiveFilter === "FALSE" && !request.isConsecutive );
 
-            return matchesTitle && matchesStatus && matchesConsecutive;
+            // return matchesTitle && matchesStatus && matchesConsecutive;
+            return matchesTitle && matchesStatus;
         });
 
         return filtered.sort(( a, b ) => {
-            const [aValue, bValue] = {
-                title       : [a.title, b.title],
-                consecutive : [a.isConsecutive, b.isConsecutive],
-                updatedAt   : [a.updatedAt, b.updatedAt],
-            }[sortBy];
+            // const [aValue, bValue] = {
+            //     title       : [a.title, b.title],
+            //     // consecutive : [a.isConsecutive, b.isConsecutive],
+            //     updatedAt   : [a.updatedAt, b.updatedAt],
+            // }[sortBy];
 
-            if ( aValue < bValue ) return sortOrder === "asc" ? -1 : 1;
-            if ( aValue > bValue ) return sortOrder === "asc" ? 1 : -1;
+            // if ( aValue < bValue ) return sortOrder === "asc" ? -1 : 1;
+            // if ( aValue > bValue ) return sortOrder === "asc" ? 1 : -1;
 
             return 0;
         })
