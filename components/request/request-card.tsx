@@ -47,11 +47,11 @@ export function RequestCard({
                         <p className="text-[11px] text-muted-foreground">{ request.id }</p>
                     </CardTitle>
 
-                    <div className="flex items-center gap-2">
+                    {/* <div className="flex items-center gap-2">
                         <ShowStatus status={ request.status } />
 
                         <Consecutive isConsecutive={ request.isConsecutive } />
-                    </div>
+                    </div> */}
                 </div>
             </CardHeader>
 
