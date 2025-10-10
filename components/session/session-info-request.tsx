@@ -1,6 +1,6 @@
 'use client'
 
-import { JSX, useMemo } from "react";
+import { JSX, useMemo, useState } from "react";
 
 import {
 	Accordion,
@@ -32,12 +32,14 @@ import { useQuery } from "@tanstack/react-query";
 import { KEY_QUERYS } from "@/consts/key-queries";
 import { fetchApi } from "@/services/fetch";
 import { SessionDayModuleSelector } from './session-day-module-selector';
+import { RequestForm } from '@/components/request/request-form';
 
 
 interface Props {
-	section  : OfferSection;
+	section     : OfferSection;
 	onViewRequest?  : ( requestId: string ) => void;
-    enabled: boolean;
+	enabled     : boolean;
+	facultyId?  : string;
 }
 
 
@@ -56,8 +58,10 @@ const SESSION_NAMES: Record<Session, string> = {
 export function SessionInfoRequest({
 	section,
 	onViewRequest,
-	enabled
+	enabled,
+	facultyId = ''
 }: Props ): JSX.Element {
+	const [isRequestFormOpen, setIsRequestFormOpen] = useState( false );
 	const {
 		data        : request,
 		isLoading,
@@ -91,17 +95,27 @@ export function SessionInfoRequest({
 	}, [ request ]);
 
 	if ( !request ) return (
-		<Card>
-			<CardContent className="mt-5 space-y-0">
-				<Button
-					onClick     = { () => onViewRequest?.( section.id ) }
-					className   = "gap-2 w-full"
-				>
-					<PlusIcon className="h-4 w-4" />
-					Crear Solicitud
-				</Button>
-			</CardContent>
-		</Card>
+		<>
+			<Card>
+				<CardContent className="mt-5 space-y-0">
+					<Button
+						onClick     = {() => setIsRequestFormOpen( true )}
+						className   = "gap-2 w-full"
+					>
+						<PlusIcon className="h-4 w-4" />
+						Crear Solicitud
+					</Button>
+				</CardContent>
+			</Card>
+
+			<RequestForm
+				isOpen      = { isRequestFormOpen }
+				onClose     = {() => setIsRequestFormOpen( false )}
+				request     = { null }
+				facultyId   = { facultyId }
+				section     = { section }
+			/>
+		</>
 	);
 
 	return (
