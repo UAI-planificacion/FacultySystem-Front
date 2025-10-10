@@ -98,14 +98,17 @@ export interface Request {
     id              : string;
     title           : string;
     status          : Status;
-    isConsecutive   : boolean;
     description     : string | null;
+
     createdAt       : Date;
     updatedAt       : Date;
+
     staffCreate     : StaffRequest;
     staffUpdate     : StaffRequest | null;
+
     totalDetails    : number;
     facultyId       : string;
+
     section        : RequestSection
 }
 
@@ -113,10 +116,9 @@ export interface Request {
 export interface CreateRequest {
     id?             : string | null;
     title           : string;
-    isConsecutive?   : boolean;
-    subjectId?      : string;
     staffCreateId   : string;
     description?    : string | null;
+    sectionId       : string;
 }
 
 
@@ -124,8 +126,6 @@ export interface UpdateRequest {
     id              : string;
     title?          : string;
     status?         : Status;
-    isConsecutive?  : boolean;
-    subjectId?      : string;
     staffUpdateId?  : string;
     description?    : string | null;
 }
