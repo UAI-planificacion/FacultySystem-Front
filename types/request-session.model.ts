@@ -1,23 +1,28 @@
 import { OfferSectionProffesor }    from "@/types/offer-section.model";
-import { StaffRequest }             from "@/types/request";
-import { Size, SpaceType }          from "@/types/request-detail.model";
+import { SpaceType }                from "@/types/request-detail.model";
 import { Session }                  from "@/types/section.model";
 
 
-export interface RequestSession {
+interface SessionSize {
     id              : string;
-    session         : Session;
-    description     : string | null;
-    isEnglish       : boolean;
-    isConsecutive   : boolean;
-    inAfternoon     : boolean;
-    spaceSize       : Size;
-    spaceType       : SpaceType;
-    professor       : OfferSectionProffesor;
-    createdAt       : Date;
-    updatedAt       : Date;
-    staffCreate     : StaffRequest;
-    staffUpdate     : StaffRequest | null;
+    detail          : string;
+}
+
+export interface RequestSession {
+    id                  : string;
+    session             : Session;
+    spaceId             : string | null;
+    description         : string | null;
+    isEnglish           : boolean;
+    isConsecutive       : boolean;
+    inAfternoon         : boolean;
+    spaceSize           : SessionSize | null;
+    spaceType           : SpaceType | null;
+    professor           : OfferSectionProffesor;
+    createdAt           : Date;
+    updatedAt           : Date;
+    sessionDayModules   : number[];
+    building            : string;
 }
 
 
