@@ -47,7 +47,6 @@ export function SessionDayModuleSelector({
 	} = useQuery({
 		queryKey    : [KEY_QUERYS.MODULES],
 		queryFn     : () => fetchApi<Module[]>({ url: 'modules/original' }),
-		enabled,
 	});
 
     const {
@@ -57,7 +56,6 @@ export function SessionDayModuleSelector({
 	} = useQuery({
 		queryKey    : [KEY_QUERYS.MODULES, 'dayModules'],
 		queryFn     : () => fetchApi<DayModule[]>({ url: 'modules/dayModule' }),
-		enabled,
 	});
 
 
@@ -115,13 +113,13 @@ export function SessionDayModuleSelector({
 
 
 	const handleCellClick = useCallback(( dayId: number, moduleId: number ): void => {
-		if ( !currentSession ) return;
+		if ( !currentSession || !enabled ) return;
 
 		// const sessionForThisDayModule = getSessionForDayModule( dayId, moduleId );
 		const dayModuleId = calculateDayModuleId( dayId, moduleId );
 
 		onToggleDayModule( currentSession, dayId, moduleId, dayModuleId );
-	}, [ currentSession, getSessionForDayModule, calculateDayModuleId, onToggleDayModule ]);
+	}, [ currentSession, enabled, getSessionForDayModule, calculateDayModuleId, onToggleDayModule ]);
 
 
 	// Obtener el color de fondo según la sesión
@@ -205,7 +203,7 @@ export function SessionDayModuleSelector({
 										const isModuleAvailableOnDay    = module.days.includes( day.id );
 										const sessionForThisCell        = getSessionForDayModule( day.id, module.id.toString() );
 										const isSelected                = sessionForThisCell !== null;
-										const canSelect                 = currentSession && availableSessions.includes( currentSession );
+										const canSelect                 = enabled && currentSession && availableSessions.includes( currentSession );
 
 										let cellStyle: React.CSSProperties = {};
 
