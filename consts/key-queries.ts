@@ -4,6 +4,7 @@ export const KEY_QUERYS = {
     STAFF           : 'staff',
     REQUESTS        : 'requests',
     REQUEST_DETAIL  : 'request-detail',
+    REQUEST_SESSION  : 'request-sessions',
     MODULES         : 'modules',
     MODULES_ORIGINAL: 'modules-original',
     COMMENTS        : "comments",
