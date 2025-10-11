@@ -12,18 +12,25 @@ import { Props }                from "@/components/shared/item-select/select-pro
 import { KEY_QUERYS }   from "@/consts/key-queries";
 import { fetchApi }     from "@/services/fetch";
 import { SizeResponse } from "@/types/request";
+import { useSpace }     from "@/hooks/use-space";
+
+
+interface SizeSelectProps extends Props {
+	buildingFilter? : string;
+}
 
 
 export function SizeSelect({
     defaultValues,
     onSelectionChange,
     label,
-    multiple    = true,
-    placeholder = 'Seleccionar Tamaños',
-    enabled     = true,
-    disabled    = false,
-    className   = ''
-} : Props ): JSX.Element {
+    multiple        = true,
+    placeholder     = 'Seleccionar Tamaños',
+    enabled         = true,
+    disabled        = false,
+    className       = '',
+    buildingFilter
+} : SizeSelectProps ): JSX.Element {
     const {
         data,
         isLoading,
@@ -35,13 +42,40 @@ export function SizeSelect({
     });
 
 
+	// Obtener spaces data para filtrar por building
+	const {
+		spacesData,
+		isLoading   : isLoadingSpaces
+	} = useSpace({ enabled: !!buildingFilter });
+
+
     const memoizedSizes = useMemo(() => {
-        return data?.map( size => ({
+		if ( !data ) return [];
+
+		// Si hay filtro por building, filtrar sizes disponibles en ese building
+		if ( buildingFilter ) {
+			const availableSizes = new Set(
+				spacesData
+					.filter( space => space.building === buildingFilter )
+					.map( space => space.size )
+			);
+
+			return data
+				.filter( size => availableSizes.has( size.id ))
+				.map( size => ({
+					id      : size.id,
+					label   : `${size.id} ${size.detail}`,
+					value   : size.id
+				}));
+		}
+
+		// Sin filtro, retornar todos
+        return data.map( size => ({
             id      : size.id,
             label   : `${size.id} ${size.detail}`,
             value   : size.id
-        }) ) ?? [];
-    }, [data]);
+        }));
+    }, [ data, buildingFilter, spacesData ]);
 
 
     return (
@@ -66,7 +100,7 @@ export function SizeSelect({
                     defaultValues       = { defaultValues }
                     onSelectionChange   = { onSelectionChange }
                     placeholder         = { placeholder }
-                    disabled            = { isLoading || disabled }
+                    disabled            = { isLoading || isLoadingSpaces || disabled }
                     multiple            = { multiple }
                 />
             )}
