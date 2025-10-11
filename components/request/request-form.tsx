@@ -28,7 +28,6 @@ import {
 import {
 	Form,
 	FormControl,
-	FormDescription,
 	FormField,
 	FormItem,
 	FormLabel,
@@ -38,30 +37,11 @@ import {
 	ToggleGroup,
 	ToggleGroupItem,
 }                                   from "@/components/ui/toggle-group"
-import {
-	Tabs,
-	TabsContent,
-	TabsList,
-	TabsTrigger,
-}                                   from "@/components/ui/tabs";
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle
-}                                   from "@/components/ui/card";
 import { Input }                    from "@/components/ui/input";
 import { Button }                   from "@/components/ui/button";
 import { ShowDateAt }               from "@/components/shared/date-at";
-import { CommentSection }           from "@/components/comment/comment-section";
-import { Switch }                   from "@/components/ui/switch";
-import { Textarea }                 from "@/components/ui/textarea";
-import { Label }                    from "@/components/ui/label";
 import { SectionSelect }            from "@/components/shared/item-select/section-select";
-import { SessionDayModuleSelector } from "@/components/session/session-day-module-selector";
-import { ProfessorSelect }          from "@/components/shared/item-select/professor-select";
-import { SpaceSelect }              from "@/components/shared/item-select/space-select";
-import { SessionName }              from "@/components/session/session-name";
+import { RequestSessionForm }       from "@/components/request/request-session-form";
 
 import {
 	CreateRequest,
@@ -72,15 +52,12 @@ import {
 import { OfferSection }             from "@/types/offer-section.model";
 import { Session }                  from "@/types/section.model";
 import { RequestSessionCreate }     from "@/types/request-session.model";
-import { SpaceType }                from "@/types/request-detail.model";
 import { KEY_QUERYS }               from "@/consts/key-queries";
 import { Method, fetchApi }         from "@/services/fetch";
 import { errorToast, successToast } from "@/config/toast/toast.config";
-import { cn }                       from "@/lib/utils";
 import LoaderMini                   from "@/icons/LoaderMini";
 import { useSession }               from "@/hooks/use-session";
 import { updateFacultyTotal }       from "@/app/faculties/page";
-import { useSizes }                 from "@/hooks/use-sizes";
 
 
 export type RequestFormValues = z.infer<typeof formSchema>;
@@ -123,10 +100,6 @@ const formSchema = z.object({
 		required_error: "Debe seleccionar una sección",
 		invalid_type_error: "La sección debe ser un texto"
 	}).min(1, { message: "Debe seleccionar una sección" }),
-	description: z.string()
-		.max(500, { message: "La descripción no puede tener más de 500 caracteres" })
-		.nullable()
-		.transform(val => val === "" ? null : val),
 })
 
 
@@ -134,11 +107,7 @@ const defaultRequest = ( data : Request | null, sectionId? : string ) => ({
 	title           : data?.title           || '',
 	status          : data?.status          || Status.PENDING,
 	sectionId       : data?.section?.id     || sectionId || '',
-	description     : data?.description     || '',
 });
-
-
-type Tab = 'form' | 'comments';
 
 
 const sessionLabels: Record<Session, string> = {
@@ -146,14 +115,6 @@ const sessionLabels: Record<Session, string> = {
 	[Session.A] : 'Ayudantía',
 	[Session.T] : 'Taller',
 	[Session.L] : 'Laboratorio',
-};
-
-
-const sessionColors: Record<Session, string> = {
-	[Session.C] : 'bg-blue-500',
-	[Session.A] : 'bg-green-500',
-	[Session.T] : 'bg-orange-500',
-	[Session.L] : 'bg-purple-500',
 };
 
 
@@ -165,10 +126,8 @@ export function RequestForm({
 	facultyId,
 	section : propSection
 }: Props ): JSX.Element {
-	const queryClient   = useQueryClient();
-	const [tab, setTab] = useState<Tab>( 'form' );
-	const { staff }     = useSession();
-	const { data : sizes } = useSizes();
+	const queryClient               = useQueryClient();
+	const { staff, isLoading: isLoadingStaff }     = useSession();
 
 	// Estado para la sección seleccionada
 	const [selectedSectionId, setSelectedSectionId] = useState<string | null>( propSection?.id || request?.section?.id || null );
@@ -192,6 +151,22 @@ export function RequestForm({
 		[Session.L] : { isEnglish : false, isConsecutive : false, inAfternoon : false },
 	});
 
+	// Estado para el edificio seleccionado por sesión
+	const [sessionBuildings, setSessionBuildings] = useState<Record<Session, string | null>>({
+		[Session.C] : null,
+		[Session.A] : null,
+		[Session.T] : null,
+		[Session.L] : null,
+	});
+
+	// Estado para el tipo de filtro seleccionado (type, size, space)
+	const [sessionFilterType, setSessionFilterType] = useState<Record<Session, 'type' | 'size' | 'space'>>({
+		[Session.C] : 'type',
+		[Session.A] : 'type',
+		[Session.T] : 'type',
+		[Session.L] : 'type',
+	});
+
 
 	// Obtener la sección seleccionada
 	const { data : selectedSection } = useQuery({
@@ -202,7 +177,6 @@ export function RequestForm({
 
 
 	const section = propSection || selectedSection;
-
 
 	// Calcular sesiones disponibles basado en la sección
 	const availableSessions = useMemo(() => {
@@ -217,47 +191,6 @@ export function RequestForm({
 
 		return sessions;
 	}, [ section ]);
-
-
-	// Manejar toggle de dayModule
-	const handleToggleDayModule = useCallback(( session: Session, dayId: number, moduleId: number, dayModuleId: number ) => {
-		setSessionDayModules( prev => {
-			const sessionModules = prev[session];
-			const existingIndex = sessionModules.findIndex( dm => dm.dayId === dayId && dm.moduleId === moduleId );
-
-			if ( existingIndex >= 0 ) {
-				// Remover
-				return {
-					...prev,
-					[session]: sessionModules.filter(( _, index ) => index !== existingIndex )
-				};
-			} else {
-				// Agregar
-				return {
-					...prev,
-					[session]: [...sessionModules, {
-						session,
-						dayModuleId,
-						dayId,
-						moduleId
-					}]
-				};
-			}
-		});
-	}, []);
-
-
-	// Manejar cambio de configuración de sesión
-	const handleSessionConfigChange = useCallback(( session: Session, key: keyof RequestSessionCreate, value: any ) => {
-		setSessionConfigs( prev => ({
-			...prev,
-			[session]: {
-				...prev[session],
-				[key]: value
-			}
-		}));
-	}, []);
-
 
 	// API para crear request con sessions
 	const createRequestWithSessionsApi = async ( payload: CreateRequestWithSessions ): Promise<Request> =>
@@ -314,14 +247,18 @@ export function RequestForm({
 	// Resetear form cuando cambia request o isOpen
 	useEffect(() => {
 		form.reset( defaultRequest( request, propSection?.id ));
-		setTab( 'form' );
 		setSelectedSectionId( propSection?.id || request?.section?.id || null );
 	}, [request, isOpen, propSection]);
 
 
 	// Manejar envío del formulario
 	function handleSubmit( data: RequestFormValues ): void {
-		console.log( "🚀 ~ file: request-form.tsx ~ data:", data )
+
+		// Esperar a que termine de cargar antes de validar
+		if ( isLoadingStaff ) {
+			toast( 'Cargando información del usuario...', { description: 'Por favor espere' });
+			return;
+		}
 
 		if ( !staff ) {
 			toast( 'Por favor, inicie sesión para crear una solicitud', errorToast );
@@ -336,23 +273,21 @@ export function RequestForm({
 				staffUpdateId   : staff.id,
 			});
 		} else {
-			// Crear nueva request con sessions
-			// Construir request sessions
 			const requestSessions: RequestSessionCreate[] = availableSessions.map( session => {
-				const dayModuleIds = sessionDayModules[session].map( dm => dm.dayModuleId );
-				const config = sessionConfigs[session];
+				const dayModuleIds  = sessionDayModules[session].map( dm => dm.dayModuleId );
+				const config        = sessionConfigs[session];
 
 				return {
 					session         : session,
-					description     : config.description || null,
-					isEnglish       : config.isEnglish || false,
-					isConsecutive   : config.isConsecutive || false,
-					inAfternoon     : config.inAfternoon || false,
-					spaceSizeId     : config.spaceSizeId || null,
-					spaceType       : config.spaceType || null,
-					professorId     : config.professorId || null,
-					staffCreate     : staff,
-					spaceId         : config.spaceId || null,
+					description     : config.description    || null,
+					isEnglish       : config.isEnglish      || false,
+					isConsecutive   : config.isConsecutive  || false,
+					inAfternoon     : config.inAfternoon    || false,
+					spaceSizeId     : config.spaceSizeId    || null,
+					spaceType       : config.spaceType      || null,
+					professorId     : config.professorId    || null,
+					building        : config.building       || '',
+					spaceId         : config.spaceId        || null,
 					dayModulesId    : dayModuleIds,
 				};
 			});
@@ -367,8 +302,16 @@ export function RequestForm({
 					`Debe seleccionar al menos un horario para: ${invalidSessions.map( s => sessionLabels[s] ).join( ', ' )}`,
 					errorToast
 				);
+
 				return;
 			}
+
+			const dataS = {
+				...data,
+				staffCreateId   : staff.id,
+				requestSessions
+			}
+			console.log('🚀 ~ file: request-form.tsx:395 ~ dataS:', dataS)
 
 			createRequestMutation.mutate({
 				...data,
@@ -387,21 +330,39 @@ export function RequestForm({
 			[Session.T] : [],
 			[Session.L] : [],
 		});
-		setCurrentSession( null );
-		setSessionConfigs({
+
+        setCurrentSession( null );
+
+        setSessionConfigs({
 			[Session.C] : { isEnglish : false, isConsecutive : false, inAfternoon : false },
 			[Session.A] : { isEnglish : false, isConsecutive : false, inAfternoon : false },
 			[Session.T] : { isEnglish : false, isConsecutive : false, inAfternoon : false },
 			[Session.L] : { isEnglish : false, isConsecutive : false, inAfternoon : false },
 		});
-		setSelectedSectionId( null );
-		onClose();
+
+        setSessionBuildings({
+			[Session.C] : null,
+			[Session.A] : null,
+			[Session.T] : null,
+			[Session.L] : null,
+		});
+
+        setSessionFilterType({
+			[Session.C] : 'type',
+			[Session.A] : 'type',
+			[Session.T] : 'type',
+			[Session.L] : 'type',
+		});
+
+        setSelectedSectionId( null );
+
+        onClose();
 	}, [ onClose ]);
 
 
 	return (
 		<Dialog open={isOpen} onOpenChange={handleClose}>
-			<DialogContent className="sm:max-w-[1200px] max-h-[90vh] overflow-y-auto">
+			<DialogContent className="sm:max-w-[800px] overflow-y-auto">
 				<DialogHeader>
 					<div className="space-y-1">
 						<DialogTitle>
@@ -417,371 +378,185 @@ export function RequestForm({
 					</div>
 				</DialogHeader>
 
-				<Tabs
-					defaultValue    = { tab }
-					onValueChange   = {( value ) => setTab( value as Tab )}
-					className       = "w-full"
-				>
-					{ request &&
-						<TabsList className="grid w-full grid-cols-2">
-							<TabsTrigger value="form">
-								Información
-							</TabsTrigger>
+                    <Form {...form}>
+                        <form onSubmit={ form.handleSubmit( handleSubmit )} className="space-y-4">
+                            <div className="grid grid-cols-1 gap-4">
+                                {/* Title */}
+                                <FormField
+                                    control = { form.control }
+                                    name    = "title"
+                                    render  = {({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Título</FormLabel>
 
-							<TabsTrigger value="comments">
-								Comentarios
-							</TabsTrigger>
-						</TabsList>
-					}
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="Ingrese el título de la solicitud"
+                                                    {...field}
+                                                />
+                                            </FormControl>
 
-					<TabsContent
-						value       = "form"
-						className   = { cn( "space-y-4", request ? "mt-4": "" )}
-					>
-						<Form {...form}>
-							<form onSubmit={ form.handleSubmit( handleSubmit )} className="space-y-4">
-								<div className="grid grid-cols-1 gap-4">
-									{/* Title */}
-									<FormField
-										control = { form.control }
-										name    = "title"
-										render  = {({ field }) => (
-											<FormItem>
-												<FormLabel>Título</FormLabel>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
 
-												<FormControl>
-													<Input
-														placeholder="Ingrese el título de la solicitud"
-														{...field}
-													/>
-												</FormControl>
+                                {/* Section Select */}
+                                <FormField
+                                    control = { form.control }
+                                    name    = "sectionId"
+                                    render  = {({ field }) => (
+                                        <FormItem>
+                                            <SectionSelect
+                                                label               = "Sección"
+                                                multiple            = { false }
+                                                placeholder         = "Seleccionar sección"
+                                                defaultValues       = { field.value }
+                                                onSelectionChange   = {( value ) => {
+                                                    const sectionId = typeof value === 'string' ? value : undefined;
+                                                    field.onChange( sectionId );
+                                                    setSelectedSectionId( sectionId || null );
+                                                }}
+                                                disabled            = { !!propSection || !!request }
+                                            />
 
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
 
-									{/* Section Select */}
-									<FormField
-										control = { form.control }
-										name    = "sectionId"
-										render  = {({ field }) => (
-											<FormItem>
-												<SectionSelect
-													label               = "Sección"
-													multiple            = { false }
-													placeholder         = "Seleccionar sección"
-													defaultValues       = { field.value }
-													onSelectionChange   = {( value ) => {
-														const sectionId = typeof value === 'string' ? value : undefined;
-														field.onChange( sectionId );
-														setSelectedSectionId( sectionId || null );
-													}}
-													disabled            = { !!propSection || !!request }
-												/>
+                                {/* Status */}
+                                { request &&
+                                    <FormField
+                                        control = { form.control }
+                                        name    = "status"
+                                        render  = {({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Estado</FormLabel>
 
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
+                                                <FormControl>
+                                                    <ToggleGroup
+                                                        type            = "single"
+                                                        value           = { field.value }
+                                                        onValueChange   = {( value: Status ) => {
+                                                            if ( value ) field.onChange( value )
+                                                        }}
+                                                        className       = "w-full"
+                                                        defaultValue    = { field.value }
+                                                    >
+                                                        <ToggleGroupItem
+                                                            value       = "PENDING"
+                                                            aria-label  = "Pendiente"
+                                                            className   = "flex-1 rounded-tl-lg rounded-bl-lg rounded-tr-none rounded-br-none border-t border-l border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-amber-400 data-[state=on]:dark:bg-amber-500 data-[state=on]:text-black data-[state=on]:dark:text-white data-[state=on]:hover:bg-amber-500 data-[state=on]:dark:hover:bg-amber-600"
+                                                        >
+                                                            <CircleDashed className="mr-2 h-4 w-4"/>
+                                                            Pendiente
+                                                        </ToggleGroupItem>
 
-									{/* Status */}
-									{ request &&
-										<FormField
-											control = { form.control }
-											name    = "status"
-											render  = {({ field }) => (
-												<FormItem>
-													<FormLabel>Estado</FormLabel>
+                                                        <ToggleGroupItem
+                                                            value       = "REVIEWING"
+                                                            aria-label  = "Revisando"
+                                                            className   = "flex-1 rounded-none border-t border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-blue-400 data-[state=on]:dark:bg-blue-500 data-[state=on]:text-black data-[state=on]:dark:text-white data-[state=on]:hover:bg-blue-500 data-[state=on]:dark:hover:bg-blue-600"
+                                                        >
+                                                            <Eye className="mr-2 h-4 w-4"/>
+                                                            Revisando
+                                                        </ToggleGroupItem>
 
-													<FormControl>
-														<ToggleGroup
-															type            = "single"
-															value           = { field.value }
-															onValueChange   = {( value: Status ) => {
-																if ( value ) field.onChange( value )
-															}}
-															className       = "w-full"
-															defaultValue    = { field.value }
-														>
-															<ToggleGroupItem
-																value       = "PENDING"
-																aria-label  = "Pendiente"
-																className   = "flex-1 rounded-tl-lg rounded-bl-lg rounded-tr-none rounded-br-none border-t border-l border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-amber-400 data-[state=on]:dark:bg-amber-500 data-[state=on]:text-black data-[state=on]:dark:text-white data-[state=on]:hover:bg-amber-500 data-[state=on]:dark:hover:bg-amber-600"
-															>
-																<CircleDashed className="mr-2 h-4 w-4"/>
-																Pendiente
-															</ToggleGroupItem>
+                                                        <ToggleGroupItem
+                                                            value       = "APPROVED"
+                                                            aria-label  = "Aprobado"
+                                                            className   = "flex-1 rounded-none border-t border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-green-400 data-[state=on]:dark:bg-green-500 data-[state=on]:text-black data-[state=on]:dark:text-white data-[state=on]:hover:bg-green-500 data-[state=on]:dark:hover:bg-green-600"
+                                                        >
+                                                            <BadgeCheck className="mr-2 h-4 w-4"/>
+                                                            Aprobado
+                                                        </ToggleGroupItem>
 
-															<ToggleGroupItem
-																value       = "REVIEWING"
-																aria-label  = "Revisando"
-																className   = "flex-1 rounded-none border-t border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-blue-400 data-[state=on]:dark:bg-blue-500 data-[state=on]:text-black data-[state=on]:dark:text-white data-[state=on]:hover:bg-blue-500 data-[state=on]:dark:hover:bg-blue-600"
-															>
-																<Eye className="mr-2 h-4 w-4"/>
-																Revisando
-															</ToggleGroupItem>
+                                                        <ToggleGroupItem
+                                                            value       = "REJECTED"
+                                                            aria-label  = "Rechazado"
+                                                            className   = "flex-1 rounded-tl-none rounded-bl-none rounded-tr-lg rounded-br-lg border-t border-r border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-red-400 data-[state=on]:dark:bg-red-500 data-[state=on]:text-black data-[state=on]:dark:text-white data-[state=on]:hover:bg-red-500 data-[state=on]:dark:hover:bg-red-600"
+                                                        >
+                                                            <OctagonX className="mr-2 h-4 w-4"/>
+                                                            Rechazado
+                                                        </ToggleGroupItem>
+                                                    </ToggleGroup>
+                                                </FormControl>
 
-															<ToggleGroupItem
-																value       = "APPROVED"
-																aria-label  = "Aprobado"
-																className   = "flex-1 rounded-none border-t border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-green-400 data-[state=on]:dark:bg-green-500 data-[state=on]:text-black data-[state=on]:dark:text-white data-[state=on]:hover:bg-green-500 data-[state=on]:dark:hover:bg-green-600"
-															>
-																<BadgeCheck className="mr-2 h-4 w-4"/>
-																Aprobado
-															</ToggleGroupItem>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                }
 
-															<ToggleGroupItem
-																value       = "REJECTED"
-																aria-label  = "Rechazado"
-																className   = "flex-1 rounded-tl-none rounded-bl-none rounded-tr-lg rounded-br-lg border-t border-r border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-red-400 data-[state=on]:dark:bg-red-500 data-[state=on]:text-black data-[state=on]:dark:text-white data-[state=on]:hover:bg-red-500 data-[state=on]:dark:hover:bg-red-600"
-															>
-																<OctagonX className="mr-2 h-4 w-4"/>
-																Rechazado
-															</ToggleGroupItem>
-														</ToggleGroup>
-													</FormControl>
+                                {/* Request Sessions - Solo para creación */}
+                                { !request && section && availableSessions.length > 0 && (
+                                    <RequestSessionForm
+                                        availableSessions           = { availableSessions }
+                                        sessionDayModules           = { sessionDayModules }
+                                        sessionConfigs              = { sessionConfigs }
+                                        sessionBuildings            = { sessionBuildings }
+                                        sessionFilterType           = { sessionFilterType }
+                                        currentSession              = { currentSession }
+                                        onSessionDayModulesChange   = { setSessionDayModules }
+                                        onSessionConfigsChange      = { setSessionConfigs }
+                                        onSessionBuildingsChange    = { setSessionBuildings }
+                                        onSessionFilterTypeChange   = { setSessionFilterType }
+                                        onCurrentSessionChange      = { setCurrentSession }
+                                    />
+                                )}
 
-													<FormMessage />
-												</FormItem>
-											)}
-										/>
-									}
+                                { request && <>
+                                    {/* Staff Create - Readonly */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <FormLabel>Creado por</FormLabel>
 
-									{/* Description */}
-									<FormField
-										control = { form.control }
-										name    = "description"
-										render  = {({ field }) => (
-											<FormItem>
-												<FormLabel>Descripción</FormLabel>
+                                            <Input
+                                                value = { request?.staffCreate?.name || '-' }
+                                                readOnly
+                                                disabled
+                                            />
+                                        </div>
 
-												<FormControl>
-													<Textarea
-														placeholder = "Agregue una descripción (opcional)"
-														className   = "min-h-[100px] max-h-[200px]"
-														{...field}
-														value       = { field.value || '' }
-													/>
-												</FormControl>
+                                        <div className="space-y-2">
+                                            <FormLabel>Última actualización por</FormLabel>
 
-												<FormDescription className="text-xs flex justify-end">
-													{field.value?.length || 0} / 500
-												</FormDescription>
+                                            <Input
+                                                value = { request?.staffUpdate?.name || '-' }
+                                                readOnly
+                                                disabled
+                                            />
+                                        </div>
+                                    </div>
 
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
+                                    {/* Staff Update - Readonly */}
+                                    <ShowDateAt
+                                        createdAt = { request?.createdAt }
+                                        updatedAt = { request?.updatedAt }
+                                    />
+                                </>
+                                }
+                            </div>
 
-									{/* Request Sessions - Solo para creación */}
-									{ !request && section && availableSessions.length > 0 && (
-										<Card>
-											<CardHeader>
-												<CardTitle className="text-base">Configurar Sesiones</CardTitle>
-											</CardHeader>
+                            <div className="flex justify-between space-x-4 pt-4 border-t">
+                                <Button
+                                    type    = "button"
+                                    variant = "outline"
+                                    onClick = { handleClose }
+                                >
+                                    Cancelar
+                                </Button>
 
-											<CardContent className="space-y-4">
-												{/* Selector de sesión actual para marcar */}
-												<div className="space-y-2">
-													<Label>Seleccionar sesión para marcar horarios</Label>
-
-													<div className="flex flex-wrap gap-2">
-														{availableSessions.map( session => {
-															const isCurrent = currentSession === session;
-															const count = sessionDayModules[session].length;
-
-															return (
-																<Button
-																	key         = { session }
-																	variant     = { isCurrent ? "default" : "outline" }
-																	size        = "sm"
-																	onClick     = {() => setCurrentSession( session )}
-																	className   = {`${ isCurrent ? sessionColors[session] + ' text-white hover:' + sessionColors[session] : '' }`}
-																>
-																	{ sessionLabels[session] } ({ count })
-																</Button>
-															);
-														})}
-													</div>
-												</div>
-
-												{/* Tabla única compartida */}
-												<div>
-													<SessionDayModuleSelector
-														selectedSessions    = { Object.values( sessionDayModules ).flat() }
-														onToggleDayModule   = { handleToggleDayModule }
-														currentSession      = { currentSession }
-														availableSessions   = { availableSessions }
-														enabled             = { true }
-													/>
-												</div>
-
-												{/* Tabs para configuración individual de cada sesión */}
-												<Tabs defaultValue={ availableSessions[0] } className="w-full">
-													<TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${availableSessions.length}, 1fr)` }}>
-														{availableSessions.map( session => (
-															<TabsTrigger
-																key     = { session }
-																value   = { session }
-															>
-																{ sessionLabels[session] }
-															</TabsTrigger>
-														))}
-													</TabsList>
-
-													{availableSessions.map( session => (
-														<TabsContent key={ session } value={ session } className="space-y-4 mt-4">
-															{/* Configuración de la sesión */}
-															<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-																{/* Profesor */}
-																<ProfessorSelect
-																	label               = "Profesor"
-																	multiple            = { false }
-																	placeholder         = "Seleccionar profesor"
-																	defaultValues       = { sessionConfigs[session].professorId || undefined }
-																	onSelectionChange   = {( value ) => {
-																		const professorId = typeof value === 'string' ? value : null;
-																		handleSessionConfigChange( session, 'professorId', professorId );
-																	}}
-																/>
-
-																{/* Espacio */}
-																<SpaceSelect
-																	label               = "Espacio"
-																	multiple            = { false }
-																	placeholder         = "Seleccionar espacio"
-																	defaultValues       = { sessionConfigs[session].spaceId || undefined }
-																	onSelectionChange   = {( value ) => {
-																		const spaceId = typeof value === 'string' ? value : null;
-																		handleSessionConfigChange( session, 'spaceId', spaceId );
-																	}}
-																/>
-															</div>
-
-															{/* Switches */}
-															<div className="space-y-3">
-																<div className="flex items-center justify-between rounded-lg border p-3">
-																	<Label htmlFor={`isEnglish-${session}`} className="cursor-pointer">
-																		En inglés
-																	</Label>
-
-																	<Switch
-																		id              = {`isEnglish-${session}`}
-																		checked         = { sessionConfigs[session].isEnglish || false }
-																		onCheckedChange = {( checked ) => handleSessionConfigChange( session, 'isEnglish', checked )}
-																	/>
-																</div>
-
-																<div className="flex items-center justify-between rounded-lg border p-3">
-																	<Label htmlFor={`isConsecutive-${session}`} className="cursor-pointer">
-																		Consecutivo
-																	</Label>
-
-																	<Switch
-																		id              = {`isConsecutive-${session}`}
-																		checked         = { sessionConfigs[session].isConsecutive || false }
-																		onCheckedChange = {( checked ) => handleSessionConfigChange( session, 'isConsecutive', checked )}
-																	/>
-																</div>
-
-																<div className="flex items-center justify-between rounded-lg border p-3">
-																	<Label htmlFor={`inAfternoon-${session}`} className="cursor-pointer">
-																		En la tarde
-																	</Label>
-
-																	<Switch
-																		id              = {`inAfternoon-${session}`}
-																		checked         = { sessionConfigs[session].inAfternoon || false }
-																		onCheckedChange = {( checked ) => handleSessionConfigChange( session, 'inAfternoon', checked )}
-																	/>
-																</div>
-															</div>
-
-															{/* Descripción de la sesión */}
-															<div>
-																<Label htmlFor={`description-${session}`}>Descripción de la sesión</Label>
-
-																<Textarea
-																	id          = {`description-${session}`}
-																	placeholder = "Descripción opcional"
-																	className   = "mt-2"
-																	value       = { sessionConfigs[session].description || '' }
-																	onChange    = {( e ) => handleSessionConfigChange( session, 'description', e.target.value )}
-																/>
-															</div>
-														</TabsContent>
-													))}
-												</Tabs>
-											</CardContent>
-										</Card>
-									)}
-
-									{ request && <>
-										{/* Staff Create - Readonly */}
-										<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-											<div className="space-y-2">
-												<FormLabel>Creado por</FormLabel>
-
-												<Input
-													value = { request?.staffCreate?.name || '-' }
-													readOnly
-													disabled
-												/>
-											</div>
-
-											<div className="space-y-2">
-												<FormLabel>Última actualización por</FormLabel>
-
-												<Input
-													value = { request?.staffUpdate?.name || '-' }
-													readOnly
-													disabled
-												/>
-											</div>
-										</div>
-
-										{/* Staff Update - Readonly */}
-										<ShowDateAt
-											createdAt = { request?.createdAt }
-											updatedAt = { request?.updatedAt }
-										/>
-									</>
-									}
-								</div>
-
-								<div className="flex justify-between space-x-4 pt-4 border-t">
-									<Button
-										type    = "button"
-										variant = "outline"
-										onClick = { handleClose }
-									>
-										Cancelar
-									</Button>
-
-									<Button
-										type        = "submit"
-										disabled    = { createRequestMutation.isPending || updateRequestMutation.isPending }
-									>
-										{ ( createRequestMutation.isPending || updateRequestMutation.isPending ) && <LoaderMini /> }
-										{ request ? 'Guardar cambios' : 'Crear solicitud' }
-									</Button>
-								</div>
-							</form>
-						</Form>
-					</TabsContent>
-
-					{ request &&
-						<TabsContent value="comments" className="mt-4">
-							{ request?.id && (
-								<CommentSection
-									requestId   = { request.id }
-									enabled     = { tab === 'comments' }
-								/>
-							)}
-						</TabsContent>
-					}
-				</Tabs>
+                                <Button
+                                    type        = "submit"
+                                    disabled    = { isLoadingStaff || createRequestMutation.isPending || updateRequestMutation.isPending }
+                                >
+                                    { ( isLoadingStaff || createRequestMutation.isPending || updateRequestMutation.isPending ) && <LoaderMini /> }
+                                    { isLoadingStaff ? 'Cargando...' : ( request ? 'Guardar cambios' : 'Crear solicitud' )}
+                                </Button>
+                            </div>
+                        </form>
+                    </Form>
 			</DialogContent>
 		</Dialog>
 	);
