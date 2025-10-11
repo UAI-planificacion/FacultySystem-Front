@@ -66,7 +66,7 @@ export interface RequestProfessor {
 
 export interface PeriodRequest {
     id          : string;
-    code        : number;
+    name        : string;
     startDate   : Date;
     endDate     : Date;
 }
@@ -98,7 +98,6 @@ export interface Request {
     id              : string;
     title           : string;
     status          : Status;
-    description     : string | null;
 
     createdAt       : Date;
     updatedAt       : Date;
