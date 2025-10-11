@@ -3,7 +3,6 @@
 import { JSX } from "react";
 
 import { Session }      from "@/types/section.model";
-import { Offer }        from "@/types/offer.model";
 import { SessionName }  from "@/components/session/session-name";
 import { SessionCount } from "@/components/section/types";
 
@@ -14,11 +13,11 @@ interface Props {
 }
 
 
-export const getSessionCounts = ( offer : Offer ): SessionCount => ({
-    C: offer.lecture,
-    A: offer.tutoringSession,
-    T: offer.workshop,
-    L: offer.laboratory,
+export const getSessionCounts = ( sessionCounts : SessionCount ): SessionCount => ({
+    C: sessionCounts.C,
+    A: sessionCounts.A,
+    T: sessionCounts.T,
+    L: sessionCounts.L,
 });
 
 
