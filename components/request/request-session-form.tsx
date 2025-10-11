@@ -26,8 +26,8 @@ import { SizeSelect }               from "@/components/shared/item-select/size-s
 import { SpaceTypeSelect }          from "@/components/shared/item-select/space-type-select";
 import { Checkbox }                 from "@/components/ui/checkbox";
 
-import { Session }                  from "@/types/section.model";
-import { RequestSessionCreate }     from "@/types/request-session.model";
+import { Session }              from "@/types/section.model";
+import { RequestSessionCreate } from "@/types/request-session.model";
 
 
 interface SessionDayModule {
@@ -73,9 +73,9 @@ const sessionColors: Record<Session, string> = {
 export const requestSessionSchema = z.object({
 	building    : z.string().min( 1, { message: "El edificio es obligatorio" }),
 	spaceFilter : z.object({
-		spaceId         : z.string().nullable(),
-		spaceType       : z.string().nullable(),
-		spaceSizeId     : z.string().nullable(),
+		spaceId     : z.string().nullable(),
+		spaceType   : z.string().nullable(),
+		spaceSizeId : z.string().nullable(),
 	}).refine(
 		( data ) => data.spaceId !== null || data.spaceType !== null || data.spaceSizeId !== null,
 		{
@@ -98,7 +98,6 @@ export function RequestSessionForm({
 	onSessionFilterTypeChange,
 	onCurrentSessionChange,
 }: Props ): JSX.Element {
-
 	// Manejar toggle de dayModule
 	const handleToggleDayModule = useCallback(( session: Session, dayId: number, moduleId: number, dayModuleId: number ) => {
 		onSessionDayModulesChange({
