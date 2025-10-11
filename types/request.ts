@@ -1,4 +1,5 @@
-import { Role } from "@/types/staff.model";
+import { Role }         from "@/types/staff.model";
+import { SpaceType }    from "@/types/request-detail.model";
 
 
 export enum Status {
@@ -90,7 +91,10 @@ export interface RequestSection {
     professor       : RequestProfessor;
     period          : PeriodRequest;
     subject         : RequestSubject;
+    spaceType       : SpaceType;
+    spaceSize       : SizeResponse;
     countSessions   : number;
+    building        : string | null;
 }
 
 
