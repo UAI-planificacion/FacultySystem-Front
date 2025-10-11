@@ -1,14 +1,15 @@
 export type Skill = {
     floor       : number | null;
-    capacity    : number | null;
+    capacity    : number;
     aforo       : number | null;
     mts2        : string | null;
     foto        : string | null;
     num_enchufe : number | null;
-    type        : string | null;
-    size        : string | null;
+    type        : string;
+    size        : string;
     min?        : number | null;
     max?        : number | null;
+    building    : string;
 }
 
 
