@@ -18,7 +18,6 @@ import {
 import { Button }       from "@/components/ui/button";
 import { ShowStatus }   from "@/components/shared/status";
 import { ShowDate }     from "@/components/shared/date";
-import { Consecutive }  from "@/components/shared/consecutive";
 import { ActionButton } from "@/components/shared/action";
 
 import { type Request } from "@/types/request";
@@ -47,23 +46,29 @@ export function RequestCard({
                         <p className="text-[11px] text-muted-foreground">{ request.id }</p>
                     </CardTitle>
 
-                    {/* <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
                         <ShowStatus status={ request.status } />
-
-                        <Consecutive isConsecutive={ request.isConsecutive } />
-                    </div> */}
+                    </div>
                 </div>
             </CardHeader>
 
             <CardContent className="space-y-3">
                 <div className="space-y-2 text-sm">
-                    {/* <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5">
                         <BookOpen className="h-4 w-4" />
 
                         <span className="font-medium max-w-full truncate overflow-hidden whitespace-nowrap">
-                            { request.offer.subject.id } - { request.offer.subject.name }
+                            { request.section.subject.id }-{ request.section.code }
                         </span>
-                    </div> */}
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                        <CalendarDays className="h-4 w-4" />
+
+                        <span className="max-w-full truncate overflow-hidden whitespace-nowrap">
+                            { request.section.period.id }-{ request.section.period.name } { new Date( request.section.startDate ).toLocaleDateString( 'es-CL' )} - { new Date( request.section.endDate ).toLocaleDateString( 'es-CL' )}
+                        </span>
+                    </div>
 
                     <div className="flex items-center gap-1.5">
                         <User className="h-4 w-4" />
@@ -73,22 +78,8 @@ export function RequestCard({
                         </span>
                     </div>
 
-                    {/* <div className="flex items-center gap-1.5">
-                        <CalendarDays className="h-4 w-4" />
-
-                        <span className="max-w-full truncate overflow-hidden whitespace-nowrap">
-                            { request.offer.period.id } - { request.offer.period.name }
-                        </span>
-                    </div> */}
-
                     <ShowDate date={ request.createdAt } />
                 </div>
-
-                {request.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2 truncate">
-                        { request.description }
-                    </p>
-                )}
 
                 <div className="flex items-center gap-2 justify-end">
                     <ActionButton

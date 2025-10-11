@@ -19,7 +19,6 @@ import {
 import { Card, CardContent }    from "@/components/ui/card";
 import { Button }               from "@/components/ui/button";
 import { Badge }                from "@/components/ui/badge";
-import { Consecutive }          from "@/components/shared/consecutive";
 import { ShowStatus }           from "@/components/shared/status";
 import { ScrollArea }           from "@/components/ui/scroll-area";
 import { ActionButton }         from "@/components/shared/action";
@@ -72,11 +71,10 @@ export function RequestTable({
                             <TableRow>
                                 <TableHead>Título</TableHead>
                                 <TableHead>Estado</TableHead>
-                                {/* <TableHead>Consecutivo</TableHead> */}
+                                <TableHead>SSEC</TableHead>
                                 <TableHead>Período</TableHead>
+                                <TableHead>Fechas</TableHead>
                                 <TableHead>Creado por</TableHead>
-                                <TableHead>Actualizado por</TableHead>
-                                <TableHead>Asignatura</TableHead>
                                 <TableHead className="text-right">Acciones</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -93,16 +91,23 @@ export function RequestTable({
                                     <TableCell>
                                         <ShowStatus status={ request.status } />
                                     </TableCell>
-{/* 
-                                    <TableCell>
-                                        <Consecutive isConsecutive={ request.isConsecutive } />
-                                    </TableCell> */}
 
-                                    {/* <TableCell>
+                                    <TableCell
+                                        className   = "max-w-[150px] truncate"
+                                        title       = {`${request.section.subject.id}-${request.section.code} | ${ request.section.subject.name }`}
+                                    >
+                                        { request.section.subject.id }-{ request.section.code }
+                                    </TableCell>
+
+                                    <TableCell>
                                         <Badge variant="outline">
-                                            { request.offer.period.id } - { request.offer.period.name }
+                                            { request.section.period.id }-{ request.section.period.name }
                                         </Badge>
-                                    </TableCell> */}
+                                    </TableCell>
+
+                                    <TableCell className="text-sm text-muted-foreground">
+                                        { new Date( request.section.startDate ).toLocaleDateString( 'es-CL' )} - { new Date( request.section.endDate ).toLocaleDateString( 'es-CL' )}
+                                    </TableCell>
 
                                     <TableCell
                                         className   = "max-w-[150px] truncate"
@@ -110,26 +115,6 @@ export function RequestTable({
                                     >
                                         { request.staffCreate.name }
                                     </TableCell>
-
-                                    <TableCell>
-                                        { request.staffUpdate ? (
-                                            <div
-                                                className   = "max-w-[150px] truncate"
-                                                title       = { request.staffUpdate.name }
-                                            >
-                                                { request.staffUpdate.name }
-                                            </div>
-                                        ) : (
-                                            <span className="text-muted-foreground">-</span>
-                                        )}
-                                    </TableCell>
-
-                                    {/* <TableCell
-                                        className   = "max-w-[150px] truncate"
-                                        title       = {`${request.offer.subject.id} - ${request.offer.subject.name}`}
-                                    >
-                                        { request.offer.subject.name }
-                                    </TableCell> */}
 
                                     <TableCell className="text-right">
                                         <div className="flex items-center justify-end gap-2">
