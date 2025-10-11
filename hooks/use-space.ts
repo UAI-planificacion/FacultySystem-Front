@@ -9,6 +9,16 @@ import { Space }        from "@/types/space.model";
 import { ENV }          from "@/config/envs/env";
 
 
+// Interface for flattened space data
+export interface SpaceData {
+	id			: string;
+	name		: string;
+	size		: string;
+	building	: string;
+	type		: string;
+}
+
+
 // Function to transform cost center data to options format
 export const memoizedSpaceData = (
 	spaceData : Space | undefined
@@ -21,6 +31,20 @@ export const memoizedSpaceData = (
 }, [spaceData]);
 
 
+// Function to transform space data to flattened format
+export const memoizedSpaceDataFlat = (
+	spaceData : Space | undefined
+): SpaceData[] => useMemo(() => {
+	return spaceData?.lov_vals?.map( space => ({
+		id			: space.idlovvals.toString(),
+		name		: space.description,
+		size		: space.skill.size,
+		building	: space.skill.building,
+		type		: space.skill.type,
+	})) ?? [];
+}, [spaceData]);
+
+
 // Interface for hook parameters
 interface UseSpaceParams {
 	enabled? : boolean;
@@ -29,7 +53,8 @@ interface UseSpaceParams {
 
 // Interface for hook return values
 interface UseSpaceReturn {
-	spaces      : Option[];
+	spaces		: Option[];
+	spacesData  : SpaceData[];
 	isLoading	: boolean;
 	isError		: boolean;
 	error		: Error | null;
@@ -60,7 +85,8 @@ export const useSpace = (
 
 
 	return {
-		spaces: memoizedSpaceData( data ),
+		spaces		: memoizedSpaceData( data ),
+		spacesData	: memoizedSpaceDataFlat( data ),
 		isLoading,
 		isError,
 		error,
