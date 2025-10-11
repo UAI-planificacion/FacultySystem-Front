@@ -77,9 +77,12 @@ export function useSession(): UseSessionReturn {
         isLoading   : isStaffLoading,
         error       : staffError
     } = useQuery({
-        queryKey	: [KEY_QUERYS.STAFF, session?.user?.email],
+        queryKey	: [ KEY_QUERYS.STAFF, session?.user?.email ],
         queryFn		: () => fetchApi<Staff>({ url: `staff/${session?.user?.email}` }),
-        enabled     : !!session,
+        enabled     : !!session?.user?.email,
+		staleTime	: 1000 * 60 * 5,		// 5 minutos - mantener datos frescos
+		gcTime		: 1000 * 60 * 10,		// 10 minutos - mantener en caché
+		retry		: 2,					// Reintentar 2 veces en caso de error
     });
 
 
