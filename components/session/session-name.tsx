@@ -13,13 +13,15 @@ interface Props {
     session     : Session;
     isShort?    : boolean;
     count?      : number;
+    hideCount?  : boolean;
 }
 
 
 export function SessionName({
     session,
     isShort,
-    count
+    count,
+    hideCount = false
 }:Props ) {
     return (
         <Badge
@@ -27,9 +29,11 @@ export function SessionName({
             className   = { `${sessionColors[session]} ${sessionColorsHover[session]} text-white` }
             title       = { isShort ?  `${ count } ${sessionLabels[session]}` : undefined }
         >
-            { isShort ?
-                `${ count }${session}` :
-                sessionLabels[session]
+            { hideCount ?
+                session :
+                isShort ?
+                    `${ count }${session}` :
+                    sessionLabels[session]
             }
         </Badge>
     );
