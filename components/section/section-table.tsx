@@ -1,6 +1,8 @@
 'use client'
 
 import React, { useState } from "react"
+import { useRouter } from 'next/navigation';
+
 
 import {
     Album,
@@ -246,6 +248,7 @@ export function SectionTable({
 			L: section.laboratory,
 		};
 	}
+    const router = useRouter();
 
 
 	return (
@@ -348,9 +351,10 @@ export function SectionTable({
 													disabled    = { section.isClosed }
                                                     className   = "bg-green-500 hover:bg-green-600"
 													onClick     = { () => {
-														setCreateSessionSection( section );
-                                                        setSelectedSectionEdit( section );
-														setIsCreateSessionOpen( true );
+														// setCreateSessionSection( section );
+                                                        // setSelectedSectionEdit( section );
+														// setIsCreateSessionOpen( true );
+                                                        router.push(`sections/${section.id}`)
 													}}
 												>
 													<Album className="w-4 h-4" />
