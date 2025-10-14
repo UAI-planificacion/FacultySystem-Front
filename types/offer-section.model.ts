@@ -1,6 +1,7 @@
 import { Module, Status }   from "@/types/request";
 import { Session }          from "@/types/section.model";
 import { Role }             from "@/types/staff.model";
+import { Building, SpaceType } from "./request-detail.model";
 
 
 export interface OfferSectionProffesor {
@@ -86,6 +87,7 @@ interface SessionDayModule {
 interface RequestSessionDetail {
     id                  : string;
     session             : Session;
+    building            : Building;
     spaceId             : string;
     isEnglish           : boolean;
     isConsecutive       : boolean;
@@ -93,6 +95,7 @@ interface RequestSessionDetail {
     description         : string | null;
     professor           : OfferSectionProffesor | null;
     spaceSize           : SpaceSize | null;
+    spaceType           : SpaceType | null;
     staffUpdate         : Staff;
     sessionDayModules   : SessionDayModule[];
     createdAt           : Date;
