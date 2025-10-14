@@ -3,53 +3,51 @@
 import { JSX, useMemo, useState } from "react";
 
 import {
-	Accordion,
-	AccordionContent,
-	AccordionItem,
-	AccordionTrigger
-}                           from '@/components/ui/accordion';
-import { Card, CardContent }             from '@/components/ui/card';
-import { Button }           from '@/components/ui/button';
-import { Badge }            from '@/components/ui/badge';
-import { ShowStatus }       from '@/components/shared/status';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-	ExternalLinkIcon,
 	User,
 	Building2,
 	Clock,
-	GraduationCap,
 	Languages,
 	Sun,
 	FileText,
 	PlusIcon,
-	Calendar
+	Calendar,
+    Cuboid,
+    Edit,
+    MessageCircle
 }                           from 'lucide-react';
-
-import { OfferSection, RequestSession }   from '@/types/offer-section.model';
-import { Session } from '@/types/section.model';
 import { useQuery } from "@tanstack/react-query";
-import { KEY_QUERYS } from "@/consts/key-queries";
-import { fetchApi } from "@/services/fetch";
-import { SessionDayModuleSelector } from './session-day-module-selector';
-import { RequestForm } from '@/components/request/request-form';
+
+import { Card, CardContent, CardHeader }    from '@/components/ui/card';
+import { Button }                           from '@/components/ui/button';
+import { ShowStatus }                       from '@/components/shared/status';
+import { RequestForm }                      from '@/components/request/request-form';
+import { SessionDayModuleSelector }         from '@/components/session/session-day-module-selector';
+import { RequestSessionEditForm }           from '@/components/request-session/request-session-edit-form';
+import { SesionInfoRequestCard }            from '@/components/session/session-info-request-card';
+import { sessionLabels }                    from '@/components/section/section.config';
+
+import {
+    OfferSection,
+    RequestSession
+}                       from '@/types/offer-section.model';
+import { Request }      from '@/types/request';
+import { KEY_QUERYS }   from "@/consts/key-queries";
+import { fetchApi }     from "@/services/fetch";
 
 
 interface Props {
-	section     : OfferSection;
-	onViewRequest?  : ( requestId: string ) => void;
-	enabled     : boolean;
-	facultyId?  : string;
+	section			: OfferSection;
+	enabled			: boolean;
+	facultyId?		: string;
 }
 
 
-// Mapeo de nombres de sesiones en español
-const SESSION_NAMES: Record<Session, string> = {
-	[Session.C] : 'Cátedra',
-	[Session.A] : 'Ayudantía',
-	[Session.T] : 'Taller',
-	[Session.L] : 'Laboratorio'
-};
+const getResponsive = ( lenght: number ): string => ({
+    1 : 'grid-cols-1',
+    2 : 'grid-cols-1 md:grid-cols-2',
+    3 : 'grid-cols-1 md:grid-cols-3',
+    4 : 'grid-cols-1 md:grid-cols-4'
+})[lenght] || 'grid-cols-1'
 
 
 /**
@@ -57,11 +55,13 @@ const SESSION_NAMES: Record<Session, string> = {
  */
 export function SessionInfoRequest({
 	section,
-	onViewRequest,
 	enabled,
 	facultyId = ''
 }: Props ): JSX.Element {
-	const [isRequestFormOpen, setIsRequestFormOpen] = useState( false );
+	const [isRequestFormOpen, setIsRequestFormOpen]					= useState( false );
+	const [isRequestSessionEditOpen, setIsRequestSessionEditOpen]	= useState( false );
+	const [selectedRequestSession, setSelectedRequestSession]		= useState<RequestSession['requestSessions'][0] | undefined>( undefined );
+
 	const {
 		data        : request,
 		isLoading,
@@ -119,13 +119,15 @@ export function SessionInfoRequest({
 	);
 
 	return (
-		<Card className="border-l-4 border-l-primary/50">
-			<Accordion type="single" collapsible className="w-full">
-				<AccordionItem value="request-info" className="border-none">
-					<AccordionTrigger className="px-6 py-4 hover:no-underline">
-						<div className="flex items-center justify-between w-full pr-4">
-							<div className="flex items-center gap-4 flex-1">
-								<div className="flex flex-col items-start gap-2">
+		<Card>
+		{/* <Card className="border-l-4 border-l-primary/50 p-4"> */}
+			{/* <Accordion type="single" collapsible className="w-full"> */}
+				{/* <AccordionItem value="request-info" className="border-none"> */}
+					{/* <AccordionTrigger className="px-6 py-4 hover:no-underline"> */}
+						{/* <CardHeader className="flex items-center justify-betwee"> */}
+						<CardHeader>
+                            <div className="flex items-center justify-between">
+								<div className="flex flex-col items-start gap-0.5">
 									<div className="flex items-center gap-2">
 										<span className="text-sm font-semibold">
 											Solicitud:
@@ -140,174 +142,139 @@ export function SessionInfoRequest({
 										ID: { request.id }
 									</p>
 								</div>
-							</div>
 
-							<div className="flex items-center gap-3">
-								<ShowStatus status={ request.status } />
+                                <div className="flex items-center gap-2">
+                                    <ShowStatus status={ request.status } />
 
-								{ onViewRequest && (
-									<Button
-										variant     = "outline"
-										size        = "icon"
-										title       = "Ver solicitud completa"
-										onClick     = { ( e ) => {
-											e.stopPropagation();
-											onViewRequest( request.id );
-										}}
-										className   = "h-8 w-8"
-									>
-										<ExternalLinkIcon className="h-4 w-4" />
-									</Button>
-								)}
-							</div>
-						</div>
-					</AccordionTrigger>
+                                    <Button
+                                        onClick     = {() => setIsRequestFormOpen( true )}
+                                        className   = "text-blue-500 hover:text-blue-600"
+                                        variant     = "ghost"
+                                        size        = "icon"
+                                        title       = "Editar solicitud"
+                                    >
+                                        <Edit className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+						</CardHeader>
+					{/* </AccordionTrigger> */}
 
-					<AccordionContent className="px-6 pb-4">
-						<div className="space-y-6 pt-2">
-							{/* Tabs por cada sesión */}
-							{ request.requestSessions && request.requestSessions.length > 0 && (
-								<Tabs defaultValue={ request.requestSessions[0].session } className="w-full">
-									<TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${ request.requestSessions.length }, 1fr)` }}>
-										{ request.requestSessions.map( reqSession => (
-											<TabsTrigger key={ reqSession.id } value={ reqSession.session }>
-												{ SESSION_NAMES[reqSession.session] } ({ reqSession.sessionDayModules.length })
-											</TabsTrigger>
-										))}
-									</TabsList>
+					{/* // <AccordionContent className="px-6 pb-4"> */}
+						<CardContent className="space-y-6">
+							{/* Cards agrupadas por campo */}
+                            <div className="space-y-3">
+                                {/* Botones de acción comentados temporalmente */}
+                                <div className={`grid ${getResponsive( request.requestSessions.length )} gap-3`}>
+                                    { request.requestSessions.map(( rs, index ) => (
+                                        <div
+                                            key={ index }
+                                            className="flex items-center justify-between gap-1 border py-0.5 px-4 rounded-lg"
+                                        >
+                                            <span className="text-sm font-medium">
+                                                { sessionLabels[rs.session] } ({ rs.sessionDayModules.length })
+                                            </span>
 
-									{ request.requestSessions.map( reqSession => (
-										<TabsContent key={ reqSession.id } value={ reqSession.session } className="space-y-4 mt-4">
-											{/* Información específica de la sesión */}
-											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-												{/* Espacio ID */}
-												<div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-													<Building2 className="h-5 w-5 text-primary mt-0.5" />
+                                            <div className=" flex gap-2 items-center">
+                                                <Button
+                                                    onClick     = {() => {
+														setSelectedRequestSession( rs );
+														setIsRequestSessionEditOpen( true );
+													}}
+                                                    className   = "text-blue-500 hover:text-blue-600"
+                                                    variant     = "ghost"
+                                                    size        = "icon"
+                                                    title       = "Editar solicitud de sesión"
+                                                >
+                                                    <Edit className="h-4 w-4" />
+                                                </Button>
 
-													<div className="flex-1 space-y-1">
-														<p className="text-xs font-medium text-muted-foreground">
-															Espacio
-														</p>
+                                                <Button
+                                                    onClick     = {() => {}}
+                                                    className   = "text-amber-500 hover:text-amber-600"
+                                                    variant     = "ghost"
+                                                    size        = "icon"
+                                                    title       = "Ver comentarios de la sesión"
+                                                >
+                                                    <MessageCircle className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
 
-														<p className="text-sm font-semibold">
-															{ reqSession.spaceId || (
-																<span className="text-muted-foreground">
-																	No especificado
-																</span>
-															)}
-														</p>
-													</div>
-												</div>
+								<div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+									{/* Edificio */}
+									<SesionInfoRequestCard
+										icon	= { Building2 }
+										label	= "Edificio"
+										values	= { request.requestSessions.map( rs => ({
+											session	: rs.session,
+											value	: rs.building
+										}))}
+									/>
 
-												{/* Tamaño de espacio */}
-												{ reqSession.spaceSize && (
-													<div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-														<Building2 className="h-5 w-5 text-primary mt-0.5" />
+									{/* Detalle Espacio */}
+									<SesionInfoRequestCard
+										icon	= { Cuboid }
+										label	= "Detalle Espacio"
+										values	= { request.requestSessions.map( rs => ({
+											session	: rs.session,
+											value	: rs.spaceId || ( rs.spaceSize ? `${ rs.spaceSize.id } ${ rs.spaceSize.detail }` : null ) || rs.spaceType
+										}))}
+									/>
 
-														<div className="flex-1 space-y-1">
-															<p className="text-xs font-medium text-muted-foreground">
-																Tamaño de Espacio
-															</p>
+									{/* Profesor */}
+									<SesionInfoRequestCard
+										icon	= { User }
+										label	= "Profesor"
+										values	= { request.requestSessions.map( rs => ({
+											session	: rs.session,
+											value	: rs.professor ? `${rs.professor.id}-${rs.professor.name}` : null
+										}))}
+									/>
 
-															<p className="text-sm font-semibold">
-																{ reqSession.spaceSize.detail }
-															</p>
-														</div>
-													</div>
-												)}
-											</div>
+									{/* En la Tarde */}
+									<SesionInfoRequestCard
+										icon	= { Sun }
+										label	= "En la Tarde"
+										values	= { request.requestSessions.map( rs => ({
+											session	: rs.session,
+											value	: rs.isAfternoon ? "Sí" : "No"
+										}))}
+									/>
 
-											{/* Configuración de Sesión */}
-											<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-												<div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-													<Sun className="h-5 w-5 text-primary mt-0.5" />
+									{/* En Inglés */}
+									<SesionInfoRequestCard
+										icon	= { Languages }
+										label	= "En Inglés"
+										values	= { request.requestSessions.map( rs => ({
+											session	: rs.session,
+											value	: rs.isEnglish ? "Sí" : "No"
+										}))}
+									/>
 
-													<div className="flex-1 space-y-1">
-														<p className="text-xs font-medium text-muted-foreground">
-															En la Tarde
-														</p>
+									{/* Consecutivo */}
+									<SesionInfoRequestCard
+										icon	= { Clock }
+										label	= "Consecutivo"
+										values	= { request.requestSessions.map( rs => ({
+											session	: rs.session,
+											value	: rs.isConsecutive ? "Sí" : "No"
+										}))}
+									/>
+								</div>
 
-														<Badge
-															variant     = { reqSession.isAfternoon ? "default" : "secondary" }
-															className   = "text-xs"
-														>
-															{ reqSession.isAfternoon ? "Sí" : "No" }
-														</Badge>
-													</div>
-												</div>
-
-												<div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-													<Languages className="h-5 w-5 text-primary mt-0.5" />
-
-													<div className="flex-1 space-y-1">
-														<p className="text-xs font-medium text-muted-foreground">
-															En Inglés
-														</p>
-
-														<Badge
-															variant     = { reqSession.isEnglish ? "default" : "secondary" }
-															className   = "text-xs"
-														>
-															{ reqSession.isEnglish ? "Sí" : "No" }
-														</Badge>
-													</div>
-												</div>
-
-												<div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-													<Clock className="h-5 w-5 text-primary mt-0.5" />
-
-													<div className="flex-1 space-y-1">
-														<p className="text-xs font-medium text-muted-foreground">
-															Consecutivo
-														</p>
-
-														<Badge
-															variant     = { reqSession.isConsecutive ? "default" : "secondary" }
-															className   = "text-xs"
-														>
-															{ reqSession.isConsecutive ? "Sí" : "No" }
-														</Badge>
-													</div>
-												</div>
-											</div>
-
-											{/* Profesor */}
-											{ reqSession.professor && (
-												<div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-													<User className="h-5 w-5 text-primary mt-0.5" />
-
-													<div className="flex-1 space-y-1">
-														<p className="text-xs font-medium text-muted-foreground">
-															Profesor
-														</p>
-
-														<p className="text-sm font-semibold">
-															{ reqSession.professor.name }
-														</p>
-													</div>
-												</div>
-											)}
-
-											{/* Descripción */}
-											{ reqSession.description && (
-												<div className="flex items-start gap-3 p-4 rounded-lg bg-muted/50 border border-border">
-													<FileText className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-
-													<div className="flex-1 space-y-1">
-														<p className="text-xs font-medium text-muted-foreground">
-															Descripción
-														</p>
-
-														<p className="text-sm text-foreground leading-relaxed">
-															{ reqSession.description }
-														</p>
-													</div>
-												</div>
-											)}
-										</TabsContent>
-									))}
-								</Tabs>
-							)}
+                                {/* Descripción */}
+                                <SesionInfoRequestCard
+                                    icon	= { FileText }
+                                    label	= "Descripción"
+                                    values	= { request.requestSessions.map( rs => ({
+                                        session	: rs.session,
+                                        value	: rs.description
+                                    }))}
+                                />
+                            </div>
 
 							{/* Tabla de sesiones por día y módulo */}
 							{ allSelectedSessions.length > 0 && (
@@ -328,10 +295,43 @@ export function SessionInfoRequest({
 									/>
 								</div>
 							)}
-						</div>
-					</AccordionContent>
-				</AccordionItem>
-			</Accordion>
+						</CardContent>
+					{/* </AccordionContent> */}
+				{/* </AccordionItem> */}
+			{/* </Accordion> */}
+
+			{/* Formulario de edición de solicitud */}
+			<RequestForm
+				isOpen		= { isRequestFormOpen }
+				onClose		= {() => setIsRequestFormOpen( false )}
+				request		= { request as unknown as Request | null }
+				facultyId	= { facultyId }
+				section		= { section }
+			/>
+
+			{/* Formulario de edición de sesión de solicitud */}
+			{ selectedRequestSession && (
+				<RequestSessionEditForm
+					isOpen				= { isRequestSessionEditOpen }
+					onClose				= {() => {
+						setIsRequestSessionEditOpen( false );
+						setSelectedRequestSession( undefined );
+					}}
+					onCancel			= {() => {
+						setIsRequestSessionEditOpen( false );
+						setSelectedRequestSession( undefined );
+					}}
+					onSuccess			= {() => {
+						setIsRequestSessionEditOpen( false );
+						setSelectedRequestSession( undefined );
+					}}
+					requestSession		= {{
+						...selectedRequestSession,
+						inAfternoon: selectedRequestSession.isAfternoon
+					} as any}
+					requestId			= { request?.id || '' }
+				/>
+			)}
 		</Card>
 	);
 }
