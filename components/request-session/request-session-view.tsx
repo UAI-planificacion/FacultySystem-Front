@@ -8,8 +8,8 @@ import {
 	useMutation,
 	useQuery,
 	useQueryClient
-}									from "@tanstack/react-query";
-import { toast }					from "sonner";
+}                   from "@tanstack/react-query";
+import { toast }    from "sonner";
 
 import { Button }					from "@/components/ui/button";
 import { RequestInfoCard }			from "@/components/request-detail/request-info-card";
@@ -51,7 +51,7 @@ interface SessionDayModule {
 
 interface RequestSessionDayModuleUpdate {
 	requestSessionId	: string;
-	sessionDayModules	: number[];
+	dayModulesId	: number[];
 }
 
 
@@ -59,12 +59,12 @@ export function RequestSessionView({
 	request,
 	onBack,
 }: Props ): JSX.Element {
-	const queryClient										= useQueryClient();
-	const [selectedSession, setSelectedSession]			= useState<RequestSession | undefined>( undefined );
-	const [isOpenEdit, setIsOpenEdit]					= useState( false );
-	const [isEditingModules, setIsEditingModules]		= useState( false );
-	const [currentSessionForModules, setCurrentSessionForModules] = useState<Session | null>( null );
-	const { viewMode, onViewChange }					= useViewMode({ queryName: 'viewSession' });
+	const queryClient									            = useQueryClient();
+	const [selectedSession, setSelectedSession]		                = useState<RequestSession | undefined>( undefined );
+	const [isOpenEdit, setIsOpenEdit]				                = useState( false );
+	const [isEditingModules, setIsEditingModules]                   = useState( false );
+	const [currentSessionForModules, setCurrentSessionForModules]   = useState<Session | null>( null );
+	const { viewMode, onViewChange }				                = useViewMode({ queryName: 'viewSession' });
 
 
 	const {
@@ -76,7 +76,6 @@ export function RequestSessionView({
 		queryFn		: () => fetchApi<RequestSession[]>({ url: `request-sessions/request/${request.id}` }),
 	});
 
-
 	// Load dayModules to convert IDs
 	const {
 		data		: dayModules = [],
@@ -85,7 +84,6 @@ export function RequestSessionView({
 		queryKey	: [ KEY_QUERYS.MODULES, 'dayModules' ],
 		queryFn		: () => fetchApi<DayModule[]>({ url: 'modules/dayModule' }),
 	});
-
 
 	// Convert sessionDayModules to SessionDayModule format for the selector
 	const allSessionDayModules = useMemo(() => {
@@ -112,10 +110,8 @@ export function RequestSessionView({
 		return modules;
 	}, [ data, dayModules ]);
 
-
 	// State for managing module selection during edit
 	const [editingSessionDayModules, setEditingSessionDayModules] = useState<Record<string, number[]>>({});
-
 
 	// Initialize editing state when edit mode is enabled
 	const handleStartEditingModules = useCallback(() => {
@@ -130,7 +126,6 @@ export function RequestSessionView({
 		setEditingSessionDayModules( initialModules );
 		setIsEditingModules( true );
 	}, [ data ]);
-
 
 	// Handle toggle of day module
 	const handleToggleDayModule = useCallback(( session: Session, dayId: number, moduleId: number, dayModuleId: number ) => {
@@ -184,18 +179,17 @@ export function RequestSessionView({
 		});
 	}, [ data ]);
 
-
 	// Save module changes
 	const updateModulesMutation = useMutation({
 		mutationFn: async ( updates: RequestSessionDayModuleUpdate[] ) => {
 			return fetchApi({
-				url		: `request-sessions/update-modules`,
+				url		: `request-sessions/day-modules`,
 				method	: Method.PATCH,
 				body	: updates,
 			});
 		},
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.REQUEST_SESSION, request.id ] });
+			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.REQUEST_SESSION, request.id ]});
 			toast( 'Módulos actualizados exitosamente', successToast );
 			setIsEditingModules( false );
 			setCurrentSessionForModules( null );
@@ -207,11 +201,14 @@ export function RequestSessionView({
 
 
 	const handleSaveModules = () => {
-		const updates: RequestSessionDayModuleUpdate[] = Object.entries( editingSessionDayModules ).map(([ requestSessionId, sessionDayModules ]) => ({
-			requestSessionId,
-			sessionDayModules,
-		}));
+		const updates: RequestSessionDayModuleUpdate[] = Object
+            .entries( editingSessionDayModules )
+            .map(([ requestSessionId, dayModulesId ]) => ({
+                requestSessionId,
+                dayModulesId,
+            }));
 
+        console.log('🚀 ~ file: request-session-view.tsx:211 ~ updates:', updates)
 		updateModulesMutation.mutate( updates );
 	};
 
