@@ -111,7 +111,6 @@ export function RequestSessionEditForm({
 		},
 	});
 
-
 	// Update form when requestSession changes
 	useEffect(() => {
 		if ( requestSession ) {
@@ -142,7 +141,6 @@ export function RequestSessionEditForm({
 		}
 	}, [ requestSession, form ]);
 
-
 	// Update mutation
 	const updateRequestSessionMutation = useMutation({
 		mutationFn: async ( values: RequestSessionEditFormValues ) => {
@@ -158,6 +156,7 @@ export function RequestSessionEditForm({
 					isConsecutive	: values.isConsecutive,
 					inAfternoon		: values.inAfternoon,
 					description		: values.description,
+                    building		: values.building,
 				},
 			});
 		},
@@ -173,6 +172,7 @@ export function RequestSessionEditForm({
 
 
 	const onSubmit = ( values: RequestSessionEditFormValues ) => {
+		console.log('🚀 ~ file: request-session-edit-form.tsx:174 ~ values:', values)
 		updateRequestSessionMutation.mutate( values );
 	};
 
@@ -302,14 +302,14 @@ export function RequestSessionEditForm({
 													<FormControl>
 														<SpaceSelect
 															multiple			= { false }
-															placeholder			= "Seleccionar espacio"
+															placeholder			= "Seleccione"
 															defaultValues		= { field.value || undefined }
-															onSelectionChange	= {( value ) => {
+                                                            buildingFilter		= { selectedBuilding || undefined }
+                                                            disabled			= { filterType !== 'space' }
+															onSelectionChange   = {( value ) => {
 																const spaceId = typeof value === 'string' ? value : null;
 																field.onChange( spaceId );
 															}}
-															buildingFilter		= { selectedBuilding || undefined }
-															disabled			= { filterType !== 'space' }
 														/>
 													</FormControl>
 
@@ -343,14 +343,14 @@ export function RequestSessionEditForm({
 													<FormControl>
 														<SpaceTypeSelect
 															multiple			= { false }
-															placeholder			= "Seleccionar tipo"
+															placeholder			= "Seleccione"
 															defaultValues		= { field.value || undefined }
-															onSelectionChange	= {( value ) => {
+                                                            buildingFilter		= { selectedBuilding || undefined }
+                                                            disabled			= { filterType !== 'type' }
+															onSelectionChange   = {( value ) => {
 																const spaceType = ( typeof value === 'string' && value !== 'none' ) ? value : null;
 																field.onChange( spaceType );
 															}}
-															buildingFilter		= { selectedBuilding || undefined }
-															disabled			= { filterType !== 'type' }
 														/>
 													</FormControl>
 
@@ -384,14 +384,14 @@ export function RequestSessionEditForm({
 													<FormControl>
 														<SizeSelect
 															multiple			= { false }
-															placeholder			= "Seleccionar tamaño"
+															placeholder			= "Seleccione"
 															defaultValues		= { field.value || undefined }
+                                                            buildingFilter		= { selectedBuilding || undefined }
+                                                            disabled			= { filterType !== 'size' }
 															onSelectionChange	= {( value ) => {
 																const sizeId = typeof value === 'string' ? value : null;
 																field.onChange( sizeId );
 															}}
-															buildingFilter		= { selectedBuilding || undefined }
-															disabled			= { filterType !== 'size' }
 														/>
 													</FormControl>
 
