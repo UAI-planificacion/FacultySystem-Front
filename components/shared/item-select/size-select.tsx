@@ -16,7 +16,8 @@ import { useSpace }     from "@/hooks/use-space";
 
 
 interface SizeSelectProps extends Props {
-	buildingFilter? : string;
+	buildingFilter?     : string;
+	spaceTypeFilter?    : string;
 }
 
 
@@ -29,7 +30,8 @@ export function SizeSelect({
     enabled         = true,
     disabled        = false,
     className       = '',
-    buildingFilter
+    buildingFilter,
+    spaceTypeFilter
 } : SizeSelectProps ): JSX.Element {
     const {
         data,
@@ -41,22 +43,25 @@ export function SizeSelect({
         enabled
     });
 
-
-	// Obtener spaces data para filtrar por building
+	// Obtener spaces data para filtrar por building y/o spaceType
 	const {
 		spacesData,
 		isLoading   : isLoadingSpaces
-	} = useSpace({ enabled: !!buildingFilter });
+	} = useSpace({ enabled: !!buildingFilter || !!spaceTypeFilter });
 
 
     const memoizedSizes = useMemo(() => {
 		if ( !data ) return [];
 
-		// Si hay filtro por building, filtrar sizes disponibles en ese building
-		if ( buildingFilter ) {
+		// Si hay filtro por building y/o spaceType, filtrar sizes disponibles
+		if ( buildingFilter || spaceTypeFilter ) {
 			const availableSizes = new Set(
 				spacesData
-					.filter( space => space.building === buildingFilter )
+					.filter( space => {
+						const matchesBuilding = !buildingFilter || space.building === buildingFilter;
+						const matchesType = !spaceTypeFilter || space.type === spaceTypeFilter;
+						return matchesBuilding && matchesType;
+					})
 					.map( space => space.size )
 			);
 
@@ -75,7 +80,7 @@ export function SizeSelect({
             label   : `${size.id} ${size.detail}`,
             value   : size.id
         }));
-    }, [ data, buildingFilter, spacesData ]);
+    }, [ data, buildingFilter, spaceTypeFilter, spacesData ]);
 
 
     return (
