@@ -159,12 +159,12 @@ export function RequestForm({
 		[Session.L] : null,
 	});
 
-	// Estado para el tipo de filtro seleccionado (type, size, space)
-	const [sessionFilterType, setSessionFilterType] = useState<Record<Session, 'type' | 'size' | 'space'>>({
-		[Session.C] : 'type',
-		[Session.A] : 'type',
-		[Session.T] : 'type',
-		[Session.L] : 'type',
+	// Estado para el modo de filtro seleccionado (space, type-size)
+	const [sessionFilterMode, setSessionFilterMode] = useState<Record<Session, 'space' | 'type-size'>>({
+		[Session.C] : 'type-size',
+		[Session.A] : 'type-size',
+		[Session.T] : 'type-size',
+		[Session.L] : 'type-size',
 	});
 
 
@@ -253,7 +253,6 @@ export function RequestForm({
 
 	// Manejar envío del formulario
 	function handleSubmit( data: RequestFormValues ): void {
-
 		// Esperar a que termine de cargar antes de validar
 		if ( isLoadingStaff ) {
 			toast( 'Cargando información del usuario...', { description: 'Por favor espere' });
@@ -347,11 +346,11 @@ export function RequestForm({
 			[Session.L] : null,
 		});
 
-        setSessionFilterType({
-			[Session.C] : 'type',
-			[Session.A] : 'type',
-			[Session.T] : 'type',
-			[Session.L] : 'type',
+        setSessionFilterMode({
+			[Session.C] : 'type-size',
+			[Session.A] : 'type-size',
+			[Session.T] : 'type-size',
+			[Session.L] : 'type-size',
 		});
 
         setSelectedSectionId( null );
@@ -362,7 +361,7 @@ export function RequestForm({
 
 	return (
 		<Dialog open={isOpen} onOpenChange={handleClose}>
-			<DialogContent className="sm:max-w-[800px] overflow-y-auto">
+			<DialogContent className="max-w-[800px] max-h-[90vh] overflow-y-auto">
 				<DialogHeader>
 					<div className="space-y-1">
 						<DialogTitle>
@@ -490,20 +489,20 @@ export function RequestForm({
 
                                 {/* Request Sessions - Solo para creación */}
                                 { !request && section && availableSessions.length > 0 && (
-                                    <RequestSessionForm
-                                        availableSessions           = { availableSessions }
-                                        sessionDayModules           = { sessionDayModules }
-                                        sessionConfigs              = { sessionConfigs }
-                                        sessionBuildings            = { sessionBuildings }
-                                        sessionFilterType           = { sessionFilterType }
-                                        currentSession              = { currentSession }
-                                        onSessionDayModulesChange   = { setSessionDayModules }
-                                        onSessionConfigsChange      = { setSessionConfigs }
-                                        onSessionBuildingsChange    = { setSessionBuildings }
-                                        onSessionFilterTypeChange   = { setSessionFilterType }
-                                        onCurrentSessionChange      = { setCurrentSession }
-                                    />
-                                )}
+									<RequestSessionForm
+										availableSessions           = { availableSessions }
+										sessionDayModules           = { sessionDayModules }
+										sessionConfigs              = { sessionConfigs }
+										sessionBuildings            = { sessionBuildings }
+										sessionFilterMode           = { sessionFilterMode }
+										currentSession              = { currentSession }
+										onSessionDayModulesChange   = { setSessionDayModules }
+										onSessionConfigsChange      = { setSessionConfigs }
+										onSessionBuildingsChange    = { setSessionBuildings }
+										onSessionFilterModeChange   = { setSessionFilterMode }
+										onCurrentSessionChange      = { setCurrentSession }
+									/>
+								)}
 
                                 { request && <>
                                     {/* Staff Create - Readonly */}
