@@ -20,11 +20,8 @@ import { Textarea }                 from "@/components/ui/textarea";
 import { Label }                    from "@/components/ui/label";
 import { SessionDayModuleSelector } from "@/components/session/session-day-module-selector";
 import { ProfessorSelect }          from "@/components/shared/item-select/professor-select";
-import { SpaceSelect }              from "@/components/shared/item-select/space-select";
 import { HeadquartersSelect }       from "@/components/shared/item-select/headquarters-select";
-import { SizeSelect }               from "@/components/shared/item-select/size-select";
-import { SpaceTypeSelect }          from "@/components/shared/item-select/space-type-select";
-import { Checkbox }                 from "@/components/ui/checkbox";
+import { SpaceFilterSelector, FilterMode } from "@/components/shared/space-filter-selector";
 
 import { Session }              from "@/types/section.model";
 import { RequestSessionCreate } from "@/types/request-session.model";
@@ -43,12 +40,12 @@ interface Props {
 	sessionDayModules       : Record<Session, SessionDayModule[]>;
 	sessionConfigs          : Record<Session, Partial<RequestSessionCreate>>;
 	sessionBuildings        : Record<Session, string | null>;
-	sessionFilterType       : Record<Session, 'type' | 'size' | 'space'>;
+	sessionFilterMode       : Record<Session, FilterMode>;
 	currentSession          : Session | null;
 	onSessionDayModulesChange   : ( sessionDayModules: Record<Session, SessionDayModule[]> ) => void;
 	onSessionConfigsChange      : ( sessionConfigs: Record<Session, Partial<RequestSessionCreate>> ) => void;
 	onSessionBuildingsChange    : ( sessionBuildings: Record<Session, string | null> ) => void;
-	onSessionFilterTypeChange   : ( sessionFilterType: Record<Session, 'type' | 'size' | 'space'> ) => void;
+	onSessionFilterModeChange   : ( sessionFilterMode: Record<Session, FilterMode> ) => void;
 	onCurrentSessionChange      : ( currentSession: Session | null ) => void;
 }
 
@@ -90,12 +87,12 @@ export function RequestSessionForm({
 	sessionDayModules,
 	sessionConfigs,
 	sessionBuildings,
-	sessionFilterType,
+	sessionFilterMode,
 	currentSession,
 	onSessionDayModulesChange,
 	onSessionConfigsChange,
 	onSessionBuildingsChange,
-	onSessionFilterTypeChange,
+	onSessionFilterModeChange,
 	onCurrentSessionChange,
 }: Props ): JSX.Element {
 	// Manejar toggle de dayModule
@@ -188,25 +185,13 @@ export function RequestSessionForm({
 	}, [ sessionBuildings, sessionConfigs, onSessionBuildingsChange, onSessionConfigsChange ]);
 
 
-	// Manejar cambio de tipo de filtro
-	const handleFilterTypeChange = useCallback(( session: Session, filterType: 'type' | 'size' | 'space' ) => {
-		onSessionFilterTypeChange({
-			...sessionFilterType,
-			[session]: filterType
+	// Manejar cambio de modo de filtro
+	const handleFilterModeChange = useCallback(( session: Session, filterMode: FilterMode ) => {
+		onSessionFilterModeChange({
+			...sessionFilterMode,
+			[session]: filterMode
 		});
-
-		// Limpiar las otras opciones según el tipo seleccionado
-		if ( filterType === 'space' ) {
-			handleSessionConfigChange( session, 'spaceType', null );
-			handleSessionConfigChange( session, 'spaceSizeId', null );
-		} else if ( filterType === 'type' ) {
-			handleSessionConfigChange( session, 'spaceId', null );
-			handleSessionConfigChange( session, 'spaceSizeId', null );
-		} else if ( filterType === 'size' ) {
-			handleSessionConfigChange( session, 'spaceType', null );
-			handleSessionConfigChange( session, 'spaceId', null );
-		}
-	}, [ sessionFilterType, onSessionFilterTypeChange, handleSessionConfigChange ]);
+	}, [ sessionFilterMode, onSessionFilterModeChange ]);
 
 
 	return (
@@ -255,93 +240,19 @@ export function RequestSessionForm({
 								/>
 							</div>
 
-							{/* Selector de tipo de filtro (Type, Size, Space) */}
+							{/* Selector de filtros de espacio */}
 							{ sessionConfigs[session].building && (
-								<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-									{/* Espacio Específico */}
-									<div className="flex gap-2 items-end">
-										<Checkbox
-											className       = "cursor-default rounded-full p-[0.6rem] flex justify-center items-center mb-2"
-											checked         = { sessionFilterType[session] === 'space' }
-											onCheckedChange = {( checked ) => {
-												if ( checked ) {
-													handleFilterTypeChange( session, 'space' );
-												}
-											}}
-										/>
-
-										<div className="w-full">
-											<SpaceSelect
-												label               = "Espacio Específico"
-												multiple            = { false }
-												placeholder         = "Seleccionar espacio"
-												defaultValues       = { sessionConfigs[session].spaceId || undefined }
-												onSelectionChange   = {( value ) => {
-													const spaceId = typeof value === 'string' ? value : null;
-													handleSessionConfigChange( session, 'spaceId', spaceId );
-												}}
-												buildingFilter      = { sessionConfigs[session].building || undefined }
-												disabled            = { sessionFilterType[session] !== 'space' }
-											/>
-										</div>
-									</div>
-
-									{/* Tipo de Espacio */}
-									<div className="flex gap-2 items-end">
-										<Checkbox
-											className       = "cursor-default rounded-full p-[0.6rem] flex justify-center items-center mb-2"
-											checked         = { sessionFilterType[session] === 'type' }
-											onCheckedChange = {( checked ) => {
-												if ( checked ) {
-													handleFilterTypeChange( session, 'type' );
-												}
-											}}
-										/>
-
-										<div className="w-full">
-											<SpaceTypeSelect
-												label               = "Tipo de Espacio"
-												multiple            = { false }
-												placeholder         = "Seleccionar tipo"
-												defaultValues       = { sessionConfigs[session].spaceType || undefined }
-												onSelectionChange   = {( value ) => {
-													const spaceType = ( typeof value === 'string' && value !== 'none' ) ? value : null;
-													handleSessionConfigChange( session, 'spaceType', spaceType );
-												}}
-												buildingFilter      = { sessionConfigs[session].building || undefined }
-												disabled            = { sessionFilterType[session] !== 'type' }
-											/>
-										</div>
-									</div>
-
-									{/* Tamaño */}
-									<div className="flex gap-2 items-end">
-										<Checkbox
-											className       = "cursor-default rounded-full p-[0.6rem] flex justify-center items-center mb-2"
-											checked         = { sessionFilterType[session] === 'size' }
-											onCheckedChange = {( checked ) => {
-												if ( checked ) {
-													handleFilterTypeChange( session, 'size' );
-												}
-											}}
-										/>
-
-										<div className="w-full">
-											<SizeSelect
-												label               = "Tamaño"
-												multiple            = { false }
-												placeholder         = "Seleccionar tamaño"
-												defaultValues       = { sessionConfigs[session].spaceSizeId || undefined }
-												onSelectionChange   = {( value ) => {
-													const sizeId = typeof value === 'string' ? value : null;
-													handleSessionConfigChange( session, 'spaceSizeId', sizeId );
-												}}
-												buildingFilter      = { sessionConfigs[session].building || undefined }
-												disabled            = { sessionFilterType[session] !== 'size' }
-											/>
-										</div>
-									</div>
-								</div>
+								<SpaceFilterSelector
+									buildingId          = { sessionConfigs[session].building || null }
+									filterMode          = { sessionFilterMode[session] }
+									spaceId             = { sessionConfigs[session].spaceId || null }
+									spaceType           = { sessionConfigs[session].spaceType || null }
+									spaceSizeId         = { sessionConfigs[session].spaceSizeId || null }
+									onFilterModeChange  = {( mode ) => handleFilterModeChange( session, mode )}
+									onSpaceIdChange     = {( spaceId ) => handleSessionConfigChange( session, 'spaceId', spaceId )}
+									onSpaceTypeChange   = {( spaceType ) => handleSessionConfigChange( session, 'spaceType', spaceType )}
+									onSpaceSizeIdChange = {( spaceSizeId ) => handleSessionConfigChange( session, 'spaceSizeId', spaceSizeId )}
+								/>
 							)}
 
 							{/* Switches */}
