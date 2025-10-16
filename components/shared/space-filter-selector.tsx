@@ -25,13 +25,14 @@ export type FilterMode = 'space' | 'type-size';
 interface Props {
 	buildingId          : string | null;
 	filterMode          : FilterMode;
-	spaceId             : string | null;
+	spaceId             : string | string[] | null;
 	spaceType           : string | null;
 	spaceSizeId         : string | null;
 	onFilterModeChange  : ( mode: FilterMode )              => void;
-	onSpaceIdChange     : ( spaceId: string | null )        => void;
+	onSpaceIdChange     : ( spaceId: string | string[] | null )        => void;
 	onSpaceTypeChange   : ( spaceType: string | null )      => void;
 	onSpaceSizeIdChange : ( spaceSizeId: string | null )    => void;
+    spaceMultiple?       : boolean;
 }
 
 
@@ -57,6 +58,7 @@ export function SpaceFilterSelector({
 	onSpaceIdChange,
 	onSpaceTypeChange,
 	onSpaceSizeIdChange,
+    spaceMultiple = false
 }: Props ): JSX.Element {
 	// Check if size filter should be enabled
 	const isSizeFilterEnabled = filterMode === 'type-size' && 
@@ -97,14 +99,19 @@ export function SpaceFilterSelector({
 				<div className="w-full">
 					<SpaceSelect
 						label               = "Espacio Específico"
-						multiple            = { false }
+						multiple            = { spaceMultiple }
 						placeholder         = "Seleccionar espacio"
 						defaultValues       = { spaceId || undefined }
                         buildingFilter      = { buildingId || undefined }
                         disabled            = { filterMode !== 'space' }
 						onSelectionChange   = {( value ) => {
-							const newSpaceId = typeof value === 'string' ? value : null;
-							onSpaceIdChange( newSpaceId );
+							if ( spaceMultiple ) {
+								const spaceIds = Array.isArray( value ) ? value : ( value ? [value] : null );
+								onSpaceIdChange( spaceIds );
+							} else {
+								const newSpaceId = typeof value === 'string' ? value : null;
+								onSpaceIdChange( newSpaceId );
+							}
 						}}
 					/>
 				</div>
