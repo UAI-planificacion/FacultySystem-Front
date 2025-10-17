@@ -14,7 +14,7 @@ import {
     Cuboid,
     Edit,
     MessageCircle
-}                           from 'lucide-react';
+}                   from 'lucide-react';
 import { useQuery } from "@tanstack/react-query";
 
 import { Card, CardContent, CardHeader }    from '@/components/ui/card';
@@ -29,10 +29,11 @@ import { sessionLabels }                    from '@/components/section/section.c
 import {
     OfferSection,
     RequestSession
-}                       from '@/types/offer-section.model';
-import { Request }      from '@/types/request';
-import { KEY_QUERYS }   from "@/consts/key-queries";
-import { fetchApi }     from "@/services/fetch";
+}                                           from '@/types/offer-section.model';
+import { Request }                          from '@/types/request';
+import { KEY_QUERYS }                       from "@/consts/key-queries";
+import { fetchApi }                         from "@/services/fetch";
+import { getBuildingName, getSpaceType }    from "@/lib/utils";
 
 
 interface Props {
@@ -45,8 +46,8 @@ interface Props {
 const getResponsive = ( lenght: number ): string => ({
     1 : 'grid-cols-1',
     2 : 'grid-cols-1 md:grid-cols-2',
-    3 : 'grid-cols-1 md:grid-cols-3',
-    4 : 'grid-cols-1 md:grid-cols-4'
+    3 : 'grid-cols-1 md:grid-cols-2',
+    4 : 'grid-cols-1 md:grid-cols-2'
 })[lenght] || 'grid-cols-1'
 
 
@@ -71,8 +72,6 @@ export function SessionInfoRequest({
 		queryFn     : () => fetchApi<RequestSession>({ url : `requests/section/${section.id}` }),
 	});
 
-    console.log('🚀 ~ file: session-info-request.tsx:63 ~ request:', request)
-
 	// Preparar las sesiones seleccionadas para el selector de días/módulos
 	const allSelectedSessions = useMemo(() => {
 		if ( !request?.requestSessions ) return [];
@@ -87,11 +86,30 @@ export function SessionInfoRequest({
 		);
 	}, [ request ]);
 
-
 	// Obtener las sesiones disponibles
 	const availableSessions = useMemo(() => {
 		if ( !request?.requestSessions ) return [];
 		return request.requestSessions.map( rs => rs.session );
+	}, [ request ]);
+
+	// Memoizar valores de Detalle Espacio para evitar recálculos
+	const spaceDetailValues = useMemo(() => {
+		if ( !request?.requestSessions ) return [];
+
+		return request.requestSessions.map( rs => ({
+			session	: rs.session,
+			value	: rs.spaceId || 
+				( rs.spaceType
+					? (
+						`${ getSpaceType( rs.spaceType! )}
+						${ rs.spaceSize
+							? `${rs.spaceSize!.id} ${rs.spaceSize!.detail}`
+							: ''
+						}`
+					)
+					: ''
+				)
+		}));
 	}, [ request ]);
 
 	if ( !request ) return (
@@ -161,7 +179,7 @@ export function SessionInfoRequest({
 					{/* </AccordionTrigger> */}
 
 					{/* // <AccordionContent className="px-6 pb-4"> */}
-						<CardContent className="space-y-6">
+						<CardContent className="space-y-4 max-h-[45rem] overflow-y-auto">
 							{/* Cards agrupadas por campo */}
                             <div className="space-y-3">
                                 {/* Botones de acción comentados temporalmente */}
@@ -210,7 +228,7 @@ export function SessionInfoRequest({
 										label	= "Edificio"
 										values	= { request.requestSessions.map( rs => ({
 											session	: rs.session,
-											value	: rs.building
+											value	: getBuildingName( rs.building )
 										}))}
 									/>
 
@@ -218,10 +236,7 @@ export function SessionInfoRequest({
 									<SesionInfoRequestCard
 										icon	= { Cuboid }
 										label	= "Detalle Espacio"
-										values	= { request.requestSessions.map( rs => ({
-											session	: rs.session,
-											value	: rs.spaceId || ( rs.spaceSize ? `${ rs.spaceSize.id } ${ rs.spaceSize.detail }` : null ) || rs.spaceType
-										}))}
+										values	= { spaceDetailValues }
 									/>
 
 									{/* Profesor */}
@@ -313,6 +328,7 @@ export function SessionInfoRequest({
 			{ selectedRequestSession && (
 				<RequestSessionEditForm
 					isOpen				= { isRequestSessionEditOpen }
+					requestId			= { request?.id || '' }
 					onClose				= {() => {
 						setIsRequestSessionEditOpen( false );
 						setSelectedRequestSession( undefined );
@@ -329,7 +345,6 @@ export function SessionInfoRequest({
 						...selectedRequestSession,
 						inAfternoon: selectedRequestSession.isAfternoon
 					} as any}
-					requestId			= { request?.id || '' }
 				/>
 			)}
 		</Card>
