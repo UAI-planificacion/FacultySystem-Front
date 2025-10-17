@@ -1,6 +1,6 @@
 "use client"
 
-import { JSX, useCallback } from "react"
+import { JSX, useCallback, useState } from "react"
 
 import { z } from "zod";
 
@@ -95,6 +95,10 @@ export function RequestSessionForm({
 	onSessionFilterModeChange,
 	onCurrentSessionChange,
 }: Props ): JSX.Element {
+	// Estado para controlar si usar configuración global
+	const [ useGlobalConfig, setUseGlobalConfig ] = useState<boolean>( false );
+
+
 	// Manejar toggle de dayModule
 	const handleToggleDayModule = useCallback(( session: Session, dayId: number, moduleId: number, dayModuleId: number ) => {
 		onSessionDayModulesChange({
@@ -197,8 +201,214 @@ export function RequestSessionForm({
 	return (
 		<Card>
 			<CardContent className="space-y-4 mt-4">
-				{/* Tabs para configuración individual de cada sesión */}
-				<Tabs defaultValue={ availableSessions[0] } className="w-full">
+				{/* Switch para configuración global */}
+				<div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+					<div className="space-y-0.5">
+						<Label htmlFor="use-global-config" className="text-base font-semibold cursor-pointer">
+							Configuración Global
+						</Label>
+						<p className="text-sm text-muted-foreground">
+							Aplicar la misma configuración a todas las sesiones
+						</p>
+					</div>
+
+					<Switch
+						id				= "use-global-config"
+						checked			= { useGlobalConfig }
+						onCheckedChange	= { setUseGlobalConfig }
+					/>
+				</div>
+
+				{ useGlobalConfig ? (
+					<div className="space-y-4">
+						{/* Configuración Global - Aplica a todas las sesiones */}
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+							{/* Profesor */}
+							<ProfessorSelect
+								label				= "Profesor"
+								multiple			= { false }
+								placeholder			= "Seleccionar profesor"
+								defaultValues		= { sessionConfigs[availableSessions[0]]?.professorId || undefined }
+								onSelectionChange	= {( value ) => {
+									const professorId = typeof value === 'string' ? value : null;
+									const updatedConfigs = { ...sessionConfigs };
+									availableSessions.forEach( session => {
+										updatedConfigs[session] = {
+											...updatedConfigs[session],
+											professorId
+										};
+									});
+									onSessionConfigsChange( updatedConfigs );
+								}}
+							/>
+
+							{/* Edificio */}
+							<HeadquartersSelect
+								label				= "Edificio"
+								multiple			= { false }
+								placeholder			= "Seleccionar edificio"
+								defaultValues		= { sessionBuildings[availableSessions[0]] || undefined }
+								onSelectionChange	= {( value ) => {
+									const buildingId = typeof value === 'string' ? value : null;
+									const updatedBuildings = { ...sessionBuildings };
+									const updatedConfigs = { ...sessionConfigs };
+
+									availableSessions.forEach( session => {
+										updatedBuildings[session] = buildingId;
+										updatedConfigs[session] = {
+											...updatedConfigs[session],
+											building    : buildingId || undefined,
+											spaceType   : null,
+											spaceSizeId : null,
+											spaceId     : null,
+										};
+									});
+
+									onSessionBuildingsChange( updatedBuildings );
+									onSessionConfigsChange( updatedConfigs );
+								}}
+							/>
+						</div>
+
+						{/* Selector de filtros de espacio */}
+						{ sessionConfigs[availableSessions[0]]?.building && (
+							<SpaceFilterSelector
+								buildingId			= { sessionConfigs[availableSessions[0]].building || null }
+								filterMode			= { sessionFilterMode[availableSessions[0]] }
+								spaceId				= { sessionConfigs[availableSessions[0]].spaceId || null }
+								spaceType			= { sessionConfigs[availableSessions[0]].spaceType || null }
+								spaceSizeId			= { sessionConfigs[availableSessions[0]].spaceSizeId || null }
+								onFilterModeChange	= {( mode ) => {
+									const updatedFilterModes = { ...sessionFilterMode };
+									availableSessions.forEach( session => {
+										updatedFilterModes[session] = mode;
+									});
+									onSessionFilterModeChange( updatedFilterModes );
+								}}
+								onSpaceIdChange		= {( spaceId ) => {
+									const normalizedSpaceId = typeof spaceId === 'string' ? spaceId : null;
+									const updatedConfigs = { ...sessionConfigs };
+									availableSessions.forEach( session => {
+										updatedConfigs[session] = {
+											...updatedConfigs[session],
+											spaceId: normalizedSpaceId
+										};
+									});
+									onSessionConfigsChange( updatedConfigs );
+								}}
+								onSpaceTypeChange	= {( spaceType ) => {
+									const updatedConfigs = { ...sessionConfigs };
+									availableSessions.forEach( session => {
+										updatedConfigs[session] = {
+											...updatedConfigs[session],
+											spaceType: spaceType as any
+										};
+									});
+									onSessionConfigsChange( updatedConfigs );
+								}}
+								onSpaceSizeIdChange	= {( spaceSizeId ) => {
+									const updatedConfigs = { ...sessionConfigs };
+									availableSessions.forEach( session => {
+										updatedConfigs[session] = {
+											...updatedConfigs[session],
+											spaceSizeId
+										};
+									});
+									onSessionConfigsChange( updatedConfigs );
+								}}
+							/>
+						)}
+
+						{/* Switches */}
+						<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+							<div className="flex items-center justify-between rounded-lg border p-3">
+								<Label htmlFor="global-isEnglish" className="cursor-pointer">
+									En inglés
+								</Label>
+
+								<Switch
+									id				= "global-isEnglish"
+									checked			= { sessionConfigs[availableSessions[0]]?.isEnglish || false }
+									onCheckedChange	= {( checked ) => {
+										const updatedConfigs = { ...sessionConfigs };
+										availableSessions.forEach( session => {
+											updatedConfigs[session] = {
+												...updatedConfigs[session],
+												isEnglish: checked
+											};
+										});
+										onSessionConfigsChange( updatedConfigs );
+									}}
+								/>
+							</div>
+
+							<div className="flex items-center justify-between rounded-lg border p-3">
+								<Label htmlFor="global-isConsecutive" className="cursor-pointer">
+									Consecutivo
+								</Label>
+
+								<Switch
+									id				= "global-isConsecutive"
+									checked			= { sessionConfigs[availableSessions[0]]?.isConsecutive || false }
+									onCheckedChange	= {( checked ) => {
+										const updatedConfigs = { ...sessionConfigs };
+										availableSessions.forEach( session => {
+											updatedConfigs[session] = {
+												...updatedConfigs[session],
+												isConsecutive: checked
+											};
+										});
+										onSessionConfigsChange( updatedConfigs );
+									}}
+								/>
+							</div>
+
+							<div className="flex items-center justify-between rounded-lg border p-3">
+								<Label htmlFor="global-inAfternoon" className="cursor-pointer">
+									En la tarde
+								</Label>
+
+								<Switch
+									id				= "global-inAfternoon"
+									checked			= { sessionConfigs[availableSessions[0]]?.inAfternoon || false }
+									onCheckedChange	= {( checked ) => {
+										const updatedConfigs = { ...sessionConfigs };
+										availableSessions.forEach( session => {
+											updatedConfigs[session] = {
+												...updatedConfigs[session],
+												inAfternoon: checked
+											};
+										});
+										onSessionConfigsChange( updatedConfigs );
+									}}
+								/>
+							</div>
+						</div>
+
+						{/* Descripción */}
+						<div>
+							<Label htmlFor="global-description">Descripción de la sesión</Label>
+
+							<Textarea
+								id			= "global-description"
+								placeholder	= "Descripción opcional"
+								className	= "mt-2"
+								value		= { sessionConfigs[availableSessions[0]]?.description || '' }
+								onChange	= {( e ) => {
+									const updatedConfigs = { ...sessionConfigs };
+									availableSessions.forEach( session => {
+										updatedConfigs[session] = {
+											...updatedConfigs[session],
+											description: e.target.value
+										};
+									});
+									onSessionConfigsChange( updatedConfigs );
+								}}
+							/>
+						</div>
+					</div>
+				) : (
+					<Tabs defaultValue={ availableSessions[0] } className="w-full">
 					<TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${availableSessions.length}, 1fr)` }}>
 						{availableSessions.map( session => (
 							<TabsTrigger
@@ -212,7 +422,6 @@ export function RequestSessionForm({
 
 					{availableSessions.map( session => (
 						<TabsContent key={ session } value={ session } className="space-y-4 mt-4">
-							
 							{/* Configuración de la sesión */}
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 								{/* Profesor */}
@@ -308,7 +517,8 @@ export function RequestSessionForm({
 							</div>
 						</TabsContent>
 					))}
-				</Tabs>
+					</Tabs>
+				)}
 
 				<div className="space-y-2">
 					<Label>Selecciona la sesión para marcar posibles horarios semanales</Label>
