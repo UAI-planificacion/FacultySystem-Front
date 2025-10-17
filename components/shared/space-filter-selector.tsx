@@ -8,15 +8,7 @@ import { SizeSelect }       from "@/components/shared/item-select/size-select";
 import { SpaceTypeSelect }  from "@/components/shared/item-select/space-type-select";
 
 import { SpaceType } from "@/types/request-detail.model";
-
-
-// Whitelist of space types that allow size filtering
-const SPACE_TYPES_WITH_SIZE_FILTER: SpaceType[] = [
-	SpaceType.ROOM,
-	SpaceType.DIS,
-	// SpaceType.LABPC,
-	// SpaceType.LAB,
-];
+import { SPACE_TYPES_WITH_SIZE_FILTER } from "@/lib/utils";
 
 
 export type FilterMode = 'space' | 'type-size';
