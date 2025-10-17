@@ -86,7 +86,7 @@ export function FirstPlanning({
 			)}
 
 			{/* Botón siguiente */}
-			<div className="flex justify-end">
+			<div className="flex justify-end border-t pt-4">
 				<Button
 					onClick     = { onNext }
 					disabled    = { !allSessionsComplete }

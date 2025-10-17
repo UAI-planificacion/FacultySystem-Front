@@ -346,7 +346,7 @@ export function SecondPlanning({
 			</div>
 
 			{/* Botones de navegación */}
-			<div className="flex justify-between">
+			<div className="flex justify-between border-t pt-4">
 				<Button
 					variant	= "outline"
 					onClick	= { onBack }
