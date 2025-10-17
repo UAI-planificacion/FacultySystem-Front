@@ -1,6 +1,8 @@
 'use client'
 
 import { JSX, useState, useMemo, useCallback } from "react";
+import { useRouter } from 'next/navigation';
+
 
 import { useMutation }  from "@tanstack/react-query";
 import { toast }        from "sonner";
@@ -22,7 +24,7 @@ import {
 }                                       from "@/types/session-availability.model";
 import { OfferSection }				    from "@/types/offer-section.model";
 import { Session }					    from "@/types/section.model";
-import { Building, Size, SpaceType }    from "@/types/request-detail.model";
+import { Building, BuildingEnum, Size, SpaceType }    from "@/types/request-detail.model";
 import { fetchApi, Method }			    from "@/services/fetch";
 import { errorToast, successToast }	    from "@/config/toast/toast.config";
 
@@ -41,6 +43,8 @@ interface Props {
 
 
 export function PlanningStepperComponent({ section }: Props ): JSX.Element {
+    const router = useRouter();
+
 	// Estado del paso actual
 	const [currentStep, setCurrentStep] = useState( 1 );
 
@@ -232,6 +236,16 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 	// Manejar cambio de edificio global
 	const handleGlobalBuildingChange = useCallback(( buildingId: string | null ) => {
 		setGlobalBuildingId( buildingId );
+
+		// Actualizar el edificio en todas las sesiones
+		setSessionBuildings( prev => {
+			const updated = { ...prev };
+			Object.keys( sessionRequirements ).forEach( session => {
+				updated[session as Session] = buildingId;
+			});
+			return updated;
+		});
+
 		// Limpiar filtros de espacio cuando cambia el edificio
 		setSessionSpaceTypes( prev => {
 			const updated = { ...prev };
@@ -442,7 +456,7 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 					spaceIds        : spaceIds.length > 0 ? spaceIds : null,
 					professorIds    : professorIds,
 					isEnglish       : allInEnglish ? true : sessionInEnglish[sessionKey],
-					building        : spaceIds.length === 0 ? ( sessionBuildings[sessionKey] as Building | null ) : null,
+					building        : spaceIds.length === 0 ? ( sessionBuildings[sessionKey] as BuildingEnum | null ) : null,
 					spaceType       : spaceIds.length === 0 ? ( sessionSpaceTypes[sessionKey] as SpaceType | null ) : null,
 					spaceSize       : spaceIds.length === 0 ? ( sessionSpaceSizes[sessionKey] as Size | null ) : null,
 				};
@@ -545,12 +559,14 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 						response			= { availabilityResponse }
 						sectionId			= { section.id }
 						sessionInEnglish	= { sessionInEnglish }
+						selectedDayModules	= { selectedDayModules }
 						onBack				= {() => goToStep( 2 )}
 						onSuccess			= {() => {
 							// Resetear el stepper al paso 1 después de reservar exitosamente
 							setCurrentStep( 1 );
 							setSelectedDayModules([]);
 							setAvailabilityResponse( null );
+                            router.push(`/sections`);
 						}}
 					/>
 				)}
