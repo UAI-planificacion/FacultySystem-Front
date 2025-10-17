@@ -27,6 +27,25 @@ export enum Building {
 }
 
 
+export enum BuildingEnum {
+    PREGRADO_A    = 'PREGRADO_A',
+    PREGRADO_B    = 'PREGRADO_B',
+    POSTGRADO_C   = 'POSTGRADO_C',
+    TALLERES_D    = 'TALLERES_D',
+    TALLERES_E    = 'TALLERES_E',
+    PREGRADO_F    = 'PREGRADO_F',
+    ERRAZURIZ     = 'ERRAZURIZ',
+    VITACURA      = 'VITACURA',
+    VINA_A        = 'VINA_A',
+    VINA_B        = 'VINA_B',
+    VINA_C        = 'VINA_C',
+    VINA_D        = 'VINA_D',
+    VINA_E        = 'VINA_E',
+    VINA_F        = 'VINA_F',
+    Z             = 'Z'
+}
+
+
 export enum Size {
     XS  = "XS",
     XE  = "XE",
