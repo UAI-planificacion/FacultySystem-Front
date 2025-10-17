@@ -1,6 +1,6 @@
 "use client"
 
-import { JSX, useEffect, useState } from "react"
+import { JSX, useEffect } from "react"
 
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -29,11 +29,8 @@ import { Switch }					from "@/components/ui/switch";
 import { Textarea }					from "@/components/ui/textarea";
 import { Label }					from "@/components/ui/label";
 import { ProfessorSelect }			from "@/components/shared/item-select/professor-select";
-import { SpaceSelect }				from "@/components/shared/item-select/space-select";
 import { HeadquartersSelect }		from "@/components/shared/item-select/headquarters-select";
-import { SizeSelect }				from "@/components/shared/item-select/size-select";
-import { SpaceTypeSelect }			from "@/components/shared/item-select/space-type-select";
-import { Checkbox }					from "@/components/ui/checkbox";
+import { SpaceFilterSelector, FilterMode } from "@/components/shared/space-filter-selector";
 
 import { RequestSession }			from "@/types/request-session.model";
 import { Session }					from "@/types/section.model";
@@ -64,6 +61,7 @@ const sessionLabels: Record<Session, string> = {
 const requestSessionEditSchema = z.object({
 	professorId		: z.string().nullable(),
 	building		: z.string().nullable(),
+	filterMode		: z.enum([ 'space', 'type-size' ]),
 	spaceId			: z.string().nullable(),
 	spaceType		: z.string().nullable(),
 	spaceSizeId		: z.string().nullable(),
@@ -72,9 +70,15 @@ const requestSessionEditSchema = z.object({
 	inAfternoon		: z.boolean(),
 	description		: z.string().nullable(),
 }).refine(
-	( data ) => data.spaceId !== null || data.spaceType !== null || data.spaceSizeId !== null,
+	( data ) => {
+		if ( data.filterMode === 'space' ) {
+			return data.spaceId !== null;
+		} else {
+			return data.spaceType !== null || data.spaceSizeId !== null;
+		}
+	},
 	{
-		message	: "Debe seleccionar al menos un filtro: Espacio específico, Tipo de espacio o Tamaño",
+		message	: "Debe seleccionar al menos un filtro válido según el modo seleccionado",
 		path	: ["spaceId"],
 	}
 );
@@ -91,16 +95,14 @@ export function RequestSessionEditForm({
 	onClose,
 	requestId,
 }: Props ): JSX.Element {
-	const queryClient							= useQueryClient();
-	const [filterType, setFilterType]			= useState<'type' | 'size' | 'space'>( 'space' );
-	const [selectedBuilding, setSelectedBuilding] = useState<string | null>( null );
-
+	const queryClient = useQueryClient();
 
 	const form = useForm<RequestSessionEditFormValues>({
 		resolver	: zodResolver( requestSessionEditSchema ),
 		defaultValues: {
 			professorId		: null,
 			building		: null,
+			filterMode		: 'space',
 			spaceId			: null,
 			spaceType		: null,
 			spaceSizeId		: null,
@@ -114,13 +116,13 @@ export function RequestSessionEditForm({
 	// Update form when requestSession changes
 	useEffect(() => {
 		if ( requestSession ) {
-			// Set building first
-			const building = requestSession.building || null;
-			setSelectedBuilding( building );
+			// Determine filter mode
+			const filterMode: FilterMode = requestSession.spaceId ? 'space' : 'type-size';
 
 			form.reset({
 				professorId		: requestSession.professor?.id || null,
-				building		: building,
+				building		: requestSession.building || null,
+				filterMode		: filterMode,
 				spaceId			: requestSession.spaceId,
 				spaceType		: requestSession.spaceType,
 				spaceSizeId		: requestSession.spaceSize?.id || null,
@@ -129,15 +131,6 @@ export function RequestSessionEditForm({
 				inAfternoon		: requestSession.inAfternoon,
 				description		: requestSession.description,
 			});
-
-			// Determine filter type
-			if ( requestSession.spaceId ) {
-				setFilterType( 'space' );
-			} else if ( requestSession.spaceType ) {
-				setFilterType( 'type' );
-			} else if ( requestSession.spaceSize ) {
-				setFilterType( 'size' );
-			}
 		}
 	}, [ requestSession, form ]);
 
@@ -177,34 +170,13 @@ export function RequestSessionEditForm({
 	};
 
 
-	const handleFilterTypeChange = ( newFilterType: 'type' | 'size' | 'space' ) => {
-		setFilterType( newFilterType );
-
-		// Clear other options
-		if ( newFilterType === 'space' ) {
-			form.setValue( 'spaceType', null );
-			form.setValue( 'spaceSizeId', null );
-		} else if ( newFilterType === 'type' ) {
-			form.setValue( 'spaceId', null );
-			form.setValue( 'spaceSizeId', null );
-		} else if ( newFilterType === 'size' ) {
-			form.setValue( 'spaceType', null );
-			form.setValue( 'spaceId', null );
-		}
-	};
-
-
 	const handleBuildingChange = ( buildingId: string | null ) => {
-		setSelectedBuilding( buildingId );
 		form.setValue( 'building', buildingId );
 
 		// Clear space filters when building changes
 		form.setValue( 'spaceType', null );
 		form.setValue( 'spaceSizeId', null );
 		form.setValue( 'spaceId', null );
-
-		// Reset filter type to space
-		setFilterType( 'space' );
 	};
 
 
@@ -276,133 +248,20 @@ export function RequestSessionEditForm({
 							/>
 						</div>
 
-						{/* Selector de tipo de filtro (Type, Size, Space) */}
-						{selectedBuilding && (
-							<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-								{/* Espacio Específico */}
-								<div className="flex gap-2 items-end">
-									<Checkbox
-										className		= "cursor-default rounded-full p-[0.6rem] flex justify-center items-center mb-2"
-										checked			= { filterType === 'space' }
-										onCheckedChange	= {( checked ) => {
-											if ( checked ) {
-												handleFilterTypeChange( 'space' );
-											}
-										}}
-									/>
-
-									<div className="w-full">
-										<FormField
-											control	= { form.control }
-											name	= "spaceId"
-											render	= {({ field }) => (
-												<FormItem>
-													<FormLabel>Espacio Específico</FormLabel>
-
-													<FormControl>
-														<SpaceSelect
-															multiple			= { false }
-															placeholder			= "Seleccione"
-															defaultValues		= { field.value || undefined }
-                                                            buildingFilter		= { selectedBuilding || undefined }
-                                                            disabled			= { filterType !== 'space' }
-															onSelectionChange   = {( value ) => {
-																const spaceId = typeof value === 'string' ? value : null;
-																field.onChange( spaceId );
-															}}
-														/>
-													</FormControl>
-
-													<FormMessage />
-												</FormItem>
-											)}
-										/>
-									</div>
-								</div>
-
-								{/* Tipo de Espacio */}
-								<div className="flex gap-2 items-end">
-									<Checkbox
-										className		= "cursor-default rounded-full p-[0.6rem] flex justify-center items-center mb-2"
-										checked			= { filterType === 'type' }
-										onCheckedChange	= {( checked ) => {
-											if ( checked ) {
-												handleFilterTypeChange( 'type' );
-											}
-										}}
-									/>
-
-									<div className="w-full">
-										<FormField
-											control	= { form.control }
-											name	= "spaceType"
-											render	= {({ field }) => (
-												<FormItem>
-													<FormLabel>Tipo de Espacio</FormLabel>
-
-													<FormControl>
-														<SpaceTypeSelect
-															multiple			= { false }
-															placeholder			= "Seleccione"
-															defaultValues		= { field.value || undefined }
-                                                            buildingFilter		= { selectedBuilding || undefined }
-                                                            disabled			= { filterType !== 'type' }
-															onSelectionChange   = {( value ) => {
-																const spaceType = ( typeof value === 'string' && value !== 'none' ) ? value : null;
-																field.onChange( spaceType );
-															}}
-														/>
-													</FormControl>
-
-													<FormMessage />
-												</FormItem>
-											)}
-										/>
-									</div>
-								</div>
-
-								{/* Tamaño */}
-								<div className="flex gap-2 items-end">
-									<Checkbox
-										className		= "cursor-default rounded-full p-[0.6rem] flex justify-center items-center mb-2"
-										checked			= { filterType === 'size' }
-										onCheckedChange	= {( checked ) => {
-											if ( checked ) {
-												handleFilterTypeChange( 'size' );
-											}
-										}}
-									/>
-
-									<div className="w-full">
-										<FormField
-											control	= { form.control }
-											name	= "spaceSizeId"
-											render	= {({ field }) => (
-												<FormItem>
-													<FormLabel>Tamaño</FormLabel>
-
-													<FormControl>
-														<SizeSelect
-															multiple			= { false }
-															placeholder			= "Seleccione"
-															defaultValues		= { field.value || undefined }
-                                                            buildingFilter		= { selectedBuilding || undefined }
-                                                            disabled			= { filterType !== 'size' }
-															onSelectionChange	= {( value ) => {
-																const sizeId = typeof value === 'string' ? value : null;
-																field.onChange( sizeId );
-															}}
-														/>
-													</FormControl>
-
-													<FormMessage />
-												</FormItem>
-											)}
-										/>
-									</div>
-								</div>
-							</div>
-						)}
+						{/* Selector de filtros de espacio */}
+					{ form.watch( 'building' ) && (
+						<SpaceFilterSelector
+							buildingId          = { form.watch( 'building' ) }
+							filterMode          = { form.watch( 'filterMode' ) }
+							spaceId             = { form.watch( 'spaceId' ) }
+							spaceType           = { form.watch( 'spaceType' ) }
+							spaceSizeId         = { form.watch( 'spaceSizeId' ) }
+							onFilterModeChange  = {( mode ) => form.setValue( 'filterMode', mode )}
+							onSpaceIdChange     = {( spaceId ) => form.setValue( 'spaceId', typeof spaceId === 'string' ? spaceId : null )}
+							onSpaceTypeChange   = {( spaceType ) => form.setValue( 'spaceType', spaceType )}
+							onSpaceSizeIdChange = {( spaceSizeId ) => form.setValue( 'spaceSizeId', spaceSizeId )}
+						/>
+					)}
 
 						{/* Switches */}
 						<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
