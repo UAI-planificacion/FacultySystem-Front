@@ -11,7 +11,7 @@ interface Props {
 export function SessionType({ session }: Props ) {
     return (
         <Badge
-            className   = {`text-sm font-medium text-white ${sessionColors[session]} ${sessionColorsHover[session]}`}
+            className   = {`text-sm font-medium text-white py-0 ${sessionColors[session]} ${sessionColorsHover[session]}`}
             title       = { sessionLabels[session] }
         >
             {sessionLabels[session]}
