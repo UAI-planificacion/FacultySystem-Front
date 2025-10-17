@@ -14,11 +14,11 @@ import { SessionName }				from "@/components/session/session-name";
 import { SessionInfoRequest }		from "@/components/session/session-info-request";
 import { PlanningStepperComponent } from "@/components/section/planning/planning-stepper";
 
-import { OfferSection }	from "@/types/offer-section.model";
-import { Session }		from "@/types/section.model";
-import { fetchApi }		from "@/services/fetch";
-import { KEY_QUERYS }	from "@/consts/key-queries";
-import { tempoFormat }	from "@/lib/utils";
+import { OfferSection }     from "@/types/offer-section.model";
+import { Session }	        from "@/types/section.model";
+import { fetchApi }	        from "@/services/fetch";
+import { KEY_QUERYS }       from "@/consts/key-queries";
+import { cn, tempoFormat }	from "@/lib/utils";
 
 
 export default function SectionDetailPage(): JSX.Element {
@@ -95,7 +95,9 @@ export default function SectionDetailPage(): JSX.Element {
                     </CardContent>
                 </Card>
 
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <div className={cn(
+                    "grid grid-cols-1 gap-4", section.haveRequest && "xl:grid-cols-2"
+                )}>
                     <SessionInfoRequest
                         section = { section }
                         enabled = { !!section }
