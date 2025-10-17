@@ -1,7 +1,10 @@
+import {
+    BuildingEnum,
+    SpaceType
+}                           from "@/types/request-detail.model";
 import { Module, Status }   from "@/types/request";
 import { Session }          from "@/types/section.model";
 import { Role }             from "@/types/staff.model";
-import { Building, SpaceType } from "./request-detail.model";
 
 
 export interface OfferSectionProffesor {
@@ -87,7 +90,7 @@ interface SessionDayModule {
 interface RequestSessionDetail {
     id                  : string;
     session             : Session;
-    building            : Building;
+    building            : BuildingEnum;
     spaceId             : string;
     isEnglish           : boolean;
     isConsecutive       : boolean;
@@ -132,4 +135,5 @@ export interface OfferSection {
     subject         : OfferSectionSubject;
     period          : OfferSectionPeriod;
     sessions        : OfferSession[];
+    haveRequest     : boolean;
 }
