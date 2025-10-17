@@ -1,13 +1,18 @@
-import { Building, Size, SpaceType } from "@/types/request-detail.model";
-import { Session } from "@/types/section.model";
+import {
+    BuildingEnum,
+    Size,
+    SpaceType
+}                   from "@/types/request-detail.model";
+import { Session }  from "@/types/section.model";
 
 
 export interface AvailableSpace {
 	id          : string;
 	name        : string;
-	building    : Building;
+	building    : BuildingEnum;
 	type        : SpaceType;
 	capacity    : number;
+    size        : Size;
 }
 
 
@@ -41,7 +46,7 @@ export interface SessionAvailabilityRequest {
 	spaceIds        : string[] | null;
 	professorIds    : string[];
 	isEnglish       : boolean;
-	building        : Building | null;
+	building        : BuildingEnum | null;
 	spaceType       : SpaceType | null;
 	spaceSize       : Size | null;
 }
