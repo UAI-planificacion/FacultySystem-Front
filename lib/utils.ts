@@ -3,7 +3,7 @@ import { twMerge }                  from 'tailwind-merge';
 import { format }                   from "@formkit/tempo"
 
 import { Status }       from '@/types/request';
-import { SpaceType }    from '@/types/request-detail.model';
+import { BuildingEnum, SpaceType }    from '@/types/request-detail.model';
 
 
 export function cn(...inputs: ClassValue[]) {
@@ -45,3 +45,31 @@ export const getSpaceType = ( spaceType: SpaceType ) => ({
     [SpaceType.POSTGRADUATE_ROOM]   : "Sala Postgrado",
     [SpaceType.MULTIPURPOSE]        : "Multiuso",
 })[spaceType];
+
+
+export const getBuildingName = ( building: BuildingEnum ) => ({
+    [BuildingEnum.PREGRADO_A]    : "Edificio Pregrado A",
+    [BuildingEnum.PREGRADO_B]    : "Edificio Pregrado B",
+    [BuildingEnum.POSTGRADO_C]   : "Edificio Postgrado C",
+    [BuildingEnum.TALLERES_D]    : "Edificio Talleres D",
+    [BuildingEnum.TALLERES_E]    : "Edificio Talleres E",
+    [BuildingEnum.PREGRADO_F]    : "Edificio Pregrado F",
+    [BuildingEnum.ERRAZURIZ]     : "Edificio Errazuriz",
+    [BuildingEnum.VITACURA]      : "Edificio Vitacura",
+    [BuildingEnum.VINA_A]        : "Edificio A",
+    [BuildingEnum.VINA_B]        : "Edificio B",
+    [BuildingEnum.VINA_C]        : "Edificio C",
+    [BuildingEnum.VINA_D]        : "Edificio D",
+    [BuildingEnum.VINA_E]        : "Edificio E",
+    [BuildingEnum.VINA_F]        : "Edificio F",
+    [BuildingEnum.Z]             : "Z",
+})[building];
+
+
+// Whitelist of space types that allow size filtering
+export const SPACE_TYPES_WITH_SIZE_FILTER: SpaceType[] = [
+	SpaceType.ROOM,
+	SpaceType.DIS,
+	// SpaceType.LABPC,
+	// SpaceType.LAB,
+];
