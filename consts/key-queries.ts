@@ -10,6 +10,7 @@ export const KEY_QUERYS = {
     COMMENTS        : "comments",
     GRADES          : 'grades',
     OFFERS          : 'offers',
+    PLANNING_CHANGE : 'planning-change',
 
     SPACES          : 'spaces',
 
