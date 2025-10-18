@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 
 import {
     Album,
+    CalendarClock,
     ChevronDown,
     ChevronRight,
     Plus
@@ -35,6 +36,7 @@ import { SessionShort }         from "@/components/session/session-short"
 import { SessionForm }          from "@/components/session/session-form"
 import { SessionTable }         from "@/components/session/session-table"
 import { SectionForm }          from "@/components/section/section-form"
+import { PlanningChangeForm }   from "@/components/planning-change/planning-change-form"
 
 import { OfferSection }             from "@/types/offer-section.model"
 import { fetchApi, Method }         from "@/services/fetch"
@@ -70,6 +72,7 @@ export function SectionTable({
 	const [ isOpenSessionForm, setIsOpenSessionForm ]       = useState<boolean>( false );
 	const [ isOpenSectionForm, setIsOpenSectionForm ]       = useState<boolean>( false );
 	const [ selectedSection, setSelectedSection ]           = useState<OfferSection | undefined>( undefined );
+	const [ isOpenPlanningChange, setIsOpenPlanningChange ] = useState<boolean>( false );
 
 	/**
 	 * Toggle section expansion
@@ -343,6 +346,18 @@ export function SectionTable({
 
 									<TableCell className="text-right">
 										<div className="flex items-center justify-end gap-1.5">
+											{/* Botón para crear planning-change */}
+											<Button
+												title		= "Crear Cambio de Planificación"
+												size		= "icon"
+												variant		= "outline"
+												disabled	= { section.isClosed }
+												className	= "bg-blue-500 hover:bg-blue-600 text-white"
+												onClick		= { () => setIsOpenPlanningChange( true )}
+											>
+												<CalendarClock className="w-4 h-4" />
+											</Button>
+
 											{ section.sessions.length === 0
 												? <Button
 													title       = "Asignar Sesiones"
@@ -431,6 +446,19 @@ export function SectionTable({
 				onConfirm   = { handleConfirmDeleteSection }
 				name        = { `SSEC ${selectedSection?.subject.id}-${selectedSection?.code}` }
 				type        = { "la Sección" }
+			/>
+
+			{/* Planning Change Form */}
+			<PlanningChangeForm
+				planningChange	= { null }
+				isOpen			= { isOpenPlanningChange }
+				onClose			= { () => setIsOpenPlanningChange( false )}
+				onSuccess		= { () => {
+					setIsOpenPlanningChange( false );
+					queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.PLANNING_CHANGE ] });
+				}}
+				onCancel		= { () => setIsOpenPlanningChange( false )}
+				staffId			= "temp-staff-id"
 			/>
 		</>
 	);
