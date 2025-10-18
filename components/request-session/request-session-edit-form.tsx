@@ -2,11 +2,11 @@
 
 import { JSX, useEffect } from "react"
 
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { useMutation, useQueryClient }  from "@tanstack/react-query";
+import { z }                            from "zod";
+import { useForm }                      from "react-hook-form";
+import { zodResolver }                  from "@hookform/resolvers/zod";
+import { toast }                        from "sonner";
 
 import {
 	Dialog,
@@ -15,7 +15,7 @@ import {
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-}									from "@/components/ui/dialog";
+}								from "@/components/ui/dialog";
 import {
 	Form,
 	FormControl,
@@ -23,14 +23,17 @@ import {
 	FormItem,
 	FormLabel,
 	FormMessage,
-}									from "@/components/ui/form";
-import { Button }					from "@/components/ui/button";
-import { Switch }					from "@/components/ui/switch";
-import { Textarea }					from "@/components/ui/textarea";
-import { Label }					from "@/components/ui/label";
-import { ProfessorSelect }			from "@/components/shared/item-select/professor-select";
-import { HeadquartersSelect }		from "@/components/shared/item-select/headquarters-select";
-import { SpaceFilterSelector, FilterMode } from "@/components/shared/space-filter-selector";
+}								from "@/components/ui/form";
+import {
+    SpaceFilterSelector,
+    FilterMode
+}                               from "@/components/shared/space-filter-selector";
+import { Button }				from "@/components/ui/button";
+import { Switch }				from "@/components/ui/switch";
+import { Textarea }				from "@/components/ui/textarea";
+import { Label }				from "@/components/ui/label";
+import { ProfessorSelect }		from "@/components/shared/item-select/professor-select";
+import { HeadquartersSelect }	from "@/components/shared/item-select/headquarters-select";
 
 import { RequestSession }			from "@/types/request-session.model";
 import { Session }					from "@/types/section.model";
@@ -55,7 +58,6 @@ const sessionLabels: Record<Session, string> = {
 	[Session.T]	: 'Taller',
 	[Session.L]	: 'Laboratorio',
 };
-
 
 // Zod schema for request session edit validation
 const requestSessionEditSchema = z.object({
