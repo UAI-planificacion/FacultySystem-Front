@@ -21,15 +21,17 @@ export function SectionSelect({
 	multiple    = false,
 	placeholder = 'Seleccionar Sección',
 	enabled     = true,
-	disabled    = false
+	disabled    = false,
+	queryKey    = [ KEY_QUERYS.SECCTIONS, 'not-planning' ],
+	url         = 'sections/not-planning'
 } : Props ): JSX.Element {
 	const {
 		data,
 		isLoading,
 		isError,
 	} = useQuery({
-		queryKey    : [ KEY_QUERYS.SECCTIONS, 'not-planning' ],
-		queryFn     : () => fetchApi<OfferSection[]>({ url: 'sections/not-planning' }),
+		queryKey    : queryKey,
+		queryFn     : () => fetchApi<OfferSection[]>({ url }),
 		enabled
 	});
 
