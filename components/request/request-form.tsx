@@ -8,12 +8,6 @@ import {
 	useQueryClient
 }                       from "@tanstack/react-query";
 import { toast }        from "sonner";
-import {
-	BadgeCheck,
-	CircleDashed,
-	Eye,
-	OctagonX
-}                       from "lucide-react";
 import { z }            from "zod";
 import { zodResolver }  from "@hookform/resolvers/zod";
 import { useForm }      from "react-hook-form";
@@ -24,7 +18,7 @@ import {
 	DialogDescription,
 	DialogHeader,
 	DialogTitle
-}                                   from "@/components/ui/dialog";
+}                               from "@/components/ui/dialog";
 import {
 	Form,
 	FormControl,
@@ -32,16 +26,13 @@ import {
 	FormItem,
 	FormLabel,
 	FormMessage
-}                                   from "@/components/ui/form";
-import {
-	ToggleGroup,
-	ToggleGroupItem,
-}                                   from "@/components/ui/toggle-group"
-import { Input }                    from "@/components/ui/input";
-import { Button }                   from "@/components/ui/button";
-import { ShowDateAt }               from "@/components/shared/date-at";
-import { SectionSelect }            from "@/components/shared/item-select/section-select";
-import { RequestSessionForm }       from "@/components/request/request-session-form";
+}                               from "@/components/ui/form";
+import { Input }                from "@/components/ui/input";
+import { Button }               from "@/components/ui/button";
+import { ShowDateAt }           from "@/components/shared/date-at";
+import { SectionSelect }        from "@/components/shared/item-select/section-select";
+import { RequestSessionForm }   from "@/components/request/request-session-form";
+import { ChangeStatus }         from "@/components/shared/change-status";
 
 import {
 	CreateRequest,
@@ -434,51 +425,11 @@ export function RequestForm({
                                                 <FormLabel>Estado</FormLabel>
 
                                                 <FormControl>
-                                                    <ToggleGroup
-                                                        type            = "single"
+                                                    <ChangeStatus
                                                         value           = { field.value }
-                                                        onValueChange   = {( value: Status ) => {
-                                                            if ( value ) field.onChange( value )
-                                                        }}
-                                                        className       = "w-full"
+                                                        onValueChange   = { field.onChange }
                                                         defaultValue    = { field.value }
-                                                    >
-                                                        <ToggleGroupItem
-                                                            value       = "PENDING"
-                                                            aria-label  = "Pendiente"
-                                                            className   = "flex-1 rounded-tl-lg rounded-bl-lg rounded-tr-none rounded-br-none border-t border-l border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-amber-400 data-[state=on]:dark:bg-amber-500 data-[state=on]:text-black data-[state=on]:dark:text-white data-[state=on]:hover:bg-amber-500 data-[state=on]:dark:hover:bg-amber-600"
-                                                        >
-                                                            <CircleDashed className="mr-2 h-4 w-4"/>
-                                                            Pendiente
-                                                        </ToggleGroupItem>
-
-                                                        <ToggleGroupItem
-                                                            value       = "REVIEWING"
-                                                            aria-label  = "Revisando"
-                                                            className   = "flex-1 rounded-none border-t border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-blue-400 data-[state=on]:dark:bg-blue-500 data-[state=on]:text-black data-[state=on]:dark:text-white data-[state=on]:hover:bg-blue-500 data-[state=on]:dark:hover:bg-blue-600"
-                                                        >
-                                                            <Eye className="mr-2 h-4 w-4"/>
-                                                            Revisando
-                                                        </ToggleGroupItem>
-
-                                                        <ToggleGroupItem
-                                                            value       = "APPROVED"
-                                                            aria-label  = "Aprobado"
-                                                            className   = "flex-1 rounded-none border-t border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-green-400 data-[state=on]:dark:bg-green-500 data-[state=on]:text-black data-[state=on]:dark:text-white data-[state=on]:hover:bg-green-500 data-[state=on]:dark:hover:bg-green-600"
-                                                        >
-                                                            <BadgeCheck className="mr-2 h-4 w-4"/>
-                                                            Aprobado
-                                                        </ToggleGroupItem>
-
-                                                        <ToggleGroupItem
-                                                            value       = "REJECTED"
-                                                            aria-label  = "Rechazado"
-                                                            className   = "flex-1 rounded-tl-none rounded-bl-none rounded-tr-lg rounded-br-lg border-t border-r border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-red-400 data-[state=on]:dark:bg-red-500 data-[state=on]:text-black data-[state=on]:dark:text-white data-[state=on]:hover:bg-red-500 data-[state=on]:dark:hover:bg-red-600"
-                                                        >
-                                                            <OctagonX className="mr-2 h-4 w-4"/>
-                                                            Rechazado
-                                                        </ToggleGroupItem>
-                                                    </ToggleGroup>
+                                                    />
                                                 </FormControl>
 
                                                 <FormMessage />
