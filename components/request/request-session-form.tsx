@@ -392,7 +392,7 @@ export function RequestSessionForm({
 							<Textarea
 								id			= "global-description"
 								placeholder	= "Descripción opcional"
-								className	= "mt-2"
+								className	= "mt-2 max-h-36"
 								value		= { sessionConfigs[availableSessions[0]]?.description || '' }
 								onChange	= {( e ) => {
 									const updatedConfigs = { ...sessionConfigs };
