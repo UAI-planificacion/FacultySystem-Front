@@ -351,9 +351,12 @@ export function SectionTable({
 												title		= "Crear Cambio de Planificación"
 												size		= "icon"
 												variant		= "outline"
-												disabled	= { section.isClosed }
+												disabled	= { section.isClosed || section.sessions.length === 0 }
 												className	= "bg-blue-500 hover:bg-blue-600 text-white"
-												onClick		= { () => setIsOpenPlanningChange( true )}
+												onClick		= { () => {
+                                                    setIsOpenPlanningChange( true );
+                                                    setSelectedSectionEdit( section );
+                                                }}
 											>
 												<CalendarClock className="w-4 h-4" />
 											</Button>
@@ -451,6 +454,7 @@ export function SectionTable({
 			{/* Planning Change Form */}
 			<PlanningChangeForm
 				planningChange	= { null }
+                section         = { selectedSectionEdit }
 				isOpen			= { isOpenPlanningChange }
 				onClose			= { () => setIsOpenPlanningChange( false )}
 				onSuccess		= { () => {
