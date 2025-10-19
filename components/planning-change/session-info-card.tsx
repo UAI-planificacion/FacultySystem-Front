@@ -89,7 +89,7 @@ export function SessionInfoCard({
 
 	return (
 		<Card className="border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20">
-			<Accordion type="single" collapsible defaultValue="session-info">
+			<Accordion type="single" collapsible>
 				<AccordionItem value="session-info" className="border-none">
 					<CardHeader className="pb-2">
 						<AccordionTrigger className="hover:no-underline py-0">
