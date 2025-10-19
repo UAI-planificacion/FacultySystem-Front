@@ -19,7 +19,7 @@ import {
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-}							                    from "@/components/ui/dialog";
+}							                from "@/components/ui/dialog";
 import {
 	Form,
 	FormControl,
@@ -27,40 +27,35 @@ import {
 	FormItem,
 	FormLabel,
 	FormMessage,
-}							                    from "@/components/ui/form";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-}							                    from "@/components/ui/select";
-import { SpaceFilterSelector, FilterMode }      from "@/components/shared/space-filter-selector";
-import { Button }			                    from "@/components/ui/button";
-import { Switch }			                    from "@/components/ui/switch";
-import { Textarea }			                    from "@/components/ui/textarea";
-import { Label }			                    from "@/components/ui/label";
-import { Input }			                    from "@/components/ui/input";
-import { Checkbox }			                    from "@/components/ui/checkbox";
-import { ProfessorSelect }	                    from "@/components/shared/item-select/professor-select";
-import { HeadquartersSelect }                   from "@/components/shared/item-select/headquarters-select";
-import { SessionWithoutPlanningChangeSelect }   from "@/components/shared/item-select/session-without-planning-change-select";
-import { SectionSelect }	                    from "@/components/shared/item-select/section-select";
-import { SessionInfoCard }	                    from "@/components/planning-change/session-info-card";
-import { RequestDetailModuleDays }              from "@/components/request-detail/request-detail-module-days";
+}							                from "@/components/ui/form";
+import { SpaceFilterSelector, FilterMode }  from "@/components/shared/space-filter-selector";
+import { Button }			                from "@/components/ui/button";
+import { Switch }			                from "@/components/ui/switch";
+import { Textarea }			                from "@/components/ui/textarea";
+import { Label }			                from "@/components/ui/label";
+import { Input }			                from "@/components/ui/input";
+import { ProfessorSelect }	                from "@/components/shared/item-select/professor-select";
+import { HeadquartersSelect }               from "@/components/shared/item-select/headquarters-select";
+import { MultiSelectCombobox }              from "@/components/shared/Combobox";
+import { SessionInfoCard }	                from "@/components/planning-change/session-info-card";
+import { RequestDetailModuleDays }          from "@/components/request-detail/request-detail-module-days";
+import { sessionLabels }                    from "@/components/section/section.config";
+import { ChangeStatus }                     from "@/components/shared/change-status";
+import { SessionTypeSelector }              from "@/components/shared/session-type-selector";
 
 import {
     PlanningChange,
     PlanningChangeCreate,
     PlanningChangeUpdate,
     SessionWithoutPlanningChange
-}                                   from "@/types/planning-change.model";
-import { Session }			        from "@/types/section.model";
-import { Status }			        from "@/types/request";
-import { KEY_QUERYS }		        from "@/consts/key-queries";
-import { Method, fetchApi }	        from "@/services/fetch";
-import { errorToast, successToast } from "@/config/toast/toast.config";
-import { getStatusName }	        from "@/lib/utils";
+}                                       from "@/types/planning-change.model";
+import { Session }			            from "@/types/section.model";
+import { Status }			            from "@/types/request";
+import { KEY_QUERYS }		            from "@/consts/key-queries";
+import { Method, fetchApi }	            from "@/services/fetch";
+import { errorToast, successToast }     from "@/config/toast/toast.config";
+import { tempoFormat }                  from "@/lib/utils";
+import { OfferSection, OfferSession }   from "@/types/offer-section.model";
 
 
 interface Props {
@@ -70,19 +65,8 @@ interface Props {
 	isOpen			: boolean;
 	onClose			: () => void;
 	staffId			: string;
+    section         : OfferSection | null;
 }
-
-
-const sessionLabels: Record<Session, string> = {
-	[Session.C]	: 'Cátedra',
-	[Session.A]	: 'Ayudantía',
-	[Session.T]	: 'Taller',
-	[Session.L]	: 'Laboratorio',
-};
-
-
-export type SessionSelectionMode = 'session' | 'section';
-
 
 // Base Zod schema for planning change validation
 const basePlanningChangeSchema = z.object({
@@ -101,99 +85,49 @@ const basePlanningChangeSchema = z.object({
 	description		: z.string().nullable(),
 	dayModulesId	: z.array( z.number() ).min( 0 ),
 	status			: z.nativeEnum( Status ).optional(),
-}).refine(
-	( data ) => {
-		// Si no hay sessionId, debe haber sectionId
-		if ( !data.sessionId && !data.sectionId ) {
-			return false;
-		}
-		// No pueden estar ambos presentes
-		if ( data.sessionId && data.sectionId ) {
-			return false;
-		}
-		return true;
-	},
-	{
-		message	: "Debe seleccionar una sesión existente O una sección para crear nueva sesión",
-		path	: ["sessionId"],
-	}
-);
+});
 
 
 /**
  * Create dynamic schema with session validation
  */
-const createPlanningChangeSchema = ( selectedSession: SessionWithoutPlanningChange | null, filterMode: FilterMode ) => {
+const createPlanningChangeSchema = (
+    selectedSession: SessionWithoutPlanningChange | null,
+    filterMode: FilterMode
+) => {
 	return basePlanningChangeSchema.superRefine(( data: z.infer<typeof basePlanningChangeSchema>, ctx: z.RefinementCtx ) => {
 		// Validación cuando se selecciona una SESIÓN EXISTENTE
 		if ( data.sessionId && selectedSession ) {
-			// Verificar cambios en campos disponibles
-			const changes = {
-				sessionName	: data.sessionName !== null && data.sessionName !== selectedSession.name,
-				professorId	: data.professorId !== null && data.professorId !== selectedSession.professor.id,
-				building	: data.building !== null, // Building no está en session, siempre es cambio si se selecciona
-				isEnglish	: data.isEnglish !== null && data.isEnglish !== selectedSession.isEnglish,
-				spaceId		: data.spaceId !== null && data.spaceId !== selectedSession.spaceId,
-				spaceType	: data.spaceType !== null, // spaceType no está en session, siempre es cambio
-				spaceSizeId	: data.spaceSizeId !== null, // spaceSizeId no está en session, siempre es cambio
-				dayModules	: data.dayModulesId.length > 0 && !data.dayModulesId.includes( selectedSession.dayModule.id ),
-			};
-
 			// Verificar si hay al menos un cambio
-			const hasChanges = Object.values( changes ).some( changed => changed );
+			const hasSessionNameChange	= data.sessionName !== null && data.sessionName !== selectedSession.name;
+			const hasProfessorChange	= data.professorId !== null && data.professorId !== selectedSession.professor.id;
+			const hasBuildingChange		= data.building !== null;
+			const hasIsEnglishChange	= data.isEnglish !== null && data.isEnglish !== selectedSession.isEnglish;
+			const hasSpaceIdChange		= data.spaceId !== null && data.spaceId !== selectedSession.spaceId;
+			const hasSpaceTypeChange	= data.spaceType !== null;
+			const hasSpaceSizeChange	= data.spaceSizeId !== null;
+			const hasDayModulesChange	= data.dayModulesId.length > 0 && !data.dayModulesId.includes( selectedSession.dayModule.id );
 
-			if ( !hasChanges ) {
+			const hasAnyChange = hasSessionNameChange 
+                || hasProfessorChange
+                || hasBuildingChange
+                || hasIsEnglishChange
+                || hasSpaceIdChange
+                || hasSpaceTypeChange
+                || hasSpaceSizeChange
+                || hasDayModulesChange;
+
+			if ( !hasAnyChange ) {
 				ctx.addIssue({
 					code	: z.ZodIssueCode.custom,
 					message	: "Debe realizar al menos un cambio en la sesión seleccionada",
 					path	: ["title"],
 				});
 			}
-
-			// Validar campos específicos que son iguales
-			if ( data.sessionName !== null && data.sessionName === selectedSession.name ) {
-				ctx.addIssue({
-					code	: z.ZodIssueCode.custom,
-					message	: "El tipo de sesión seleccionado ya está asignado a esta sesión",
-					path	: ["sessionName"],
-				});
-			}
-
-			if ( data.professorId !== null && data.professorId === selectedSession.professor.id ) {
-				ctx.addIssue({
-					code	: z.ZodIssueCode.custom,
-					message	: "El profesor seleccionado ya está asignado a esta sesión",
-					path	: ["professorId"],
-				});
-			}
-
-			if ( data.isEnglish !== null && data.isEnglish === selectedSession.isEnglish ) {
-				ctx.addIssue({
-					code	: z.ZodIssueCode.custom,
-					message	: "El valor de 'En Inglés' seleccionado ya está asignado a esta sesión",
-					path	: ["isEnglish"],
-				});
-			}
-
-			if ( data.spaceId !== null && data.spaceId === selectedSession.spaceId ) {
-				ctx.addIssue({
-					code	: z.ZodIssueCode.custom,
-					message	: "El espacio seleccionado ya está asignado a esta sesión",
-					path	: ["spaceId"],
-				});
-			}
-
-			if ( data.dayModulesId.length > 0 && data.dayModulesId.includes( selectedSession.dayModule.id )) {
-				ctx.addIssue({
-					code	: z.ZodIssueCode.custom,
-					message	: "El módulo seleccionado ya está asignado a esta sesión",
-					path	: ["dayModulesId"],
-				});
-			}
 		}
 
-		// Validación cuando se selecciona una SECCIÓN
-		if ( data.sectionId ) {
+		// Validación cuando NO se selecciona una sesión (modo creación)
+		if ( !data.sessionId ) {
 			// sessionName es requerido
 			if ( !data.sessionName ) {
 				ctx.addIssue({
@@ -247,7 +181,6 @@ const createPlanningChangeSchema = ( selectedSession: SessionWithoutPlanningChan
 }
 
 
-
 type PlanningChangeFormValues = z.infer<typeof basePlanningChangeSchema>;
 
 
@@ -258,29 +191,68 @@ export function PlanningChangeForm({
 	isOpen,
 	onClose,
 	staffId,
+    section
 }: Props ): JSX.Element {
-	const queryClient = useQueryClient();
-	const isEditMode = !!planningChange;
+	const queryClient   = useQueryClient();
+	const isEditMode    = !!planningChange;
 
-	const [ requestDetailModule, setRequestDetailModule ] = useState<Array<{ id?: string; day: string; moduleId: string }>>([]);
-	const [ selectedSessionId, setSelectedSessionId ] = useState<string | null>( null );
-	const [ sessionSelectionMode, setSessionSelectionMode ] = useState<SessionSelectionMode>( 'session' );
-	const [ filterMode, setFilterMode ] = useState<FilterMode>( 'space' );
+	const [ requestDetailModule, setRequestDetailModule ]   = useState<Array<{ id?: string; day: string; moduleId: string }>>([]);
+	const [ selectedSessionId, setSelectedSessionId ]       = useState<string | null>( null );
+	const [ filterMode, setFilterMode ]                     = useState<FilterMode>( 'space' );
 
-	// Fetch sessions for validation
+	// Fetch sessions from section
 	const {
-		data		: sessions,
+		data		: sectionSessions,
 		isLoading	: isLoadingSessions,
 	} = useQuery({
-		queryKey	: [ KEY_QUERYS.PLANNING_CHANGE, 'session-without' ],
-		queryFn		: () => fetchApi<SessionWithoutPlanningChange[]>({ url: 'planning-change/without/session' }),
-		enabled		: !!selectedSessionId,
+		queryKey	: [ KEY_QUERYS.SECCTIONS, 'sessions', section?.id ],
+		queryFn		: () => fetchApi<OfferSession[]>({ url: `sessions/section/${ section?.id }` }),
+		enabled		: isOpen && !!section?.id,
 		staleTime	: 5 * 60 * 1000,
 		refetchOnWindowFocus: false,
 	});
 
 	// Get selected session data
-	const selectedSession = sessions?.find( s => s.id === selectedSessionId ) || null;
+	const selectedSession = useMemo(() => {
+		if ( !selectedSessionId || !sectionSessions ) return null;
+
+		const offerSession = sectionSessions.find( s => s.id === selectedSessionId );
+		if ( !offerSession ) return null;
+
+		// Convert OfferSession to SessionWithoutPlanningChange format for validation
+		return {
+			id			: offerSession.id,
+			name		: offerSession.name,
+			spaceId		: offerSession.spaceId,
+			isEnglish	: offerSession.isEnglish,
+			date		: offerSession.date,
+			professor	: {
+				id		: offerSession.professor.id,
+				name	: offerSession.professor.name,
+			},
+			dayModule	: {
+				id		: offerSession.dayModuleId,
+				dayId	: offerSession.dayId,
+				module	: {
+					id			: parseInt( offerSession.module.id ),
+					code		: offerSession.module.code,
+					startHour	: offerSession.module.startHour,
+					endHour		: offerSession.module.endHour,
+					difference	: offerSession.module.diference || '',
+				},
+			},
+			section: {
+				id			: section?.id || '',
+				code		: section?.code || 0,
+				startDate	: section?.startDate || new Date(),
+				endDate		: section?.endDate || new Date(),
+				subject		: {
+					id		: section?.subject?.id || '',
+					name	: section?.subject?.name || '',
+				},
+			},
+		} as SessionWithoutPlanningChange;
+	}, [ selectedSessionId, sectionSessions, section ]);
 
 	// Create dynamic schema with session validation
 	const planningChangeSchema = useMemo(
@@ -288,12 +260,27 @@ export function PlanningChangeForm({
 		[ selectedSession, filterMode ]
 	);
 
+	// Prepare session options for Combobox
+	const sectionSessionOptions = useMemo(() => {
+		if ( !sectionSessions ) return [];
+
+		return sectionSessions.map( session => {
+			const formattedDate = tempoFormat( session.date );
+			const moduleInfo = `${ session.module.startHour }-${ session.module.endHour }`;
+
+			return {
+				id		: session.id,
+				value	: session.id,
+				label	: `${ sessionLabels[session.name] } - ${ formattedDate } - ${ moduleInfo }`,
+			};
+		});
+	}, [ sectionSessions ]);
 
 	const form = useForm<PlanningChangeFormValues>({
 		resolver		: zodResolver( planningChangeSchema ),
 		defaultValues	: {
 			title			: '',
-			sessionName		: Session.C,
+			sessionName		: null,
 			sessionId		: null,
 			sectionId		: null,
 			professorId		: null,
@@ -309,7 +296,6 @@ export function PlanningChangeForm({
 			status			: Status.PENDING,
 		},
 	});
-
 
 	// Update form when planningChange changes
 	useEffect(() => {
@@ -347,11 +333,10 @@ export function PlanningChangeForm({
 		} else {
 			setRequestDetailModule([]);
 			setSelectedSessionId( null );
-			setSessionSelectionMode( 'session' );
 			setFilterMode( 'space' );
 			form.reset({
 				title			: '',
-				sessionName		: Session.C,
+				sessionName		: null,
 				sessionId		: null,
 				sectionId		: null,
 				professorId		: null,
@@ -376,7 +361,7 @@ export function PlanningChangeForm({
 				title			: values.title,
 				sessionName		: values.sessionName,
 				sessionId		: values.sessionId,
-				sectionId		: values.sectionId,
+				sectionId		: values.sessionId ? null : section?.id || null,
 				professorId		: values.professorId,
 				spaceSizeId		: values.spaceSizeId as any,
 				spaceType		: values.spaceType as any,
@@ -398,7 +383,8 @@ export function PlanningChangeForm({
 			});
 		},
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.PLANNING_CHANGE, 'session-without' ] });
+			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.PLANNING_CHANGE ] });
+			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.SECCTIONS ] });
 			toast( 'Cambio de planificación creado exitosamente', successToast );
 			onSuccess();
 		},
@@ -406,7 +392,6 @@ export function PlanningChangeForm({
 			toast( `Error al crear cambio de planificación: ${error.message}`, errorToast );
 		},
 	});
-
 
 	// Update mutation
 	const updatePlanningChangeMutation = useMutation({
@@ -448,7 +433,8 @@ export function PlanningChangeForm({
 
 
 	const onSubmit = ( values: PlanningChangeFormValues ) => {
-		console.log('🚀 ~ file: planning-change-form.tsx:312 ~ values:', values)
+		console.log('🚀 ~ PlanningChangeForm ~ onSubmit ~ values:', values);
+		
 		// if ( isEditMode ) {
 		// 	updatePlanningChangeMutation.mutate( values );
 		// } else {
@@ -467,18 +453,6 @@ export function PlanningChangeForm({
 	};
 
 
-	const handleSessionSelectionModeChange = ( mode: SessionSelectionMode ) => {
-		setSessionSelectionMode( mode );
-
-		// Clear fields based on mode
-		if ( mode === 'session' ) {
-			form.setValue( 'sectionId', null );
-		} else {
-			form.setValue( 'sessionId', null );
-			setSelectedSessionId( null );
-		}
-	};
-
 
 	const handleModuleToggle = useCallback(( day: string, moduleId: string, isChecked: boolean ) => {
 		setRequestDetailModule( prev => {
@@ -490,14 +464,11 @@ export function PlanningChangeForm({
 		});
 	}, []);
 
-
 	// Update dayModulesId when requestDetailModule changes
 	useEffect(() => {
 		const dayModuleIds = requestDetailModule.map( item => parseInt( item.moduleId ));
 		form.setValue( 'dayModulesId', dayModuleIds );
 	}, [ requestDetailModule, form ]);
-
-
 
 
 	return (
@@ -538,109 +509,57 @@ export function PlanningChangeForm({
 							)}
 						/>
 
-						{/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4"> */}
-							{/* Status (solo en modo edición) */}
-							{ isEditMode && (
-								<FormField
-									control	= { form.control }
-									name	= "status"
-									render	= {({ field }) => (
-										<FormItem>
-											<FormLabel>Estado</FormLabel>
+                        {/* Status (solo en modo edición) */}
+                        { isEditMode && (
+                            <FormField
+                                control	= { form.control }
+                                name	= "status"
+                                render	= {({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Estado</FormLabel>
 
-											<Select
-												onValueChange	= { field.onChange }
-												defaultValue	= { field.value }
-												value			= { field.value }
-											>
-												<FormControl>
-													<SelectTrigger>
-														<SelectValue placeholder="Seleccionar estado" />
-													</SelectTrigger>
-												</FormControl>
+                                        <FormControl>
+                                            <ChangeStatus
+                                                value           = { field.value || Status.PENDING }
+                                                onValueChange   = { field.onChange }
+                                                defaultValue    = { field.value }
+                                            />
+                                        </FormControl>
 
-												<SelectContent>
-													{ Object.values( Status ).map( status => (
-														<SelectItem key={ status } value={ status }>
-															{ getStatusName( status ) }
-														</SelectItem>
-													))}
-												</SelectContent>
-											</Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
 
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-							)}
-						{/* </div> */}
-
-						{/* Selección de Sesión o Sección (solo en modo creación) */}
+						{/* Selección de Sesión (solo en modo creación) */}
 						{ !isEditMode && (
-							<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-								{/* Sesión Existente */}
-								<div className="flex gap-2 items-end">
-									<Checkbox
-										className		= "cursor-default rounded-full p-[0.6rem] flex justify-center items-center mb-2"
-										checked			= { sessionSelectionMode === 'session' }
-										onCheckedChange	= {( checked ) => { if ( checked ) handleSessionSelectionModeChange( 'session' )}}
-									/>
+							<FormField
+								control	= { form.control }
+								name	= "sessionId"
+								render	= {({ field }) => (
+									<FormItem>
+										<Label>Sesión (opcional - seleccionar solo para modificar)</Label>
 
-									<FormField
-										control	= { form.control }
-										name	= "sessionId"
-										render	= {({ field }) => (
-											<FormItem className="w-full">
-												<SessionWithoutPlanningChangeSelect
-													label				= "Sesión Existente (para modificar)"
-													placeholder			= "Seleccionar sesión existente"
-													defaultValues		= { field.value || undefined }
-													disabled			= { sessionSelectionMode !== 'session' }
-													onSelectionChange	= {( value ) => {
-														const sessionId = typeof value === 'string' ? value : null;
-														field.onChange( sessionId );
-														setSelectedSessionId( sessionId );
-													}}
-												/>
+										<MultiSelectCombobox
+											options				= { sectionSessionOptions }
+											defaultValues		= { field.value || undefined }
+											onSelectionChange	= {( value ) => {
+												const sessionId = typeof value === 'string' ? value : undefined;
+												field.onChange( sessionId || null );
+												setSelectedSessionId( sessionId || null );
+											}}
+											placeholder			= "Seleccionar sesión existente (dejar vacío para crear nueva)"
+											disabled			= { isLoadingSessions }
+											isLoading			= { isLoadingSessions }
+											multiple			= { false }
+											required			= { false }
+										/>
 
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-								</div>
-
-								{/* Sección (para crear nueva sesión) */}
-								<div className="flex gap-2 items-end">
-									<Checkbox
-										className		= "cursor-default rounded-full p-[0.6rem] flex justify-center items-center mb-2"
-										checked			= { sessionSelectionMode === 'section' }
-										onCheckedChange	= {( checked ) => { if ( checked ) handleSessionSelectionModeChange( 'section' )}}
-									/>
-
-									<FormField
-										control	= { form.control }
-										name	= "sectionId"
-										render	= {({ field }) => (
-											<FormItem className="w-full">
-												<SectionSelect
-													label				= "Sección (para crear nueva sesión)"
-													placeholder			= "Seleccionar sección"
-													defaultValues		= { field.value || undefined }
-													queryKey			= {[ KEY_QUERYS.SECCTIONS, 'planning' ]}
-													url					= "sections/planning"
-													disabled			= { sessionSelectionMode !== 'section' }
-													onSelectionChange	= {( value ) => {
-														const sectionId = typeof value === 'string' ? value : null;
-														field.onChange( sectionId );
-													}}
-												/>
-
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-								</div>
-							</div>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
 						)}
 
 						{/* Mostrar información de la sesión seleccionada */}
@@ -658,27 +577,17 @@ export function PlanningChangeForm({
 								name	= "sessionName"
 								render	= {({ field }) => (
 									<FormItem>
-										<FormLabel>Tipo de Sesión *</FormLabel>
+										<FormLabel>Tipo de Sesión</FormLabel>
 
-										<Select
-											onValueChange	= { field.onChange }
-											defaultValue	= { field.value || undefined }
-											value			= { field.value || undefined }
-										>
-											<FormControl>
-												<SelectTrigger>
-													<SelectValue placeholder="Seleccionar tipo" />
-												</SelectTrigger>
-											</FormControl>
-
-											<SelectContent>
-												{ Object.entries( sessionLabels ).map(([ key, label ]) => (
-													<SelectItem key={ key } value={ key }>
-														{ label }
-													</SelectItem>
-												))}
-											</SelectContent>
-										</Select>
+										<FormControl>
+											<SessionTypeSelector
+												multiple		= { false }
+												value			= { field.value }
+												onValueChange	= { field.onChange }
+												defaultValue	= { field.value }
+												allowDeselect	= { true }
+											/>
+										</FormControl>
 
 										<FormMessage />
 									</FormItem>
@@ -842,6 +751,7 @@ export function PlanningChangeForm({
 											placeholder	= "Descripción opcional del cambio"
 											value		= { field.value || '' }
 											onChange	= { field.onChange }
+                                            className   = "max-h-36"
 										/>
 									</FormControl>
 
