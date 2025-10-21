@@ -56,16 +56,17 @@ import { Method, fetchApi }	            from "@/services/fetch";
 import { errorToast, successToast }     from "@/config/toast/toast.config";
 import { tempoFormat }                  from "@/lib/utils";
 import { OfferSection, OfferSession }   from "@/types/offer-section.model";
+import { useSession }                   from "@/hooks/use-session";
 
 
 interface Props {
-	planningChange?	: PlanningChange | null;
+	planningChange? : PlanningChange | null;
 	onSuccess		: () => void;
 	onCancel		: () => void;
 	isOpen			: boolean;
 	onClose			: () => void;
-	staffId			: string;
     section         : OfferSection | null;
+    session?        : OfferSession | null;
 }
 
 // Base Zod schema for planning change validation
@@ -86,7 +87,6 @@ const basePlanningChangeSchema = z.object({
 	dayModulesId	: z.array( z.number() ).min( 0 ),
 	status			: z.nativeEnum( Status ).optional(),
 });
-
 
 /**
  * Create dynamic schema with session validation
@@ -190,15 +190,19 @@ export function PlanningChangeForm({
 	onCancel,
 	isOpen,
 	onClose,
-	staffId,
-    section
+    section,
+    session
 }: Props ): JSX.Element {
+	const {
+        staff,
+        isLoading: isLoadingStaff
+    }                   = useSession();
 	const queryClient   = useQueryClient();
-	const isEditMode    = !!planningChange;
 
 	const [ requestDetailModule, setRequestDetailModule ]   = useState<Array<{ id?: string; day: string; moduleId: string }>>([]);
 	const [ selectedSessionId, setSelectedSessionId ]       = useState<string | null>( null );
 	const [ filterMode, setFilterMode ]                     = useState<FilterMode>( 'space' );
+	const [ isEditMode, setIsEditMode ]                     = useState<boolean>( !!planningChange );
 
 	// Fetch sessions from section
 	const {
@@ -208,6 +212,18 @@ export function PlanningChangeForm({
 		queryKey	: [ KEY_QUERYS.SECCTIONS, 'sessions', section?.id ],
 		queryFn		: () => fetchApi<OfferSession[]>({ url: `sessions/section/${ section?.id }` }),
 		enabled		: isOpen && !!section?.id,
+		staleTime	: 5 * 60 * 1000,
+		refetchOnWindowFocus: false,
+	});
+
+	// Fetch PlanningChange from session.planningChangeId
+	const {
+		data		: fetchedPlanningChange,
+		isLoading	: isLoadingPlanningChange,
+	} = useQuery({
+		queryKey	: [ KEY_QUERYS.PLANNING_CHANGE, session?.planningChangeId ],
+		queryFn		: () => fetchApi<PlanningChange>({ url: `planning-change/${ session?.planningChangeId }` }),
+		enabled		: isOpen && !!session && !planningChange && !!session.planningChangeId,
 		staleTime	: 5 * 60 * 1000,
 		refetchOnWindowFocus: false,
 	});
@@ -299,13 +315,18 @@ export function PlanningChangeForm({
 
 	// Update form when planningChange changes
 	useEffect(() => {
-		if ( planningChange ) {
+		const currentPlanningChange = planningChange || fetchedPlanningChange;
+
+		if ( currentPlanningChange ) {
+			// Set edit mode to true
+			setIsEditMode( true );
+
 			// Determine filter mode and set state
-			const determinedFilterMode: FilterMode = planningChange.spaceId ? 'space' : 'type-size';
+			const determinedFilterMode: FilterMode = currentPlanningChange.spaceId ? 'space' : 'type-size';
 			setFilterMode( determinedFilterMode );
 
 			// Convert dayModulesId to requestDetailModule format
-			const modules = planningChange.dayModulesId.map( id => ({
+			const modules = currentPlanningChange.dayModulesId.map( id => ({
 				day			: id.toString(),
 				moduleId	: id.toString()
 			}));
@@ -314,23 +335,24 @@ export function PlanningChangeForm({
 			setSelectedSessionId( null );
 
 			form.reset({
-				title			: planningChange.title,
-				sessionName		: planningChange.sessionName,
-				sessionId		: null,
-				sectionId		: null,
-				professorId		: planningChange.professor?.id || null,
-				building		: planningChange.building || null,
-				spaceId			: planningChange.spaceId,
-				spaceType		: planningChange.spaceType,
-				spaceSizeId		: planningChange.spaceSize as any,
-				isEnglish		: planningChange.isEnglish,
-				isConsecutive	: planningChange.isConsecutive,
-				inAfternoon		: planningChange.inAfternoon,
-				description		: planningChange.description,
-				dayModulesId	: planningChange.dayModulesId,
-				status			: planningChange.status,
+				title			: currentPlanningChange.title,
+				sessionName		: currentPlanningChange.sessionName,
+				sessionId		: currentPlanningChange.sessionId,
+				sectionId		: currentPlanningChange.sectionId,
+				professorId		: currentPlanningChange.professor?.id || null,
+				building		: currentPlanningChange.building || null,
+				spaceId			: currentPlanningChange.spaceId,
+				spaceType		: currentPlanningChange.spaceType,
+				spaceSizeId		: ( currentPlanningChange.spaceSize as any ) || null,
+				isEnglish		: currentPlanningChange.isEnglish,
+				isConsecutive	: currentPlanningChange.isConsecutive,
+				inAfternoon		: currentPlanningChange.inAfternoon,
+				description		: currentPlanningChange.description,
+				dayModulesId	: currentPlanningChange.dayModulesId,
+				status			: currentPlanningChange.status,
 			});
 		} else {
+			setIsEditMode( false );
 			setRequestDetailModule([]);
 			setSelectedSessionId( null );
 			setFilterMode( 'space' );
@@ -352,7 +374,15 @@ export function PlanningChangeForm({
 				status			: Status.PENDING,
 			});
 		}
-	}, [ planningChange, form, isOpen ]);
+	}, [ planningChange, fetchedPlanningChange, form, isOpen ]);
+
+	// Set session when it comes from props
+	useEffect(() => {
+		if ( session && isOpen ) {
+			setSelectedSessionId( session.id );
+			form.setValue( 'sessionId', session.id );
+		}
+	}, [ session, isOpen, form ]);
 
 	// Create mutation
 	const createPlanningChangeMutation = useMutation({
@@ -373,7 +403,7 @@ export function PlanningChangeForm({
 				building		: values.building as any,
 				status			: null,
 				dayModulesId	: values.dayModulesId,
-				staffCreateId	: staffId,
+				staffCreateId	: staff!.id,
 			};
 
 			return fetchApi({
@@ -396,11 +426,16 @@ export function PlanningChangeForm({
 	// Update mutation
 	const updatePlanningChangeMutation = useMutation({
 		mutationFn: async ( values: PlanningChangeFormValues ) => {
+            const planningId = planningChange?.id || session?.planningChangeId || fetchedPlanningChange?.id;
+
+            if ( !planningId ) {
+                toast( 'No se encontró el ID del cambio de planificación', errorToast );
+                return;
+            }
+
 			const body: PlanningChangeUpdate = {
-				id				: planningChange!.id,
 				title			: values.title,
 				sessionName		: values.sessionName,
-				sessionId		: values.sessionId,
 				professorId		: values.professorId,
 				spaceSizeId		: values.spaceSizeId as any,
 				spaceType		: values.spaceType as any,
@@ -412,11 +447,11 @@ export function PlanningChangeForm({
 				building		: values.building as any,
 				dayModulesId	: values.dayModulesId,
 				status			: values.status || null,
-				staffUpdateId	: staffId,
+				staffUpdateId	: staff!.id,
 			};
 
 			return fetchApi({
-				url		: `planning-change/${planningChange!.id}`,
+				url		: `planning-change/${planningId}`,
 				method	: Method.PATCH,
 				body,
 			});
@@ -433,13 +468,23 @@ export function PlanningChangeForm({
 
 
 	const onSubmit = ( values: PlanningChangeFormValues ) => {
-		console.log('🚀 ~ PlanningChangeForm ~ onSubmit ~ values:', values);
+        if ( isLoadingStaff ) {
+			toast( 'Cargando información del usuario...', { description: 'Por favor espere' });
+			return;
+		}
+
+        if ( !staff ) {
+			toast( 'Por favor, inicie sesión para crear una solicitud', errorToast );
+			return;
+		}
+
+        console.log('🚀 ~ PlanningChangeForm ~ onSubmit ~ values:', values);
 		
-		// if ( isEditMode ) {
-		// 	updatePlanningChangeMutation.mutate( values );
-		// } else {
-		// 	createPlanningChangeMutation.mutate( values );
-		// }
+		if ( isEditMode ) {
+			updatePlanningChangeMutation.mutate( values );
+		} else {
+			createPlanningChangeMutation.mutate( values );
+		}
 	};
 
 
@@ -500,6 +545,7 @@ export function PlanningChangeForm({
 									<FormControl>
 										<Input
 											placeholder	= "Título del cambio de planificación"
+											disabled	= { !!session?.planningChangeId && isLoadingPlanningChange }
 											{...field}
 										/>
 									</FormControl>
@@ -523,6 +569,7 @@ export function PlanningChangeForm({
                                                 value           = { field.value || Status.PENDING }
                                                 onValueChange   = { field.onChange }
                                                 defaultValue    = { field.value }
+                                                className		= { !!session?.planningChangeId && isLoadingPlanningChange ? 'opacity-50 pointer-events-none' : '' }
                                             />
                                         </FormControl>
 
@@ -533,7 +580,7 @@ export function PlanningChangeForm({
                         )}
 
 						{/* Selección de Sesión (solo en modo creación) */}
-						{ !isEditMode && (
+						{( !isEditMode && !session ) && (
 							<FormField
 								control	= { form.control }
 								name	= "sessionId"
@@ -586,6 +633,7 @@ export function PlanningChangeForm({
 												onValueChange	= { field.onChange }
 												defaultValue	= { field.value }
 												allowDeselect	= { true }
+												className		= { !!session?.planningChangeId && isLoadingPlanningChange ? 'opacity-50 pointer-events-none' : 'w-full' }
 											/>
 										</FormControl>
 
@@ -606,6 +654,7 @@ export function PlanningChangeForm({
 												multiple			= { false }
 												placeholder			= "Seleccionar profesor"
 												defaultValues		= { field.value || undefined }
+												disabled			= { !!session?.planningChangeId && isLoadingPlanningChange }
 												onSelectionChange	= {( value ) => {
 													const professorId = typeof value === 'string' ? value : null;
 													field.onChange( professorId );
@@ -631,6 +680,7 @@ export function PlanningChangeForm({
 												multiple			= { false }
 												placeholder			= "Seleccionar edificio"
 												defaultValues		= { field.value || undefined }
+												disabled			= { !!session?.planningChangeId && isLoadingPlanningChange }
 												onSelectionChange	= {( value ) => {
 													const buildingId = typeof value === 'string' ? value : null;
 													field.onChange( buildingId );
@@ -648,6 +698,7 @@ export function PlanningChangeForm({
 						{/* Selector de filtros de espacio */}
 						{ form.watch( 'building' ) && (
 							<div className="space-y-2">
+								<div className={ !!session?.planningChangeId && isLoadingPlanningChange ? 'opacity-50 pointer-events-none' : '' }>
 								<SpaceFilterSelector
 									buildingId			= { form.watch( 'building' ) }
 									filterMode			= { filterMode }
@@ -659,6 +710,7 @@ export function PlanningChangeForm({
 									onSpaceTypeChange	= {( spaceType ) => form.setValue( 'spaceType', spaceType )}
 									onSpaceSizeIdChange	= {( spaceSizeId ) => form.setValue( 'spaceSizeId', spaceSizeId )}
 								/>
+							</div>
 								
 								{/* Mostrar errores de espacios */}
 								{ ( form.formState.errors.spaceId || form.formState.errors.spaceType ) && (
@@ -686,6 +738,7 @@ export function PlanningChangeForm({
 													id				= "isEnglish"
 													checked			= { field.value || false }
 													onCheckedChange	= { field.onChange }
+													disabled		= { !!session?.planningChangeId && isLoadingPlanningChange }
 												/>
 											</FormControl>
 										</div>
@@ -708,6 +761,7 @@ export function PlanningChangeForm({
 													id				= "isConsecutive"
 													checked			= { field.value || false }
 													onCheckedChange	= { field.onChange }
+													disabled		= { !!session?.planningChangeId && isLoadingPlanningChange }
 												/>
 											</FormControl>
 										</div>
@@ -730,6 +784,7 @@ export function PlanningChangeForm({
 													id				= "inAfternoon"
 													checked			= { field.value || false }
 													onCheckedChange	= { field.onChange }
+													disabled		= { !!session?.planningChangeId && isLoadingPlanningChange }
 												/>
 											</FormControl>
 										</div>
@@ -751,6 +806,7 @@ export function PlanningChangeForm({
 											placeholder	= "Descripción opcional del cambio"
 											value		= { field.value || '' }
 											onChange	= { field.onChange }
+											disabled	= { !!session?.planningChangeId && isLoadingPlanningChange }
                                             className   = "max-h-36"
 										/>
 									</FormControl>
@@ -764,12 +820,14 @@ export function PlanningChangeForm({
 						<div className="space-y-2">
 							<Label>Módulos y Días *</Label>
 
-							<RequestDetailModuleDays
-								requestDetailModule	= { requestDetailModule }
-								onModuleToggle		= { handleModuleToggle }
-								enabled				= { true }
-								multiple			= { true }
-							/>
+							<div className={ !!session?.planningChangeId && isLoadingPlanningChange ? 'opacity-50 pointer-events-none' : '' }>
+								<RequestDetailModuleDays
+									requestDetailModule	= { requestDetailModule }
+									onModuleToggle		= { handleModuleToggle }
+									enabled				= { true }
+									multiple			= { true }
+								/>
+							</div>
 
 							{ form.formState.errors.dayModulesId && (
 								<p className="text-sm font-medium text-destructive">
