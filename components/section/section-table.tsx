@@ -63,6 +63,7 @@ export function SectionTable({
 	onSelectedSessionsChange
 }: Props ) {
 	const queryClient                                       = useQueryClient();
+    const router                                            = useRouter();
 	const [ expandedSections, setExpandedSections ]         = useState<Set<string>>( new Set() );
 	const [ selectedSections, setSelectedSections ]         = useState<Set<string>>( new Set() );
 	const [ createSessionSection, setCreateSessionSection ] = useState<OfferSection | null>( null );
@@ -91,13 +92,11 @@ export function SectionTable({
 		});
 	}
 
-
 	/**
 	 * Check if section is fully selected
 	 */
 	const isSectionFullySelected = ( section: OfferSection ): boolean =>
 		selectedSections.has( section.id );
-
 
 	/**
 	 * Handle section selection (parent)
@@ -122,13 +121,13 @@ export function SectionTable({
 
 		const newSelectedSessions = new Set( selectedSessions );
 
-		section.sessions.forEach( ( session ) => {
-			if ( checked ) {
-				newSelectedSessions.add( session.id );
-			} else {
-				newSelectedSessions.delete( session.id );
-			}
-		} );
+		// section.sessions.forEach( ( session ) => {
+		// 	if ( checked ) {
+		// 		newSelectedSessions.add( session.id );
+		// 	} else {
+		// 		newSelectedSessions.delete( session.id );
+		// 	}
+		// } );
 
 		onSelectedSessionsChange( newSelectedSessions );
 	}
@@ -137,12 +136,12 @@ export function SectionTable({
 	/**
 	 * Check if section is partially selected
 	 */
-	function isSectionPartiallySelected( section: OfferSection ): boolean {
-		const sessionIds            = section.sessions.map( s => s.id );
-		const selectedSessionIds    = sessionIds.filter( id => selectedSessions.has( id ));
+	// function isSectionPartiallySelected( section: OfferSection ): boolean {
+	// 	const sessionIds            = section.sessions.map( s => s.id );
+	// 	const selectedSessionIds    = sessionIds.filter( id => selectedSessions.has( id ));
 
-		return selectedSessionIds.length > 0 && selectedSessionIds.length < sessionIds.length;
-	}
+	// 	return selectedSessionIds.length > 0 && selectedSessionIds.length < sessionIds.length;
+	// }
 
 
 	/**
@@ -166,26 +165,25 @@ export function SectionTable({
 
 		if ( !section ) return;
 
-		const sessionIds            = section.sessions.map( s => s.id );
-		const selectedSessionIds    = sessionIds.filter( id => 
-			checked
-				? ( newSelectedSessions.has( id ) )
-				: ( newSelectedSessions.has( id ) )
-		);
+		// const sessionIds            = section.sessions.map( s => s.id );
+		// const selectedSessionIds    = sessionIds.filter( id => 
+		// 	checked
+		// 		? ( newSelectedSessions.has( id ) )
+		// 		: ( newSelectedSessions.has( id ) )
+		// );
 
-		setSelectedSections( ( prev ) => {
-			const newSet = new Set( prev );
+		// setSelectedSections( ( prev ) => {
+		// 	const newSet = new Set( prev );
 
-			if ( selectedSessionIds.length === sessionIds.length ) {
-				newSet.add( sectionId );
-			} else {
-				newSet.delete( sectionId );
-			}
+		// 	if ( selectedSessionIds.length === sessionIds.length ) {
+		// 		newSet.add( sectionId );
+		// 	} else {
+		// 		newSet.delete( sectionId );
+		// 	}
 
-			return newSet;
-		});
+		// 	return newSet;
+		// });
 	}
-
 
 	/**
 	 * Handle edit section
@@ -195,7 +193,6 @@ export function SectionTable({
 		setIsOpenSectionForm( true );
 	}
 
-
 	/**
 	 * Handle delete section
 	 */
@@ -203,7 +200,6 @@ export function SectionTable({
 		setSelectedSection( section );
 		setIsOpenDelete( true );
 	}
-
 
 	/**
 	 * API call to delete section
@@ -213,7 +209,6 @@ export function SectionTable({
 			url     : `Sections/${sectionId}`,
 			method  : Method.DELETE
 		});
-
 
 	/**
 	 * Mutation to delete section
@@ -229,7 +224,6 @@ export function SectionTable({
 		onError: ( mutationError ) => toast( `Error al eliminar sección: ${mutationError.message}`, errorToast )
 	});
 
-
 	/**
 	 * Confirm delete section
 	 */
@@ -238,7 +232,6 @@ export function SectionTable({
 			deleteSectionMutation.mutate( selectedSection.id );
 		}
 	}
-
 
 	/**
 	 * Get session counts for SessionShort component
@@ -251,7 +244,6 @@ export function SectionTable({
 			L: section.laboratory,
 		};
 	}
-    const router = useRouter();
 
 
 	return (
@@ -301,7 +293,8 @@ export function SectionTable({
 											size        = "sm"
 											onClick     = {() => toggleSectionExpansion( section.id )}
 											className   = "p-1 h-8 w-8"
-                                            disabled = { section.sessions.length === 0 }
+                                            disabled    = { section.sessionsCount === 0 }
+                                            // disabled = { section.sessions.length === 0 }
 										>
 											{ expandedSections.has( section.id )
 												? <ChevronDown className="h-4 w-4" />
@@ -314,9 +307,9 @@ export function SectionTable({
 										<Checkbox
 											checked         = { isSectionFullySelected( section ) }
 											onCheckedChange = {( checked ) => handleSectionSelection( section.id, checked as boolean )}
-											className       = { isSectionPartiallySelected( section ) ? "data-[state=unchecked]:bg-blue-100 w-5 h-5" : " w-5 h-5" }
+											// className       = { isSectionPartiallySelected( section ) ? "data-[state=unchecked]:bg-blue-100 w-5 h-5" : " w-5 h-5" }
 											aria-label      = "Seleccionar sección"
-											disabled        = { section.isClosed || section.sessions.length === 0 }
+											disabled        = { section.isClosed || section.sessionsCount === 0 }
 										/>
 									</TableCell>
 
@@ -351,7 +344,7 @@ export function SectionTable({
 												title		= "Crear Cambio de Planificación"
 												size		= "icon"
 												variant		= "outline"
-												disabled	= { section.isClosed || section.sessions.length === 0 }
+												disabled	= { section.isClosed || section.sessionsCount === 0 }
 												className	= "bg-blue-500 hover:bg-blue-600 text-white"
 												onClick		= { () => {
                                                     setIsOpenPlanningChange( true );
@@ -361,7 +354,7 @@ export function SectionTable({
 												<CalendarClock className="w-4 h-4" />
 											</Button>
 
-											{ section.sessions.length === 0
+											{ section.sessionsCount === 0
 												? <Button
 													title       = "Asignar Sesiones"
 													size        = "icon"
@@ -410,9 +403,10 @@ export function SectionTable({
 								{/* Expanded Sessions (Children) */}
 								{expandedSections.has( section.id ) && (
 									<SessionTable
-										section           = { section }
-										selectedSessions  = { selectedSessions }
-										handleSessionSelection = { handleSessionSelection }
+										section                 = { section }
+										selectedSessions        = { selectedSessions }
+										handleSessionSelection  = { handleSessionSelection }
+										isOpen                  = { expandedSections.has( section.id ) }
 									/>
 								)}
 							</React.Fragment>
@@ -462,7 +456,6 @@ export function SectionTable({
 					queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.PLANNING_CHANGE ] });
 				}}
 				onCancel		= { () => setIsOpenPlanningChange( false )}
-				staffId			= "temp-staff-id"
 			/>
 		</>
 	);
