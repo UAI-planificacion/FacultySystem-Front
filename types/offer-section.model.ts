@@ -56,6 +56,7 @@ export interface OfferSession {
     dayId                   : number;
     dayModuleId             : number;
     requestSession?         : RequestSession;
+    planningChangeId        : string | null;
 }
 
 
@@ -117,6 +118,14 @@ export interface RequestSession {
     requestSessions : RequestSessionDetail[];
 }
 
+export interface SectionSession {
+     spaceIds        : string[];        // IDs de espacios
+    dayIds          : number[];        // IDs de días
+    moduleIds       : number[];        // IDs de módulos
+    professorIds    : string[];        // IDs de profesores
+
+}
+
 
 export interface OfferSection {
     id              : string;
@@ -134,6 +143,8 @@ export interface OfferSection {
     professor       : OfferSectionProffesor;
     subject         : OfferSectionSubject;
     period          : OfferSectionPeriod;
-    sessions        : OfferSession[];
+    // sessions        : OfferSession[];
+    sessionsCount : number;
     haveRequest     : boolean;
+    sessions: SectionSession;
 }
