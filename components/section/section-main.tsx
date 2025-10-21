@@ -121,15 +121,21 @@ export function SectionMain({
         // Apply filters
         const filtered = sectionsData.filter(( section ) => {
             const matchesCode       = codeFilter.length         === 0 || codeFilter.includes( section.code.toString() );
-            const matchesRoom       = roomFilter.length         === 0 || section.sessions.some( session => roomFilter.includes( session.spaceId || '' ));
-            const matchesDay        = dayFilter.length          === 0 || section.sessions.some( session => dayFilter.includes( session.dayId?.toString() || '' ));
+            const matchesRoom       = roomFilter.length         === 0 || section.sessions.spaceIds.some( spaceId => roomFilter.includes( spaceId ));
+            const matchesDay        = dayFilter.length          === 0 || section.sessions.dayIds.some( dayId => dayFilter.includes( dayId.toString() ));
             const matchesPeriod     = periodFilter.length       === 0 || periodFilter.includes( section.period.id );
             const matchesStatus     = statusFilter.length       === 0 || statusFilter.includes( section.isClosed ? 'closed' : 'open' );
             const matchesSubject    = subjectFilter.length      === 0 || subjectFilter.includes( section.subject.id );
             const matchesSize       = sizeFilter.length         === 0 || sizeFilter.includes( section.spaceSizeId || '' );
-            const matchesSession    = sessionFilter.length      === 0 || section.sessions.some( session => sessionFilter.includes( session.name ));
-            const matchesModule     = moduleFilter.length       === 0 || section.sessions.some( session => moduleFilter.includes( session.module.id ));
-            const matchesProfessor  = professorFilter.length    === 0 || section.sessions.some( session => professorFilter.includes( session.professor?.id || '' ));
+            const matchesSession    = sessionFilter.length      === 0 || sessionFilter.some( sessionType => {
+                if ( sessionType === 'C' ) return section.lecture > 0;
+                if ( sessionType === 'A' ) return section.tutoringSession > 0;
+                if ( sessionType === 'T' ) return section.workshop > 0;
+                if ( sessionType === 'L' ) return section.laboratory > 0;
+                return false;
+            });
+            const matchesModule     = moduleFilter.length       === 0 || section.sessions.moduleIds.some( moduleId => moduleFilter.includes( moduleId.toString() ));
+            const matchesProfessor  = professorFilter.length    === 0 || section.sessions.professorIds.some( professorId => professorFilter.includes( professorId ));
 
             return matchesCode && matchesRoom && matchesDay && matchesPeriod && matchesStatus && matchesSubject && matchesSize && matchesSession && matchesModule && matchesProfessor;
         });
