@@ -25,6 +25,9 @@ interface Props {
 }
 
 
+// TODO: Se podría eliminar este componente 
+// ***TODO: Hay que revisarlo**
+
 /**
  * SessionWithoutPlanningChangeSelect Component
  * 
