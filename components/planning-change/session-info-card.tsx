@@ -8,23 +8,23 @@ import {
 	CardDescription,
 	CardHeader,
 	CardTitle,
-}									from "@/components/ui/card";
-import { Badge }					from "@/components/ui/badge";
-import { Skeleton }					from "@/components/ui/skeleton";
+}						from "@/components/ui/card";
 import {
 	Accordion,
 	AccordionContent,
 	AccordionItem,
 	AccordionTrigger,
-}									from "@/components/ui/accordion";
+}						from "@/components/ui/accordion";
+import { Skeleton }     from "@/components/ui/skeleton";
+import { Badge }		from "@/components/ui/badge";
 
-import { SessionWithoutPlanningChange }	from "@/types/planning-change.model";
-import { tempoFormat }					from "@/lib/utils";
-import { Session }						from "@/types/section.model";
+import { tempoFormat }  from "@/lib/utils";
+import { Session }      from "@/types/section.model";
+import { OfferSession } from "@/types/offer-section.model";
 
 
 interface Props {
-	sessionData		: SessionWithoutPlanningChange | null;
+	sessionData?    : OfferSession | null;
 	isLoading		: boolean;
 }
 
@@ -35,7 +35,6 @@ const sessionLabels: Record<Session, string> = {
 	[Session.T]	: 'Taller',
 	[Session.L]	: 'Laboratorio',
 };
-
 
 /**
  * SessionInfoCard Component
@@ -160,7 +159,7 @@ export function SessionInfoCard({
 									<span className="font-semibold text-muted-foreground">Módulo/Horario:</span>
 									<div className="mt-2">
 										<Badge variant="outline" className="font-mono">
-											M{ sessionData.dayModule.module.code } { sessionData.dayModule.module.difference || '' }: { sessionData.dayModule.module.startHour } - { sessionData.dayModule.module.endHour } { sessionData.dayModule.module.difference?? '' }
+											M{ sessionData.module.code } { sessionData.module.difference || '' }: { sessionData.module.startHour } - { sessionData.module.endHour } { sessionData.module.difference?? '' }
 										</Badge>
 									</div>
 								</div>
