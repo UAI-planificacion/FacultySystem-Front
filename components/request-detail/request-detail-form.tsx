@@ -715,10 +715,10 @@ export function RequestDetailForm({
                     { requestDetail &&
                         <TabsContent value="comments" className="mt-4">
                             <CommentSection
-                                requestDetailId = { requestDetail?.id }
+                                requestSessionId = { requestDetail?.id }
                                 enabled         = { tab === 'comments' }
                                 size            = { 'h-[378px]' }
-                                />
+                            />
                         </TabsContent>
                     }
                 </Tabs>
