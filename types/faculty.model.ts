@@ -1,9 +1,9 @@
 
 interface Total {
-    totalSubjects   : number;
-    totalStaff      : number;
-    totalRequests   : number;
-    // totalOffers     : number;
+    totalSubjects           : number;
+    totalStaff              : number;
+    totalRequests           : number;
+    totalPlanningChanges    : number;
 }
 
 
