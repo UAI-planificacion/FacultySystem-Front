@@ -9,7 +9,8 @@ import {
     Edit2,
     Trash2,
     X
-} from "lucide-react";
+}                   from "lucide-react";
+import { toast }    from "sonner";
 
 import { Button }               from "@/components/ui/button";
 import { Textarea }             from "@/components/ui/textarea";
@@ -24,11 +25,12 @@ import { Comment }      from "@/types/comment.model";
 import { useSession }   from "@/hooks/use-session";
 import { useComments }  from "@/hooks/use-comments";
 import { Role }         from "@/types/staff.model";
+import { errorToast }   from "@/config/toast/toast.config";
 
 
 interface CommentSectionProps {
-	requestId?          : string;
-	requestDetailId?    : string;
+	planningChangeId?   : string;
+	requestSessionId?   : string;
     enabled             : boolean;
     size?               : string;
 }
@@ -37,8 +39,8 @@ interface CommentSectionProps {
  * Component for displaying and managing comments in a request
  */
 export function CommentSection( { 
-	requestId,
-	requestDetailId,
+	planningChangeId,
+	requestSessionId,
     enabled,
     size = 'h-[450px]'
 }: CommentSectionProps ): JSX.Element {
@@ -46,7 +48,8 @@ export function CommentSection( {
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen]           = useState( false );
 	const [deletingCommentId, setDeletingCommentId]             = useState<string | undefined>( undefined );
 	const [deletingCommentContent, setDeletingCommentContent]   = useState<string>( '' );
-	const { staff }                                             = useSession();
+	const sessionData                                           = useSession();
+	const { staff }                                             = sessionData;
 
 	const {
 		comments,
@@ -57,7 +60,7 @@ export function CommentSection( {
         updateComment,
         deleteComment,
         isCreating
-	} = useComments({ requestId, requestDetailId, enabled });
+	} = useComments({ requestSessionId, planningChangeId, enabled });
 
 
 	/**
@@ -66,13 +69,18 @@ export function CommentSection( {
 	const handleSubmitComment = () => {
         const content = newComment.trim();
 
-        if ( !content || !staff ) return;
+        if ( !staff ) {
+            toast('No se encontro al usuario', errorToast);
+            return;
+        }
+
+        if ( !content.trim() ) return;
 
         createComment.mutate({
             content,
             staffId: staff.id,
-            ...(requestId && { requestId }),
-            ...(requestDetailId && { requestDetailId }),
+            ...(planningChangeId && { planningChangeId }),
+            ...(requestSessionId && { requestSessionId }),
         });
 
         setNewComment( '' );
@@ -194,7 +202,7 @@ export function CommentSection( {
 
 						<Button
 							onClick     = { handleSubmitComment }
-							disabled    = { !newComment.trim() || isCreating || isError }
+							disabled    = { !newComment.trim() || isCreating || isError || !staff }
 							size        = "sm"
 						>
 							<Send className="h-4 w-4 mr-2" />
