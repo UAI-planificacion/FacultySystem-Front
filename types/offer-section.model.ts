@@ -31,7 +31,7 @@ export interface OfferModule {
     name        : string;
     startHour   : string;
     endHour     : string;
-    diference   : 'A' | 'B' | null;
+    difference   : 'A' | 'B' | null;
 }
 
 
@@ -57,6 +57,16 @@ export interface OfferSession {
     dayModuleId             : number;
     requestSession?         : RequestSession;
     planningChangeId        : string | null;
+    section                 : SectionSeccionPlanningChange;
+
+}
+
+interface SectionSeccionPlanningChange {
+    id          : string;
+    code        : number,
+    startDate   : Date;
+    endDate     : Date;
+    subject     : OfferSectionSubject
 }
 
 
