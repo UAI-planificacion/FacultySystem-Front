@@ -34,14 +34,14 @@ interface UseCommentsReturn {
 
 
 export enum CommentType {
-    REQUEST = "request",
-    DETAIL = 'request-detail'
+    REQUEST_SESSION = "request-sessions",
+    PLANNING_CHANGE = 'planning-change'
 }
 
 
-interface CommentsProps {
-    requestId?          : string;
-	requestDetailId?    : string;
+interface Props {
+    requestSessionId?   : string;
+	planningChangeId?   : string;
     enabled             : boolean;
 }
 
@@ -53,16 +53,16 @@ interface CommentsProps {
  * @returns Object containing comments data and management functions
  */
 export function useComments({
-    requestId,
-    requestDetailId,
+    requestSessionId,
+    planningChangeId,
     enabled = true,
-}: CommentsProps ): UseCommentsReturn {
+}: Props ): UseCommentsReturn {
 	const queryClient = useQueryClient();
-    const id = requestId || requestDetailId;
+    const id = requestSessionId || planningChangeId;
 
     if ( !id ) throw new Error ( 'Id is required' );
 
-    const type = requestId ? CommentType.REQUEST : CommentType.DETAIL;
+    const type = requestSessionId ? CommentType.REQUEST_SESSION : CommentType.PLANNING_CHANGE;
     const endpoint = 'comments';
 
 	const {
