@@ -1,6 +1,6 @@
 "use client"
 
-import { JSX, useEffect } from "react"
+import { JSX, useEffect, useState } from "react"
 
 import { useMutation, useQueryClient }  from "@tanstack/react-query";
 import { z }                            from "zod";
@@ -16,6 +16,12 @@ import {
 	DialogHeader,
 	DialogTitle,
 }								from "@/components/ui/dialog";
+import {
+	Tabs,
+	TabsContent,
+	TabsList,
+	TabsTrigger,
+}							from "@/components/ui/tabs";
 import {
 	Form,
 	FormControl,
@@ -34,12 +40,14 @@ import { Textarea }				from "@/components/ui/textarea";
 import { Label }				from "@/components/ui/label";
 import { ProfessorSelect }		from "@/components/shared/item-select/professor-select";
 import { HeadquartersSelect }	from "@/components/shared/item-select/headquarters-select";
+import { CommentSection }		from "@/components/comment/comment-section";
 
 import { RequestSession }			from "@/types/request-session.model";
 import { Session }					from "@/types/section.model";
 import { KEY_QUERYS }				from "@/consts/key-queries";
 import { Method, fetchApi }			from "@/services/fetch";
 import { errorToast, successToast }	from "@/config/toast/toast.config";
+import { cn }						from "@/lib/utils";
 
 
 interface Props {
@@ -88,6 +96,8 @@ const requestSessionEditSchema = z.object({
 
 type RequestSessionEditFormValues = z.infer<typeof requestSessionEditSchema>;
 
+type Tab = 'form' | 'comments';
+
 
 export function RequestSessionEditForm({
 	requestSession,
@@ -98,6 +108,7 @@ export function RequestSessionEditForm({
 	requestId,
 }: Props ): JSX.Element {
 	const queryClient = useQueryClient();
+	const [ tab, setTab ] = useState<Tab>( 'form' );
 
 	const form = useForm<RequestSessionEditFormValues>({
 		resolver	: zodResolver( requestSessionEditSchema ),
@@ -120,6 +131,8 @@ export function RequestSessionEditForm({
 		if ( requestSession ) {
 			// Determine filter mode
 			const filterMode: FilterMode = requestSession.spaceId ? 'space' : 'type-size';
+
+			setTab( 'form' );
 
 			form.reset({
 				professorId		: requestSession.professor?.id || null,
@@ -195,8 +208,22 @@ export function RequestSessionEditForm({
 					</DialogDescription>
 				</DialogHeader>
 
-				<Form {...form}>
-					<form onSubmit={ form.handleSubmit( onSubmit ) } className="space-y-4">
+				<Tabs
+					defaultValue	= { tab }
+					onValueChange	= {( value ) => setTab( value as Tab )}
+					className		= "w-full"
+				>
+					<TabsList className="grid w-full grid-cols-2">
+						<TabsTrigger value="form">Información</TabsTrigger>
+
+						<TabsTrigger value="comments">
+							Comentarios
+						</TabsTrigger>
+					</TabsList>
+
+					<TabsContent value="form" className="space-y-4 mt-4">
+						<Form {...form}>
+							<form onSubmit={ form.handleSubmit( onSubmit ) } className="space-y-4">
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							{/* Profesor */}
 							<FormField
@@ -355,25 +382,35 @@ export function RequestSessionEditForm({
 							)}
 						/>
 
-						<DialogFooter className="flex justify-between border-t pt-4">
-							<Button
-								type		= "button"
-								variant		= "outline"
-								onClick		= { onCancel }
-								disabled	= { updateRequestSessionMutation.isPending }
-							>
-								Cancelar
-							</Button>
+								<DialogFooter className="flex justify-between border-t pt-4">
+									<Button
+										type		= "button"
+										variant		= "outline"
+										onClick		= { onCancel }
+										disabled	= { updateRequestSessionMutation.isPending }
+									>
+										Cancelar
+									</Button>
 
-							<Button
-								type		= "submit"
-								disabled	= { updateRequestSessionMutation.isPending }
-							>
-								{ updateRequestSessionMutation.isPending ? 'Guardando...' : 'Guardar Cambios' }
-							</Button>
-						</DialogFooter>
-					</form>
-				</Form>
+									<Button
+										type		= "submit"
+										disabled	= { updateRequestSessionMutation.isPending }
+									>
+										{ updateRequestSessionMutation.isPending ? 'Guardando...' : 'Guardar Cambios' }
+									</Button>
+								</DialogFooter>
+							</form>
+						</Form>
+					</TabsContent>
+
+					<TabsContent value="comments" className="mt-4">
+						<CommentSection
+							requestSessionId	= { requestSession?.id }
+							enabled				= { tab === 'comments' }
+							size				= { 'h-[450px]' }
+						/>
+					</TabsContent>
+				</Tabs>
 			</DialogContent>
 		</Dialog>
 	);
