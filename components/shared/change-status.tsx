@@ -1,6 +1,6 @@
 'use client'
 
-import { JSX } from "react";
+import { JSX, useMemo, useCallback } from "react";
 
 import { ToggleGroup, ToggleGroupItem }	from "@/components/ui/toggle-group";
 import { CircleDashed, Eye, BadgeCheck, OctagonX } from "lucide-react";
@@ -8,12 +8,27 @@ import { CircleDashed, Eye, BadgeCheck, OctagonX } from "lucide-react";
 import { Status } from "@/types/request";
 
 
-interface Props {
+interface SingleSelectProps {
+	multiple		: false;
 	value			: Status;
 	onValueChange	: ( value: Status ) => void;
 	defaultValue?	: Status;
+	allowDeselect?	: boolean;
 	className?		: string;
 }
+
+
+interface MultiSelectProps {
+	multiple		: true;
+	value			: Status[];
+	onValueChange	: ( value: Status[] ) => void;
+	defaultValue?	: Status[];
+	allowDeselect?	: boolean;
+	className?		: string;
+}
+
+
+type Props = SingleSelectProps | MultiSelectProps;
 
 
 /**
@@ -21,22 +36,65 @@ interface Props {
  * 
  * Reusable status selector with toggle group for Request and PlanningChange forms.
  * Displays 4 status options: PENDING, REVIEWING, APPROVED, REJECTED with icons and colors.
+ * 
+ * @param multiple - If true, allows multiple selection. Default: false
+ * @param allowDeselect - If true, allows deselecting items. Default: true
  */
-export function ChangeStatus({
-	value,
-	onValueChange,
-	defaultValue,
-	className = "w-full"
-}: Props ): JSX.Element {
+export function ChangeStatus( props: Props ): JSX.Element {
+	const {
+		multiple = false,
+		value,
+		onValueChange,
+		defaultValue,
+		allowDeselect = true,
+		className = "w-full"
+	} = props;
+
+	// Memoizar el valor del toggle group
+	const toggleValue = useMemo(() => {
+		if ( multiple ) {
+			return value as string[];
+		}
+		return ( value as Status ) || '';
+	}, [ multiple, value ]);
+
+	// Memoizar el defaultValue del toggle group
+	const toggleDefaultValue = useMemo(() => {
+		if ( multiple ) {
+			return defaultValue as string[] | undefined;
+		}
+		return ( defaultValue as Status ) || undefined;
+	}, [ multiple, defaultValue ]);
+
+	// Handler para cambios de valor
+	const handleValueChange = useCallback(( val: string | string[] ) => {
+		if ( multiple ) {
+			const arrayVal = val as string[];
+			// Si allowDeselect es false y se intenta deseleccionar el último, no hacer nada
+			if ( !allowDeselect && arrayVal.length === 0 ) {
+				return;
+			}
+			( onValueChange as ( value: Status[] ) => void )( arrayVal as Status[] );
+		} else {
+			const stringVal = val as string;
+			// Si allowDeselect es false y el valor es vacío, no hacer nada
+			if ( !allowDeselect && ( stringVal === '' || !stringVal )) {
+				return;
+			}
+
+			if ( stringVal && stringVal !== '' ) {
+				( onValueChange as ( value: Status ) => void )( stringVal as Status );
+			}
+		}
+	}, [ multiple, allowDeselect, onValueChange ]);
+
 	return (
 		<ToggleGroup
-			type			= "single"
-			value			= { value }
-			onValueChange	= {( val: Status ) => {
-				if ( val ) onValueChange( val )
-			}}
+			type			= { multiple ? "multiple" : "single" }
+			value			= { toggleValue as any }
+			onValueChange	= { handleValueChange as any }
 			className		= { className }
-			defaultValue	= { defaultValue }
+			defaultValue	= { toggleDefaultValue as any }
 		>
 			<ToggleGroupItem
 				value		= "PENDING"
