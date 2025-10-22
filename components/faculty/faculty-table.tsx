@@ -3,7 +3,7 @@
 import { JSX } from "react";
 import { useRouter } from 'next/navigation';
 
-import { BookCopy, Users, BookOpen } from "lucide-react";
+import { BookCopy, Users, BookOpen, CalendarCog } from "lucide-react";
 
 import {
 	Table,
@@ -43,6 +43,7 @@ function FacultyTableSkeleton(): JSX.Element {
 					<TableHead className="w-[200px]">Nombre</TableHead>
 					<TableHead className="w-[300px]">Descripción</TableHead>
 					<TableHead className="w-[120px] text-center">Solicitudes</TableHead>
+					<TableHead className="w-[120px] text-center">Cambio Plan.</TableHead>
 					<TableHead className="w-[120px] text-center">Personal</TableHead>
 					<TableHead className="w-[120px] text-center">Asignaturas</TableHead>
 					<TableHead className="w-[120px] text-center">Acciones</TableHead>
@@ -57,6 +58,10 @@ function FacultyTableSkeleton(): JSX.Element {
 
 						<TableCell>
 							<Skeleton className="h-4 w-[250px]" />
+						</TableCell>
+
+						<TableCell className="text-center">
+							<Skeleton className="h-6 w-8 mx-auto rounded-full" />
 						</TableCell>
 
 						<TableCell className="text-center">
@@ -148,6 +153,8 @@ export function FacultyTable({
 
                                 <TableHead className="w-[10px] text-center">Solicitudes</TableHead>
 
+                                <TableHead className="w-[10px] text-center">Cambio Plan.</TableHead>
+
                                 <TableHead className="w-[10px] text-center">Personal</TableHead>
 
                                 <TableHead className="w-[10px] text-center">Asignaturas</TableHead>
@@ -176,6 +183,18 @@ export function FacultyTable({
                                         >
                                             <BookCopy className="h-4 w-4 mr-2" />
                                             {faculty.totalRequests || 0}
+                                        </Button>
+                                    </TableCell>
+
+                                    <TableCell className="text-center">
+                                        <Button
+                                            variant		= "outline"
+                                            size		= "default"
+                                            onClick		= {() => router.push(`/faculties/${faculty.id}?tab=planning-change`)}
+                                            className	= "h-10 px-4 text-sm mx-auto flex items-center justify-center min-w-[80px]"
+                                        >
+                                            <CalendarCog className="h-4 w-4 mr-2" />
+                                            {faculty.totalPlanningChanges || 0}
                                         </Button>
                                     </TableCell>
 
