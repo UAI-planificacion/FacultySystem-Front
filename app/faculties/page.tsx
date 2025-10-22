@@ -7,7 +7,8 @@ import {
     Users,
     BookOpen,
     Plus,
-    BookCopy
+    BookCopy,
+    CalendarCog
 }                   from "lucide-react";
 import {
     useMutation,
@@ -22,10 +23,10 @@ import { FacultyTable }         from "@/components/faculty/faculty-table";
 import { Button }               from "@/components/ui/button";
 import { StatisticCard }        from "@/components/ui/statistic-card";
 import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
-import { Input }                from "@/components/ui/input";
 import { ViewMode }             from "@/components/shared/view-mode";
 import { DataPagination }       from "@/components/ui/data-pagination";
 import { PageLayout }           from "@/components/layout/page-layout";
+import { SearchInput }          from "@/components/shared/Search-input";
 
 import {
     CreateFacultyInput,
@@ -224,7 +225,7 @@ export default function FacultiesPage() {
         >
             <div className="flex flex-col h-full space-y-4 overflow-hidden">
                 {/* Statistics Cards */}
-                <div className="flex-shrink-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="flex-shrink-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                     <StatisticCard
                         title   = "Total de Facultades"
                         value   = { data?.faculties.length }
@@ -242,29 +243,27 @@ export default function FacultiesPage() {
                         value   = { data?.totalSubjects }
                         icon    = { <BookOpen className="h-6 w-6" /> }
                     />
-{/* 
-                    <StatisticCard
-                        title   = "Total de Ofertas"
-                        value   = { data?.totalOffers }
-                        icon    = { <BookCopy className="h-6 w-6" /> }
-                    /> */}
 
                     <StatisticCard
                         title   = "Total de Solicitudes"
                         value   = { data?.totalRequests }
                         icon    = { <BookCopy className="h-6 w-6" /> }
                     />
+
+                    <StatisticCard
+                        title   = "Total de Cambios de P."
+                        value   = { data?.totalPlanningChanges }
+                        icon    = { <CalendarCog className="h-6 w-6" /> }
+                    />
                 </div>
 
                 {/* Faculty List */}
                 <div className="flex-1 flex flex-col space-y-4 overflow-hidden">
-                    <div className="flex-shrink-0 w-full flex items-center justify-between gap-2">
-                        <Input
-                            type        = "search"
+                    <div className="w-full flex items-center justify-between gap-2 pt-1 pl-1">
+                        <SearchInput
                             placeholder = "Buscar facultad por nombre..."
-                            value       = { filterText }
-                            onChange    = {( e ) => setFilterText( e.target.value )}
-                            className   = "w-full max-w-md"
+                            title       = { filterText }
+                            setTitle    = { setFilterText }
                         />
 
                         <ViewMode
