@@ -21,6 +21,12 @@ import {
 	DialogTitle,
 }							                from "@/components/ui/dialog";
 import {
+	Tabs,
+	TabsContent,
+	TabsList,
+	TabsTrigger,
+}							                from "@/components/ui/tabs";
+import {
 	Form,
 	FormControl,
 	FormField,
@@ -38,6 +44,7 @@ import { ProfessorSelect }	                from "@/components/shared/item-select
 import { HeadquartersSelect }               from "@/components/shared/item-select/headquarters-select";
 import { MultiSelectCombobox }              from "@/components/shared/Combobox";
 import { SessionInfoCard }	                from "@/components/planning-change/session-info-card";
+import { CommentSection }	                from "@/components/comment/comment-section";
 import { RequestDetailModuleDays }          from "@/components/request-detail/request-detail-module-days";
 import { sessionLabels }                    from "@/components/section/section.config";
 import { ChangeStatus }                     from "@/components/shared/change-status";
@@ -46,15 +53,14 @@ import { SessionTypeSelector }              from "@/components/shared/session-ty
 import {
     PlanningChange,
     PlanningChangeCreate,
-    PlanningChangeUpdate,
-    SessionWithoutPlanningChange
+    PlanningChangeUpdate
 }                                       from "@/types/planning-change.model";
 import { Session }			            from "@/types/section.model";
 import { Status }			            from "@/types/request";
 import { KEY_QUERYS }		            from "@/consts/key-queries";
 import { Method, fetchApi }	            from "@/services/fetch";
 import { errorToast, successToast }     from "@/config/toast/toast.config";
-import { tempoFormat }                  from "@/lib/utils";
+import { tempoFormat, cn }              from "@/lib/utils";
 import { OfferSection, OfferSession }   from "@/types/offer-section.model";
 import { useSession }                   from "@/hooks/use-session";
 
@@ -92,7 +98,7 @@ const basePlanningChangeSchema = z.object({
  * Create dynamic schema with session validation
  */
 const createPlanningChangeSchema = (
-    selectedSession: SessionWithoutPlanningChange | null,
+    selectedSession: OfferSession | null,
     filterMode: FilterMode
 ) => {
 	return basePlanningChangeSchema.superRefine(( data: z.infer<typeof basePlanningChangeSchema>, ctx: z.RefinementCtx ) => {
@@ -106,7 +112,7 @@ const createPlanningChangeSchema = (
 			const hasSpaceIdChange		= data.spaceId !== null && data.spaceId !== selectedSession.spaceId;
 			const hasSpaceTypeChange	= data.spaceType !== null;
 			const hasSpaceSizeChange	= data.spaceSizeId !== null;
-			const hasDayModulesChange	= data.dayModulesId.length > 0 && !data.dayModulesId.includes( selectedSession.dayModule.id );
+			const hasDayModulesChange	= data.dayModulesId.length > 0 && !data.dayModulesId.includes( selectedSession.dayModuleId );
 
 			const hasAnyChange = hasSessionNameChange 
                 || hasProfessorChange
@@ -183,6 +189,8 @@ const createPlanningChangeSchema = (
 
 type PlanningChangeFormValues = z.infer<typeof basePlanningChangeSchema>;
 
+type Tab = 'form' | 'comments';
+
 
 export function PlanningChangeForm({
 	planningChange,
@@ -199,6 +207,7 @@ export function PlanningChangeForm({
     }                   = useSession();
 	const queryClient   = useQueryClient();
 
+	const [ tab, setTab ]                                   = useState<Tab>( 'form' );
 	const [ requestDetailModule, setRequestDetailModule ]   = useState<Array<{ id?: string; day: string; moduleId: string }>>([]);
 	const [ selectedSessionId, setSelectedSessionId ]       = useState<string | null>( null );
 	const [ filterMode, setFilterMode ]                     = useState<FilterMode>( 'space' );
@@ -228,47 +237,30 @@ export function PlanningChangeForm({
 		refetchOnWindowFocus: false,
 	});
 
+
+    const {
+		data		: fetchedSession,
+		isLoading	: isLoadingFetchedSession,
+	} = useQuery({
+		queryKey	: [ KEY_QUERYS.SECCTIONS, 'session', selectedSessionId ],
+		queryFn		: () => fetchApi<OfferSession>({ url: `sessions/${ selectedSessionId }` }),
+		enabled		: isOpen && !!selectedSessionId && !section?.id,
+		staleTime	: 5 * 60 * 1000,
+		refetchOnWindowFocus: false,
+	});
+
 	// Get selected session data
 	const selectedSession = useMemo(() => {
-		if ( !selectedSessionId || !sectionSessions ) return null;
+		if ( sectionSessions && selectedSessionId ) {
+			return sectionSessions.find( s => s.id === selectedSessionId ) || null;
+		}
 
-		const offerSession = sectionSessions.find( s => s.id === selectedSessionId );
-		if ( !offerSession ) return null;
+		if ( fetchedSession ) {
+			return fetchedSession;
+		}
 
-		// Convert OfferSession to SessionWithoutPlanningChange format for validation
-		return {
-			id			: offerSession.id,
-			name		: offerSession.name,
-			spaceId		: offerSession.spaceId,
-			isEnglish	: offerSession.isEnglish,
-			date		: offerSession.date,
-			professor	: {
-				id		: offerSession.professor.id,
-				name	: offerSession.professor.name,
-			},
-			dayModule	: {
-				id		: offerSession.dayModuleId,
-				dayId	: offerSession.dayId,
-				module	: {
-					id			: parseInt( offerSession.module.id ),
-					code		: offerSession.module.code,
-					startHour	: offerSession.module.startHour,
-					endHour		: offerSession.module.endHour,
-					difference	: offerSession.module.diference || '',
-				},
-			},
-			section: {
-				id			: section?.id || '',
-				code		: section?.code || 0,
-				startDate	: section?.startDate || new Date(),
-				endDate		: section?.endDate || new Date(),
-				subject		: {
-					id		: section?.subject?.id || '',
-					name	: section?.subject?.name || '',
-				},
-			},
-		} as SessionWithoutPlanningChange;
-	}, [ selectedSessionId, sectionSessions, section ]);
+		return null;
+	}, [ sectionSessions, selectedSessionId, fetchedSession ]);
 
 	// Create dynamic schema with session validation
 	const planningChangeSchema = useMemo(
@@ -333,6 +325,7 @@ export function PlanningChangeForm({
 
 			setRequestDetailModule( modules );
 			setSelectedSessionId( null );
+            setTab( 'form' );
 
 			form.reset({
 				title			: currentPlanningChange.title,
@@ -378,11 +371,16 @@ export function PlanningChangeForm({
 
 	// Set session when it comes from props
 	useEffect(() => {
-		if ( session && isOpen ) {
-			setSelectedSessionId( session.id );
-			form.setValue( 'sessionId', session.id );
+		if ( !isOpen ) return;
+
+		const currentPlanningChange = planningChange    || fetchedPlanningChange;
+		const newSessionId          = session?.id       || currentPlanningChange?.sessionId;
+
+		if ( newSessionId && selectedSessionId !== newSessionId ) {
+			setSelectedSessionId( newSessionId );
+			form.setValue( 'sessionId', newSessionId );
 		}
-	}, [ session, isOpen, form ]);
+	}, [ session, isOpen, planningChange, fetchedPlanningChange, selectedSessionId, form ]);
 
 	// Create mutation
 	const createPlanningChangeMutation = useMutation({
@@ -532,8 +530,24 @@ export function PlanningChangeForm({
 					</DialogDescription>
 				</DialogHeader>
 
-				<Form {...form}>
-					<form onSubmit={ form.handleSubmit( onSubmit ) } className="space-y-4">
+				<Tabs
+					defaultValue	= { tab }
+					onValueChange	= {( value ) => setTab( value as Tab )}
+					className		= "w-full"
+				>
+					{ isEditMode && (
+						<TabsList className="grid w-full grid-cols-2">
+							<TabsTrigger value="form">Información</TabsTrigger>
+
+							<TabsTrigger value="comments">
+								Comentarios
+							</TabsTrigger>
+						</TabsList>
+					)}
+
+					<TabsContent value="form" className={ cn( "space-y-4", isEditMode ? 'mt-4' : '' ) }>
+						<Form {...form}>
+							<form onSubmit={ form.handleSubmit( onSubmit ) } className="space-y-4">
 						{/* Título */}
 						<FormField
 							control	= { form.control }
@@ -566,6 +580,7 @@ export function PlanningChangeForm({
 
                                         <FormControl>
                                             <ChangeStatus
+												multiple		= { false }
                                                 value           = { field.value || Status.PENDING }
                                                 onValueChange   = { field.onChange }
                                                 defaultValue    = { field.value }
@@ -611,10 +626,12 @@ export function PlanningChangeForm({
 
 						{/* Mostrar información de la sesión seleccionada */}
 						{ selectedSessionId && (
-							<SessionInfoCard 
-								sessionData	= { selectedSession }
-								isLoading	= { isLoadingSessions }
-							/>
+							<>
+								<SessionInfoCard 
+									sessionData	= { selectedSession }
+									isLoading	= { isLoadingSessions || isLoadingFetchedSession }
+								/>
+							</>
 						)}
 
 						<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -836,28 +853,40 @@ export function PlanningChangeForm({
 							)}
 						</div>
 
-						<DialogFooter className="flex justify-between border-t pt-4">
-							<Button
-								type		= "button"
-								variant		= "outline"
-								onClick		= { onCancel }
-								disabled	= { createPlanningChangeMutation.isPending || updatePlanningChangeMutation.isPending }
-							>
-								Cancelar
-							</Button>
+								<DialogFooter className="flex justify-between border-t pt-4">
+									<Button
+										type		= "button"
+										variant		= "outline"
+										onClick		= { onCancel }
+										disabled	= { createPlanningChangeMutation.isPending || updatePlanningChangeMutation.isPending }
+									>
+										Cancelar
+									</Button>
 
-							<Button
-								type		= "submit"
-								disabled	= { createPlanningChangeMutation.isPending || updatePlanningChangeMutation.isPending }
-							>
-								{ ( createPlanningChangeMutation.isPending || updatePlanningChangeMutation.isPending ) 
-									? 'Guardando...' 
-									: isEditMode ? 'Actualizar' : 'Crear'
-								}
-							</Button>
-						</DialogFooter>
-					</form>
-				</Form>
+									<Button
+										type		= "submit"
+										disabled	= { createPlanningChangeMutation.isPending || updatePlanningChangeMutation.isPending }
+									>
+										{ ( createPlanningChangeMutation.isPending || updatePlanningChangeMutation.isPending ) 
+											? 'Guardando...' 
+											: isEditMode ? 'Actualizar' : 'Crear'
+										}
+									</Button>
+								</DialogFooter>
+							</form>
+						</Form>
+					</TabsContent>
+
+					{ isEditMode && (
+						<TabsContent value="comments" className="mt-4">
+							<CommentSection
+								planningChangeId	= { planningChange?.id || fetchedPlanningChange?.id }
+								enabled				= { tab === 'comments' }
+								size				= { 'h-[450px]' }
+							/>
+						</TabsContent>
+					)}
+				</Tabs>
 			</DialogContent>
 		</Dialog>
 	);
