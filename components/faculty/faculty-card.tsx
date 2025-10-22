@@ -6,7 +6,8 @@ import {
     Users,
     BookOpen,
     Building,
-    BookCopy
+    BookCopy,
+    CalendarCog
 } from "lucide-react";
 
 import {
@@ -52,47 +53,51 @@ export function FacultyCard({
             </CardHeader>
 
             <CardFooter className="flex gap-2 pt-2 justify-between">
-                <div className="grid grid-cols-4 sm:grid-cols-2 md:grid-cols-4 gap-2">
+                <div className="grid grid-cols-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-2">
                     <Button 
                         variant   = "outline"
                         size      = "sm"
-                        onClick   = {() => router.push(`/faculties/${faculty.id}?tab=staff`)}
+                        onClick   = {() => router.push( `/faculties/${ faculty.id }?tab=staff` )}
                         className = "flex items-center gap-1.5"
                     >
                         <Users className="h-4 w-4" />
-                        {faculty.totalStaff || 0} Personal
+
+                        { faculty.totalStaff || 0 } Personal
                     </Button>
 
                     <Button 
                         variant   = "outline"
                         size      = "sm"
-                        onClick   = {() => router.push(`/faculties/${faculty.id}?tab=subjects`)}
+                        onClick   = {() => router.push( `/faculties/${ faculty.id }?tab=subjects` )}
                         className = "flex items-center gap-1.5"
                     >
                         <BookOpen className="h-4 w-4" />
-                        {faculty.totalSubjects || 0} Asignaturas
-                    </Button>
 
-                    {/* <Button 
-                        variant   = "outline"
-                        size      = "sm"
-                        onClick   = {() => router.push(`/faculties/${faculty.id}?tab=offers`)}
-                        className = "flex items-center gap-1.5"
-                        disabled  = { faculty.totalSubjects === 0 }
-                    >
-                        <BookOpen className="h-4 w-4" />
-                        {faculty.totalOffers || 0} Ofertas
-                    </Button> */}
+                        { faculty.totalSubjects || 0 } Asignaturas
+                    </Button>
 
                     <Button 
                         variant     = "outline"
                         size        = "sm"
-                        onClick     = {() => router.push(`/faculties/${faculty.id}?tab=requests`)}
+                        onClick     = {() => router.push( `/faculties/${ faculty.id }?tab=requests` )}
                         className   = "flex items-center gap-1.5"
-                        disabled    = { faculty.totalOffers === 0 }
+                        disabled    = { faculty.totalSubjects === 0 }
                     >
                         <BookCopy className="h-4 w-4" />
-                        {faculty.totalRequests || 0} Solicitudes
+
+                        { faculty.totalRequests || 0 } Solicitudes
+                    </Button>
+
+                    <Button 
+                        variant     = "outline"
+                        size        = "sm"
+                        onClick     = {() => router.push( `/faculties/${ faculty.id }?tab=planning-change` )}
+                        className   = "flex items-center gap-1.5"
+                        disabled    = { faculty.totalSubjects === 0 }
+                    >
+                        <CalendarCog className="h-4 w-4" />
+
+                        { faculty.totalPlanningChanges || 0 } Cambio P.
                     </Button>
                 </div>
 
