@@ -75,6 +75,7 @@ export function SectionMain({
     const [sessionFilter, setSessionFilter]         = useState<string[]>(() => searchParams.get('session')?.split(',').filter(Boolean) || []);
     const [moduleFilter, setModuleFilter]           = useState<string[]>(() => searchParams.get('module')?.split(',').filter(Boolean) || []);
     const [professorFilter, setProfessorFilter]     = useState<string[]>(() => searchParams.get('professor')?.split(',').filter(Boolean) || []);
+    const [sectionIdFilter, setSectionIdFilter]     = useState<string>(() => searchParams.get('sectionId') || '');
     const [selectedSections, setSelectedSections]   = useState<Set<string>>( new Set() );
     const [currentPage, setCurrentPage]             = useState<number>( 1 );
     const [itemsPerPage, setItemsPerPage]           = useState<number>( 10 );
@@ -120,6 +121,7 @@ export function SectionMain({
 
         // Apply filters
         const filtered = sectionsData.filter(( section ) => {
+            const matchesSectionId  = sectionIdFilter === '' || section.id === sectionIdFilter;
             const matchesCode       = codeFilter.length         === 0 || codeFilter.includes( section.code.toString() );
             const matchesRoom       = roomFilter.length         === 0 || section.sessions.spaceIds.some( spaceId => roomFilter.includes( spaceId ));
             const matchesDay        = dayFilter.length          === 0 || section.sessions.dayIds.some( dayId => dayFilter.includes( dayId.toString() ));
@@ -137,7 +139,7 @@ export function SectionMain({
             const matchesModule     = moduleFilter.length       === 0 || section.sessions.moduleIds.some( moduleId => moduleFilter.includes( moduleId.toString() ));
             const matchesProfessor  = professorFilter.length    === 0 || section.sessions.professorIds.some( professorId => professorFilter.includes( professorId ));
 
-            return matchesCode && matchesRoom && matchesDay && matchesPeriod && matchesStatus && matchesSubject && matchesSize && matchesSession && matchesModule && matchesProfessor;
+            return matchesSectionId && matchesCode && matchesRoom && matchesDay && matchesPeriod && matchesStatus && matchesSubject && matchesSize && matchesSession && matchesModule && matchesProfessor;
         });
 
         const totalItems = filtered.length;
@@ -149,12 +151,12 @@ export function SectionMain({
         const sections   = filtered.slice( startIndex, endIndex );
 
         return { sections, totalItems, totalPages };
-    }, [ sectionsData, codeFilter, roomFilter, dayFilter, periodFilter, statusFilter, subjectFilter, sizeFilter, sessionFilter, moduleFilter, professorFilter, currentPage, itemsPerPage ]);
+    }, [ sectionsData, sectionIdFilter, codeFilter, roomFilter, dayFilter, periodFilter, statusFilter, subjectFilter, sizeFilter, sessionFilter, moduleFilter, professorFilter, currentPage, itemsPerPage ]);
 
 
     useEffect(() => {
         setCurrentPage( 1 );
-    }, [ codeFilter, roomFilter, dayFilter, periodFilter, statusFilter, subjectFilter, sizeFilter, sessionFilter, moduleFilter, professorFilter, itemsPerPage ]);
+    }, [ sectionIdFilter, codeFilter, roomFilter, dayFilter, periodFilter, statusFilter, subjectFilter, sizeFilter, sessionFilter, moduleFilter, professorFilter, itemsPerPage ]);
 
 
 	/**
@@ -356,6 +358,7 @@ export function SectionMain({
                             variant     = "outline"
                             className   = "w-full gap-2"
                             onClick     = {() => {
+                                setSectionIdFilter('');
                                 setCodeFilter([]);
                                 setRoomFilter([]);
                                 setDayFilter([]);
