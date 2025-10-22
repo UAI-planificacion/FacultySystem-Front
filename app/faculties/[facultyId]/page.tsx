@@ -8,6 +8,7 @@ import {
     ArrowLeft,
     BookCopy,
     BookOpen,
+    CalendarCog,
     Users
 }                                   from "lucide-react";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -17,11 +18,12 @@ import {
     TabsContent,
     TabsList,
     TabsTrigger
-}                               from "@/components/ui/tabs";
-import { StaffManagement }      from "@/components/staff/staff-management";
-import { SubjectsManagement }   from "@/components/subject/subjects-management";
-import { RequestsManagement }   from "@/components/request/request-management";
-import { Button }               from "@/components/ui/button";
+}                                   from "@/components/ui/tabs";
+import { StaffManagement }          from "@/components/staff/staff-management";
+import { SubjectsManagement }       from "@/components/subject/subjects-management";
+import { RequestsManagement }       from "@/components/request/request-management";
+import { PlanningChangeManagement } from "@/components/planning-change/planning-change-management";
+import { Button }                   from "@/components/ui/button";
 
 import { Faculty, FacultyResponse } from "@/types/faculty.model";
 import { KEY_QUERYS }               from "@/consts/key-queries";
@@ -29,9 +31,10 @@ import { fetchApi }                 from "@/services/fetch";
 
 
 enum TabValue {
-    SUBJECTS    = "subjects",
-    STAFF       = "staff",
-    REQUESTS    = "requests"
+    SUBJECTS            = "subjects",
+    STAFF               = "staff",
+    REQUESTS            = "requests",
+    PLANNING_CHANGE     = "planning-change"
 }
 
 
@@ -124,7 +127,7 @@ export default function FacultyDetailsPage(): JSX.Element {
                 onValueChange   = {( value: string ) => setActiveTab( value as TabValue )}
                 className       = "w-full"
             >
-                <TabsList className="grid grid-cols-3 mb-4 h-12">
+                <TabsList className="grid grid-cols-4 mb-4 h-12">
                     <TabsTrigger
                         value       = { TabValue.STAFF }
                         className   = "h-10 text-md gap-2"
@@ -154,6 +157,16 @@ export default function FacultyDetailsPage(): JSX.Element {
 
                         <span className="hidden sm:block">Solicitudes ({ faculty?.totalRequests || 0 })</span>
                     </TabsTrigger>
+
+                    <TabsTrigger
+                        value       = { TabValue.PLANNING_CHANGE }
+                        className   = "h-10 text-md gap-2"
+                        title       = "Planificación"
+                    >
+                        <CalendarCog className="h-5 w-5" />
+
+                        <span className="hidden sm:block">Cambio de Plan. ({ faculty?.totalPlanningChanges || 0 })</span>
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value={TabValue.STAFF}>
@@ -174,6 +187,13 @@ export default function FacultyDetailsPage(): JSX.Element {
                     <RequestsManagement
                         facultyId   = { facultyId }
                         enabled     = { activeTab === TabValue.REQUESTS }
+                    />
+                </TabsContent>
+
+                <TabsContent value={TabValue.PLANNING_CHANGE}>
+                    <PlanningChangeManagement
+                        facultyId   = { facultyId }
+                        enabled     = { activeTab === TabValue.PLANNING_CHANGE }
                     />
                 </TabsContent>
             </Tabs>
