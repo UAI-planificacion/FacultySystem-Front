@@ -58,8 +58,8 @@ export interface OfferSession {
     requestSession?         : RequestSession;
     planningChangeId        : string | null;
     section                 : SectionSeccionPlanningChange;
-
 }
+
 
 interface SectionSeccionPlanningChange {
     id          : string;
@@ -70,18 +70,12 @@ interface SectionSeccionPlanningChange {
 }
 
 
-interface RequestSessionGrade {
-    id: string;
-    name: string;
-}
-
-
 interface Staff {
-    id: string;
-    name: string;
-    email: string;
-    role: Role;
-    facultyId: string;
+    id          : string;
+    name        : string;
+    email       : string;
+    role        : Role;
+    facultyId   : string;
 }
 
 
@@ -128,12 +122,13 @@ export interface RequestSession {
     requestSessions : RequestSessionDetail[];
 }
 
-export interface SectionSession {
-     spaceIds        : string[];        // IDs de espacios
-    dayIds          : number[];        // IDs de días
-    moduleIds       : number[];        // IDs de módulos
-    professorIds    : string[];        // IDs de profesores
 
+export interface SectionSession {
+    ids             : string[]; // IDs de sesiones
+    spaceIds        : string[]; // IDs de espacios
+    dayIds          : number[]; // IDs de días
+    moduleIds       : number[]; // IDs de módulos
+    professorIds    : string[]; // IDs de profesores
 }
 
 
@@ -153,8 +148,7 @@ export interface OfferSection {
     professor       : OfferSectionProffesor;
     subject         : OfferSectionSubject;
     period          : OfferSectionPeriod;
-    // sessions        : OfferSession[];
-    sessionsCount : number;
+    sessionsCount   : number;
     haveRequest     : boolean;
-    sessions: SectionSession;
+    sessions        : SectionSession;
 }
