@@ -10,27 +10,30 @@ import { Session }			from "@/types/section.model";
 import { sessionLabels }	from "@/components/section/section.config";
 
 
-interface SingleSelectProps {
+interface Props {
 	multiple		: false;
-	value			: Session | null;
-	onValueChange	: ( value: Session | null ) => void;
-	defaultValue?	: Session | null;
+	value			: Session[] | Session | null;
+	onValueChange	: ( value: Session[] | Session | null ) => void;
+	defaultValue?	: Session[] | Session | null;
 	allowDeselect?	: boolean;
 	className?		: string;
+    isShort?        : boolean;
+
 }
 
 
-interface MultiSelectProps {
-	multiple		: true;
-	value			: Session[];
-	onValueChange	: ( value: Session[] ) => void;
-	defaultValue?	: Session[];
-	allowDeselect?	: boolean;
-	className?		: string;
-}
+// interface MultiSelectProps {
+// 	multiple		: true;
+// 	value			: Session[];
+// 	onValueChange	: ( value: Session[] ) => void;
+// 	defaultValue?	: Session[];
+// 	allowDeselect?	: boolean;
+// 	className?		: string;
+//     isShort?        : boolean;
+// }
 
 
-type Props = SingleSelectProps | MultiSelectProps;
+// type Props = SingleSelectProps | MultiSelectProps;
 
 
 /**
@@ -43,15 +46,24 @@ type Props = SingleSelectProps | MultiSelectProps;
  * @param multiple - If true, allows multiple selection. Default: false
  * @param allowDeselect - If true, allows deselecting items. Default: true
  */
-export function SessionTypeSelector( props: Props ): JSX.Element {
-	const {
+export function SessionTypeSelector({
 		multiple = false,
 		value,
 		onValueChange,
 		defaultValue,
 		allowDeselect = true,
-		className = "w-full"
-	} = props;
+		className = "w-full",
+		isShort = true
+}: Props ): JSX.Element {
+	// const {
+	// 	multiple = false,
+	// 	value,
+	// 	onValueChange,
+	// 	defaultValue,
+	// 	allowDeselect = true,
+	// 	className = "w-full",
+	// 	isShort = false
+	// } = props;
 
 	// Memoizar el valor del toggle group
 	const toggleValue = useMemo(() => {
@@ -107,7 +119,7 @@ export function SessionTypeSelector( props: Props ): JSX.Element {
 				className	= "flex-1 rounded-tl-lg rounded-bl-lg rounded-tr-none rounded-br-none border-t border-l border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-blue-500 data-[state=on]:dark:bg-blue-600 data-[state=on]:text-white data-[state=on]:hover:bg-blue-600 data-[state=on]:dark:hover:bg-blue-700"
 				title		= { sessionLabels[Session.C] }
 			>
-				C
+				{ isShort ? 'C' : 'Cátedra' }
 			</ToggleGroupItem>
 
 			<ToggleGroupItem
@@ -116,7 +128,7 @@ export function SessionTypeSelector( props: Props ): JSX.Element {
 				className	= "flex-1 rounded-none border-t border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-green-500 data-[state=on]:dark:bg-green-600 data-[state=on]:text-white data-[state=on]:hover:bg-green-600 data-[state=on]:dark:hover:bg-green-700"
 				title		= { sessionLabels[Session.A] }
 			>
-				A
+				{ isShort ? 'A' : 'Ayudantía' }
 			</ToggleGroupItem>
 
 			<ToggleGroupItem
@@ -125,7 +137,7 @@ export function SessionTypeSelector( props: Props ): JSX.Element {
 				className	= "flex-1 rounded-none border-t border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-orange-500 data-[state=on]:dark:bg-orange-600 data-[state=on]:text-white data-[state=on]:hover:bg-orange-600 data-[state=on]:dark:hover:bg-orange-700"
 				title		= { sessionLabels[Session.T] }
 			>
-				T
+				{ isShort ? 'T' : 'Taller' }
 			</ToggleGroupItem>
 
 			<ToggleGroupItem
@@ -134,7 +146,7 @@ export function SessionTypeSelector( props: Props ): JSX.Element {
 				className	= "flex-1 rounded-tl-none rounded-bl-none rounded-tr-lg rounded-br-lg border-t border-r border-b border-zinc-200 dark:border-zinc-700 data-[state=on]:bg-purple-500 data-[state=on]:dark:bg-purple-600 data-[state=on]:text-white data-[state=on]:hover:bg-purple-600 data-[state=on]:dark:hover:bg-purple-700"
 				title		= { sessionLabels[Session.L] }
 			>
-				L
+				{ isShort ? 'L' : 'Laboratorio' }
 			</ToggleGroupItem>
 		</ToggleGroup>
 	);
