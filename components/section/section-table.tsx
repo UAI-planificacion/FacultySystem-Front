@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from "react"
+import React, { useState, useCallback } from "react"
 import { useRouter } from 'next/navigation';
 
 
@@ -53,7 +53,6 @@ interface Props {
 	onSelectedSessionsChange    : ( selectedSessions: Set<string> ) => void;
 }
 
-// ***********TODO: VERIFICAR LOS USESATES **************
 
 export function SectionTable({
 	sections,
@@ -62,11 +61,10 @@ export function SectionTable({
 	selectedSessions,
 	onSelectedSessionsChange
 }: Props ) {
-	const queryClient                                       = useQueryClient();
-    const router                                            = useRouter();
+	const queryClient   = useQueryClient();
+    const router        = useRouter();
+
 	const [ expandedSections, setExpandedSections ]         = useState<Set<string>>( new Set() );
-	const [ selectedSections, setSelectedSections ]         = useState<Set<string>>( new Set() );
-	const [ createSessionSection, setCreateSessionSection ] = useState<OfferSection | null>( null );
 	const [ isCreateSessionOpen, setIsCreateSessionOpen ]   = useState<boolean>( false );
 	const [ selectedSectionEdit, setSelectedSectionEdit ]   = useState<OfferSection | null>( null );
 	const [ isOpenDelete, setIsOpenDelete ]                 = useState( false );
@@ -78,7 +76,7 @@ export function SectionTable({
 	/**
 	 * Toggle section expansion
 	 */
-	function toggleSectionExpansion( sectionId: string ): void {
+	const toggleSectionExpansion = useCallback(( sectionId: string ): void => {
 		setExpandedSections(( prev ) => {
 			const newSet = new Set( prev );
 
@@ -90,116 +88,91 @@ export function SectionTable({
 
 			return newSet;
 		});
-	}
+	}, []);
 
 	/**
 	 * Check if section is fully selected
 	 */
-	const isSectionFullySelected = ( section: OfferSection ): boolean =>
-		selectedSections.has( section.id );
+	const isSectionFullySelected = useCallback(( section: OfferSection ): boolean => {
+		const sessionIds = section.sessions.ids || [];
+		
+		if ( sessionIds.length === 0 ) return false;
+		
+		return sessionIds.every( id => selectedSessions.has( id ));
+	}, [ selectedSessions ]);
 
 	/**
 	 * Handle section selection (parent)
 	 */
-	function handleSectionSelection( sectionId: string, checked: boolean ): void {
-		setSelectedSections( ( prev ) => {
-			const newSet = new Set( prev );
-
-			if ( checked ) {
-				newSet.add( sectionId );
-			} else {
-				newSet.delete( sectionId );
-			}
-
-			return newSet;
-		});
-
-		// Auto-select/deselect all sessions in the section
+	const handleSectionSelection = useCallback(( sectionId: string, checked: boolean | 'indeterminate' ): void => {
 		const section = sections.find( s => s.id === sectionId );
 
-		if ( !section ) return;
+		if ( !section ) {
+			return;
+		}
 
+		const sessionIds = section.sessions?.ids || [];
 		const newSelectedSessions = new Set( selectedSessions );
 
-		// section.sessions.forEach( ( session ) => {
-		// 	if ( checked ) {
-		// 		newSelectedSessions.add( session.id );
-		// 	} else {
-		// 		newSelectedSessions.delete( session.id );
-		// 	}
-		// } );
+		const shouldSelect = checked === true || checked === 'indeterminate';
+
+		sessionIds.forEach( ( sessionId ) => {
+			if ( shouldSelect ) {
+				newSelectedSessions.add( sessionId );
+			} else {
+				newSelectedSessions.delete( sessionId );
+			}
+		});
 
 		onSelectedSessionsChange( newSelectedSessions );
-	}
+	}, [ sections, selectedSessions, onSelectedSessionsChange ]);
 
 
 	/**
 	 * Check if section is partially selected
 	 */
-	// function isSectionPartiallySelected( section: OfferSection ): boolean {
-	// 	const sessionIds            = section.sessions.map( s => s.id );
-	// 	const selectedSessionIds    = sessionIds.filter( id => selectedSessions.has( id ));
-
-	// 	return selectedSessionIds.length > 0 && selectedSessionIds.length < sessionIds.length;
-	// }
+	const isSectionPartiallySelected = useCallback(( section: OfferSection ): boolean => {
+		const sessionIds = section.sessions.ids || [];
+		
+		if ( sessionIds.length === 0 ) return false;
+		
+		const selectedSessionIds = sessionIds.filter( id => selectedSessions.has( id ));
+		
+		return selectedSessionIds.length > 0 && selectedSessionIds.length < sessionIds.length;
+	}, [ selectedSessions ]);
 
 
 	/**
 	 * Handle session selection (child)
 	 */
-	function handleSessionSelection( sessionId: string, sectionId: string ): void {
+	const handleSessionSelection = useCallback(( sessionId: string, sectionId: string ): void => {
 		const isCurrentlySelected   = selectedSessions.has( sessionId );
-		const checked               = !isCurrentlySelected;
 		const newSelectedSessions   = new Set( selectedSessions );
 
-		if ( checked ) {
-			newSelectedSessions.add( sessionId );
-		} else {
+		if ( isCurrentlySelected ) {
 			newSelectedSessions.delete( sessionId );
+		} else {
+			newSelectedSessions.add( sessionId );
 		}
 
 		onSelectedSessionsChange( newSelectedSessions );
-
-		// Check if we need to update section selection
-		const section = sections.find( s => s.id === sectionId );
-
-		if ( !section ) return;
-
-		// const sessionIds            = section.sessions.map( s => s.id );
-		// const selectedSessionIds    = sessionIds.filter( id => 
-		// 	checked
-		// 		? ( newSelectedSessions.has( id ) )
-		// 		: ( newSelectedSessions.has( id ) )
-		// );
-
-		// setSelectedSections( ( prev ) => {
-		// 	const newSet = new Set( prev );
-
-		// 	if ( selectedSessionIds.length === sessionIds.length ) {
-		// 		newSet.add( sectionId );
-		// 	} else {
-		// 		newSet.delete( sectionId );
-		// 	}
-
-		// 	return newSet;
-		// });
-	}
+	}, [ selectedSessions, onSelectedSessionsChange ]);
 
 	/**
 	 * Handle edit section
 	 */
-	function handleEditSection( section: OfferSection ): void {
+	const handleEditSection = useCallback(( section: OfferSection ): void => {
 		setSelectedSection( section );
 		setIsOpenSectionForm( true );
-	}
+	}, []);
 
 	/**
 	 * Handle delete section
 	 */
-	function handleDeleteSection( section: OfferSection ): void {
+	const handleDeleteSection = useCallback(( section: OfferSection ): void => {
 		setSelectedSection( section );
 		setIsOpenDelete( true );
-	}
+	}, []);
 
 	/**
 	 * API call to delete section
@@ -227,23 +200,23 @@ export function SectionTable({
 	/**
 	 * Confirm delete section
 	 */
-	function handleConfirmDeleteSection(): void {
+	const handleConfirmDeleteSection = useCallback((): void => {
 		if ( selectedSection ) {
 			deleteSectionMutation.mutate( selectedSection.id );
 		}
-	}
+	}, [ selectedSection, deleteSectionMutation ]);
 
 	/**
 	 * Get session counts for SessionShort component
 	 */
-	function getSessionCounts( section: OfferSection ) {
+	const getSessionCounts = useCallback(( section: OfferSection ) => {
 		return {
 			C: section.lecture,
 			A: section.tutoringSession,
 			T: section.workshop,
 			L: section.laboratory,
 		};
-	}
+	}, []);
 
 
 	return (
@@ -305,9 +278,14 @@ export function SectionTable({
 
 									<TableCell>
 										<Checkbox
-											checked         = { isSectionFullySelected( section ) }
-											onCheckedChange = {( checked ) => handleSectionSelection( section.id, checked as boolean )}
-											// className       = { isSectionPartiallySelected( section ) ? "data-[state=unchecked]:bg-blue-100 w-5 h-5" : " w-5 h-5" }
+											checked         = { 
+												isSectionFullySelected( section ) 
+													? true 
+													: isSectionPartiallySelected( section ) 
+														? 'indeterminate' 
+														: false 
+											}
+											onCheckedChange = {( checked ) => handleSectionSelection( section.id, checked )}
 											aria-label      = "Seleccionar sección"
 											disabled        = { section.isClosed || section.sessionsCount === 0 }
 										/>
@@ -431,7 +409,7 @@ export function SectionTable({
             />
 
 			<CreateSessionForm
-				section = { createSessionSection }
+				section = { null }
 				isOpen  = { isCreateSessionOpen }
 				onClose = { () => setIsCreateSessionOpen( false )}
 			/>
