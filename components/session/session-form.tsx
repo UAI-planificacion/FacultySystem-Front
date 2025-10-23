@@ -10,9 +10,13 @@ import {
     useMutation,
     useQuery,
     useQueryClient
-}                               from '@tanstack/react-query';
-import { toast }                from 'sonner';
-import { BookCopy, Calendar, ExternalLinkIcon, Plus, RefreshCcw } from 'lucide-react';
+}                   from '@tanstack/react-query';
+import {
+    BookCopy,
+    Calendar,
+    RefreshCcw
+}                   from 'lucide-react';
+import { toast }    from 'sonner';
 
 import {
     Dialog,
@@ -30,15 +34,20 @@ import {
     FormLabel,
     FormMessage
 }                                   from '@/components/ui/form';
+import {
+    Card,
+    CardContent,
+    CardHeader
+}                                   from '@/components/ui/card';
 import { Input }                    from '@/components/ui/input';
 import { Button }                   from '@/components/ui/button';
 import { SpaceSelect }              from '@/components/shared/item-select/space-select';
 import { ProfessorSelect }          from '@/components/shared/item-select/professor-select';
-import { SessionSelect }            from '@/components/shared/item-select/session-select';
+import { SessionTypeSelector }      from '@/components/shared/session-type-selector';
 import { RequestDetailModuleDays }  from '@/components/request-detail/request-detail-module-days';
 import { CalendarSelect }           from '@/components/ui/calendar-select';
 import { Switch }                   from '@/components/ui/switch';
-import { Card, CardContent }        from '@/components/ui/card';
+import { PlanningChangeForm }       from '@/components/planning-change/planning-change-form';
 
 import {
     CreateSessionRequest,
@@ -53,7 +62,6 @@ import { useAvailableDates }            from '@/hooks/use-available-dates';
 import { Session }                      from '@/types/section.model';
 import { DayModule }                    from '@/types/day-module.model';
 import { OfferSection, OfferSession }   from '@/types/offer-section.model';
-import { SessionInfoRequest }           from './session-info-request';
 
 
 interface Props {
@@ -110,6 +118,7 @@ export function SessionForm({
     const [ shouldFetchDates, setShouldFetchDates ]         = useState<boolean>( false );
     const [ isUpdateDateSpace, setIsUpdateDateSpace  ]      = useState<boolean>( false );
     const [ englishForAll, setEnglishForAll ]               = useState<boolean>( false );
+    const [ isPlanningChangeOpen, setIsPlanningChangeOpen ] = useState<boolean>( false );
 
 
     const form = useForm<FormData>({
@@ -189,17 +198,60 @@ export function SessionForm({
 
 
     const {
-        data            : availableDates = [],
-        isLoading       : isLoadingDates,
-        isError         : isErrorDates,
-        error           : errorDates
+        data        : availableDates = [],
+        isLoading   : isLoadingDates,
+        isError     : isErrorDates,
+        error       : errorDates
     } = useAvailableDates({
-        // sessionId,
-        sectionId : section?.id || null,
+        sessionId   : session?.id || null,
         dayModuleId : selectedDayModuleId,
-        spaceId,
-        enabled     : shouldFetchDates
+        spaceId     : form.watch( 'spaceId' ) || null,
+        enabled     : shouldFetchDates,
+        professorId : form.watch( 'professorId' ) || null
     });
+
+    // Efecto para verificar caché cuando cambian spaceId, professorId o dayModuleId
+    useEffect(() => {
+        if ( !isOpen ) return;
+
+        const currentSpaceId        = form.watch( 'spaceId' );
+        const currentProfessorId    = form.watch( 'professorId' );
+        const currentSessionId      = session?.id || null;
+
+        // Si no hay los datos necesarios, deshabilitar calendario
+        if ( !currentSpaceId || !currentProfessorId || !selectedDayModuleId || !currentSessionId ) {
+            setShowCalendar( false );
+            return;
+        }
+
+        // Generar queryKey para buscar en caché
+        const cacheKey = [ KEY_QUERYS.AVAILABLE_DATES, currentSessionId, selectedDayModuleId, currentSpaceId, currentProfessorId ];
+
+        // Buscar data en caché
+        const cachedData = queryClient.getQueryData<Date[]>( cacheKey );
+
+        if ( cachedData && cachedData.length > 0 ) {
+            // Hay caché, habilitar calendario
+            setShowCalendar( true );
+
+            // Verificar si la fecha actual está en las fechas disponibles
+            const currentDate = form.watch( 'date' );
+            if ( currentDate ) {
+                const isDateAvailable = cachedData.some( 
+                    availableDate => availableDate.toDateString() === currentDate.toDateString()
+                );
+
+                // Si la fecha no está disponible, limpiarla
+                if ( !isDateAvailable ) {
+                    form.setValue( 'date', null );
+                }
+            }
+        } else {
+            // No hay caché, deshabilitar calendario y limpiar fecha
+            setShowCalendar( false );
+            form.setValue( 'date', null );
+        }
+    }, [ form.watch( 'spaceId' ), form.watch( 'professorId' ), selectedDayModuleId, isOpen, session?.id, queryClient, form ]);
 
 
     // Efecto para manejar el resultado de la query
@@ -215,7 +267,7 @@ export function SessionForm({
 
         if ( !isLoadingDates && availableDates ) {
             if ( availableDates.length === 0 ) {
-                toast( 'No hay fechas disponibles. Prueba con otra sala.', errorToast );
+                toast( 'No hay fechas disponibles. Prueba con otro espacio y/o profesor.', errorToast );
                 setShowCalendar( false );
             } else {
                 setShowCalendar( true );
@@ -246,25 +298,8 @@ export function SessionForm({
     const createSessionMutation = useMutation({
         mutationFn: createSessionApi,
         onSuccess: ( createdSession ) => {
-            queryClient.setQueryData<OfferSection[]>(
-                [ KEY_QUERYS.SECCTIONS ],
-                ( oldData ) => {
-                    if ( !oldData || !section ) return oldData;
+            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECCTIONS] });
 
-                    return oldData.map( sec => {
-                        if ( sec.id === section.id ) {
-                            return {
-                                ...sec,
-                                sessions: [ ...sec.sessions, createdSession ]
-                            };
-                        }
-
-                        return sec;
-                    });
-                }
-            );
-
-            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.OFFERS] });
             onSave( createdSession );
             onClose();
             toast( 'Sesión creada exitosamente', successToast );
@@ -277,30 +312,7 @@ export function SessionForm({
     const updateSessionMutation = useMutation({
         mutationFn: updateSessionApi,
         onSuccess: ( updatedSession ) => {
-            queryClient.setQueryData<OfferSection[]>(
-                [ KEY_QUERYS.SECCTIONS ],
-                ( oldData ) => {
-                    if ( !oldData ) return oldData;
-
-                    return oldData.map( section => {
-                        const sessionIndex = section.sessions.findIndex( s => s.id === updatedSession.id );
-
-                        if ( sessionIndex !== -1 ) {
-                            return {
-                                ...section,
-                                sessions: section.sessions.map( s =>
-                                    s.id === updatedSession.id ? updatedSession : s
-                                )
-                            };
-                        }
-
-                        return section;
-                    });
-                }
-            );
-
             queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECCTIONS] });
-            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.OFFERS] });
 
             onSave( updatedSession );
             onClose();
@@ -462,7 +474,7 @@ export function SessionForm({
 
     return (
         <Dialog open={isOpen} onOpenChange={handleClose}>
-            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-3xl max-h-[100vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>
                         { ids
@@ -482,47 +494,39 @@ export function SessionForm({
                         }
                     </DialogDescription>
 
-                    { !ids 
-                        ? 
-                        <>
-                        <Card>
-                            <CardContent className="mt-4">
-                                <div className="grid grid-cols-4 gap-4">
+                    <div className="space-y-4">
+                        { !ids 
+                            ? <Card>
+                                <CardHeader className="py-3 px-5 border-b grid grid-cols-4 gap-4 items-center">
                                     <span className="font-medium">SSEC</span>
                                     <span className="font-medium">Periodo</span>
                                     <span className="font-medium">Fecha Inicio</span>
                                     <span className="font-medium">Fecha Fin</span>
-                                </div>
+                                </CardHeader>
 
-                                <hr className="my-2" />
-
-                                <div className="grid grid-cols-4 gap-4">
+                                <CardContent className="py-3 px-5 grid grid-cols-4 gap-4">
                                     <span>{ section?.subject.id }-{ section?.code }</span>
                                     <span>{ section?.period?.name }</span>
                                     <span>{ section?.startDate && tempoFormat( section.startDate )}</span>
                                     <span>{ section?.endDate && tempoFormat( section.endDate )}</span>
-                                </div>
-                            </CardContent>
-                        </Card>
+                                </CardContent>
+                            </Card>
 
-                        {/* Mostrar info de la solicitud */}
-                        {/* { session && <SessionInfoRequest /> } */}
-                        </>
-                        : <Card>
-                            <CardContent className="mt-5">
-                                <div className="flex items-center gap-2">
-                                    <span className="font-medium w-48">Sessiones seleccionadas:</span>
-                                    <span className="">{ids.length}</span>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    }
+                            : <Card>
+                                <CardContent className="mt-5">
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-medium w-48">Sessiones seleccionadas:</span>
+                                        <span className="">{ids.length}</span>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        }
 
-                    {  !!ids || !isUpdateDateSpace &&
-                        <Card>
-                            <CardContent className="mt-4">
-                                <div className="grid grid-cols-3 gap-4">
+                        { !!ids || !isUpdateDateSpace &&
+                            <Card>
+                                <CardHeader className="py-1 px-5 border-b grid grid-cols-4 gap-4 items-center">
                                     <span className="font-medium">Espacio</span>
+                                    <span className="font-medium">Profesor</span>
 
                                     <span className="font-medium">Fecha</span>
 
@@ -532,44 +536,44 @@ export function SessionForm({
                                         <Button
                                             size    = "icon"
                                             onClick = {() => setIsUpdateDateSpace( true )}
-                                            title   = "Actualizar fecha y espacio"
+                                            title   = "Actualizar con verificación"
                                         >
                                             <RefreshCcw className="h-4 w-4" />
                                         </Button>
                                     </div>
-                                </div>
+                                </CardHeader>
 
-                                <hr className="my-2" />
-
-                                <div className="grid grid-cols-3 gap-4">
+                                <CardContent className="py-3 px-5 grid grid-cols-4 gap-4">
                                     <span>{ session?.spaceId }</span>
+                                    <span>{ session?.professor.name }</span>
                                     <span>{ session?.date && tempoFormat( session?.date )  }</span>
                                     <span>{ session?.module.name }</span>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    }
+                                </CardContent>
+                            </Card>
+                        }
+                    </div>
                 </DialogHeader>
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit( onSubmit )} className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* Session Name Field */}
+                         {/* Session Name Field */}
                             <FormField
                                 control = { form.control }
                                 name    = "name"
                                 render  = {({ field }) => (
                                     <FormItem>
+                                        <FormLabel>Tipo de Sesión</FormLabel>
+
                                         <FormControl>
-                                            <SessionSelect
-                                                label               = "Tipo de Sesión"
-                                                placeholder         = "Seleccionar tipo"
-                                                defaultValues       = { field.value ? [field.value] : [] }
-                                                multiple            = { false }
-                                                onSelectionChange   = {( values ) => {
-                                                    field.onChange( values as string as Session );
+                                            <SessionTypeSelector
+                                                multiple        = { false }
+                                                value           = { field.value || null }
+                                                isShort         = { false }
+                                                onValueChange   = {( value ) => {
+                                                    field.onChange( value );
                                                     setSessionRequired( false );
                                                 }}
+                                                allowDeselect   = { true }
                                             />
                                         </FormControl>
 
@@ -578,28 +582,7 @@ export function SessionForm({
                                     </FormItem>
                                 )}
                             />
-
-                            {/* Professor Field */}
-                            <FormField
-                                control = { form.control }
-                                name    = "professorId"
-                                render  = {({ field }) => (
-                                    <FormItem>
-                                        <FormControl>
-                                            <ProfessorSelect
-                                                label               = "Profesor"
-                                                defaultValues       = { field.value ? [field.value] : [] }
-                                                onSelectionChange   = {( values ) => field.onChange( values as string || null )}
-                                                multiple            = { false }
-                                                placeholder         = "Seleccionar profesor"
-                                            />
-                                        </FormControl>
-
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Corrected Registrants Field */}
                             <FormField
                                 control = { form.control }
@@ -714,7 +697,7 @@ export function SessionForm({
                                     }
 
                                     <FormLabel className="text-base items-center flex gap-2">
-                                        Sección en Inglés
+                                        En inglés
                                     </FormLabel>
 
                                     <FormControl>
@@ -737,7 +720,7 @@ export function SessionForm({
                                 onDayModuleSelect   = { handleDayModuleSelect }
                             />
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-3 gap-3">
                                 {/* Space Field */}
                                 <FormField
                                     control = { form.control }
@@ -758,13 +741,35 @@ export function SessionForm({
                                     )}
                                 />
 
+                                 {/* Professor Field */}
+                                <FormField
+                                    control = { form.control }
+                                    name    = "professorId"
+                                    render  = {({ field }) => (
+                                        <FormItem>
+                                            <FormControl>
+                                                <ProfessorSelect
+                                                    label               = "Profesor"
+                                                    defaultValues       = { field.value ? [field.value] : [] }
+                                                    onSelectionChange   = {( values ) => field.onChange( values as string || null )}
+                                                    multiple            = { false }
+                                                    placeholder         = "Seleccionar profesor"
+                                                />
+                                            </FormControl>
+
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
                                 {/* Calendar Select */}
                                 <FormField
                                     control = { form.control }
                                     name    = "date"
                                     render  = {({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Fecha</FormLabel>
+                                            <FormLabel>Fechas disponibles</FormLabel>
+
                                             <FormControl>
                                                 <CalendarSelect
                                                     disabledButton  = { !showCalendar }
@@ -789,7 +794,7 @@ export function SessionForm({
                                     <Button
                                         type        = "button"
                                         variant     = "outline"
-                                        onClick     = { () => setIsUpdateDateSpace( false ) }
+                                        onClick     = {() => setIsUpdateDateSpace( false )}
                                         className   = "w-full gap-2"
                                     >
                                         Cancelar
@@ -804,15 +809,6 @@ export function SessionForm({
                                 >
                                     <Calendar className="h-4 w-4" />
                                     { isLoadingDates ? 'Buscando...' : 'Buscar fechas disponibles' }
-                                </Button>
-
-                                <Button
-                                    onClick = {() => setIsUpdateDateSpace( true )}
-                                    title   = "Abrir solicitud"
-                                    className="w-full gap-2"
-                                >
-                                    <BookCopy className="h-4 w-4" />
-                                    Crear Solicitud
                                 </Button>
                             </div>
                         </>
@@ -829,29 +825,59 @@ export function SessionForm({
                                 Cancelar
                             </Button>
 
-                            <Button
-                                type        = "submit"
-                                disabled    = { 
-                                    createSessionMutation.isPending || 
-                                    updateSessionMutation.isPending || 
-                                    ( selectedDayModuleId !== null && !form.watch( 'date' )) 
-                                }
-                            >
-                                {( createSessionMutation.isPending || updateSessionMutation.isPending )
-                                    ? 'Guardando...' 
-                                    : ( 
-                                        ids
-                                            ? 'Actualizar Sesiones'
-                                            : session
-                                                ? 'Guardar Cambios'
-                                                : 'Crear Sesión'
-                                    )
-                                }
-                            </Button>
+                            <div className="flex gap-2 items-center">
+                                { session && (
+                                    <Button
+                                        onClick     = {() => setIsPlanningChangeOpen( true )}
+                                        title       = "Abrir solicitud"
+                                        className   = "w-full gap-2"
+                                        type        = "button"
+                                        variant     = { session?.planningChangeId ? "default" : "outline"}
+                                    >
+                                        <BookCopy className="h-4 w-4" />
+
+                                        { `${session?.planningChangeId ? 'Ver' : 'Solicitar'} cambio de planificación` }
+                                    </Button>
+                                )}
+
+                                <Button
+                                    type        = "submit"
+                                    disabled    = { 
+                                        createSessionMutation.isPending || 
+                                        updateSessionMutation.isPending 
+                                        // ( selectedDayModuleId !== null && !form.watch( 'date' )) 
+                                    }
+                                >
+                                    {( createSessionMutation.isPending || updateSessionMutation.isPending )
+                                        ? 'Guardando...' 
+                                        : ( 
+                                            ids
+                                                ? 'Actualizar Sesiones'
+                                                : session
+                                                    ? 'Guardar Cambios'
+                                                    : 'Crear Sesión'
+                                        )
+                                    }
+                                </Button>
+                            </div>
                         </DialogFooter>
                     </form>
                 </Form>
             </DialogContent>
+
+            <PlanningChangeForm
+                isOpen      = { isPlanningChangeOpen }
+                onClose     = {() => setIsPlanningChangeOpen( false )}
+                onCancel    = {() => setIsPlanningChangeOpen( false )}
+                onSuccess   = {() => {
+                    setIsPlanningChangeOpen( false );
+                    queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECCTIONS] });
+                    queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.OFFERS] });
+                    toast( 'Cambio de planificación guardado exitosamente', successToast );
+                }}
+                section     = { section }
+                session     = { session }
+            />
         </Dialog>
     );
 }
