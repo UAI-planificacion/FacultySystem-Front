@@ -23,10 +23,7 @@ import {
     TableHeader,
     TableRow
 }                               from "@/components/ui/table";
-import {
-    SubjectForm,
-    SubjectFormValues
-}                               from "@/components/subject/subject-form";
+import { SubjectForm }          from "@/components/subject/subject-form";
 import {
     Card,
     CardContent,
@@ -50,11 +47,7 @@ import { SessionShort }         from "@/components/session/session-short";
 import { SpaceTypeSelect }      from "@/components/shared/item-select/space-type-select";
 import { SizeSelect }           from "@/components/shared/item-select/size-select";
 
-import {
-    CreateSubject,
-    Subject,
-    UpdateSubject
-}                                   from "@/types/subject.model";
+import { Subject }                  from "@/types/subject.model";
 import { KEY_QUERYS }               from "@/consts/key-queries"
 import { Method, fetchApi }         from "@/services/fetch"
 import { errorToast, successToast } from "@/config/toast/toast.config"
@@ -151,39 +144,8 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
     };
 
 
-    const createSubjectApi = async ( newSubject: CreateSubject ): Promise<Subject>  =>
-        fetchApi<Subject>( { url: `subjects`, method: Method.POST, body: newSubject } );
-
-
-    const updateSubjectApi = async ( updatedSubject: UpdateSubject ): Promise<Subject>  =>
-        fetchApi<Subject>( { url: `subjects/${updatedSubject.id}`, method: Method.PATCH, body: updatedSubject } );
-
-
     const deleteSubjectApi = async ( subjectId: string ): Promise<Subject> =>
         fetchApi<Subject>( { url: `subjects/${subjectId}`, method: Method.DELETE } );
-
-
-    function saveSuject( isCreated: boolean ): void {
-        queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SUBJECTS, facultyId] });
-        if ( isCreated ) updateFacultyTotal( queryClient, facultyId, true, 'totalSubjects' );
-        setIsFormOpen( false );
-        setEditingSubject( undefined );
-        toast( `Asignatura ${isCreated ? 'creada' : 'actualizada'} exitosamente`, successToast );
-    }
-
-
-    const createSubjectMutation = useMutation<Subject, Error, CreateSubject>({
-        mutationFn  : createSubjectApi,
-        onSuccess   : () => saveSuject( true ),
-        onError     : ( mutationError ) => toast(`Error al crear asignatura: ${mutationError.message}`, errorToast ),
-    });
-
-
-    const updateSubjectMutation = useMutation<Subject, Error, UpdateSubject>({
-        mutationFn  : updateSubjectApi,
-        onSuccess   : () => saveSuject( false ),
-        onError     : ( mutationError ) => toast(`Error al actualizar asignatura: ${mutationError.message}`, errorToast ),
-    });
 
 
     const deleteSubjectMutation = useMutation<Subject, Error, string>({
@@ -222,25 +184,7 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
     }
 
 
-    function handleFormSubmit( formData: SubjectFormValues ): void {
-        if ( editingSubject ) {
-            updateSubjectMutation.mutate({
-                ...formData,
-            } as UpdateSubject );
-        } else {
-            createSubjectMutation.mutate({
-                ...formData,
-                facultyId,
-            } as CreateSubject );
-        }
-    }
-
-
     function handleOfferSubjectSubmit( formData: any ): void {
-        // TODO: Implementar la lógica para crear la oferta de asignatura
-        console.log('Datos de oferta de asignatura:', formData);
-        
-        // Por ahora solo cerramos el formulario y mostramos un toast
         closeOfferSubjectForm();
         toast('Oferta de asignatura creada exitosamente', successToast);
     }
@@ -350,6 +294,7 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                                         <TableHead className="bg-background w-[400px]">Nombre</TableHead>
                                         <TableHead className="bg-background w-[110px] text-start">Espacio</TableHead>
                                         <TableHead className="bg-background w-[140px] text-start">Sesiones</TableHead>
+                                        <TableHead className="bg-background w-[100px] text-start">Grado</TableHead>
                                         <TableHead className="bg-background w-[100px] text-start">Estado</TableHead>
                                         <TableHead className="bg-background w-[120px] text-right">Acciones</TableHead>
                                     </TableRow>
@@ -398,6 +343,13 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
                                                                     L: subject.laboratory,
                                                                 }}
                                                             />
+                                                        </div>
+                                                    </TableCell>
+
+                                                    {/* Grado */}
+                                                    <TableCell className="w-[100px]">
+                                                        <div className="flex justify-center">
+                                                            { subject.grade?.name }
                                                         </div>
                                                     </TableCell>
 
@@ -464,7 +416,7 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
             {/* Subject Form Dialog */}
             <SubjectForm
                 subject     = { editingSubject }
-                onSubmit    = { handleFormSubmit }
+                facultyId   = { facultyId }
                 onClose     = { () => setIsFormOpen( false )}
                 isOpen      = { isFormOpen }
             />
