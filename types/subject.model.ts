@@ -13,21 +13,33 @@ interface BaseSubject {
 }
 
 
+interface Grade {
+    id              : string;
+    name            : string;
+    headquartersId  : string;
+}
+
+
 export interface Subject extends BaseSubject {
     facultyId   : string;
     isActive    : boolean;
     createAt    : Date      | string;
     updateAt    : Date      | string;
     offersCount : number;
+    grade       : Grade | null;
 }
 
 
 export interface CreateSubject extends BaseSubject {
     facultyId: string;
+    gradeId         : string | null;
+
 }
 
 
-export interface UpdateSubject extends Partial<BaseSubject> {}
+export interface UpdateSubject extends Partial<BaseSubject> {
+    gradeId?         : string | null;
+}
 
 
 export interface CreateOfferSubject {
