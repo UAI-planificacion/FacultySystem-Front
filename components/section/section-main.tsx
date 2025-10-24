@@ -20,21 +20,21 @@ import {
     Card,
     CardContent,
     CardFooter
-}                               from '@/components/ui/card';
-import { DataPagination }       from '@/components/ui/data-pagination';
-import { Label }                from '@/components/ui/label';
-import { Button }               from '@/components/ui/button';
-import { MultiSelectCombobox }  from '@/components/shared/Combobox';
-import { SubjectSelect }        from '@/components/shared/item-select/subject-select';
-import { SizeSelect }           from '@/components/shared/item-select/size-select';
-import { PeriodSelect }         from '@/components/shared/item-select/period-select';
-import { SpaceSelect }          from '@/components/shared/item-select/space-select';
-import { SessionSelect }        from '@/components/shared/item-select/session-select';
-import { ModuleSelect }         from '@/components/shared/item-select/module-select';
-import { ProfessorSelect }      from '@/components/shared/item-select/professor-select';
-import { DaySelect }            from '@/components/shared/item-select/days-select';
-import { SectionTable }         from '@/components/section/section-table';
-import { SessionForm }          from '@/components/session/session-form';
+}                                   from '@/components/ui/card';
+import { DataPagination }           from '@/components/ui/data-pagination';
+import { Label }                    from '@/components/ui/label';
+import { Button }                   from '@/components/ui/button';
+import { MultiSelectCombobox }      from '@/components/shared/Combobox';
+import { SubjectSelect }            from '@/components/shared/item-select/subject-select';
+import { SizeSelect }               from '@/components/shared/item-select/size-select';
+import { PeriodSelect }             from '@/components/shared/item-select/period-select';
+import { SpaceSelect }              from '@/components/shared/item-select/space-select';
+import { SessionSelect }            from '@/components/shared/item-select/session-select';
+import { ModuleSelect }             from '@/components/shared/item-select/module-select';
+import { ProfessorSelect }          from '@/components/shared/item-select/professor-select';
+import { DaySelect }                from '@/components/shared/item-select/days-select';
+import { SectionTable }             from '@/components/section/section-table';
+import { SessionMassiveUpdateForm } from '@/components/session/session-massive-update-form';
 
 import { KEY_QUERYS }               from '@/consts/key-queries';
 import { fetchApi, Method }         from '@/services/fetch';
@@ -101,7 +101,7 @@ export function SectionMain({
         isLoading   : isLoadingSections,
         isError     : isErrorSections
     } = useQuery<OfferSection[]>({
-        queryKey: [ KEY_QUERYS.SECCTIONS ],
+        queryKey: [ KEY_QUERYS.SECTIONS ],
         queryFn : () => fetchApi({ url     : 'Sections' }),
         enabled,
     });
@@ -175,7 +175,7 @@ export function SectionMain({
 	const deleteSessionsMutation = useMutation<void, Error, string>({
 		mutationFn: deleteSessionsApi,
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECCTIONS] });
+			queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
 			setIsDeleteDialogOpen( false );
 			setSelectedSections( new Set() );
 			toast( 'Sesiones eliminadas exitosamente', successToast );
@@ -403,13 +403,13 @@ export function SectionMain({
             </div>
         </div>
 
-        <SessionForm
-            section = { null }
-            session = { null }
-            isOpen  = { isEditSection }
-            onClose = { () => setIsEditSection( false ) }
-            onSave  = { () => {} }
-            ids     = { Array.from( selectedSections ) }
+        <SessionMassiveUpdateForm
+            isOpen      = { isEditSection }
+            onClose     = { () => setIsEditSection( false ) }
+            ids         = { Array.from( selectedSections ) }
+            onSuccess   = { () => {
+                queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
+            }}
         />
 
 		{/* Delete Confirmation Dialog */}
