@@ -20,7 +20,8 @@ export function ProfessorSelect({
     label,
     multiple    = true,
     placeholder = 'Seleccionar Profesores',
-    enabled     = true
+    enabled     = true,
+    disabled    = false,
 } : Props ): JSX.Element {
     const {
         data,
@@ -64,7 +65,7 @@ export function ProfessorSelect({
                     defaultValues       = { defaultValues }
                     onSelectionChange   = { onSelectionChange }
                     placeholder         = { placeholder }
-                    disabled            = { isLoading }
+                    disabled            = { isLoading || disabled }
                     multiple            = {  multiple }
                 />
             )}
