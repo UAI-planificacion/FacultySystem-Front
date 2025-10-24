@@ -38,7 +38,7 @@ export function ChangeStatusSection({
     const updateSectionMutation = useMutation({
         mutationFn  : updateSectionApi,
         onSuccess   : () => {
-            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECCTIONS] });
+            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
             const isOpen = section.isClosed
             toast( `Sección ${ isOpen ? 'Cerrada' : 'Abierta' } exitosamente`, successToast );
             setIsOpenAlert( false );

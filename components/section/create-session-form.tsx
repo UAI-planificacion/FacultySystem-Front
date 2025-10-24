@@ -321,7 +321,7 @@ export function CreateSessionForm({ section, isOpen, onClose, onSuccess }: Props
 	const createSessionsMutation = useMutation({
 		mutationFn  : createSessionsApi,
 		onSuccess   : () => {
-			queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECCTIONS] });
+			queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
 			toast( 'Sesiones creadas exitosamente', successToast );
 			handleClose();
 			onSuccess?.();

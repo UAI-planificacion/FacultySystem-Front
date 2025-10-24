@@ -161,7 +161,7 @@ export function RequestForm({
 
 	// Obtener la sección seleccionada
 	const { data : selectedSection } = useQuery({
-		queryKey    : [ KEY_QUERYS.SECCTIONS, 'not-planning', selectedSectionId ],
+		queryKey    : [ KEY_QUERYS.SECTIONS, 'not-planning', selectedSectionId ],
 		queryFn     : () => fetchApi<OfferSection>({ url: `sections/${selectedSectionId}` }),
 		enabled     : !!selectedSectionId && !propSection
 	});
@@ -206,7 +206,7 @@ export function RequestForm({
 		mutationFn  : createRequestWithSessionsApi,
 		onSuccess   : () => {
 			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.REQUESTS ]});
-			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.SECCTIONS ]});
+			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.SECTIONS ]});
 			updateFacultyTotal( queryClient, facultyId, true, 'totalRequests' );
 			handleClose();
 			toast( 'Solicitud creada exitosamente', successToast );
@@ -429,6 +429,7 @@ export function RequestForm({
                                                         value           = { field.value }
                                                         onValueChange   = { field.onChange }
                                                         defaultValue    = { field.value }
+                                                        multiple        = { false }
                                                     />
                                                 </FormControl>
 

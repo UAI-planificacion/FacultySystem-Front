@@ -218,7 +218,7 @@ export function PlanningChangeForm({
 		data		: sectionSessions,
 		isLoading	: isLoadingSessions,
 	} = useQuery({
-		queryKey	: [ KEY_QUERYS.SECCTIONS, 'sessions', section?.id ],
+		queryKey	: [ KEY_QUERYS.SECTIONS, 'sessions', section?.id ],
 		queryFn		: () => fetchApi<OfferSession[]>({ url: `sessions/section/${ section?.id }` }),
 		enabled		: isOpen && !!section?.id,
 		staleTime	: 5 * 60 * 1000,
@@ -242,7 +242,7 @@ export function PlanningChangeForm({
 		data		: fetchedSession,
 		isLoading	: isLoadingFetchedSession,
 	} = useQuery({
-		queryKey	: [ KEY_QUERYS.SECCTIONS, 'session', selectedSessionId ],
+		queryKey	: [ KEY_QUERYS.SECTIONS, 'session', selectedSessionId ],
 		queryFn		: () => fetchApi<OfferSession>({ url: `sessions/${ selectedSessionId }` }),
 		enabled		: isOpen && !!selectedSessionId && !section?.id,
 		staleTime	: 5 * 60 * 1000,
@@ -412,7 +412,7 @@ export function PlanningChangeForm({
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.PLANNING_CHANGE ] });
-			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.SECCTIONS ] });
+			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.SECTIONS ] });
 			toast( 'Cambio de planificación creado exitosamente', successToast );
 			onSuccess();
 		},

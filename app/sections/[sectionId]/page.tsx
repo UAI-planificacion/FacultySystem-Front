@@ -30,7 +30,7 @@ export default function SectionDetailPage(): JSX.Element {
         isLoading,
         isError
     }   = useQuery({
-		queryKey: [ KEY_QUERYS.SECCTIONS, sectionId ],
+		queryKey: [ KEY_QUERYS.SECTIONS, sectionId ],
 		queryFn : () => fetchApi<OfferSection>({ url: `sections/${sectionId}` }),
 	});
 

@@ -196,7 +196,7 @@ export default function OffersPage() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: [ KEY_QUERYS.SECCTIONS ]
+                queryKey: [ KEY_QUERYS.SECTIONS ]
             });
 
             const newSection = {
