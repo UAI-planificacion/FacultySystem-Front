@@ -201,7 +201,7 @@ export function OfferSubjectForm({
 	const createOfferSubjectMutation = useMutation<any[], Error, CreateOfferSubject>({
 		mutationFn: createOfferSubjectApi,
 		onSuccess: ( createdOffers ) => {
-			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.SECCTIONS ]});
+			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.SECTIONS ]});
 			onClose();
 			form.reset();
             // TODO: mejorar el filtro
