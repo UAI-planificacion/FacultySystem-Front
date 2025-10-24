@@ -39,20 +39,18 @@ import {
     CardContent,
     CardHeader
 }                                   from '@/components/ui/card';
-import { Input }                    from '@/components/ui/input';
 import { Button }                   from '@/components/ui/button';
 import { SpaceSelect }              from '@/components/shared/item-select/space-select';
 import { ProfessorSelect }          from '@/components/shared/item-select/professor-select';
-import { SessionTypeSelector }      from '@/components/shared/session-type-selector';
 import { RequestDetailModuleDays }  from '@/components/request-detail/request-detail-module-days';
 import { CalendarSelect }           from '@/components/ui/calendar-select';
 import { Switch }                   from '@/components/ui/switch';
 import { PlanningChangeForm }       from '@/components/planning-change/planning-change-form';
+import { SessionFormFields }        from '@/components/session/session-form-fields';
 
 import {
     CreateSessionRequest,
-    UpdateSessionRequest,
-    UpdateMassiveSessionRequest
+    UpdateSessionRequest
 }                                       from '@/types/session-request.model';
 import { fetchApi, Method }             from '@/services/fetch';
 import { KEY_QUERYS }                   from '@/consts/key-queries';
@@ -71,7 +69,6 @@ interface Props {
     section     : OfferSection | null;
     onSave      : ( updatedSession: OfferSession ) => void;
     onSuccess?  : () => void;
-    ids?        : string[] | null;
 }
 
 
@@ -84,17 +81,25 @@ const formSchema = z.object({
     realRegistrants         : z.number().nullable().optional(),
     plannedBuilding         : z.string().nullable().optional(),
     professorId             : z.string().nullable().optional(),
-    moduleId                : z.number().nullable().optional(),
     date                    : z.date().nullable().optional(),
-    day                     : z.number().min(1).max(7).nullable().optional(),
-}).refine(( data ) => {
-    const hasDaySelected    = data.day      !== null && data.day        !== undefined;
-    const hasModuleSelected = data.moduleId !== null && data.moduleId   !== undefined;
+}).superRefine(( data, ctx ) => {
+    // Validar que spaceId sea requerido
+    if ( !data.spaceId || data.spaceId.trim() === '' ) {
+        ctx.addIssue({
+            code    : z.ZodIssueCode.custom,
+            message : 'El espacio es requerido',
+            path    : ['spaceId']
+        });
+    }
 
-    return hasDaySelected === hasModuleSelected;
-}, {
-    message : 'Debe seleccionar tanto el día como el módulo, o ninguno de los dos',
-    path    : ['day']
+    // Validar que date sea requerido
+    if ( !data.date ) {
+        ctx.addIssue({
+            code    : z.ZodIssueCode.custom,
+            message : 'La fecha es requerida',
+            path    : ['date']
+        });
+    }
 });
 
 
@@ -107,17 +112,16 @@ export function SessionForm({
     session,
     section,
     onSave,
-    onSuccess,
-    ids
+    onSuccess
 }: Props ) {
     const queryClient                                       = useQueryClient();
     const [ sessionRequired, setSessionRequired ]           = useState<boolean>( false );
+    const [ dayModuleRequired, setDayModuleRequired ]       = useState<boolean>( false );
     const [ selectedDayModuleId, setSelectedDayModuleId ]   = useState<number | null>( null );
     const [ showCalendar, setShowCalendar ]                 = useState<boolean>( false );
     const [ moduleDaySelections, setModuleDaySelections ]   = useState<{ day: string; moduleId: string }[]>([]);
     const [ shouldFetchDates, setShouldFetchDates ]         = useState<boolean>( false );
     const [ isUpdateDateSpace, setIsUpdateDateSpace  ]      = useState<boolean>( false );
-    const [ englishForAll, setEnglishForAll ]               = useState<boolean>( false );
     const [ isPlanningChangeOpen, setIsPlanningChangeOpen ] = useState<boolean>( false );
 
 
@@ -132,9 +136,7 @@ export function SessionForm({
             plannedBuilding         : session?.plannedBuilding      || null,
             chairsAvailable         : session?.chairsAvailable      || null,
             professorId             : session?.professor?.id        || null,
-            day                     : session?.dayId                || null,
             date                    : session?.date ? new Date( session.date ) : null,
-            moduleId                : session?.module ? Number( session.module.id ) : null,
         }
     });
 
@@ -150,8 +152,6 @@ export function SessionForm({
                 plannedBuilding         : session.plannedBuilding,
                 chairsAvailable         : session.chairsAvailable,
                 professorId             : session.professor?.id,
-                day                     : session.dayId,
-                moduleId                : session.module ? Number( session.module.id ) : null,
                 date                    : session.date ? new Date( session.date ) : null
             });
 
@@ -169,17 +169,17 @@ export function SessionForm({
         } else {
             setModuleDaySelections([]);
             setSelectedDayModuleId( null );
+            form.reset();
         }
 
         setSessionRequired( false );
         setShowCalendar( false );
         setShouldFetchDates( false );
-        setEnglishForAll( false );
 
-        const isShowDayModules = ids ? false : !session;
+        const isShowDayModules = !session;
 
         setIsUpdateDateSpace( isShowDayModules );
-    }, [ session, form, isOpen, ids ]);
+    }, [ session, form, isOpen ]);
 
 
     const {
@@ -204,6 +204,7 @@ export function SessionForm({
         error       : errorDates
     } = useAvailableDates({
         sessionId   : session?.id || null,
+        sectionId   : section?.id || null,
         dayModuleId : selectedDayModuleId,
         spaceId     : form.watch( 'spaceId' ) || null,
         enabled     : shouldFetchDates,
@@ -211,15 +212,16 @@ export function SessionForm({
     });
 
     // Efecto para verificar caché cuando cambian spaceId, professorId o dayModuleId
+    // Solo aplica cuando hay una sesión existente (modo edición)
     useEffect(() => {
-        if ( !isOpen ) return;
+        if ( !isOpen || !session?.id ) return;
 
         const currentSpaceId        = form.watch( 'spaceId' );
         const currentProfessorId    = form.watch( 'professorId' );
-        const currentSessionId      = session?.id || null;
+        const currentSessionId      = session.id;
 
         // Si no hay los datos necesarios, deshabilitar calendario
-        if ( !currentSpaceId || !currentProfessorId || !selectedDayModuleId || !currentSessionId ) {
+        if ( !currentSpaceId || !currentProfessorId || !selectedDayModuleId ) {
             setShowCalendar( false );
             return;
         }
@@ -286,9 +288,9 @@ export function SessionForm({
         });
 
 
-    const updateSessionApi = async ( updatedSession: UpdateMassiveSessionRequest | UpdateSessionRequest ): Promise<OfferSession> =>
+    const updateSessionApi = async ( updatedSession: UpdateSessionRequest ): Promise<OfferSession> =>
         fetchApi({
-            url     : `sessions/${ ids ? 'update/massive' : ( updatedSession as UpdateSessionRequest ).id }`,
+            url     : `sessions/${updatedSession.id}`,
             method  : Method.PATCH,
             body    : updatedSession
         });
@@ -298,7 +300,7 @@ export function SessionForm({
     const createSessionMutation = useMutation({
         mutationFn: createSessionApi,
         onSuccess: ( createdSession ) => {
-            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECCTIONS] });
+            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
 
             onSave( createdSession );
             onClose();
@@ -312,19 +314,16 @@ export function SessionForm({
     const updateSessionMutation = useMutation({
         mutationFn: updateSessionApi,
         onSuccess: ( updatedSession ) => {
-            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECCTIONS] });
+            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
 
             onSave( updatedSession );
             onClose();
 
-            const isMassive = ids ? 'Sesiones actualizadas' : 'Sesión actualizada';
-
-            toast( `${isMassive} exitosamente`, successToast );
+            toast( 'Sesión actualizada exitosamente', successToast );
             onSuccess?.();
         },
         onError: ( mutationError: any ) => {
-            const isMassive = ids ? 'Sesiones' : 'Sesión';
-            toast( `Error al actualizar la ${isMassive}: ${mutationError.message}`, errorToast )
+            toast( `Error al actualizar la sesión: ${mutationError.message}`, errorToast )
         }
     });
 
@@ -342,6 +341,10 @@ export function SessionForm({
     const handleDayModuleSelect = useCallback(( dayModuleId: number | null ) => {
         setSelectedDayModuleId( dayModuleId );
         setShouldFetchDates( false );
+
+        if ( dayModuleId ) {
+            setDayModuleRequired( false );
+        }
 
         if ( !dayModuleId ) {
             setShowCalendar( false );
@@ -362,28 +365,23 @@ export function SessionForm({
 
 
     function onSubmit( data: FormData ): void {
-        let dayModuleId : number | null = null;
-
-        if ( !ids && !data.name ) {
+        if ( !data.name ) {
             setSessionRequired( true );
+            return;
+        }
+
+        // Validar que se haya seleccionado un dayModuleId
+        if ( !selectedDayModuleId ) {
+            setDayModuleRequired( true );
+            toast( 'Debe seleccionar un módulo y día de la tabla', errorToast );
             return;
         }
 
         if ( isLoading ) return;
 
         if ( isError ) {
-            toast( 'Error al cargar los días y los módulos. No seleccione el día y el módulo por ahora', errorToast );
+            toast( 'Error al cargar los días y los módulos', errorToast );
             return;
-        }
-
-        if ( data.day && data.moduleId && (dayModulesData?.length ?? 0) > 0 ) {
-            dayModuleId = dayModulesData!
-            .find(( dayModule ) => dayModule.dayId === data.day && dayModule.moduleId === Number(data.moduleId ))?.id || null;
-
-            if ( !dayModuleId ) {
-                toast( 'Esta combinación de día y módulo no existe, selecciona otro.', errorToast );
-                return;
-            }
         }
 
         const {
@@ -413,24 +411,6 @@ export function SessionForm({
         };
 
         console.log('🚀 ~ file: session-form.tsx:377 ~ sessionData:', sessionData)
-
-        if ( ids  ) {
-            const updateMassiveSession : UpdateMassiveSessionRequest = {
-                ...sessionData,
-                ...(name && { name }),
-                ...( englishForAll && { isEnglish } ),
-                ids
-            }
-            console.log("🚀 ~ file: session-form.tsx ~ updateMassiveSession:", updateMassiveSession)
-
-            if ( Object.keys( updateMassiveSession ).length === 1 && "ids" in updateMassiveSession ) {
-                toast( 'Debe seleccionar al menos un valor para actualizar', errorToast );
-                return;
-            }
-
-            updateSessionMutation.mutate( updateMassiveSession );
-            return;
-        }
 
         if ( session ) {
             const updatedSession: UpdateSessionRequest = {
@@ -477,52 +457,34 @@ export function SessionForm({
             <DialogContent className="sm:max-w-3xl max-h-[100vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>
-                        { ids
-                            ? 'Editar Sesiones'
-                            : session
-                                ? 'Editar Sesión'
-                                : 'Crear Nueva Sesión'
-                        }
+                        { session ? 'Editar Sesión' : 'Crear Nueva Sesión' }
                     </DialogTitle>
 
                     <DialogDescription>
-                        { ids
-                            ? 'Modifica los datos de todas las sesiones seleccionadas, modifica un valor y se aplicará para todas.'
-                            : session
-                                ? 'Modifica los datos de la sesión individual.'
-                                : 'Completa los datos para crear una nueva sesión.'
+                        { session
+                            ? 'Modifica los datos de la sesión individual.'
+                            : 'Completa los datos para crear una nueva sesión.'
                         }
                     </DialogDescription>
 
                     <div className="space-y-4">
-                        { !ids 
-                            ? <Card>
-                                <CardHeader className="py-3 px-5 border-b grid grid-cols-4 gap-4 items-center">
-                                    <span className="font-medium">SSEC</span>
-                                    <span className="font-medium">Periodo</span>
-                                    <span className="font-medium">Fecha Inicio</span>
-                                    <span className="font-medium">Fecha Fin</span>
-                                </CardHeader>
+                        <Card>
+                            <CardHeader className="py-3 px-5 border-b grid grid-cols-4 gap-4 items-center">
+                                <span className="font-medium">SSEC</span>
+                                <span className="font-medium">Periodo</span>
+                                <span className="font-medium">Fecha Inicio</span>
+                                <span className="font-medium">Fecha Fin</span>
+                            </CardHeader>
 
-                                <CardContent className="py-3 px-5 grid grid-cols-4 gap-4">
-                                    <span>{ section?.subject.id }-{ section?.code }</span>
-                                    <span>{ section?.period?.name }</span>
-                                    <span>{ section?.startDate && tempoFormat( section.startDate )}</span>
-                                    <span>{ section?.endDate && tempoFormat( section.endDate )}</span>
-                                </CardContent>
-                            </Card>
+                            <CardContent className="py-3 px-5 grid grid-cols-4 gap-4">
+                                <span>{ section?.subject.id }-{ section?.code }</span>
+                                <span>{ section?.period?.name }</span>
+                                <span>{ section?.startDate && tempoFormat( section.startDate )}</span>
+                                <span>{ section?.endDate && tempoFormat( section.endDate )}</span>
+                            </CardContent>
+                        </Card>
 
-                            : <Card>
-                                <CardContent className="mt-5">
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-medium w-48">Sessiones seleccionadas:</span>
-                                        <span className="">{ids.length}</span>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        }
-
-                        { !!ids || !isUpdateDateSpace &&
+                        { !isUpdateDateSpace &&
                             <Card>
                                 <CardHeader className="py-1 px-5 border-b grid grid-cols-4 gap-4 items-center">
                                     <span className="font-medium">Espacio</span>
@@ -556,124 +518,12 @@ export function SessionForm({
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit( onSubmit )} className="space-y-4">
-                         {/* Session Name Field */}
-                            <FormField
-                                control = { form.control }
-                                name    = "name"
-                                render  = {({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Tipo de Sesión</FormLabel>
-
-                                        <FormControl>
-                                            <SessionTypeSelector
-                                                multiple        = { false }
-                                                value           = { field.value || null }
-                                                isShort         = { false }
-                                                onValueChange   = {( value ) => {
-                                                    field.onChange( value );
-                                                    setSessionRequired( false );
-                                                }}
-                                                allowDeselect   = { true }
-                                            />
-                                        </FormControl>
-
-                                        { sessionRequired && <span className='text-red-700'>Debe seleccionar un tipo de sesión</span>  }
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* Corrected Registrants Field */}
-                            <FormField
-                                control = { form.control }
-                                name    = "correctedRegistrants"
-                                render  = {({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Inscritos Corregidos</FormLabel>
-
-                                        <FormControl>
-                                            <Input
-                                                type        = "number"
-                                                placeholder = "Número de inscritos corregidos"
-                                                {...field}
-                                                value       = { field.value || '' }
-                                                onChange    = {( e ) => field.onChange( e.target.value ? parseInt( e.target.value ) : null )}
-                                            />
-                                        </FormControl>
-
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Real Registrants Field */}
-                            <FormField
-                                control = { form.control }
-                                name    = "realRegistrants"
-                                render  = {({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Inscritos Reales</FormLabel>
-
-                                        <FormControl>
-                                            <Input
-                                                type        = "number"
-                                                placeholder = "Número de inscritos reales"
-                                                {...field}
-                                                value       = { field.value || '' }
-                                                onChange    = {( e ) => field.onChange( e.target.value ? parseInt( e.target.value ) : null )}
-                                            />
-                                        </FormControl>
-
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Planned Building Field */}
-                            <FormField
-                                control = { form.control }
-                                name    = "plannedBuilding"
-                                render  = {({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Edificio Planificado</FormLabel>
-
-                                        <FormControl>
-                                            <Input
-                                                placeholder = "Edificio planificado"
-                                                {...field}
-                                                value       = { field.value || '' }
-                                                onChange    = {( e ) => field.onChange( e.target.value || null )}
-                                            />
-                                        </FormControl>
-
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Chairs Available Field */}
-                            <FormField
-                                control = { form.control }
-                                name    = "chairsAvailable"
-                                render  = {({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Sillas Disponibles</FormLabel>
-
-                                        <FormControl>
-                                            <Input
-                                                type        = "number"
-                                                placeholder = "Número de sillas disponibles"
-                                                {...field}
-                                                value       = { field.value || '' }
-                                                onChange    = {( e ) => field.onChange( e.target.value ? parseInt( e.target.value ) : null )}
-                                            />
-                                        </FormControl>
-
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
+                        <SessionFormFields
+                            control         = { form.control }
+                            sessionRequired = { sessionRequired }
+                            onSessionChange = {() => setSessionRequired( false )}
+                            showSessionType = { true }
+                        />
 
                         {/* Is English Field */}
                         <FormField
@@ -681,21 +531,6 @@ export function SessionForm({
                             name    = "isEnglish"
                             render  = {({ field }) => (
                                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                                    { ids  && <>
-                                        <FormLabel
-                                            className="text-base items-center flex gap-2"
-                                            title="Si se selecciona, se aplicará o se quitará el inglés para todas las sesiones seleccionadas"
-                                        >
-                                            Aplicar para todos
-                                        </FormLabel>
-
-                                            <Switch
-                                                checked         = { englishForAll || false }
-                                                onCheckedChange = { setEnglishForAll }
-                                            />
-                                        </>
-                                    }
-
                                     <FormLabel className="text-base items-center flex gap-2">
                                         En inglés
                                     </FormLabel>
@@ -704,7 +539,6 @@ export function SessionForm({
                                         <Switch
                                             checked         = { field.value || false }
                                             onCheckedChange = { field.onChange }
-                                            disabled        = { !!ids && !englishForAll }
                                         />
                                     </FormControl>
                                 </FormItem>
@@ -712,13 +546,22 @@ export function SessionForm({
                         />
 
                         { isUpdateDateSpace && <>
-                            <RequestDetailModuleDays
-                                requestDetailModule = { moduleDaySelections.map( item => ({ day: item.day, moduleId: item.moduleId })) }
-                                enabled             = { isOpen }
-                                onModuleToggle      = { handleModuleToggle }
-                                multiple            = { false }
-                                onDayModuleSelect   = { handleDayModuleSelect }
-                            />
+                            <div className="space-y-2">
+                                <RequestDetailModuleDays
+                                    requestDetailModule = { moduleDaySelections.map( item => ({ day: item.day, moduleId: item.moduleId })) }
+                                    enabled             = { isOpen }
+                                    onModuleToggle      = { handleModuleToggle }
+                                    multiple            = { false }
+                                    onDayModuleSelect   = { handleDayModuleSelect }
+                                />
+
+                                {/* Mostrar error de dayModuleId */}
+                                { dayModuleRequired && (
+                                    <p className="text-sm font-medium text-destructive">
+                                        Debe seleccionar un módulo y día de la tabla
+                                    </p>
+                                )}
+                            </div>
 
                             <div className="grid grid-cols-3 gap-3">
                                 {/* Space Field */}
@@ -850,13 +693,9 @@ export function SessionForm({
                                 >
                                     {( createSessionMutation.isPending || updateSessionMutation.isPending )
                                         ? 'Guardando...' 
-                                        : ( 
-                                            ids
-                                                ? 'Actualizar Sesiones'
-                                                : session
-                                                    ? 'Guardar Cambios'
-                                                    : 'Crear Sesión'
-                                        )
+                                        : session
+                                            ? 'Guardar Cambios'
+                                            : 'Crear Sesión'
                                     }
                                 </Button>
                             </div>
@@ -871,7 +710,7 @@ export function SessionForm({
                 onCancel    = {() => setIsPlanningChangeOpen( false )}
                 onSuccess   = {() => {
                     setIsPlanningChangeOpen( false );
-                    queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECCTIONS] });
+                    queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
                     queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.OFFERS] });
                     toast( 'Cambio de planificación guardado exitosamente', successToast );
                 }}
