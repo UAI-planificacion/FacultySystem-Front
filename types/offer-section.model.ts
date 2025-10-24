@@ -20,8 +20,12 @@ export interface OfferSectionSubject {
 
 
 export interface OfferSectionPeriod {
-    id  : string;
-    name: string;
+    id          : string;
+    name        : string;
+    startDate   : Date;
+    endDate     : Date;
+    openingDate : Date | null;
+    closingDate : Date | null;
 }
 
 
@@ -138,6 +142,7 @@ export interface OfferSection {
     isClosed        : boolean;
     groupId         : string;
     startDate       : Date;
+    building        : BuildingEnum | null;
     endDate         : Date;
     spaceSizeId     : string | null;
     spaceType       : string | null;
