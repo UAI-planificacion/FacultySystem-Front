@@ -62,7 +62,7 @@ export function SessionTable({
 		data		: sectionSessions,
 		isLoading	: isLoadingSessions,
 	} = useQuery({
-		queryKey	: [ KEY_QUERYS.SECCTIONS, 'sessions', section.id ],
+		queryKey	: [ KEY_QUERYS.SECTIONS, 'sessions', section.id ],
 		queryFn		: () => fetchApi<OfferSession[]>({ url: `sessions/section/${ section.id }` }),
 		enabled		: isOpen,
 		staleTime	: 5 * 60 * 1000,
@@ -84,7 +84,7 @@ export function SessionTable({
 	const deleteSessionMutation = useMutation<void, Error, string>({
 		mutationFn: deleteSessionApi,
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECCTIONS] });
+			queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
 			setIsOpenDelete( false );
 			setSelectedSession( undefined );
 			toast( 'Sesión eliminada exitosamente', successToast );
@@ -209,8 +209,8 @@ export function SessionTable({
                                                     variant		= "outline"
                                                     disabled	= { section.isClosed || section.sessionsCount === 0 }
                                                     className	= {cn(
-                                                        " text-white",
-                                                        session.planningChangeId ? 'bg-blue-500 hover:bg-blue-600': ''
+                                                        " dark:text-white",
+                                                        session.planningChangeId ? 'text-white bg-blue-500 hover:text-white hover:bg-blue-600': ''
                                                     )}
                                                     onClick		= { () => {
                                                         setSelectedSesionEdit( session );
