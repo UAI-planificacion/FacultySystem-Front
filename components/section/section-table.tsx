@@ -65,12 +65,11 @@ export function SectionTable({
     const router        = useRouter();
 
 	const [ expandedSections, setExpandedSections ]         = useState<Set<string>>( new Set() );
-	const [ isCreateSessionOpen, setIsCreateSessionOpen ]   = useState<boolean>( false );
-	const [ selectedSectionEdit, setSelectedSectionEdit ]   = useState<OfferSection | null>( null );
+	// const [ isCreateSessionOpen, setIsCreateSessionOpen ]   = useState<boolean>( false );
 	const [ isOpenDelete, setIsOpenDelete ]                 = useState( false );
 	const [ isOpenSessionForm, setIsOpenSessionForm ]       = useState<boolean>( false );
 	const [ isOpenSectionForm, setIsOpenSectionForm ]       = useState<boolean>( false );
-	const [ selectedSection, setSelectedSection ]           = useState<OfferSection | undefined>( undefined );
+	const [ selectedSection, setSelectedSection ]           = useState<OfferSection | null>( null );
 	const [ isOpenPlanningChange, setIsOpenPlanningChange ] = useState<boolean>( false );
 
 	/**
@@ -189,9 +188,9 @@ export function SectionTable({
 	const deleteSectionMutation = useMutation<void, Error, string>({
 		mutationFn: deleteSectionApi,
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECCTIONS] });
+			queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
 			setIsOpenDelete( false );
-			setSelectedSection( undefined );
+			setSelectedSection( null );
 			toast( 'Sección eliminada exitosamente', successToast );
 		},
 		onError: ( mutationError ) => toast( `Error al eliminar sección: ${mutationError.message}`, errorToast )
@@ -326,7 +325,7 @@ export function SectionTable({
 												className	= "bg-blue-500 hover:bg-blue-600 text-white"
 												onClick		= { () => {
                                                     setIsOpenPlanningChange( true );
-                                                    setSelectedSectionEdit( section );
+                                                    setSelectedSection( section );
                                                 }}
 											>
 												<CalendarClock className="w-4 h-4" />
@@ -334,7 +333,7 @@ export function SectionTable({
 
 											{ section.sessionsCount === 0
 												? <Button
-													title       = "Asignar Sesiones"
+													title       = "Planificar sesiones"
 													size        = "icon"
 													variant     = "outline"
 													disabled    = { section.isClosed }
@@ -351,13 +350,13 @@ export function SectionTable({
 
                                                 // *Crear una nueva sesión
                                                 : <Button
-													title       = "Crear una Sesión"
+													title       = "Asignar Sesión"
 													size        = "icon"
 													variant     = "outline"
 													disabled    = { section.isClosed }
 													onClick     = { () => {
                                                         setIsOpenSessionForm( true );
-                                                        setSelectedSectionEdit( section );
+                                                        setSelectedSection( section );
 													}}
 												>
 													<Plus className="w-4 h-4" />
@@ -371,9 +370,7 @@ export function SectionTable({
 												isDisabledEdit  = { section.isClosed }
 											/>
 
-											<ChangeStatusSection 
-                                                section={ section }
-                                            />
+											<ChangeStatusSection section={ section } />
 										</div>
 									</TableCell>
 								</TableRow>
@@ -397,22 +394,23 @@ export function SectionTable({
 			<SectionForm
 				isOpen  = { isOpenSectionForm }
 				onClose = { () => setIsOpenSectionForm( false )}
-				section = { null }
+				section = { selectedSection }
+                sections = { sections }
 			/>
 
             <SessionForm
                 isOpen  = { isOpenSessionForm }
                 onClose = { () => setIsOpenSessionForm( false )}
                 session = { null }
-                section = { selectedSectionEdit }
+                section = { selectedSection }
                 onSave  = { () => {} }
             />
 
-			<CreateSessionForm
+			{/* <CreateSessionForm
 				section = { null }
 				isOpen  = { isCreateSessionOpen }
 				onClose = { () => setIsCreateSessionOpen( false )}
-			/>
+			/> */}
 
 			{/* Delete Confirmation Dialog */}
 			<DeleteConfirmDialog
@@ -426,7 +424,7 @@ export function SectionTable({
 			{/* Planning Change Form */}
 			<PlanningChangeForm
 				planningChange	= { null }
-                section         = { selectedSectionEdit }
+                section         = { selectedSection }
 				isOpen			= { isOpenPlanningChange }
 				onClose			= { () => setIsOpenPlanningChange( false )}
 				onSuccess		= { () => {
