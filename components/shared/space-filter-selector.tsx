@@ -8,7 +8,7 @@ import { SizeSelect }       from "@/components/shared/item-select/size-select";
 import { SpaceTypeSelect }  from "@/components/shared/item-select/space-type-select";
 
 import { SpaceType } from "@/types/request-detail.model";
-import { SPACE_TYPES_WITH_SIZE_FILTER } from "@/lib/utils";
+import { SPACE_TYPES_WITH_SIZE_FILTER, cn } from "@/lib/utils";
 
 
 export type FilterMode = 'space' | 'type-size';
@@ -24,7 +24,8 @@ interface Props {
 	onSpaceIdChange     : ( spaceId: string | string[] | null )        => void;
 	onSpaceTypeChange   : ( spaceType: string | null )      => void;
 	onSpaceSizeIdChange : ( spaceSizeId: string | null )    => void;
-    spaceMultiple?       : boolean;
+    spaceMultiple?      : boolean;
+	typeFilter?         : 'space' | 'type' | null;
 }
 
 
@@ -50,7 +51,8 @@ export function SpaceFilterSelector({
 	onSpaceIdChange,
 	onSpaceTypeChange,
 	onSpaceSizeIdChange,
-    spaceMultiple = false
+    spaceMultiple = false,
+	typeFilter = null
 }: Props ): JSX.Element {
 	// Check if size filter should be enabled
 	const isSizeFilterEnabled = filterMode === 'type-size' && 
@@ -79,78 +81,94 @@ export function SpaceFilterSelector({
 
 
 	return (
-		<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-			{/* Espacio Específico */}
-			<div className="flex gap-2 items-end">
-				<Checkbox
-					className       = "cursor-default rounded-full p-[0.6rem] flex justify-center items-center mb-2"
-					checked         = { filterMode === 'space' }
-					onCheckedChange = {( checked ) => { if ( checked ) handleFilterModeChange( 'space' )}}
-				/>
+		<div className={cn("grid gap-4", {
+			"grid-cols-1 sm:grid-cols-2 md:grid-cols-3": typeFilter === null,
+			"grid-cols-1": typeFilter === 'space',
+			"grid-cols-1 sm:grid-cols-2": typeFilter === 'type',
+		})}>
+			{/* Espacio Específico - Solo se muestra si typeFilter es null o 'space' */}
+			{ ( typeFilter !== 'type' ) && (
+				<div className="flex gap-2 items-end">
+					{/* Checkbox solo visible cuando typeFilter es null */}
+					{ typeFilter === null && (
+						<Checkbox
+							className       = "cursor-default rounded-full p-[0.6rem] flex justify-center items-center mb-2"
+							checked         = { filterMode === 'space' }
+							onCheckedChange = {( checked ) => { if ( checked ) handleFilterModeChange( 'space' )}}
+						/>
+					)}
 
-				<div className="w-full">
-					<SpaceSelect
-						label               = "Espacio Específico"
-						multiple            = { spaceMultiple }
-						placeholder         = "Seleccionar espacio"
-						defaultValues       = { spaceId || undefined }
-                        buildingFilter      = { buildingId || undefined }
-                        disabled            = { filterMode !== 'space' }
-						onSelectionChange   = {( value ) => {
-							if ( spaceMultiple ) {
-								const spaceIds = Array.isArray( value ) ? value : ( value ? [value] : null );
-								onSpaceIdChange( spaceIds );
-							} else {
-								const newSpaceId = typeof value === 'string' ? value : null;
-								onSpaceIdChange( newSpaceId );
-							}
-						}}
-					/>
+					<div className="w-full">
+						<SpaceSelect
+							label               = "Espacio Específico"
+							multiple            = { spaceMultiple }
+							placeholder         = "Seleccionar espacio"
+							defaultValues       = { spaceId || undefined }
+							buildingFilter      = { buildingId || undefined }
+							disabled            = { typeFilter === null ? filterMode !== 'space' : false }
+							onSelectionChange   = {( value ) => {
+								if ( spaceMultiple ) {
+									const spaceIds = Array.isArray( value ) ? value : ( value ? [value] : null );
+									onSpaceIdChange( spaceIds );
+								} else {
+									const newSpaceId = typeof value === 'string' ? value : null;
+									onSpaceIdChange( newSpaceId );
+								}
+							}}
+						/>
+					</div>
 				</div>
-			</div>
+			)}
 
-			{/* Tipo de Espacio */}
-			<div className="flex gap-2 items-end">
-				<Checkbox
-					className       = "cursor-default rounded-full p-[0.6rem] flex justify-center items-center mb-2"
-					checked         = { filterMode === 'type-size' }
-					onCheckedChange = {( checked ) => { if ( checked ) handleFilterModeChange( 'type-size' )}}
-				/>
+			{/* Tipo de Espacio - Solo se muestra si typeFilter es null o 'type' */}
+			{ ( typeFilter !== 'space' ) && (
+				<div className="flex gap-2 items-end">
+					{/* Checkbox solo visible cuando typeFilter es null */}
+					{ typeFilter === null && (
+						<Checkbox
+							className       = "cursor-default rounded-full p-[0.6rem] flex justify-center items-center mb-2"
+							checked         = { filterMode === 'type-size' }
+							onCheckedChange = {( checked ) => { if ( checked ) handleFilterModeChange( 'type-size' )}}
+						/>
+					)}
 
-				<div className="w-full">
-					<SpaceTypeSelect
-						label               = "Tipo de Espacio"
-						multiple            = { false }
-						placeholder         = "Seleccionar tipo"
-						defaultValues       = { spaceType || undefined }
-                        buildingFilter      = { buildingId || undefined }
-                        disabled            = { filterMode !== 'type-size' }
-						onSelectionChange   = {( value ) => {
-							const newSpaceType = ( typeof value === 'string' && value !== 'none' ) ? value : null;
-							onSpaceTypeChange( newSpaceType );
-						}}
-					/>
+					<div className="w-full">
+						<SpaceTypeSelect
+							label               = "Tipo de Espacio"
+							multiple            = { false }
+							placeholder         = "Seleccionar tipo"
+							defaultValues       = { spaceType || undefined }
+							buildingFilter      = { buildingId || undefined }
+							disabled            = { typeFilter === null ? filterMode !== 'type-size' : false }
+							onSelectionChange   = {( value ) => {
+								const newSpaceType = ( typeof value === 'string' && value !== 'none' ) ? value : null;
+								onSpaceTypeChange( newSpaceType );
+							}}
+						/>
+					</div>
 				</div>
-			</div>
+			)}
 
-			{/* Tamaño */}
-			<div className="flex gap-2 items-end">
-				<div className="w-full">
-					<SizeSelect
-						label               = "Tamaño"
-						multiple            = { false }
-						placeholder         = "Seleccionar tamaño"
-						defaultValues       = { spaceSizeId || undefined }
-                        buildingFilter      = { buildingId  || undefined }
-                        spaceTypeFilter     = { spaceType   || undefined }
-                        disabled            = { !isSizeFilterEnabled }
-						onSelectionChange   = {( value ) => {
-							const newSizeId = typeof value === 'string' ? value : null;
-							onSpaceSizeIdChange( newSizeId );
-						}}
-					/>
+			{/* Tamaño - Solo se muestra si typeFilter es null o 'type' */}
+			{ ( typeFilter !== 'space' ) && (
+				<div className="flex gap-2 items-end">
+					<div className="w-full">
+						<SizeSelect
+							label               = "Tamaño"
+							multiple            = { false }
+							placeholder         = "Seleccionar tamaño"
+							defaultValues       = { spaceSizeId || undefined }
+							buildingFilter      = { buildingId  || undefined }
+							spaceTypeFilter     = { spaceType   || undefined }
+							disabled            = { !isSizeFilterEnabled }
+							onSelectionChange   = {( value ) => {
+								const newSizeId = typeof value === 'string' ? value : null;
+								onSpaceSizeIdChange( newSizeId );
+							}}
+						/>
+					</div>
 				</div>
-			</div>
+			)}
 		</div>
 	);
 }
