@@ -15,6 +15,7 @@ import {
     Dialog,
     DialogContent,
     DialogDescription,
+    DialogFooter,
     DialogHeader,
     DialogTitle
 }                               from '@/components/ui/dialog';
@@ -28,11 +29,10 @@ import {
 }                               from '@/components/ui/form';
 import { Button }               from '@/components/ui/button';
 import { MultiSelectCombobox }  from '@/components/shared/Combobox';
-import { SizeSelect }           from '@/components/shared/item-select/size-select';
-import { SpaceTypeSelect }      from '@/components/shared/item-select/space-type-select';
-import { BuildingSelect }       from '@/components/shared/item-select/building-select';
 import { ProfessorSelect }      from '@/components/shared/item-select/professor-select';
+import { BuildingSelect }       from '@/components/shared/item-select/building-select';
 import { CalendarSelect }       from '@/components/ui/calendar-select';
+import { SpaceFilterSelector, FilterMode } from '@/components/shared/space-filter-selector';
 
 import { fetchApi, Method }         from '@/services/fetch';
 import { KEY_QUERYS }               from '@/consts/key-queries';
@@ -52,9 +52,9 @@ interface Props {
 // Zod schema for form validation
 const formSchema = z.object({
     code        : z.number().min( 1, 'El número debe ser mayor a 0' ),
+    building    : z.string().optional().nullable(),
     spaceSizeId : z.string().optional().nullable(),
     spaceType   : z.string().optional().nullable(),
-    building    : z.string().optional().nullable(),
     startDate   : z.string().min( 1, 'La fecha de inicio es requerida' ),
     endDate     : z.string().min( 1, 'La fecha de fin es requerida' ),
     professorId : z.string().optional().nullable(),
@@ -85,6 +85,7 @@ export function SectionForm({
     const queryClient = useQueryClient();
 
     const [ groupSections, setGroupSections ] = useState<OfferSection[]>([]);
+    const [ filterMode, setFilterMode ] = useState<FilterMode>( 'type-size' );
 
     // Generate available code options (1-100) excluding codes already used in the group
     const availableCodeOptions = useMemo(() => {
@@ -126,9 +127,9 @@ export function SectionForm({
         resolver    : zodResolver( formSchema ),
         defaultValues: {
             code        : section?.code || 0,
+            building    : section?.building || '',
             spaceSizeId : section?.spaceSizeId || '',
             spaceType   : section?.spaceType || '',
-            building    : section?.building || '',
             startDate   : section?.startDate ? tempoFormat( section.startDate ) : '',
             endDate     : section?.endDate ? tempoFormat( section.endDate ) : '',
             professorId : section?.professor.id || '',
@@ -140,9 +141,9 @@ export function SectionForm({
         if ( section ) {
             form.reset({
                 code        : section.code,
+                building    : section.building,
                 spaceSizeId : section.spaceSizeId,
                 spaceType   : section.spaceType,
-                building    : section.building,
                 startDate   : section.startDate ? tempoFormat( section.startDate ) : '',
                 endDate     : section.endDate ? tempoFormat( section.endDate ) : '',
                 professorId : section.professor.id,
@@ -157,9 +158,9 @@ export function SectionForm({
     function onSubmit( data: FormData ): void {
         const updatedSection = {
             code        : data.code,
+            building    : data.building     || null,
             spaceSizeId : data.spaceSizeId  || null,
             spaceType   : data.spaceType    || null,
-            building    : data.building     || null,
             startDate   : data.startDate,
             endDate     : data.endDate,
             professorId : data.professorId  || null,
@@ -179,7 +180,7 @@ export function SectionForm({
 
     return (
         <Dialog open={isOpen} onOpenChange={handleClose}>
-            <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader className="space-y-4">
                     <DialogTitle>Editar Sección</DialogTitle>
 
@@ -189,7 +190,7 @@ export function SectionForm({
                 </DialogHeader>
 
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit( onSubmit )} className="space-y-6">
+                    <form onSubmit={form.handleSubmit( onSubmit )} className="space-y-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {/* Code Field */}
                             <FormField
@@ -210,6 +211,7 @@ export function SectionForm({
                                                 placeholder         = "Seleccionar número"
                                                 searchPlaceholder   = "Buscar número..."
                                                 multiple            = { false }
+                                                typeFilter          = "number"
                                             />
                                         </FormControl>
 
@@ -256,41 +258,21 @@ export function SectionForm({
                                 )}
                             />
 
-                            {/* Space Type Field */}
-                            <FormField
-                                control = { form.control }
-                                name    = "spaceType"
-                                render  = {({ field }) => (
-                                    <FormItem>
-                                        <SpaceTypeSelect
-                                            label               = "Tipo de Espacio"
-                                            defaultValues       = { field.value ? [field.value] : [] }
-                                            onSelectionChange   = {( values ) => field.onChange( values as string || null )}
-                                            multiple            = { false }
-                                        />
-
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                             {/* Size Field */}
-                            <FormField
-                                control = { form.control }
-                                name    = "spaceSizeId"
-                                render  = {({ field }) => (
-                                    <FormItem>
-                                        <SizeSelect
-                                            label               = "Tamaño"
-                                            defaultValues       = { field.value as string }
-                                            onSelectionChange   = {( values ) => field.onChange( values || '' )}
-                                            multiple            = { false }
-                                        />
-
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                            {/* Space Filter Selector - Ocupa 2 columnas */}
+                            <div className="col-span-2">
+                                <SpaceFilterSelector
+                                    buildingId          = { form.watch( 'building' ) || null }
+                                    filterMode          = { filterMode }
+                                    onFilterModeChange  = { setFilterMode }
+                                    spaceId             = { null }
+                                    onSpaceIdChange     = {() => {}}
+                                    spaceType           = { form.watch( 'spaceType' ) || null }
+                                    onSpaceTypeChange   = {( value ) => form.setValue( 'spaceType', value )}
+                                    spaceSizeId         = { form.watch( 'spaceSizeId' ) || null }
+                                    onSpaceSizeIdChange = {( value ) => form.setValue( 'spaceSizeId', value )}
+                                    typeFilter          = "type"
+                                />
+                            </div>
                         </div>
 
                         {( section?.sessions.ids?.length ?? 0 ) === 0 &&
@@ -356,7 +338,7 @@ export function SectionForm({
                         }
 
                         {/* Action Buttons */}
-                        <div className="flex justify-between space-x-2 pt-4">
+                        <DialogFooter className="flex justify-between space-x-2 pt-4 border-t">
                             <Button
                                 type        = "button"
                                 variant     = "outline"
@@ -372,7 +354,7 @@ export function SectionForm({
                             >
                                 {updateSectionMutation.isPending ? 'Guardando...' : 'Guardar Cambios'}
                             </Button>
-                        </div>
+                        </DialogFooter>
                     </form>
                 </Form>
             </DialogContent>
