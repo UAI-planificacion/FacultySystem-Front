@@ -33,6 +33,7 @@ import { ShowDateAt }           from "@/components/shared/date-at";
 import { SectionSelect }        from "@/components/shared/item-select/section-select";
 import { RequestSessionForm }   from "@/components/request/request-session-form";
 import { ChangeStatus }         from "@/components/shared/change-status";
+import { RequestSectionInfo }   from "@/components/request/request-section-info";
 
 import {
 	CreateRequest,
@@ -207,6 +208,7 @@ export function RequestForm({
 		onSuccess   : () => {
 			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.REQUESTS ]});
 			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.SECTIONS ]});
+			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.SECTIONS, 'not-planning' ]});
 			updateFacultyTotal( queryClient, facultyId, true, 'totalRequests' );
 			handleClose();
 			toast( 'Solicitud creada exitosamente', successToast );
@@ -392,28 +394,32 @@ export function RequestForm({
                                 />
 
                                 {/* Section Select */}
-                                <FormField
-                                    control = { form.control }
-                                    name    = "sectionId"
-                                    render  = {({ field }) => (
-                                        <FormItem>
-                                            <SectionSelect
-                                                label               = "Sección"
-                                                multiple            = { false }
-                                                placeholder         = "Seleccionar sección"
-                                                defaultValues       = { field.value }
-                                                onSelectionChange   = {( value ) => {
-                                                    const sectionId = typeof value === 'string' ? value : undefined;
-                                                    field.onChange( sectionId );
-                                                    setSelectedSectionId( sectionId || null );
-                                                }}
-                                                disabled            = { !!propSection || !!request }
-                                            />
+                                { !request?.section
+                                    ? <FormField
+                                        control = { form.control }
+                                        name    = "sectionId"
+                                        render  = {({ field }) => (
+                                            <FormItem>
+                                                <SectionSelect
+                                                    label               = "Sección"
+                                                    multiple            = { false }
+                                                    placeholder         = "Seleccionar sección"
+                                                    defaultValues       = { field.value }
+                                                    disabled            = { !!propSection || !!request }
+                                                    onSelectionChange   = {( value ) => {
+                                                        const sectionId = typeof value === 'string' ? value : undefined;
+                                                        field.onChange( sectionId );
+                                                        setSelectedSectionId( sectionId || null );
+                                                    }}
+                                                />
 
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    : <RequestSectionInfo section={ request.section } />
+                                }
 
                                 {/* Status */}
                                 { request &&
