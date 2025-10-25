@@ -138,12 +138,12 @@ export function RequestInfoCard({
                                     </span>
 
                                 </>
-                                : request.section.spaceSize 
+                                : request.section.spaceSizeId 
                                     ? <>
                                         <Proportions className="h-4 w-4 text-muted-foreground" />
 
                                         <span className="max-w-full truncate overflow-hidden whitespace-nowrap">
-                                            {request.section.spaceSize.id} {request.section.spaceSize.detail}
+                                            {request.section.spaceSizeId}
                                         </span>
                                     </>
                                     : "-"
