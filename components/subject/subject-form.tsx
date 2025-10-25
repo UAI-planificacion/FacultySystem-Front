@@ -507,7 +507,10 @@ export function SubjectForm({
 
 					{ !subject &&
 						<TabsContent value="file">
-							<SubjectUpload isUploading={ false } />
+							<SubjectUpload
+								isUploading = { false }
+								onSuccess   = { onClose }
+							/>
 						</TabsContent>
 					}
 				</Tabs>
