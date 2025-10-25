@@ -52,6 +52,7 @@ interface ComboboxProps {
     required?: boolean;
     isLoading?: boolean;
     disabled?: boolean;
+    typeFilter? : 'search' | 'number';
 }
 
 interface FlattenedItem {
@@ -78,6 +79,7 @@ export function MultiSelectCombobox({
     required = false,
     isLoading = false,
     disabled = false,
+    typeFilter = 'search',
 }: ComboboxProps) {
     const [open, setOpen] = useState( isOpen );
     const [searchValue, setSearchValue] = useState( "" );
@@ -463,6 +465,7 @@ export function MultiSelectCombobox({
                         onChange={(e) => setSearchValue(e.target.value)}
                         className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-8"
                         onWheel={(e) => e.stopPropagation()}
+                        type={typeFilter}
                     />
                 </div>
                 <div
