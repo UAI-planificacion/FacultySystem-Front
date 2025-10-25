@@ -1,4 +1,4 @@
-import { Size, SpaceType } from "@/types/request-detail.model";
+import { BuildingEnum, Size, SpaceType } from "@/types/request-detail.model";
 
 
 interface BaseSubject {
@@ -49,6 +49,7 @@ export interface CreateOfferSubject {
 	numberOfSections: number;
 	spaceType       : string | null;
 	spaceSizeId     : string | null;
+	building        : BuildingEnum | null;
 	workshop        : number;
 	lecture         : number;
 	tutoringSession : number;
