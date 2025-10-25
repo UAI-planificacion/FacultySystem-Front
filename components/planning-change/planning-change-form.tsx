@@ -63,6 +63,7 @@ import { errorToast, successToast }     from "@/config/toast/toast.config";
 import { tempoFormat, cn }              from "@/lib/utils";
 import { OfferSection, OfferSession }   from "@/types/offer-section.model";
 import { useSession }                   from "@/hooks/use-session";
+import { updateFacultyTotal }           from "@/app/faculties/page";
 
 
 interface Props {
@@ -413,6 +414,9 @@ export function PlanningChangeForm({
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.PLANNING_CHANGE ] });
 			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.SECTIONS ] });
+
+			updateFacultyTotal( queryClient, staff!.facultyId!, true, 'totalPlanningChanges' );
+
 			toast( 'Cambio de planificación creado exitosamente', successToast );
 			onSuccess();
 		},
