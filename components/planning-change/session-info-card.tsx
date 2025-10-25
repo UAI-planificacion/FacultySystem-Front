@@ -17,9 +17,9 @@ import {
 }						from "@/components/ui/accordion";
 import { Skeleton }     from "@/components/ui/skeleton";
 import { Badge }		from "@/components/ui/badge";
+import { SessionType }  from "@/components/session/session-type";
 
 import { tempoFormat }  from "@/lib/utils";
-import { Session }      from "@/types/section.model";
 import { OfferSession } from "@/types/offer-section.model";
 
 
@@ -27,14 +27,6 @@ interface Props {
 	sessionData?    : OfferSession | null;
 	isLoading		: boolean;
 }
-
-
-const sessionLabels: Record<Session, string> = {
-	[Session.C]	: 'Cátedra',
-	[Session.A]	: 'Ayudantía',
-	[Session.T]	: 'Taller',
-	[Session.L]	: 'Laboratorio',
-};
 
 /**
  * SessionInfoCard Component
@@ -80,7 +72,6 @@ export function SessionInfoCard({
 		);
 	}
 
-	// Guard: sessionData must exist at this point
 	if ( !sessionData ) {
 		return null;
 	}
@@ -94,12 +85,15 @@ export function SessionInfoCard({
 						<AccordionTrigger className="hover:no-underline py-0">
 							<div className="flex items-center gap-2">
 								<CardTitle className="text-base">Información de la Sesión</CardTitle>
-								<Badge variant="outline">{ sessionLabels[sessionData.name] }</Badge>
+
+                                <SessionType session={sessionData.name} />
+
+                                <Badge>SSEC {sessionData.section.subject.id}-{sessionData.section.code}</Badge>
 							</div>
 						</AccordionTrigger>
 
 						<CardDescription className="mt-1">
-							Datos de la sesión seleccionada para modificar
+							Datos de la sesión seleccionada a modificar
 						</CardDescription>
 					</CardHeader>
 
@@ -112,22 +106,21 @@ export function SessionInfoCard({
 									<p className="mt-1">{ sessionData.section.subject.id } - { sessionData.section.subject.name }</p>
 								</div>
 
-								{/* Código de Sección */}
-								<div>
-									<span className="font-semibold text-muted-foreground">Código de Sección:</span>
-									<p className="mt-1">{ sessionData.section.code }</p>
-								</div>
-
 								{/* Profesor */}
 								<div>
 									<span className="font-semibold text-muted-foreground">Profesor:</span>
-									<p className="mt-1">{ sessionData.professor.name }</p>
+									<p className="mt-1">{sessionData.professor.id} - { sessionData.professor.name }</p>
 								</div>
 
 								{/* Fecha */}
 								<div>
-									<span className="font-semibold text-muted-foreground">Fecha:</span>
-									<p className="mt-1">{ tempoFormat( sessionData.date ) }</p>
+									<span className="font-semibold text-muted-foreground">Fecha reservada:</span>
+									<p className="mt-1">
+                                        { tempoFormat( sessionData.date ) }
+                                        <Badge variant="outline" className="font-mono">
+											M{ sessionData.module.code } { sessionData.module.difference || '' }: { sessionData.module.startHour } - { sessionData.module.endHour } { sessionData.module.difference?? '' }
+										</Badge>
+                                    </p>
 								</div>
 
 								{/* Espacio */}
@@ -138,7 +131,7 @@ export function SessionInfoCard({
 
 								{/* En Inglés */}
 								<div>
-									<span className="font-semibold text-muted-foreground">En Inglés:</span>
+									<span className="font-semibold text-muted-foreground mr-2">En Inglés:</span>
 									{ sessionData.isEnglish ? (
 										<Badge variant="default" className="bg-green-600">Sí</Badge>
 									) : (
@@ -147,21 +140,11 @@ export function SessionInfoCard({
 								</div>
 
 								{/* Fechas de Sección */}
-								<div className="md:col-span-2">
+								<div>
 									<span className="font-semibold text-muted-foreground">Período de Sección:</span>
 									<p className="mt-1">
 										{ tempoFormat( sessionData.section.startDate ) } - { tempoFormat( sessionData.section.endDate ) }
 									</p>
-								</div>
-
-								{/* Módulo/Horario */}
-								<div className="md:col-span-2">
-									<span className="font-semibold text-muted-foreground">Módulo/Horario:</span>
-									<div className="mt-2">
-										<Badge variant="outline" className="font-mono">
-											M{ sessionData.module.code } { sessionData.module.difference || '' }: { sessionData.module.startHour } - { sessionData.module.endHour } { sessionData.module.difference?? '' }
-										</Badge>
-									</div>
 								</div>
 							</div>
 						</CardContent>
