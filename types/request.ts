@@ -1,5 +1,5 @@
 import { Role }         from "@/types/staff.model";
-import { SpaceType }    from "@/types/request-detail.model";
+import { Size, SpaceType }    from "@/types/request-detail.model";
 
 
 export enum Status {
@@ -60,21 +60,25 @@ export interface StaffRequest {
 export interface RequestProfessor {
     id      : string;
     name    : string;
-    email   : string;
-    role    : Role;
+    email?  : string    | null;
+    role?   : Role      | null;
 }
 
 
 export interface PeriodRequest {
     id          : string;
     name        : string;
-    startDate   : Date;
-    endDate     : Date;
+    startDate?   : Date;
+    endDate?     : Date;
 }
 
 export interface RequestSubject {
     id          : string;
     name        : string;
+}
+
+interface CountSessions {
+    sessions: number;
 }
 
 
@@ -88,12 +92,12 @@ export interface RequestSection {
     workshop        : number;
     lecture         : number;
     tutoringSession : number;
-    professor       : RequestProfessor;
+    professor       : RequestProfessor | null;
     period          : PeriodRequest;
     subject         : RequestSubject;
-    spaceType       : SpaceType;
-    spaceSize       : SizeResponse;
-    countSessions   : number;
+    spaceType       : SpaceType | null;
+    spaceSizeId     : Size | null;
+    countSessions   : CountSessions;
     building        : string | null;
 }
 
