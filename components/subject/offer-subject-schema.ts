@@ -9,6 +9,7 @@ export const offerSubjectSchema = z.object({
         .max(100, "El número de secciones no puede ser mayor a 100"),
 	spaceType       : z.string().nullable().optional(),
 	spaceSizeId     : z.string().nullable().optional(),
+	building        : z.string().nullable().optional(),
 	workshop        : z.number()
         .min(0, "El taller debe ser mayor o igual a 0")
         .max(100, "El taller no puede ser mayor a 100"),
