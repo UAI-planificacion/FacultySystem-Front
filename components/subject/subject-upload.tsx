@@ -31,6 +31,7 @@ import { KEY_QUERYS }               from "@/consts/key-queries";
 
 interface SubjectUploadProps {
 	onUpload?	: ( file: File ) => void;
+	onSuccess?	: () => void;
 	isUploading	: boolean;
 }
 
@@ -43,6 +44,7 @@ interface UploadError {
 
 export function SubjectUpload({
     onUpload,
+    onSuccess,
     isUploading,
 }: SubjectUploadProps ): JSX.Element {
     const params                            = useParams();
@@ -116,9 +118,9 @@ export function SubjectUpload({
 	 */
 	const uploadExcelFile = async ( file: File ): Promise<Subject[]> => {
 		const formData = new FormData();
-		formData.append('file', file);
+		formData.append( 'file', file );
 
-		const response = await fetch(`${ENV.REQUEST_BACK_URL}subjects/bulk-upload/${facultyId}`, {
+		const response = await fetch( `${ENV.REQUEST_BACK_URL}subjects/bulk-upload/${facultyId}`, {
 			method  : Method.POST,
 			body    : formData,
 		});
@@ -159,6 +161,9 @@ export function SubjectUpload({
 
 			// Call external onUpload if provided
 			if ( onUpload ) onUpload( selectedFile! );
+
+			// Call onSuccess to close dialog
+			if ( onSuccess ) onSuccess();
 		},
 		onError	: ( error ) => {
 			toast( `Error al cargar archivo: ${error.message}`, errorToast );
@@ -290,15 +295,16 @@ export function SubjectUpload({
 
 			{/* Upload Button */}
 			{selectedFile && (
-				<div className="flex justify-end">
+				// <div className="flex justify-end">
 					<Button
 						onClick     = { handleUpload }
 						disabled    = { isUploading }
-						className   = "min-w-32"
+						className   = "w-full gap-2"
 					>
+                        <Upload className="h-4 w-4" />
 						{ isUploading ? 'Subiendo...' : 'Subir Archivo' }
 					</Button>
-				</div>
+				// </div>
 			)}
 
 			{/* Instructions */}
