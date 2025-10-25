@@ -193,30 +193,18 @@ export function SessionInfoRequest({
                                                 { sessionLabels[rs.session] } ({ rs.sessionDayModules.length })
                                             </span>
 
-                                            <div className=" flex gap-2 items-center">
-                                                <Button
-                                                    onClick     = {() => {
-														setSelectedRequestSession( rs );
-														setIsRequestSessionEditOpen( true );
-													}}
-                                                    className   = "text-blue-500 hover:text-blue-600"
-                                                    variant     = "ghost"
-                                                    size        = "icon"
-                                                    title       = "Editar solicitud de sesión"
-                                                >
-                                                    <Edit className="h-4 w-4" />
-                                                </Button>
-
-                                                <Button
-                                                    onClick     = {() => {}}
-                                                    className   = "text-amber-500 hover:text-amber-600"
-                                                    variant     = "ghost"
-                                                    size        = "icon"
-                                                    title       = "Ver comentarios de la sesión"
-                                                >
-                                                    <MessageCircle className="h-4 w-4" />
-                                                </Button>
-                                            </div>
+                                            <Button
+                                                onClick     = {() => {
+                                                    setSelectedRequestSession( rs );
+                                                    setIsRequestSessionEditOpen( true );
+                                                }}
+                                                className   = "text-blue-500 hover:text-blue-600"
+                                                variant     = "ghost"
+                                                size        = "icon"
+                                                title       = "Editar solicitud de sesión"
+                                            >
+                                                <Edit className="h-4 w-4" />
+                                            </Button>
                                         </div>
                                     ))}
                                 </div>
