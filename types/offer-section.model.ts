@@ -1,5 +1,6 @@
 import {
     BuildingEnum,
+    Size,
     SpaceType
 }                           from "@/types/request-detail.model";
 import { Module, Status }   from "@/types/request";
@@ -144,8 +145,8 @@ export interface OfferSection {
     startDate       : Date;
     building        : BuildingEnum | null;
     endDate         : Date;
-    spaceSizeId     : string | null;
-    spaceType       : string | null;
+    spaceSizeId     : Size | null;
+    spaceType       : SpaceType | null;
     workshop        : number;
     lecture         : number;
     tutoringSession : number;
