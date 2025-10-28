@@ -66,6 +66,7 @@ import { Method, fetchApi }			from "@/services/fetch";
 import { errorToast, successToast } from "@/config/toast/toast.config";
 import { updateFacultyTotal }		from "@/app/faculties/page";
 import { Size, SpaceType }          from "@/types/request-detail.model";
+import { SPACE_TYPES_WITH_SIZE_FILTER } from "@/lib/utils";
 
 
 export type SubjectFormValues = z.infer<typeof formSchema>;
@@ -358,8 +359,8 @@ export function SubjectForm({
 													onSelectionChange   = {( value ) => {
 														field.onChange( value === "none" ? null : value );
 
-														if ( value !== SpaceType.ROOM ) {
-															form.setValue("spaceSizeId", null);
+														if ( value === "none" || !SPACE_TYPES_WITH_SIZE_FILTER.includes( value as SpaceType )) {
+															form.setValue( "spaceSizeId", null );
 														}
 													}}
 												/>
@@ -374,16 +375,14 @@ export function SubjectForm({
 										name    = "spaceSizeId"
 										render  = {({ field }) => {
 											const spaceType     = form.watch( 'spaceType' );
-											const isDisabled    = spaceType !== SpaceType.ROOM;
+											const isDisabled    = !spaceType || !SPACE_TYPES_WITH_SIZE_FILTER.includes( spaceType );
 
 											return (
 												<FormItem>
 													<SizeSelect
 														label               = "Tamaño del Espacio"
 														placeholder         = "Seleciona un tamaño"
-														onSelectionChange   = {( value ) => {
-															field.onChange( value === "none" ? null : value as string );
-														}}
+														onSelectionChange   = {( value ) => field.onChange( value === "none" ? null : value as string )}
 														defaultValues       = { field.value || "none" }
 														multiple            = { false }
 														disabled            = { isDisabled }
