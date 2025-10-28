@@ -254,9 +254,8 @@ function CommentItem( {
 	onDelete, 
 	isLoading 
 }: CommentItemProps ): JSX.Element {
-	const [isEditing, setIsEditing] = useState( false );
+	const [isEditing, setIsEditing]     = useState( false );
 	const [editContent, setEditContent] = useState( comment.content );
-
 
 	/**
 	 * Check if current user can edit/delete this comment
@@ -265,11 +264,9 @@ function CommentItem( {
 		if ( !currentUserEmail ) return false;
 
 		if ( comment.staff?.email === currentUserEmail ) return true;
-		// if ( comment.adminEmail === currentUserEmail ) return true;
 
 		return false;
 	};
-
 
 	/**
 	 * Handle saving edited comment
@@ -289,7 +286,6 @@ function CommentItem( {
 		}
 	};
 
-
 	/**
 	 * Handle canceling edit
 	 */
@@ -298,14 +294,12 @@ function CommentItem( {
 		setIsEditing( false );
 	};
 
-
 	/**
 	 * Handle deleting comment
 	 */
 	const handleDelete = () => {
 		onDelete( comment.id, comment.content );
 	};
-
 
     /**
 	 * Get the author information from comment
@@ -399,13 +393,13 @@ function CommentItem( {
 								{/* Save/Cancel buttons when editing */}
 								{isEditing && (
                                     <Button
-											variant     = "ghost"
-											size        = "icon"
-											onClick     = { handleCancelEdit }
-											disabled    = { isLoading }
-										>
-											<X className="h-5 w-5" />
-										</Button>
+                                        variant     = "ghost"
+                                        size        = "icon"
+                                        onClick     = { handleCancelEdit }
+                                        disabled    = { isLoading }
+                                    >
+                                        <X className="h-5 w-5" />
+                                    </Button>
 								)}
 							</div>
                         </div>
