@@ -1,7 +1,8 @@
 'use client'
 
 import { JSX, useMemo } from "react";
-import { useParams } from 'next/navigation';
+import { useParams }    from 'next/navigation';
+
 import { useQuery } from "@tanstack/react-query";
 
 import {
@@ -13,12 +14,18 @@ import { PageLayout }				from "@/components/layout";
 import { SessionName }				from "@/components/session/session-name";
 import { SessionInfoRequest }		from "@/components/session/session-info-request";
 import { PlanningStepperComponent } from "@/components/section/planning/planning-stepper";
+import { Badge }                    from "@/components/ui/badge";
 
-import { OfferSection }     from "@/types/offer-section.model";
-import { Session }	        from "@/types/section.model";
-import { fetchApi }	        from "@/services/fetch";
-import { KEY_QUERYS }       from "@/consts/key-queries";
-import { cn, tempoFormat }	from "@/lib/utils";
+import {
+    cn,
+    getBuildingName,
+    getSpaceType,
+    tempoFormat
+}                       from "@/lib/utils";
+import { OfferSection } from "@/types/offer-section.model";
+import { Session }	    from "@/types/section.model";
+import { fetchApi }	    from "@/services/fetch";
+import { KEY_QUERYS }   from "@/consts/key-queries";
 
 
 export default function SectionDetailPage(): JSX.Element {
@@ -60,26 +67,30 @@ export default function SectionDetailPage(): JSX.Element {
                 {/* Información de la sección */}
                 <Card>
                     <CardContent className="mt-4">
-                        <div className="grid grid-cols-4 gap-2 text-sm">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
                             <div>
                                 <Label className="text-xs text-muted-foreground">Asignatura</Label>
+
                                 <p className="font-medium">{ section.subject.id } - { section.subject.name }</p>
                             </div>
 
                             <div>
                                 <Label className="text-xs text-muted-foreground">Período</Label>
-                                <p className="font-medium">{ section.period.id } - { section.period.name } { tempoFormat( section.startDate )} - { tempoFormat( section.endDate )}</p>
+
+                                <p className="font-medium">{ section.period.id } - { section.period.name }</p>
                             </div>
 
                             { section.professor && (
                                 <div>
                                     <Label className="text-xs text-muted-foreground">Profesor por Defecto</Label>
+
                                     <p className="font-medium">{ section.professor.id } - { section.professor.name }</p>
                                 </div>
                             )}
 
                             <div>
                                 <Label className="text-xs text-muted-foreground">Sesiones Requeridas</Label>
+
                                 <div className="flex gap-2 mt-1">
                                     {Object.entries( sessionRequirements ).map(([ session, count ]) => (
                                         <SessionName
@@ -90,6 +101,31 @@ export default function SectionDetailPage(): JSX.Element {
                                         />
                                     ))}
                                 </div>
+                            </div>
+
+                            <div>
+                                <Label className="text-xs text-muted-foreground">Detalle Espacio por defecto</Label>
+
+                                <div className="flex gap-2 items-center">
+                                    { section?.building &&
+                                        <span className="font-medium">{ getBuildingName( section.building )}</span>
+                                    }
+                                    { section?.spaceType &&
+                                        <span className="font-medium">{ getSpaceType( section.spaceType )}</span>
+                                    }
+
+                                    { section?.spaceSizeId &&
+                                        <Badge>
+                                            { section.spaceSizeId }
+                                        </Badge>
+                                    }
+                                </div>
+                            </div>
+
+                            <div>
+                                <Label className="text-xs text-muted-foreground">Fechas inicio - fin</Label>
+
+                                <p className="font-medium">{ tempoFormat( section.startDate )} - { tempoFormat( section.endDate )}</p>
                             </div>
                         </div>
                     </CardContent>
