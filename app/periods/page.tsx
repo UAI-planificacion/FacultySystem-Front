@@ -49,6 +49,7 @@ import { KEY_QUERYS }               from "@/consts/key-queries";
 import { Method, fetchApi }         from "@/services/fetch";
 import { errorToast, successToast } from "@/config/toast/toast.config";
 import { usePagination }            from "@/hooks/use-pagination";
+import { tempoFormat }              from "@/lib/utils";
 
 
 const endpoint = 'periods';
@@ -84,7 +85,7 @@ export default function PeriodsPage() {
 		const matchesSearch = searchQuery === ''
             || period.id.toLowerCase().includes( searchQuery.toLowerCase() )
             || period.name.toLowerCase().includes( searchQuery.toLowerCase() )
-            || (period.startDate && period.startDate.toLowerCase().includes( searchQuery.toLowerCase() ));
+            || (period.startDate && tempoFormat(period.startDate).includes( searchQuery.toLowerCase() ));
 
         const matchesStatus = statusFilter === 'all' || period.status === statusFilter;
 
@@ -214,10 +215,10 @@ export default function PeriodsPage() {
 	/**
 	 * Formatea una fecha para mostrar en la tabla
 	 */
-	function formatDate( dateString: string | null ): string {
-		if ( !dateString ) return '-';
-		return new Date( dateString ).toLocaleDateString( 'es-ES' );
-	}
+	// function formatDate( dateString: string | null ): string {
+	// 	if ( !dateString ) return '-';
+	// 	return new Date( dateString ).toLocaleDateString( 'es-ES' );
+	// }
 
 
 	return (
@@ -318,10 +319,10 @@ export default function PeriodsPage() {
 																<TableCell className="w-[180px]">{ period.name }</TableCell>
 																<TableCell className="w-[120px]">{ period.type }</TableCell>
 																<TableCell className="w-[130px]">{ period.costCenterId }</TableCell>
-																<TableCell className="w-[130px]">{ formatDate( period.startDate ) }</TableCell>
-																<TableCell className="w-[130px]">{ formatDate( period.endDate ) }</TableCell>
-																<TableCell className="w-[130px]">{ formatDate( period.openingDate ) }</TableCell>
-																<TableCell className="w-[130px]">{ formatDate( period.closingDate ) }</TableCell>
+																<TableCell className="w-[130px]">{ tempoFormat( period.startDate ) }</TableCell>
+																<TableCell className="w-[130px]">{ tempoFormat( period.endDate ) }</TableCell>
+																<TableCell className="w-[130px]">{ tempoFormat( period.openingDate || '' ) }</TableCell>
+																<TableCell className="w-[130px]">{ tempoFormat( period.closingDate || '' ) }</TableCell>
 																<TableCell className="w-[140px]">
 																	{ renderStatusBadge( period.status ) }
 																</TableCell>
