@@ -25,7 +25,6 @@ import { Alert, AlertDescription }  from "@/components/ui/alert";
 import { errorToast, successToast } from "@/config/toast/toast.config";
 import { Subject }                  from "@/types/subject.model";
 import { Method }                   from "@/services/fetch";
-import { ENV }                      from "@/config/envs/env";
 import { KEY_QUERYS }               from "@/consts/key-queries";
 
 
@@ -120,7 +119,7 @@ export function SubjectUpload({
 		const formData = new FormData();
 		formData.append( 'file', file );
 
-		const response = await fetch( `${ENV.REQUEST_BACK_URL}subjects/bulk-upload/${facultyId}`, {
+		const response = await fetch( `${KEY_QUERYS.SUBJECTS}/bulk-upload/${facultyId}`, {
 			method  : Method.POST,
 			body    : formData,
 		});
@@ -271,9 +270,10 @@ export function SubjectUpload({
 								</div>
 
 								<div className="flex-1">
-									<p className="font-medium text-sm">{selectedFile.name}</p>
+									<p className="font-medium text-sm">{ selectedFile.name }</p>
+
 									<p className="text-xs text-muted-foreground">
-										{(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+										{( selectedFile.size / 1024 / 1024 ).toFixed( 2 )} MB
 									</p>
 								</div>
 
@@ -289,23 +289,21 @@ export function SubjectUpload({
 								<X className="h-4 w-4" />
 							</Button>
 						</div>
-				</CardContent>
-			</Card>
+                    </CardContent>
+                </Card>
 			)}
 
 			{/* Upload Button */}
-			{selectedFile && (
-				// <div className="flex justify-end">
-					<Button
-						onClick     = { handleUpload }
-						disabled    = { isUploading }
-						className   = "w-full gap-2"
-					>
-                        <Upload className="h-4 w-4" />
-						{ isUploading ? 'Subiendo...' : 'Subir Archivo' }
-					</Button>
-				// </div>
-			)}
+			{ selectedFile &&
+                <Button
+                    onClick     = { handleUpload }
+                    disabled    = { isUploading }
+                    className   = "w-full gap-2"
+                >
+                    <Upload className="h-4 w-4" />
+                    { isUploading ? 'Subiendo...' : 'Subir Archivo' }
+                </Button>
+			}
 
 			{/* Instructions */}
 			<Card>
