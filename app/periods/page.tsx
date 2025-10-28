@@ -212,15 +212,6 @@ export default function PeriodsPage() {
 	}
 
 
-	/**
-	 * Formatea una fecha para mostrar en la tabla
-	 */
-	// function formatDate( dateString: string | null ): string {
-	// 	if ( !dateString ) return '-';
-	// 	return new Date( dateString ).toLocaleDateString( 'es-ES' );
-	// }
-
-
 	return (
 		<PageLayout 
 			title="Gestión de Períodos"
@@ -319,17 +310,17 @@ export default function PeriodsPage() {
 																<TableCell className="w-[180px]">{ period.name }</TableCell>
 																<TableCell className="w-[120px]">{ period.type }</TableCell>
 																<TableCell className="w-[130px]">{ period.costCenterId }</TableCell>
-																<TableCell className="w-[130px]">{ tempoFormat( period.startDate ) }</TableCell>
-																<TableCell className="w-[130px]">{ tempoFormat( period.endDate ) }</TableCell>
-																<TableCell className="w-[130px]">{ tempoFormat( period.openingDate || '' ) }</TableCell>
-																<TableCell className="w-[130px]">{ tempoFormat( period.closingDate || '' ) }</TableCell>
+																<TableCell className="w-[130px]">{ tempoFormat( period.startDate )}</TableCell>
+																<TableCell className="w-[130px]">{ tempoFormat( period.endDate )}</TableCell>
+																<TableCell className="w-[130px]">{ tempoFormat( period.openingDate || '' )}</TableCell>
+																<TableCell className="w-[130px]">{ tempoFormat( period.closingDate || '' )}</TableCell>
 																<TableCell className="w-[140px]">
-																	{ renderStatusBadge( period.status ) }
+																	{ renderStatusBadge( period.status )}
 																</TableCell>
 																<TableCell className="w-[100px]">
 																	<ActionButton
 																		editItem={ openEditPeriodForm }
-																		deleteItem={ () => onOpenDeletePeriod(period) }
+																		deleteItem={ () => onOpenDeletePeriod( period )}
 																		item={ period }
 																	/>
 																</TableCell>
@@ -384,7 +375,7 @@ export default function PeriodsPage() {
 			<DeleteConfirmDialog
 				isOpen      = { isDeleteDialogOpen }
 				onClose     = { () => setIsDeleteDialogOpen( false )}
-				onConfirm   = { () => deletePeriodMutation.mutate( deletingPeriodId! ) }
+				onConfirm   = { () => deletePeriodMutation.mutate( deletingPeriodId! )}
 				name        = { deletingPeriodId! }
 				type        = "el Período"
 			/>
