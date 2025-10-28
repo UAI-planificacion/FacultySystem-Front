@@ -179,7 +179,7 @@ export function SessionInfoRequest({
 					{/* </AccordionTrigger> */}
 
 					{/* // <AccordionContent className="px-6 pb-4"> */}
-						<CardContent className="space-y-4 max-h-[45rem] overflow-y-auto">
+						<CardContent className="space-y-4 h-[calc(100vh-500px)] overflow-y-auto">
 							{/* Cards agrupadas por campo */}
                             <div className="space-y-3">
                                 {/* Botones de acción comentados temporalmente */}
