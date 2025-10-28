@@ -7,8 +7,8 @@ import { Button }               from "@/components/ui/button";
 
 
 interface CommentErrorCardProps {
-	onRetry?: () => void;
-	message?: string;
+	onRetry?    : () => void;
+	message?    : string;
 }
 
 
@@ -39,10 +39,10 @@ export function CommentErrorCard({
 					{/* Retry button */}
 					{onRetry && (
 						<Button
-							variant="outline"
-							size="sm"
-							onClick={onRetry}
-							className="border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30"
+							variant     = "outline"
+							size        = "sm"
+							onClick     = { onRetry }
+							className   = "border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30"
 						>
 							<RefreshCw className="w-4 h-4 mr-2" />
 							Intentar de nuevo
