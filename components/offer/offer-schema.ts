@@ -1,6 +1,9 @@
 import { z } from "zod";
 
-export const offerSubjectSchema = z.object({
+/**
+ * Schema for a single offer subject
+ */
+export const offerSchema = z.object({
 	subjectId       : z.string().min(1, "Debe seleccionar una asignatura"),
 	periodId        : z.string().min(1, "Debe seleccionar un período"),
 	professorId     : z.string().nullable().optional(),
@@ -45,4 +48,11 @@ export const offerSubjectSchema = z.object({
 }, {
     message : "Al menos una sesión debe ser mayor que 0",
     path    : [ "workshop" ],
+});
+
+/**
+ * Schema for bulk offer subjects (array mode)
+ */
+export const bulkOfferSchema = z.object({
+	offers: z.array( offerSchema ).min( 1, "Debe agregar al menos una oferta" )
 });
