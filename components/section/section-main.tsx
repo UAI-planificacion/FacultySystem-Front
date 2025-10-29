@@ -75,7 +75,7 @@ export function SectionMain({
     const [sessionFilter, setSessionFilter]         = useState<string[]>(() => searchParams.get('session')?.split(',').filter(Boolean) || []);
     const [moduleFilter, setModuleFilter]           = useState<string[]>(() => searchParams.get('module')?.split(',').filter(Boolean) || []);
     const [professorFilter, setProfessorFilter]     = useState<string[]>(() => searchParams.get('professor')?.split(',').filter(Boolean) || []);
-    const [sectionIdFilter, setSectionIdFilter]     = useState<string>(() => searchParams.get('sectionId') || '');
+    const [groupIdFilter, setGroupIdFilter]         = useState<string[]>(() => searchParams.get('groupId')?.split(',').filter(Boolean) || []);
     const [selectedSections, setSelectedSections]   = useState<Set<string>>( new Set() );
     const [currentPage, setCurrentPage]             = useState<number>( 1 );
     const [itemsPerPage, setItemsPerPage]           = useState<number>( 10 );
@@ -121,43 +121,43 @@ export function SectionMain({
 
         // Apply filters
         const filtered = sectionsData.filter(( section ) => {
-            const matchesSectionId  = sectionIdFilter === '' || section.id === sectionIdFilter;
-            const matchesCode       = codeFilter.length         === 0 || codeFilter.includes( section.code.toString() );
-            const matchesRoom       = roomFilter.length         === 0 || section.sessions.spaceIds.some( spaceId => roomFilter.includes( spaceId ));
-            const matchesDay        = dayFilter.length          === 0 || section.sessions.dayIds.some( dayId => dayFilter.includes( dayId.toString() ));
-            const matchesPeriod     = periodFilter.length       === 0 || periodFilter.includes( section.period.id );
-            const matchesStatus     = statusFilter.length       === 0 || statusFilter.includes( section.isClosed ? 'closed' : 'open' );
-            const matchesSubject    = subjectFilter.length      === 0 || subjectFilter.includes( section.subject.id );
-            const matchesSize       = sizeFilter.length         === 0 || sizeFilter.includes( section.spaceSizeId || '' );
-            const matchesSession    = sessionFilter.length      === 0 || sessionFilter.some( sessionType => {
+            const matchesGroupId    = groupIdFilter.length === 0 || groupIdFilter.includes( section.groupId );
+            const matchesCode       = codeFilter.length     === 0 || codeFilter.includes( section.code.toString() );
+            const matchesRoom       = roomFilter.length     === 0 || section.sessions.spaceIds.some( spaceId => roomFilter.includes( spaceId ));
+            const matchesDay        = dayFilter.length      === 0 || section.sessions.dayIds.some( dayId => dayFilter.includes( dayId.toString() ));
+            const matchesPeriod     = periodFilter.length   === 0 || periodFilter.includes( section.period.id );
+            const matchesStatus     = statusFilter.length   === 0 || statusFilter.includes( section.isClosed ? 'closed' : 'open' );
+            const matchesSubject    = subjectFilter.length  === 0 || subjectFilter.includes( section.subject.id );
+            const matchesSize       = sizeFilter.length     === 0 || sizeFilter.includes( section.spaceSizeId || '' );
+            const matchesSession    = sessionFilter.length  === 0 || sessionFilter.some( sessionType => {
                 if ( sessionType === 'C' ) return section.lecture > 0;
                 if ( sessionType === 'A' ) return section.tutoringSession > 0;
                 if ( sessionType === 'T' ) return section.workshop > 0;
                 if ( sessionType === 'L' ) return section.laboratory > 0;
+
                 return false;
             });
+
             const matchesModule     = moduleFilter.length       === 0 || section.sessions.moduleIds.some( moduleId => moduleFilter.includes( moduleId.toString() ));
             const matchesProfessor  = professorFilter.length    === 0 || section.sessions.professorIds.some( professorId => professorFilter.includes( professorId ));
 
-            return matchesSectionId && matchesCode && matchesRoom && matchesDay && matchesPeriod && matchesStatus && matchesSubject && matchesSize && matchesSession && matchesModule && matchesProfessor;
+            return matchesGroupId && matchesCode && matchesRoom && matchesDay && matchesPeriod && matchesStatus && matchesSubject && matchesSize && matchesSession && matchesModule && matchesProfessor;
         });
 
+        // Apply pagination
         const totalItems = filtered.length;
         const totalPages = Math.ceil( totalItems / itemsPerPage );
-
-        // Apply pagination
         const startIndex = ( currentPage - 1 ) * itemsPerPage;
         const endIndex   = startIndex + itemsPerPage;
         const sections   = filtered.slice( startIndex, endIndex );
 
         return { sections, totalItems, totalPages };
-    }, [ sectionsData, sectionIdFilter, codeFilter, roomFilter, dayFilter, periodFilter, statusFilter, subjectFilter, sizeFilter, sessionFilter, moduleFilter, professorFilter, currentPage, itemsPerPage ]);
+    }, [ sectionsData, groupIdFilter, codeFilter, roomFilter, dayFilter, periodFilter, statusFilter, subjectFilter, sizeFilter, sessionFilter, moduleFilter, professorFilter, currentPage, itemsPerPage ]);
 
 
     useEffect(() => {
         setCurrentPage( 1 );
-    }, [ sectionIdFilter, codeFilter, roomFilter, dayFilter, periodFilter, statusFilter, subjectFilter, sizeFilter, sessionFilter, moduleFilter, professorFilter, itemsPerPage ]);
-
+    }, [ groupIdFilter, codeFilter, roomFilter, dayFilter, periodFilter, statusFilter, subjectFilter, sizeFilter, sessionFilter, moduleFilter, professorFilter, itemsPerPage ]);
 
 	/**
 	 * API call para eliminar sesiones masivamente
@@ -167,7 +167,6 @@ export function SectionMain({
 			url     : `sessions/massive/${sessionIds}`,
 			method  : Method.DELETE
 		});
-
 
 	/**
 	 * Mutación para eliminar sesiones masivamente
@@ -185,7 +184,6 @@ export function SectionMain({
 		},
 	});
 
-
 	/**
 	 * Abre el diálogo de confirmación para eliminar sesiones
 	 */
@@ -193,7 +191,6 @@ export function SectionMain({
 		if ( selectedSections.size === 0 ) return;
 		setIsDeleteDialogOpen( true );
 	}
-
 
 	/**
 	 * Confirma y ejecuta la eliminación masiva de sesiones
@@ -358,17 +355,17 @@ export function SectionMain({
                             variant     = "outline"
                             className   = "w-full gap-2"
                             onClick     = {() => {
-                                setSectionIdFilter('');
-                                setCodeFilter([]);
-                                setRoomFilter([]);
-                                setDayFilter([]);
-                                setPeriodFilter([]);
-                                setStatusFilter([]);
-                                setSubjectFilter([]);
-                                setSizeFilter([]);
-                                setSessionFilter([]);
-                                setModuleFilter([]);
-                                setProfessorFilter([]);
+                                setGroupIdFilter( [] );
+                                setCodeFilter( [] );
+                                setRoomFilter( [] );
+                                setDayFilter( [] );
+                                setPeriodFilter( [] );
+                                setStatusFilter( [] );
+                                setSubjectFilter( [] );
+                                setSizeFilter( [] );
+                                setSessionFilter( [] );
+                                setModuleFilter( [] );
+                                setProfessorFilter( [] );
                                 router.push( '/sections' );
                             }}
                         >
