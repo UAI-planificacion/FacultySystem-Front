@@ -18,11 +18,11 @@ import {
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-}								from "@/components/ui/dialog";
-import { Form }					from "@/components/ui/form";
-import { Button }				from "@/components/ui/button";
-import { OfferFormFields }      from "@/components/offer/offer-form-fields";
-import { offerSchema }   from "@/components/offer/offer-schema";
+}							from "@/components/ui/dialog";
+import { Form }				from "@/components/ui/form";
+import { Button }			from "@/components/ui/button";
+import { OfferFormFields }  from "@/components/offer/offer-form-fields";
+import { offerSchema }      from "@/components/offer/offer-schema";
 
 import { CreateOfferSubject, Subject }	from "@/types/subject.model";
 import { KEY_QUERYS }					from "@/consts/key-queries";
@@ -36,7 +36,6 @@ type OfferSubjectFormValues = z.infer<typeof offerSchema>;
 interface Props {
 	facultyId		: string;
 	subject?		: Subject;
-	onSubmit		: ( data: OfferSubjectFormValues ) => void;
 	isOpen			: boolean;
 	onClose			: () => void;
 }
@@ -84,7 +83,6 @@ const validBuilding = (
 export function OfferSubjectForm({
 	facultyId,
 	subject,
-	onSubmit,
 	isOpen,
 	onClose,
 }: Props): JSX.Element {
@@ -95,7 +93,8 @@ export function OfferSubjectForm({
 		defaultValues	: emptyOfferSubject( subject ),
 	});
 
-	useEffect(() => {
+
+    useEffect(() => {
 		form.reset( emptyOfferSubject( subject ));
 	}, [ subject, form, isOpen ]);
 
