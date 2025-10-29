@@ -1,7 +1,7 @@
 'use client'
 
-import { JSX, useEffect, useMemo, useState }	from "react";
-import { Control, UseFormSetValue, UseFormWatch }	from "react-hook-form";
+import { JSX, useEffect, useMemo, useState }        from "react";
+import { Control, UseFormSetValue, UseFormWatch }   from "react-hook-form";
 
 import { useQuery }	from "@tanstack/react-query";
 
@@ -29,14 +29,16 @@ import { fetchApi }		from "@/services/fetch";
 
 
 interface Props {
-	facultyId	: string;
-	index		: number;
-	fieldPrefix : string;
-	control		: Control<any>;
-	watch		: UseFormWatch<any>;
-	setValue	: UseFormSetValue<any>;
-	getValues	: ( name: string ) => any;
-	isEnabled?	: boolean;
+	facultyId?		: string | null;
+	index			: number;
+	fieldPrefix		: string;
+	control			: Control<any>;
+	watch			: UseFormWatch<any>;
+	setValue		: UseFormSetValue<any>;
+	getValues		: any;
+	isEnabled?		: boolean;
+	subjectId?		: string | null;
+	periodId?		: string | null;
 }
 
 /**
@@ -52,40 +54,53 @@ export function OfferFormFields({
 	setValue,
 	getValues,
 	isEnabled = true,
+	subjectId,
+	periodId,
 }: Props ): JSX.Element {
-	// Estado para filterMode (siempre 'type-size' porque solo mostramos type y size)
 	const [filterMode] = useState<'type-size'>( 'type-size' );
-
-	// Query para obtener asignaturas de la facultad
-	const { data: subjects } = useQuery<Subject[]>({
+    const facultyIdUrl =  `${KEY_QUERYS.SUBJECTS}${ facultyId ? `/all/${facultyId}` : '' }`;
+	const { data: subjects = [] } = useQuery<Subject[]>({
 		queryKey	: [KEY_QUERYS.SUBJECTS, facultyId],
-		queryFn		: () => fetchApi({ url: `subjects/all/${facultyId}` }),
+		queryFn		: () => fetchApi({ url: facultyIdUrl }),
 		enabled		: isEnabled,
 	});
 
-	// Query para obtener períodos
-	const { data: periods } = useQuery<Period[]>({
+
+    const { data: periods } = useQuery<Period[]>({
 		queryKey	: [KEY_QUERYS.PERIODS],
 		queryFn		: () => fetchApi<Period[]>({ url: 'periods' }),
 		enabled		: isEnabled,
 	});
 
-	// Obtener asignatura seleccionada
-	const selectedSubject = useMemo(() => {
+
+    const selectedSubject = useMemo(() => {
 		const subjectId = watch( `${fieldPrefix}.subjectId` );
 
 		return subjects?.find( s => s.id === subjectId );
 	}, [subjects, watch( `${fieldPrefix}.subjectId` )]);
 
-	// Obtener período seleccionado
-	const selectedPeriod = useMemo(() => {
+
+    const selectedPeriod = useMemo(() => {
 		const periodId = watch( `${fieldPrefix}.periodId` );
 
 		return periods?.find( p => p.id === periodId );
 	}, [periods, watch( `${fieldPrefix}.periodId` )]);
 
-	// Cargar datos de la asignatura seleccionada
+	/**
+	 * Set default values for subjectId and periodId on mount
+	 */
 	useEffect(() => {
+		if ( subjectId ) {
+			setValue( `${fieldPrefix}.subjectId`, subjectId );
+		}
+		if ( periodId ) {
+			setValue( `${fieldPrefix}.periodId`, periodId );
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+
+    useEffect(() => {
 		if ( selectedSubject ) {
 			setValue( `${fieldPrefix}.spaceType`,			selectedSubject.spaceType || "" );
 			setValue( `${fieldPrefix}.spaceSizeId`,			selectedSubject.spaceSizeId || "" );
@@ -97,8 +112,8 @@ export function OfferFormFields({
 		}
 	}, [selectedSubject, setValue, fieldPrefix]);
 
-	// Cargar fechas del período seleccionado
-	useEffect(() => {
+
+    useEffect(() => {
 		if ( selectedPeriod ) {
 			const startDate	= new Date( selectedPeriod.startDate );
 			const endDate	= new Date( selectedPeriod.endDate );
@@ -172,7 +187,7 @@ export function OfferFormFields({
 
 	return (
         <div className="space-y-2">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Selección de Asignatura */}
                 <FormField
                     control	= { control }
@@ -183,10 +198,10 @@ export function OfferFormFields({
                                 <SubjectSelect
                                     label				= "Asignatura *"
                                     placeholder			= "Seleccionar asignatura"
-                                    onSelectionChange	= {( value ) => field.onChange( value )}
+                                    onSelectionChange   = {( value ) => field.onChange( value )}
                                     defaultValues		= { field.value ? [field.value] : [] }
                                     multiple			= { false }
-                                    url					= { facultyId }
+                                    url					= { facultyId ?? undefined }
                                 />
                             </FormControl>
 
@@ -220,7 +235,7 @@ export function OfferFormFields({
             {/* Campos habilitados solo cuando hay asignatura seleccionada */}
             {hasSelectedSubject && (
                 <>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-4">
                         {/* Profesor */}
                         <FormField
                             control	= { control }
@@ -281,7 +296,7 @@ export function OfferFormFields({
                     {/* Sesiones */}
                     <div className="space-y-1">
                         <div className="space-y-3">
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 items-center">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-center">
                                 <FormField
                                     control	= { control }
                                     name	= {`${fieldPrefix}.numberOfSections`}
