@@ -1,11 +1,19 @@
 'use client'
 
-import { JSX }                          from "react";
-import { useRouter, useSearchParams }   from "next/navigation";
-import { useForm, useFieldArray }       from "react-hook-form";
+import { JSX, useState, useMemo }   from "react";
+import { useRouter }                from "next/navigation";
+import { useForm, useFieldArray }   from "react-hook-form";
 
+import {
+    Plus,
+    Save,
+    Trash2,
+    Upload,
+    CheckCircle2,
+    AlertCircle,
+    Hash
+}                                       from "lucide-react";
 import { useMutation, useQueryClient }  from "@tanstack/react-query";
-import { Plus, Save, Trash2, Upload }   from "lucide-react";
 import { toast }                        from "sonner";
 import { zodResolver }                  from "@hookform/resolvers/zod";
 import { z }                            from "zod";
@@ -15,13 +23,22 @@ import {
     CardContent,
     CardHeader,
     CardTitle
-}                                   from "@/components/ui/card";
-import { Form}                      from "@/components/ui/form";
-import { Button }                   from "@/components/ui/button";
-import { PageLayout }               from "@/components/layout/page-layout";
-import { OfferFormFields }          from "@/components/offer/offer-form-fields";
-import { bulkOfferSchema }   from "@/components/offer/offer-schema";
-import { ScrollArea }               from "@/components/ui/scroll-area";
+}                           from "@/components/ui/card";
+import { Form}              from "@/components/ui/form";
+import { Button }           from "@/components/ui/button";
+import { PageLayout }       from "@/components/layout/page-layout";
+import { OfferFormFields }  from "@/components/offer/offer-form-fields";
+import { bulkOfferSchema }  from "@/components/offer/offer-schema";
+import { ScrollArea }       from "@/components/ui/scroll-area";
+import { SubjectSelect }    from "@/components/shared/item-select/subject-select";
+import { PeriodSelect }     from "@/components/shared/item-select/period-select";
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle
+}                           from "@/components/ui/dialog";
+import { SubjectUpload }    from "@/components/subject/subject-upload";
 
 import { errorToast, successToast } from "@/config/toast/toast.config";
 import { CreateOfferSubject }       from '@/types/subject.model';
@@ -48,7 +65,6 @@ const emptyOffer = {
 	laboratory			: 0,
 };
 
-
 /**
  * API call to create bulk offer subjects
  */
@@ -64,18 +80,31 @@ const validString = (
 	value: string | undefined | null
 ): string | null => value ?? null;
 
+
 const validBuilding = (
 	value: string | undefined | null
 ): any => value ?? null;
 
+
+/**
+ * Extract unique groupIds from offers array
+ */
+const getUniqueGroupIds = ( offers: any[] ): string => {
+	const uniqueIds = Array.from( new Set( offers.map( offer => offer.groupId )));
+	return uniqueIds.join( ',' );
+};
+
+
 export default function OffersPage(): JSX.Element {
-	const queryClient	= useQueryClient();
-	const router		= useRouter();
-	const searchParams	= useSearchParams();
-	const form			= useForm<BulkOfferSubjectFormValues>({
+	const queryClient									= useQueryClient();
+	const router										= useRouter();
+	const [isUploadDialogOpen, setIsUploadDialogOpen]	= useState<boolean>( false );
+	const [globalSubjectId, setGlobalSubjectId]			= useState<string | null>( null );
+	const [globalPeriodId, setGlobalPeriodId]			= useState<string | null>( null );
+	const form											= useForm<BulkOfferSubjectFormValues>({
 		resolver		: zodResolver( bulkOfferSchema ),
 		defaultValues	: {
-			offers		: [ emptyOffer ],
+			offers: [ emptyOffer ],
 		},
 	});
 
@@ -92,11 +121,11 @@ export default function OffersPage(): JSX.Element {
 		onSuccess: ( createdOffers ) => {
 			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.SECTIONS ]});
 			form.reset({
-				// facultyId	: form.getValues( 'facultyId' ),
-				offers		: [ emptyOffer ],
+				offers: [ emptyOffer ],
 			});
-			// TODO: mejorar navegación
-			// router.push(`/sections?subject=${createdOffers[0].subjectId}`);
+
+			const groupIds = getUniqueGroupIds( createdOffers );
+			router.push(`/sections?groupId=${groupIds}`);
 
 			toast( `${createdOffers.length} ofertas creadas exitosamente`, successToast );
 		},
@@ -120,7 +149,11 @@ export default function OffersPage(): JSX.Element {
 
 
 	const addOffer = () => {
-		append( emptyOffer );
+		append({
+			...emptyOffer,
+			subjectId	: globalSubjectId || "",
+			periodId	: globalPeriodId || "",
+		});
 	};
 
 
@@ -130,49 +163,100 @@ export default function OffersPage(): JSX.Element {
 		}
 	};
 
+	/**
+	 * Calculate offers statistics
+	 */
+	const offersStats = useMemo(() => {
+		const totalOffers = fields.length;
+		
+		let completedOffers = 0;
+		let totalSectionsToCreate = 0;
 
-	// const facultyId = form.watch( 'facultyId' );
+		fields.forEach(( field, index ) => {
+			const offer = form.getValues( `offers.${index}` );
+			
+			// Check if offer is completed
+			const hasSubject		= !!offer.subjectId;
+			const hasPeriod			= !!offer.periodId;
+			const hasNumberOfSections = (offer.numberOfSections || 0) > 0;
+			const hasAtLeastOneSession = 
+				(offer.lecture || 0) > 0 ||
+				(offer.workshop || 0) > 0 ||
+				(offer.tutoringSession || 0) > 0 ||
+				(offer.laboratory || 0) > 0;
+
+			if ( hasSubject && hasPeriod && hasNumberOfSections && hasAtLeastOneSession ) {
+				completedOffers++;
+			}
+
+			// Calculate total sections to create
+			const numberOfSections = offer.numberOfSections || 0;
+			totalSectionsToCreate += numberOfSections;
+		});
+
+		const incompleteOffers = totalOffers - completedOffers;
+
+		return {
+			totalOffers,
+			completedOffers,
+			incompleteOffers,
+			totalSectionsToCreate,
+		};
+	}, [fields, form]);
 
 
 	return (
-		<PageLayout title="Ofertar Asignaturas (Modo Masivo)">
+		<PageLayout title="Ofertar Asignaturas">
 			<Form {...form}>
-				<form onSubmit={ form.handleSubmit( handleSubmit )} className="space-y-6">
-					{/* Botones para agregar ofertas */}
-					<div className="flex justify-between items-center">
-						<Button
-							type		= "button"
-							variant		= "outline"
-							onClick		= { addOffer }
-							className	= "flex items-center gap-2"
-						>
-							<Plus className="h-4 w-4" />
-							Agregar Oferta
-						</Button>
+				<form onSubmit={ form.handleSubmit( handleSubmit )} className="space-y-4">
+					{/* Selectores globales para preseleccionar Subject y Period */}
+                    <Card>
+                        <CardContent className="mt-5">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                                <SubjectSelect
+                                    label				= "Asignatura (Opcional)"
+                                    placeholder			= "Seleccionar asignatura para todas las ofertas"
+                                    onSelectionChange	= {( value ) => setGlobalSubjectId( value as string || null )}
+                                    defaultValues		= { globalSubjectId ? [globalSubjectId] : [] }
+                                    multiple			= { false }
+                                />
 
-                        <div className="flex gap-2">
-                            <Button
-                                type		= "button"
-                                className	= "flex items-center gap-2"
-                            >
-                                <Upload className="h-4 w-4" />
+                                <PeriodSelect
+                                    label				= "Período (Opcional)"
+                                    placeholder			= "Seleccionar período para todas las ofertas"
+                                    onSelectionChange	= {( value ) => setGlobalPeriodId( value as string || null )}
+                                    defaultValues		= { globalPeriodId ? [globalPeriodId] : [] }
+                                    multiple			= { false }
+                                />
 
-                                Subir Archivo
-                            </Button>
+                                <div className="flex items-center gap-2 justify-end">
+                                    <Button
+                                        type		= "button"
+                                        variant		= "outline"
+                                        className	= "flex items-center gap-2"
+                                        onClick		= {() => setIsUploadDialogOpen( true )}
+                                    >
+                                        <Upload className="h-4 w-4" />
 
-                            <Button
-                                type		= "submit"
-                                disabled	= { createBulkOfferSubjectMutation.isPending || fields.length === 0  }
-                                className	= "flex items-center gap-2"
-                            >
-                                <Save className="h-4 w-4" />
-                                { createBulkOfferSubjectMutation.isPending
-                                    ? `Creando ${fields.length} Ofertas...`
-                                    : `Crear ${fields.length} Oferta${fields.length > 1 ? 's' : ''}`
-                                }
-                            </Button>
-                        </div>
-					</div>
+                                        Subir Archivo
+                                    </Button>
+
+                                    {/* Botones para agregar ofertas */}
+                                    <Button
+                                        type		= "button"
+                                        variant		= "outline"
+                                        onClick		= { addOffer }
+                                        className	= "flex items-center gap-2"
+                                    >
+                                        <Plus className="h-4 w-4" />
+
+                                        Agregar Oferta
+                                    </Button>
+
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
 
 					{/* Lista de ofertas */}
                     <ScrollArea className="h-[calc(100vh-25rem)]">
@@ -185,7 +269,7 @@ export default function OffersPage(): JSX.Element {
                                                 Oferta #{index + 1}
                                             </CardTitle>
 
-                                            {fields.length > 1 && (
+                                            { fields.length > 1 && (
                                                 <Button
                                                     type		= "button"
                                                     variant		= "ghost"
@@ -201,7 +285,7 @@ export default function OffersPage(): JSX.Element {
 
                                     <CardContent>
                                         <OfferFormFields
-                                            facultyId			= { '' }
+                                            facultyId			= { null }
                                             index				= { index }
                                             fieldPrefix			= { `offers.${index}` }
                                             control				= { form.control }
@@ -209,14 +293,103 @@ export default function OffersPage(): JSX.Element {
                                             setValue			= { form.setValue }
                                             getValues			= { form.getValues }
                                             isEnabled			= { true }
+                                            subjectId			= { globalSubjectId }
+                                            periodId			= { globalPeriodId }
                                         />
                                     </CardContent>
                                 </Card>
                             ))}
                         </div>
                     </ScrollArea>
+
+					{/* Barra de estado sticky */}
+					<div className="sticky bottom-0 left-0 right-0 bg-background border-t border-border p-4 mt-4">
+						<div className="flex flex-col md:flex-row items-center justify-between gap-4">
+							{/* Estadísticas */}
+							<div className="flex flex-wrap items-center gap-4 text-sm">
+								{/* Total de ofertas */}
+								<div className="flex items-center gap-2">
+									<Hash className="h-4 w-4 text-muted-foreground" />
+									<span className="font-medium">Total:</span>
+									<span className="text-muted-foreground">{ offersStats.totalOffers }</span>
+								</div>
+
+								{/* Ofertas completadas */}
+								<div className="flex items-center gap-2">
+									<CheckCircle2 className="h-4 w-4 text-green-500" />
+									<span className="font-medium">Completadas:</span>
+									<span className="text-green-600">{ offersStats.completedOffers }</span>
+								</div>
+
+								{/* Ofertas incompletas */}
+								<div className="flex items-center gap-2">
+									<AlertCircle className="h-4 w-4 text-orange-500" />
+									<span className="font-medium">Incompletas:</span>
+									<span className="text-orange-600">{ offersStats.incompleteOffers }</span>
+								</div>
+
+								{/* Total de secciones a crear */}
+								<div className="flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-md">
+									<Save className="h-4 w-4 text-primary" />
+									<span className="font-medium">Secciones a crear:</span>
+									<span className="text-primary font-bold">{ offersStats.totalSectionsToCreate }</span>
+								</div>
+							</div>
+
+							{/* Botones de acción */}
+							<div className="flex items-center gap-2">
+								{/* Botón de limpiar ofertas */}
+								<Button
+									type		= "button"
+									variant		= "destructive"
+									disabled	= { createBulkOfferSubjectMutation.isPending || fields.length === 0 }
+									className	= "flex items-center gap-2"
+									size		= "lg"
+									onClick		= {() => {
+										form.reset({ offers: [ emptyOffer ]});
+									}}
+								>
+									<Trash2 className="h-5 w-5" />
+									Limpiar Todo
+								</Button>
+
+								{/* Botón de crear ofertas */}
+								<Button
+									type		= "submit"
+									disabled	= { createBulkOfferSubjectMutation.isPending || fields.length === 0 || offersStats.completedOffers === 0 }
+									className	= "flex items-center gap-2 min-w-[200px]"
+									size		= "lg"
+								>
+									<Save className="h-5 w-5" />
+									{ createBulkOfferSubjectMutation.isPending
+										? `Creando ${offersStats.totalSectionsToCreate} Secciones...`
+										: `Crear ${offersStats.completedOffers} Oferta${offersStats.completedOffers !== 1 ? 's' : ''}`
+									}
+								</Button>
+							</div>
+						</div>
+					</div>
 				</form>
 			</Form>
+
+			{/* Dialog para subir archivo de ofertas */}
+			<Dialog open={ isUploadDialogOpen } onOpenChange={ setIsUploadDialogOpen }>
+				<DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+					<DialogHeader>
+						<DialogTitle>Subir Archivo de Ofertas</DialogTitle>
+					</DialogHeader>
+
+					<SubjectUpload
+						service		= "offer"
+						isUploading	= { false }
+						onSuccess	= {( offers ) => {
+							setIsUploadDialogOpen( false );
+							const groupIds = getUniqueGroupIds( offers );
+							router.push(`/sections?groupId=${groupIds}`);
+						}}
+					/>
+				</DialogContent>
+			</Dialog>
 		</PageLayout>
 	);
 }
