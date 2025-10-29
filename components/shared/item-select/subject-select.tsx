@@ -59,7 +59,7 @@ export function SubjectSelect({
                 multiple            = {  multiple }
             />
 
-            { isError && 
+            { isError &&
                 <span className="text-sm text-red-500">Error al cargar asignaturas</span>
             }
         </div>
