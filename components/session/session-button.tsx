@@ -56,9 +56,9 @@ export function SessionButton({
                     type        = "number"
                     value       = { section.sessionCounts[ session ]}
                     onChange    = {( e ) => setSessionCount( section.id, session, e.target.value )}
-                    className   = { `${ showLabel ? 'w-full' : 'w-20' } text-center h-8 ${ sessionBorders[session] }`}
+                    className   = { `${ showLabel ? 'w-full' : 'w-20' } text-center h-8 ${ sessionBorders[session] } [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
                     min         = "0"
-                    max         = "100"
+                    max         = "99"
                 />
 
                 <Button
@@ -67,7 +67,7 @@ export function SessionButton({
                     onClick     = {() => updateSessionCount( section.id, session, 1 )}
                     className   = {`px-2 h-8 ${sessionBorders[session]}`}
                     type        = "button"
-                    disabled    = { section.sessionCounts[session] === 100 }
+                    disabled    = { section.sessionCounts[session] === 99 }
                 >
                     <Plus className="h-4 w-4" />
                 </Button>

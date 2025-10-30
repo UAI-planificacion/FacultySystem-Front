@@ -29,7 +29,7 @@ import { SubjectSelect }            from '@/components/shared/item-select/subjec
 import { SizeSelect }               from '@/components/shared/item-select/size-select';
 import { PeriodSelect }             from '@/components/shared/item-select/period-select';
 import { SpaceSelect }              from '@/components/shared/item-select/space-select';
-import { SessionSelect }            from '@/components/shared/item-select/session-select';
+import { SessionTypeSelect }        from '@/components/shared/item-select/session-type-select';
 import { ModuleSelect }             from '@/components/shared/item-select/module-select';
 import { ProfessorSelect }          from '@/components/shared/item-select/professor-select';
 import { DaySelect }                from '@/components/shared/item-select/days-select';
@@ -321,7 +321,7 @@ export function SectionMain({
                             }}
                         />
 
-                        <SessionSelect
+                        <SessionTypeSelect
                             label               = "Filtrar por Sesiones"
                             defaultValues       = { sessionFilter }
                             onSelectionChange   = {( value ) => {

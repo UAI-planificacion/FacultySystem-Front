@@ -11,8 +11,86 @@ import { Staff }                    from "@/types/staff.model";
 
 
 interface StaffPlanningChange extends Staff {
-    id          : string;
-    name : string
+    id      : string;
+    name    : string
+}
+
+
+interface PlanningChangeSession {
+    id              : string;
+    name            : string;
+    spaceId         : string;
+    date            : Date;
+    isEnglish       : boolean;
+    professor       : OfferSectionProffesor;
+    section         : PlanningChangeSection;
+    dayModule       : {
+        id          : number;
+        dayId       : number;
+        module      : {
+            id          : number;
+            startHour   : string;
+            endHour     : string;
+            difference  : number;
+            code        : string;
+        };
+    };
+}
+
+
+interface Subject {
+    id      : string;
+    name    : string;
+}
+
+
+interface Period {
+    id      : string;
+    name    : string;
+}
+
+
+interface PlanningChangeSection {
+    id              : string;
+    code            : string;
+    isCloased       : boolean;
+    groupId         : string;
+    startDate       : Date;
+    endDate         : Date;
+    spaceType       : SpaceType             | null;
+    spaceSize       : Size                  | null;
+    professor       : OfferSectionProffesor | null;
+    subject         : Subject;
+    period          : Period;
+    workshop        : number;
+    lecture         : number;
+    tutoringSession : number;
+    laboratory      : number;
+}
+
+
+export interface PlanningChangeAll {
+    id              : string;
+    title           : string;
+    status          : Status;
+    sessionName     : Session               | null;
+    building        : BuildingEnum          | null;
+    spaceId         : string                | null;
+    isEnglish       : boolean;
+    isConsecutive   : boolean;
+    description     : string                | null;
+    spaceType       : SpaceType             | null;
+    inAfternoon     : boolean;
+    professor       : OfferSectionProffesor | null;
+    spaceSize       : Size                  | null;
+    createdAt       : Date;
+    updatedAt       : Date;
+    staffCreate     : StaffPlanningChange;
+    staffUpdate     : StaffPlanningChange   | null;
+    dayModulesId    : number[];
+
+    session         : PlanningChangeSession | null;
+    section         : PlanningChangeSection | null;
 }
 
 
@@ -53,7 +131,6 @@ interface PlanningChangeSave {
     description     : string        | null;
     building        : BuildingEnum  | null;
     status          : Status        | null;
-    // sessionId       : string        | null;
     dayModulesId    : number[];
 }
 
@@ -68,4 +145,3 @@ export interface PlanningChangeCreate extends PlanningChangeSave {
 export interface PlanningChangeUpdate extends PlanningChangeSave {
     staffUpdateId: string;
 }
-

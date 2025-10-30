@@ -184,10 +184,10 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
     }
 
 
-    function handleOfferSubjectSubmit( formData: any ): void {
-        closeOfferSubjectForm();
-        toast('Oferta de asignatura creada exitosamente', successToast);
-    }
+    // function handleOfferSubjectSubmit( formData: any ): void {
+    //     closeOfferSubjectForm();
+    //     toast('Oferta de asignatura creada exitosamente', successToast);
+    // }
 
 
     function onOpenDeleteSubject( subject: Subject ): void {
@@ -424,7 +424,6 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
             <OfferSubjectForm
                 facultyId   = { facultyId }
                 subject     = { offeringSubject }
-                onSubmit    = { handleOfferSubjectSubmit }
                 onClose     = { closeOfferSubjectForm }
                 isOpen      = { isOfferSubjectOpen }
             />

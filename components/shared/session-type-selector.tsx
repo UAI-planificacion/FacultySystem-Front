@@ -11,7 +11,7 @@ import { sessionLabels }	from "@/components/section/section.config";
 
 
 interface Props {
-	multiple		: false;
+	multiple		: boolean;
 	value			: Session[] | Session | null;
 	onValueChange	: ( value: Session[] | Session | null ) => void;
 	defaultValue?	: Session[] | Session | null;

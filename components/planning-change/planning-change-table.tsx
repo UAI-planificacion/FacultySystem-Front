@@ -26,12 +26,14 @@ import { ScrollArea }		from "@/components/ui/scroll-area";
 import { Badge }			from "@/components/ui/badge";
 import { ActionButton }		from "@/components/shared/action";
 import { Skeleton }			from "@/components/ui/skeleton";
+import { sessionLabels }	from "@/components/section/section.config";
 
-import { type PlanningChange }	from "@/types/planning-change.model";
-import { getStatusName }		from "@/lib/utils";
-import { sessionLabels }		from "@/components/section/section.config";
-import { Status }				from "@/types/request";
-
+import type {
+    PlanningChange,
+    PlanningChangeAll
+}                           from "@/types/planning-change.model";
+import { getStatusName }	from "@/lib/utils";
+import { Status }			from "@/types/request";
 
 /**
  * Obtiene el ícono correspondiente a cada estado
@@ -46,7 +48,6 @@ function getStatusIcon( status: Status ): JSX.Element {
 
 	return icons[status] || <CircleDashed className="h-4 w-4" />;
 }
-
 
 /**
  * Obtiene las clases de color para cada estado
@@ -64,9 +65,9 @@ function getStatusClasses( status: Status ): string {
 
 
 interface PlanningChangeTableProps {
-	planningChanges	: PlanningChange[];
-	onEdit			: ( planningChange: PlanningChange ) => void;
-	onDelete		: ( planningChange: PlanningChange ) => void;
+	planningChanges	: PlanningChangeAll[] | PlanningChange[];
+	onEdit			: ( planningChange: PlanningChangeAll | PlanningChange ) => void;
+	onDelete		: ( planningChange: PlanningChangeAll | PlanningChange ) => void;
 	isLoading		: boolean;
 	isError			: boolean;
 }
@@ -79,11 +80,10 @@ export function PlanningChangeTable({
 	isLoading,
 	isError
 }: PlanningChangeTableProps ): JSX.Element {
-
 	/**
 	 * Renderiza los badges de cambios para un planning change
 	 */
-	function renderChangeBadges( planningChange: PlanningChange ): JSX.Element[] {
+	function renderChangeBadges( planningChange: PlanningChangeAll | PlanningChange ): JSX.Element[] {
 		const badges: JSX.Element[] = [];
 
 		// Tipo de sesión
@@ -178,27 +178,33 @@ export function PlanningChangeTable({
 	/**
 	 * Determina el tipo de plan (Crear o Editar)
 	 */
-	function getPlanType( planningChange: PlanningChange ): string {
-		if ( planningChange.sessionId && !planningChange.sectionId ) {
-			return 'Editar';
+	function getPlanType( planningChange: PlanningChangeAll | PlanningChange ): string {
+		// Para PlanningChangeAll
+		if ( 'session' in planningChange ) {
+			if ( planningChange.session && !planningChange.section ) {
+				return 'Editar';
+			}
+
+			if ( planningChange.section && !planningChange.session ) {
+				return 'Crear';
+			}
+		}
+		// Para PlanningChange (legacy)
+		else {
+			if ( planningChange.sessionId && !planningChange.sectionId ) {
+				return 'Editar';
+			}
+
+			if ( planningChange.sectionId && !planningChange.sessionId ) {
+				return 'Crear';
+			}
 		}
 
-        if ( planningChange.sectionId && !planningChange.sessionId ) {
-			return 'Crear';
-		}
-
-        return '-';
-	}
-
-	/**
-	 * Obtiene el color del badge según el tipo de plan
-	 */
-	function getPlanBadgeVariant( type: string ): "default" | "secondary" {
-		return type === 'Crear' ? 'default' : 'secondary';
+		return '-';
 	}
 
 
-	if ( isLoading ) {
+    if ( isLoading ) {
 		return (
 			<Card>
 				<ScrollArea className="h-[600px]">
@@ -302,8 +308,6 @@ export function PlanningChangeTable({
 
                                     <TableCell>
 										<Badge
-                                            // variant={ getPlanBadgeVariant( planType )}
-                                            variant="default"
                                             className={ planType === 'Crear' ? 'text-white bg-green-500 hover:bg-green-600' : 'text-white bg-blue-500 hover:bg-blue-600' }
                                         >
 											{ planType }

@@ -317,6 +317,17 @@ export function SectionTable({
 									<TableCell className="text-right">
 										<div className="flex items-center justify-end gap-1.5">
 											{/* Botón para crear planning-change */}
+                                            <Button
+												title		= "Ver Planificaciones"
+												size		= "icon"
+												variant		= "outline"
+												disabled	= { section.isClosed || section.sessionsCount === 0 }
+												className	= "bg-amber-500 hover:bg-amber-600 text-white"
+												onClick     = { () => router.push(`planning-change?sectionId=${section.id}`)}
+											>
+												<CalendarClock className="w-4 h-4" />
+											</Button>
+
 											<Button
 												title		= "Crear Cambio de Planificación"
 												size		= "icon"
@@ -338,16 +349,10 @@ export function SectionTable({
 													variant     = "outline"
 													disabled    = { section.isClosed }
                                                     className   = "bg-green-500 hover:bg-green-600"
-													onClick     = { () => {
-														// setCreateSessionSection( section );
-                                                        // setSelectedSectionEdit( section );
-														// setIsCreateSessionOpen( true );
-                                                        router.push(`sections/${section.id}`)
-													}}
+													onClick     = { () => router.push(`sections/${section.id}`)}
 												>
 													<Album className="w-4 h-4" />
 												</Button>
-
                                                 // *Crear una nueva sesión
                                                 : <Button
 													title       = "Asignar Sesión"
