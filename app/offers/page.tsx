@@ -27,11 +27,13 @@ import {
 import { Form}              from "@/components/ui/form";
 import { Button }           from "@/components/ui/button";
 import { PageLayout }       from "@/components/layout/page-layout";
-import { OfferFormFields }  from "@/components/offer/offer-form-fields";
 import { bulkOfferSchema }  from "@/components/offer/offer-schema";
-import { ScrollArea }       from "@/components/ui/scroll-area";
 import { SubjectSelect }    from "@/components/shared/item-select/subject-select";
 import { PeriodSelect }     from "@/components/shared/item-select/period-select";
+import { OfferList }        from "@/components/offer/offer-list";
+import { OfferTable }       from "@/components/offer/offer-table";
+import { ViewMode }         from "@/components/shared/view-mode";
+import { useViewMode }      from "@/hooks/use-view-mode";
 import {
 	Dialog,
 	DialogContent,
@@ -98,6 +100,7 @@ const getUniqueGroupIds = ( offers: any[] ): string => {
 export default function OffersPage(): JSX.Element {
 	const queryClient									= useQueryClient();
 	const router										= useRouter();
+	const { viewMode, onViewChange }					= useViewMode({ queryName: 'viewOffer', defaultMode: 'cards' });
 	const [isUploadDialogOpen, setIsUploadDialogOpen]	= useState<boolean>( false );
 	const [globalSubjectId, setGlobalSubjectId]			= useState<string | null>( null );
 	const [globalPeriodId, setGlobalPeriodId]			= useState<string | null>( null );
@@ -230,6 +233,11 @@ export default function OffersPage(): JSX.Element {
                                 />
 
                                 <div className="flex items-center gap-2 justify-end">
+                                    <ViewMode
+                                        viewMode		= { viewMode }
+                                        onViewChange	= { onViewChange }
+                                    />
+
                                     <Button
                                         type		= "button"
                                         variant		= "outline"
@@ -259,48 +267,23 @@ export default function OffersPage(): JSX.Element {
                     </Card>
 
 					{/* Lista de ofertas */}
-                    <ScrollArea className="h-[calc(100vh-25rem)]">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {fields.map(( field, index ) => (
-                                <Card key={ field.id } className="relative">
-                                    <CardHeader className="pb-3">
-                                        <div className="flex justify-between items-center">
-                                            <CardTitle className="text-lg">
-                                                Oferta #{index + 1}
-                                            </CardTitle>
-
-                                            { fields.length > 1 && (
-                                                <Button
-                                                    type		= "button"
-                                                    variant		= "ghost"
-                                                    size		= "icon"
-                                                    onClick		= {() => removeOffer( index )}
-                                                    className	= "h-8 w-8 text-destructive hover:text-destructive"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </CardHeader>
-
-                                    <CardContent>
-                                        <OfferFormFields
-                                            facultyId			= { null }
-                                            index				= { index }
-                                            fieldPrefix			= { `offers.${index}` }
-                                            control				= { form.control }
-                                            watch				= { form.watch }
-                                            setValue			= { form.setValue }
-                                            getValues			= { form.getValues }
-                                            isEnabled			= { true }
-                                            subjectId			= { globalSubjectId }
-                                            periodId			= { globalPeriodId }
-                                        />
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
-                    </ScrollArea>
+					{ viewMode === 'cards' ? (
+						<OfferList
+							fields				= { fields }
+							form				= { form }
+							removeOffer			= { removeOffer }
+							globalSubjectId		= { globalSubjectId }
+							globalPeriodId		= { globalPeriodId }
+						/>
+					) : (
+						<OfferTable
+							fields				= { fields }
+							form				= { form }
+							removeOffer			= { removeOffer }
+							globalSubjectId		= { globalSubjectId }
+							globalPeriodId		= { globalPeriodId }
+						/>
+					)}
 
 					{/* Barra de estado sticky */}
 					<div className="sticky bottom-0 left-0 right-0 bg-background border-t border-border p-4 mt-4">
