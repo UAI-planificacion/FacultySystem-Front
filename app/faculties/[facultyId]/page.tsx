@@ -31,10 +31,10 @@ import { fetchApi }                 from "@/services/fetch";
 
 
 enum TabValue {
-    SUBJECTS            = "subjects",
-    STAFF               = "staff",
-    REQUESTS            = "requests",
-    PLANNING_CHANGE     = "planning-change"
+    SUBJECTS        = "subjects",
+    STAFF           = "staff",
+    REQUESTS        = "requests",
+    PLANNING_CHANGE = "planning-change"
 }
 
 
@@ -46,7 +46,6 @@ export default function FacultyDetailsPage(): JSX.Element {
     const facultyId                 = params.facultyId as string;
     const initialTab                = searchParams.get( 'tab' ) as TabValue || TabValue.SUBJECTS;
     const [activeTab, setActiveTab] = useState<TabValue>( initialTab );
-
 
     // Estado para forzar re-renders cuando cambie la caché
     const [, forceUpdate] = useState({});
