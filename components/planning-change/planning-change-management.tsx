@@ -9,15 +9,16 @@ import {
 }					from "@tanstack/react-query";
 import { toast }	from "sonner";
 
-import { DeleteConfirmDialog }	from "@/components/dialog/DeleteConfirmDialog";
-import { PlanningChangeFilter }	from "@/components/planning-change/planning-change-filter";
+import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
+import { PlanningChangeFilter } from "@/components/planning-change/planning-change-filter";
 import { PlanningChangeTable }	from "@/components/planning-change/planning-change-table";
+import { PlanningChangeCard }	from "@/components/planning-change/planning-change-card";
 import { PlanningChangeForm }	from "@/components/planning-change/planning-change-form";
 import { DataPagination }		from "@/components/ui/data-pagination";
 
 import { type PlanningChange }		from "@/types/planning-change.model";
 import { type Status }				from "@/types/request";
-import { type Session }				from "@/types/section.model";
+import { type ViewMode }			from "@/hooks/use-view-mode";
 import { Method, fetchApi }			from "@/services/fetch";
 import { errorToast, successToast }	from "@/config/toast/toast.config";
 import { KEY_QUERYS }				from "@/consts/key-queries";
@@ -35,15 +36,16 @@ export function PlanningChangeManagement({
     enabled
 }: Props ): JSX.Element {
 	const queryClient											= useQueryClient();
-	const [isFormOpen, setIsFormOpen]						= useState( false );
-	const [editingPlanningChange, setEditingPlanningChange]	= useState<PlanningChange | null>( null );
-	const [title, setTitle]									= useState( "" );
-	const [statusFilter, setStatusFilter]					= useState<Status[]>( [] );
-	const [sessionFilter, setSessionFilter]					= useState<Session[]>( [] );
-	const [isDeleteDialogOpen, setIsDeleteDialogOpen]		= useState( false );
+	const [isFormOpen, setIsFormOpen]				            = useState( false );
+	const [editingPlanningChange, setEditingPlanningChange]     = useState<PlanningChange | null>( null );
+	const [title, setTitle]							            = useState( "" );
+	const [statusFilter, setStatusFilter]			            = useState<Status[]>( [] );
+	const [sectionFilter, setSectionFilter]			            = useState<string[]>( [] );
+	const [viewMode, setViewMode]					            = useState<ViewMode>( 'table' );
+	const [isDeleteDialogOpen, setIsDeleteDialogOpen]	        = useState( false );
 	const [deletingPlanningChange, setDeletingPlanningChange]	= useState<PlanningChange | null>( null );
-	const [currentPage, setCurrentPage]						= useState( 1 );
-	const [itemsPerPage, setItemsPerPage]					= useState( 15 );
+	const [currentPage, setCurrentPage]				            = useState( 1 );
+	const [itemsPerPage, setItemsPerPage]			            = useState( 15 );
 
 
 	const { data, isLoading, isError } = useQuery({
@@ -74,19 +76,20 @@ export function PlanningChangeManagement({
 		const planningChanges = data || [];
 
 		return planningChanges.filter( planningChange => {
-			const matchesTitle = title === "" || planningChange.title.toLowerCase().includes( title.toLowerCase() );
-			const matchesStatus = statusFilter.length === 0 || statusFilter.includes( planningChange.status );
-			const matchesSession = sessionFilter.length === 0 || ( planningChange.sessionName && sessionFilter.includes( planningChange.sessionName ));
+			const matchesTitle      = title === "" || planningChange.title.toLowerCase().includes( title.toLowerCase() );
+			const matchesStatus     = statusFilter.length === 0 || statusFilter.includes( planningChange.status );
+			const matchesSection    = sectionFilter.length === 0 || ( planningChange.sectionId && sectionFilter.includes( planningChange.sectionId ));
 
-			return matchesTitle && matchesStatus && matchesSession;
+			return matchesTitle && matchesStatus && matchesSection;
 		});
-	}, [ data, title, statusFilter, sessionFilter ]);
+	}, [ data, title, statusFilter, sectionFilter ]);
 
 
 	const paginatedPlanningChanges = useMemo(() => {
-		const startIndex = ( currentPage - 1 ) * itemsPerPage;
-		const endIndex = startIndex + itemsPerPage;
-		return filteredPlanningChanges.slice( startIndex, endIndex );
+		const startIndex    = ( currentPage - 1 ) * itemsPerPage;
+		const endIndex      = startIndex + itemsPerPage;
+
+        return filteredPlanningChanges.slice( startIndex, endIndex );
 	}, [ filteredPlanningChanges, currentPage, itemsPerPage ]);
 
 
@@ -137,7 +140,7 @@ export function PlanningChangeManagement({
 
 	useEffect(() => {
 		setCurrentPage( 1 );
-	}, [ title, statusFilter, sessionFilter ]);
+	}, [ title, statusFilter, sectionFilter ]);
 
 
 	return (
@@ -148,19 +151,52 @@ export function PlanningChangeManagement({
 				setTitle			= { setTitle }
 				statusFilter		= { statusFilter }
 				setStatusFilter		= { setStatusFilter }
-				sessionFilter		= { sessionFilter }
-				setSessionFilter	= { setSessionFilter }
+				sectionFilter		= { sectionFilter }
+				setSectionFilter	= { setSectionFilter }
+				viewMode			= { viewMode }
+				onViewChange		= { setViewMode }
 				onNewPlanningChange	= { handleNewPlanningChange }
 			/>
 
-			{/* Table */}
-			<PlanningChangeTable
-				planningChanges	= { paginatedPlanningChanges }
-				onEdit			= { handleEdit }
-				onDelete		= { handleDelete }
-				isLoading		= { isLoading }
-				isError			= { isError }
-			/>
+			{/* Table or Cards */}
+			{ viewMode === 'table' ? (
+				<PlanningChangeTable
+					planningChanges	= { paginatedPlanningChanges }
+					onEdit			= { ( planningChange ) => handleEdit( planningChange as PlanningChange ) }
+					onDelete		= { ( planningChange ) => handleDelete( planningChange as PlanningChange ) }
+					isLoading		= { isLoading }
+					isError			= { isError }
+				/>
+			) : (
+				<>
+					{ isLoading ? (
+						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+							{ Array.from({ length: 6 }).map(( _, index ) => (
+								<div key={ index } className="h-64 bg-muted animate-pulse rounded-lg" />
+							))}
+						</div>
+					) : isError ? (
+						<div className="text-center text-muted-foreground p-8 border rounded-lg">
+							<p>Error al cargar los cambios de planificación</p>
+						</div>
+					) : paginatedPlanningChanges.length === 0 ? (
+						<div className="text-center text-muted-foreground p-8 border rounded-lg">
+							<p>No se encontraron cambios de planificación</p>
+						</div>
+					) : (
+						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+							{ paginatedPlanningChanges.map(( planningChange ) => (
+								<PlanningChangeCard
+									key				= { planningChange.id }
+									planningChange	= { planningChange }
+									onEdit			= { ( planningChange ) => handleEdit( planningChange as PlanningChange ) }
+									onDelete		= { ( planningChange ) => handleDelete( planningChange as PlanningChange ) }
+								/>
+							))}
+						</div>
+					)}
+				</>
+			)}
 
 			{/* Pagination */}
 			{ !isLoading && !isError && filteredPlanningChanges.length > 0 && (
@@ -170,7 +206,7 @@ export function PlanningChangeManagement({
 					totalItems				= { filteredPlanningChanges.length }
 					itemsPerPage			= { itemsPerPage }
 					onPageChange			= { handlePageChange }
-					onItemsPerPageChange	= { handleItemsPerPageChange }
+					onItemsPerPageChange    = { handleItemsPerPageChange }
 				/>
 			)}
 
