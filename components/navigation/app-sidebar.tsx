@@ -14,7 +14,9 @@ import {
 	Ruler, 
 	UsersRound,
 	ChevronLeft,
-    Album
+    Album,
+    BookOpen,
+    CalendarCog
 } from "lucide-react";
 
 import {
@@ -74,6 +76,12 @@ const navigationItems: NavigationItem[] = [
 		url     : '/sizes',
 		icon    : Ruler,
 	},
+    {
+		id      : 'subjects',
+		title   : 'Asignaturas',
+		url     : '/subjects',
+		icon    : BookOpen,
+	},
 	{
 		id      : 'professors',
 		title   : 'Profesores',
@@ -104,6 +112,12 @@ const navigationItems: NavigationItem[] = [
 		url     : '/sections',
 		icon    : Grid2X2,
 	},
+    {
+        id : 'planning-change',
+        title : 'Cambio de Plan',
+        url : '/planning-change',
+        icon : CalendarCog,
+    }
 ];
 
 
@@ -149,7 +163,7 @@ export function AppSidebar() {
 							height      = { 32 }
 							className   = "rounded"
 						/>
-						
+
 						<div className="flex flex-col group-data-[collapsible=icon]:hidden">
 							<span className="text-sm font-semibold text-white">UAI</span>
 							<span className="text-sm text-zinc-400">Adminitrador</span>
@@ -172,7 +186,7 @@ export function AppSidebar() {
 					<SidebarGroupLabel className="text-sm text-zinc-400 group-data-[collapsible=icon]:hidden">
 						Navegación
 					</SidebarGroupLabel>
-					
+
 					<SidebarGroupContent>
 						<SidebarMenu>
 							{navigationItems.map( ( item ) => {
