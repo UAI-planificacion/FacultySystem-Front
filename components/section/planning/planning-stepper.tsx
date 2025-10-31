@@ -1,8 +1,7 @@
 'use client'
 
-import { JSX, useState, useMemo, useCallback } from "react";
-import { useRouter } from 'next/navigation';
-
+import { JSX, useState, useMemo, useCallback }  from "react";
+import { useRouter }                            from 'next/navigation';
 
 import { useMutation }  from "@tanstack/react-query";
 import { toast }        from "sonner";
@@ -21,19 +20,23 @@ import { FilterMode }       from "@/components/shared/space-filter-selector";
 import {
     SessionAvailabilityRequest,
     SessionAvailabilityResponse
-}                                       from "@/types/session-availability.model";
-import { OfferSection }				    from "@/types/offer-section.model";
-import { Session }					    from "@/types/section.model";
-import { Building, BuildingEnum, Size, SpaceType }    from "@/types/request-detail.model";
-import { fetchApi, Method }			    from "@/services/fetch";
-import { errorToast, successToast }	    from "@/config/toast/toast.config";
+}                                   from "@/types/session-availability.model";
+import {
+    BuildingEnum,
+    Size,
+    SpaceType
+}                                   from "@/types/request-detail.model";
+import { OfferSection }				from "@/types/offer-section.model";
+import { Session }					from "@/types/section.model";
+import { fetchApi, Method }			from "@/services/fetch";
+import { errorToast, successToast } from "@/config/toast/toast.config";
 
 
 interface SessionDayModule {
-	session         : Session;
-	dayModuleId     : number;
-	dayId           : number;
-	moduleId        : number;
+	session     : Session;
+	dayModuleId : number;
+	dayId       : number;
+	moduleId    : number;
 }
 
 
@@ -103,12 +106,12 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 	});
 
 	// Estado para "usar mismo espacio para todas las sesiones"
-	const [useSameSpace, setUseSameSpace] = useState( false );
-	const [globalSpaceId, setGlobalSpaceId] = useState<string[]>([]);
-	const [globalBuildingId, setGlobalBuildingId] = useState<string | null>( null );
+	const [useSameSpace, setUseSameSpace]           = useState<boolean>( false );
+	const [globalSpaceId, setGlobalSpaceId]         = useState<string[]>([]);
+	const [globalBuildingId, setGlobalBuildingId]   = useState<string | null>( null );
 
 	// Estado para "usar mismo profesor para todas las sesiones"
-	const [useSameProfessor, setUseSameProfessor] = useState( false );
+	const [useSameProfessor, setUseSameProfessor]   = useState<boolean>( false );
 	const [globalProfessorId, setGlobalProfessorId] = useState<string[]>( section?.professor?.id ? [section.professor.id] : [] );
 
 	// Estado para inglés por sesión
@@ -120,11 +123,10 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 	});
 
 	// Estado para "todas las sesiones en inglés"
-	const [allInEnglish, setAllInEnglish] = useState( false );
+	const [allInEnglish, setAllInEnglish] = useState<boolean>( false );
 
 	// Estado para la respuesta del servicio
 	const [availabilityResponse, setAvailabilityResponse] = useState<SessionAvailabilityResponse[] | null>( null );
-
 
 	// Calcular cuántas sesiones de cada tipo necesitamos basado en section
 	const sessionRequirements = useMemo(() => {
@@ -140,20 +142,19 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 		return requirements;
 	}, [ section ]);
 
-
 	// Calcular las sesiones que ya están completas
 	const completedSessions = useMemo(() => {
 		const completed: Partial<Record<Session, number>> = {};
 
-		Object.entries( sessionRequirements ).forEach(([ session, required ]) => {
-			const sessionKey = session as Session;
+		Object.entries( sessionRequirements ).forEach(([ session ]) => {
+			const sessionKey    = session as Session;
 			const selectedCount = selectedDayModules.filter( dm => dm.session === sessionKey ).length;
-			completed[sessionKey] = selectedCount;
+
+            completed[sessionKey] = selectedCount;
 		});
 
 		return completed;
 	}, [ selectedDayModules, sessionRequirements ]);
-
 
 	// Verificar si todas las sesiones están completas
 	const allSessionsComplete = useMemo(() => {
@@ -163,7 +164,6 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 			return completed === required;
 		});
 	}, [ sessionRequirements, completedSessions ]);
-
 
 	// Manejar toggle de dayModule
 	const handleToggleDayModule = useCallback(( session: Session, dayId: number, moduleId: number, dayModuleId: number ) => {
@@ -194,7 +194,6 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 		});
 	}, [ sessionRequirements ]);
 
-
 	// Manejar cambio de espacios por sesión (múltiples)
 	const handleSpaceChange = useCallback(( session: Session, value: string | string[] | undefined ) => {
 		const spaceIds = Array.isArray( value ) ? value : ( value ? [value] : [] );
@@ -203,7 +202,6 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 			[session]: spaceIds
 		}));
 	}, []);
-
 
 	// Manejar cambio de profesores por sesión (múltiples)
 	const handleProfessorChange = useCallback(( session: Session, value: string | string[] | undefined ) => {
@@ -214,24 +212,22 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 		}));
 	}, []);
 
-
 	// Manejar cambio de espacio global (múltiples)
-	const handleGlobalSpaceChange = useCallback(( value: string | string[] | undefined ) => {
-		const spaceIds = Array.isArray( value ) ? value : ( value ? [value] : [] );
-		setGlobalSpaceId( spaceIds );
+	// const handleGlobalSpaceChange = useCallback(( value: string | string[] | undefined ) => {
+	// 	const spaceIds = Array.isArray( value ) ? value : ( value ? [value] : [] );
+	// 	setGlobalSpaceId( spaceIds );
 
-		if ( useSameSpace ) {
-			// Actualizar todos los espacios de sesión
-			setSessionSpaces( prev => {
-				const updated = { ...prev };
-				Object.keys( sessionRequirements ).forEach( session => {
-					updated[session as Session] = spaceIds;
-				});
-				return updated;
-			});
-		}
-	}, [ useSameSpace, sessionRequirements ]);
-
+	// 	if ( useSameSpace ) {
+	// 		// Actualizar todos los espacios de sesión
+	// 		setSessionSpaces( prev => {
+	// 			const updated = { ...prev };
+	// 			Object.keys( sessionRequirements ).forEach( session => {
+	// 				updated[session as Session] = spaceIds;
+	// 			});
+	// 			return updated;
+	// 		});
+	// 	}
+	// }, [ useSameSpace, sessionRequirements ]);
 
 	// Manejar cambio de edificio global
 	const handleGlobalBuildingChange = useCallback(( buildingId: string | null ) => {
@@ -274,7 +270,6 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
         setGlobalSpaceId([]);
 	}, [ sessionRequirements ]);
 
-
 	// Manejar cambio de profesor global (múltiples)
 	const handleGlobalProfessorChange = useCallback(( value: string | string[] | undefined ) => {
 		const professorIds = Array.isArray( value ) ? value : ( value ? [value] : [] );
@@ -292,7 +287,6 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 		}
 	}, [ useSameProfessor, sessionRequirements ]);
 
-
 	// Manejar toggle de "usar mismo espacio"
 	const handleUseSameSpaceToggle = useCallback(( checked: boolean ) => {
 		setUseSameSpace( checked );
@@ -301,14 +295,15 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 			// Aplicar los espacios globales a todas las sesiones
 			setSessionSpaces( prev => {
 				const updated = { ...prev };
-				Object.keys( sessionRequirements ).forEach( session => {
+
+                Object.keys( sessionRequirements ).forEach( session => {
 					updated[session as Session] = globalSpaceId;
 				});
-				return updated;
+
+                return updated;
 			});
 		}
 	}, [ globalSpaceId, sessionRequirements ]);
-
 
 	// Manejar toggle de "usar mismo profesor"
 	const handleUseSameProfessorToggle = useCallback(( checked: boolean ) => {
@@ -318,14 +313,15 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 			// Aplicar los profesores globales a todas las sesiones
 			setSessionProfessors( prev => {
 				const updated = { ...prev };
-				Object.keys( sessionRequirements ).forEach( session => {
+
+                Object.keys( sessionRequirements ).forEach( session => {
 					updated[session as Session] = globalProfessorId;
 				});
-				return updated;
+
+                return updated;
 			});
 		}
 	}, [ globalProfessorId, sessionRequirements ]);
-
 
 	// Manejar cambio de edificio por sesión
 	const handleBuildingChange = useCallback(( session: Session, buildingId: string | null ) => {
@@ -351,7 +347,6 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 		}));
 	}, []);
 
-
 	// Manejar cambio de tipo de espacio por sesión
 	const handleSpaceTypeChange = useCallback(( session: Session, spaceType: string | null ) => {
 		setSessionSpaceTypes( prev => ({
@@ -359,7 +354,6 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 			[session]: spaceType
 		}));
 	}, []);
-
 
 	// Manejar cambio de tamaño de espacio por sesión
 	const handleSpaceSizeChange = useCallback(( session: Session, spaceSizeId: string | null ) => {
@@ -369,7 +363,6 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 		}));
 	}, []);
 
-
 	// Manejar cambio de modo de filtro por sesión
 	const handleFilterModeChange = useCallback(( session: Session, filterMode: FilterMode ) => {
 		setSessionFilterModes( prev => ({
@@ -377,7 +370,6 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 			[session]: filterMode
 		}));
 	}, []);
-
 
 	// Manejar cambio de inglés por sesión
 	const handleInEnglishChange = useCallback(( session: Session, checked: boolean ) => {
@@ -387,7 +379,6 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 		}));
 	}, []);
 
-
 	// Manejar toggle de "todas las sesiones en inglés"
 	const handleAllInEnglishToggle = useCallback(( checked: boolean ) => {
 		setAllInEnglish( checked );
@@ -395,13 +386,14 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 		// Aplicar a todas las sesiones
 		setSessionInEnglish( prev => {
 			const updated = { ...prev };
-			Object.keys( sessionRequirements ).forEach( session => {
+
+            Object.keys( sessionRequirements ).forEach( session => {
 				updated[session as Session] = checked;
 			});
-			return updated;
+
+            return updated;
 		});
 	}, [ sessionRequirements ]);
-
 
 	// API para calcular disponibilidad de sesiones
 	const calculateAvailabilityApi = async ( payload: SessionAvailabilityRequest[] ): Promise<SessionAvailabilityResponse[]> =>
@@ -410,7 +402,6 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
             method  : Method.POST,
             body    : payload
         })
-
 
 	// Mutation para calcular disponibilidad
 	const calculateAvailabilityMutation = useMutation({
@@ -426,7 +417,6 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 			toast( `Error al calcular disponibilidad: ${error.message}`, errorToast );
 		}
 	});
-
 
 	// Generar payload para el servicio
 	const generatePayload = useCallback((): SessionAvailabilityRequest[] => {
@@ -473,7 +463,6 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 		sessionRequirements
 	]);
 
-
 	// Manejar cálculo de disponibilidad
 	const handleCalculateAvailability = useCallback(() => {
 		const payload = generatePayload();
@@ -485,7 +474,6 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 		// Cuando esté listo, descomentar:
 		calculateAvailabilityMutation.mutate( payload );
 	}, [ generatePayload ]);
-
 
 	// Navegación entre pasos
 	const goToStep = useCallback(( step: number ) => {
@@ -506,7 +494,7 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 			<CardContent>
 				{currentStep === 1 && (
 					<FirstPlanning
-						section                 = { section }
+						// section                 = { section }
 						selectedDayModules      = { selectedDayModules }
 						currentSession          = { currentSession }
 						sessionRequirements     = { sessionRequirements }
@@ -530,14 +518,12 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 						sessionFilterModes          = { sessionFilterModes }
 						sessionInEnglish            = { sessionInEnglish }
 						useSameSpace                = { useSameSpace }
-						globalSpaceId               = { globalSpaceId }
 						globalBuildingId            = { globalBuildingId }
 						useSameProfessor            = { useSameProfessor }
 						globalProfessorId           = { globalProfessorId }
 						allInEnglish                = { allInEnglish }
 						onSpaceChange               = { handleSpaceChange }
 						onProfessorChange           = { handleProfessorChange }
-						onGlobalSpaceChange         = { handleGlobalSpaceChange }
 						onGlobalBuildingChange      = { handleGlobalBuildingChange }
 						onGlobalProfessorChange     = { handleGlobalProfessorChange }
 						onUseSameSpaceToggle        = { handleUseSameSpaceToggle }
@@ -561,12 +547,16 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 						sessionInEnglish	= { sessionInEnglish }
 						selectedDayModules	= { selectedDayModules }
 						onBack				= {() => goToStep( 2 )}
-						onSuccess			= {() => {
+						onSuccess			= {( sections: OfferSection[] ) => {
 							// Resetear el stepper al paso 1 después de reservar exitosamente
 							setCurrentStep( 1 );
 							setSelectedDayModules([]);
 							setAvailabilityResponse( null );
-                            router.push(`/sections`);
+
+							// Extraer groupIds únicos y redirigir con filtro
+							const uniqueIds = Array.from( new Set( sections.map( s => s.groupId )));
+							const groupIds = uniqueIds.join( ',' );
+							router.push(`/sections?groupId=${groupIds}`);
 						}}
 					/>
 				)}

@@ -107,8 +107,7 @@ export function OfferSubjectForm({
 			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.SECTIONS ]});
 			onClose();
 			form.reset();
-            // TODO: mejorar el filtro
-			router.push(`/sections?subject=${createdOffers[0].subjectId}`);
+			router.push(`/sections?groupId=${createdOffers[0].groupId}`);
 
 			toast( `${createdOffers.length} ofertas creadas exitosamente`, successToast );
 		},

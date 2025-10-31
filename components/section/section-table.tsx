@@ -9,6 +9,7 @@ import {
     CalendarClock,
     ChevronDown,
     ChevronRight,
+    MoreVertical,
     Plus
 }                   from "lucide-react"
 import {
@@ -27,11 +28,16 @@ import {
 }                               from "@/components/ui/table"
 import { Button }               from "@/components/ui/button"
 import { Checkbox }             from "@/components/ui/checkbox"
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger
+}                               from "@/components/ui/dropdown-menu"
 import { ActiveBadge }          from "@/components/shared/active"
 import { ActionButton }         from "@/components/shared/action"
 import { ChangeStatusSection }  from "@/components/section/change-status"
 import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog"
-import { CreateSessionForm }    from "@/components/section/create-session-form"
 import { SessionShort }         from "@/components/session/session-short"
 import { SessionForm }          from "@/components/session/session-form"
 import { SessionTable }         from "@/components/session/session-table"
@@ -65,7 +71,6 @@ export function SectionTable({
     const router        = useRouter();
 
 	const [ expandedSections, setExpandedSections ]         = useState<Set<string>>( new Set() );
-	// const [ isCreateSessionOpen, setIsCreateSessionOpen ]   = useState<boolean>( false );
 	const [ isOpenDelete, setIsOpenDelete ]                 = useState( false );
 	const [ isOpenSessionForm, setIsOpenSessionForm ]       = useState<boolean>( false );
 	const [ isOpenSectionForm, setIsOpenSectionForm ]       = useState<boolean>( false );
@@ -316,58 +321,7 @@ export function SectionTable({
 
 									<TableCell className="text-right">
 										<div className="flex items-center justify-end gap-1.5">
-											{/* Botón para crear planning-change */}
-                                            <Button
-												title		= "Ver Planificaciones"
-												size		= "icon"
-												variant		= "outline"
-												disabled	= { section.isClosed || section.sessionsCount === 0 }
-												className	= "bg-amber-500 hover:bg-amber-600 text-white"
-												onClick     = { () => router.push(`planning-change?sectionId=${section.id}`)}
-											>
-												<CalendarClock className="w-4 h-4" />
-											</Button>
-
-											<Button
-												title		= "Crear Cambio de Planificación"
-												size		= "icon"
-												variant		= "outline"
-												disabled	= { section.isClosed || section.sessionsCount === 0 }
-												className	= "bg-blue-500 hover:bg-blue-600 text-white"
-												onClick		= { () => {
-                                                    setIsOpenPlanningChange( true );
-                                                    setSelectedSection( section );
-                                                }}
-											>
-												<CalendarClock className="w-4 h-4" />
-											</Button>
-
-											{ section.sessionsCount === 0
-												? <Button
-													title       = "Planificar sesiones"
-													size        = "icon"
-													variant     = "outline"
-													disabled    = { section.isClosed }
-                                                    className   = "bg-green-500 hover:bg-green-600"
-													onClick     = { () => router.push(`sections/${section.id}`)}
-												>
-													<Album className="w-4 h-4" />
-												</Button>
-                                                // *Crear una nueva sesión
-                                                : <Button
-													title       = "Asignar Sesión"
-													size        = "icon"
-													variant     = "outline"
-													disabled    = { section.isClosed }
-													onClick     = { () => {
-                                                        setIsOpenSessionForm( true );
-                                                        setSelectedSection( section );
-													}}
-												>
-													<Plus className="w-4 h-4" />
-												</Button>
-											}
-
+                                            {/* ActionButton (Editar/Eliminar) */}
 											<ActionButton
 												editItem        = {() => handleEditSection( section )}
 												deleteItem      = {() => handleDeleteSection( section )}
@@ -375,7 +329,70 @@ export function SectionTable({
 												isDisabledEdit  = { section.isClosed }
 											/>
 
+											{/* ChangeStatusSection */}
 											<ChangeStatusSection section={ section } />
+
+											{/* Dropdown Menu con acciones */}
+											<DropdownMenu>
+												<DropdownMenuTrigger asChild>
+													<Button
+														variant = "outline"
+														size    = "icon"
+														title   = "Acciones"
+													>
+														<MoreVertical className="h-4 w-4" />
+													</Button>
+												</DropdownMenuTrigger>
+
+												<DropdownMenuContent align="end">
+													{/* Ver Planificaciones */}
+													<DropdownMenuItem
+														disabled    = { section.isClosed || section.sessionsCount === 0 }
+														onClick     = { () => router.push( `planning-change?sectionId=${ section.id }` )}
+														className   = "cursor-pointer"
+													>
+														<CalendarClock className="w-4 h-4 mr-2 text-amber-500" />
+														Ver Planificaciones
+													</DropdownMenuItem>
+
+													{/* Crear Cambio de Planificación */}
+													<DropdownMenuItem
+														disabled    = { section.isClosed || section.sessionsCount === 0 }
+														onClick     = { () => {
+															setIsOpenPlanningChange( true );
+															setSelectedSection( section );
+														}}
+														className   = "cursor-pointer"
+													>
+														<CalendarClock className="w-4 h-4 mr-2 text-blue-500" />
+														Crear Cambio de Planificación
+													</DropdownMenuItem>
+
+													{/* Planificar sesiones o Asignar Sesión */}
+													{ section.sessionsCount === 0 ? (
+														<DropdownMenuItem
+															disabled    = { section.isClosed }
+															onClick     = { () => router.push(`sections/${section.id}`)}
+															className   = "cursor-pointer"
+														>
+															<Album className="w-4 h-4 mr-2 text-green-500" />
+															Planificar sesiones
+														</DropdownMenuItem>
+													) : (
+														<DropdownMenuItem
+															disabled    = { section.isClosed }
+															onClick     = { () => {
+																setIsOpenSessionForm( true );
+																setSelectedSection( section );
+															}}
+															className   = "cursor-pointer"
+														>
+															<Plus className="w-4 h-4 mr-2" />
+															Asignar Nueva Sesión
+														</DropdownMenuItem>
+													)}
+												</DropdownMenuContent>
+											</DropdownMenu>
 										</div>
 									</TableCell>
 								</TableRow>
@@ -410,12 +427,6 @@ export function SectionTable({
                 section = { selectedSection }
                 onSave  = { () => {} }
             />
-
-			{/* <CreateSessionForm
-				section = { null }
-				isOpen  = { isCreateSessionOpen }
-				onClose = { () => setIsCreateSessionOpen( false )}
-			/> */}
 
 			{/* Delete Confirmation Dialog */}
 			<DeleteConfirmDialog

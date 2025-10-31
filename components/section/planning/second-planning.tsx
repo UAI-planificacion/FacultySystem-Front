@@ -2,22 +2,22 @@
 
 import { JSX } from "react";
 
+import { Cuboid, Languages, Settings, User } from "lucide-react";
+
 import {
-	Card,
-	CardContent
-}										from "@/components/ui/card";
-import { Label }						from "@/components/ui/label";
-import { Switch }						from "@/components/ui/switch";
-import { Button }						from "@/components/ui/button";
-import { HeadquartersSelect }			from "@/components/shared/item-select/headquarters-select";
-import { SpaceFilterSelector, FilterMode } from "@/components/shared/space-filter-selector";
-import { ProfessorSelect }				from "@/components/shared/item-select/professor-select";
-import { sessionLabels }				from "@/components/section/section.config";
+    SpaceFilterSelector,
+    FilterMode
+}                               from "@/components/shared/space-filter-selector";
+import { Card }					from "@/components/ui/card";
+import { Label }				from "@/components/ui/label";
+import { Switch }				from "@/components/ui/switch";
+import { Button }				from "@/components/ui/button";
+import { HeadquartersSelect }	from "@/components/shared/item-select/headquarters-select";
+import { ProfessorSelect }		from "@/components/shared/item-select/professor-select";
+import { SessionType }          from "@/components/session/session-type";
 
 import { OfferSection }	from "@/types/offer-section.model";
 import { Session }		from "@/types/section.model";
-import { Cuboid, Globe, Languages, Settings, User } from "lucide-react";
-import { SessionType } from "@/components/session/session-type";
 
 
 function getResponsive( section : OfferSection | null ): string {
@@ -50,14 +50,14 @@ interface Props {
 	sessionFilterModes			: Record<Session, FilterMode>;
 	sessionInEnglish			: Record<Session, boolean>;
 	useSameSpace				: boolean;
-	globalSpaceId				: string[];
+	// globalSpaceId				: string[];
 	globalBuildingId			: string | null;
 	useSameProfessor			: boolean;
 	globalProfessorId			: string[];
 	allInEnglish				: boolean;
 	onSpaceChange				: ( session: Session, value: string | string[] | undefined ) => void;
 	onProfessorChange			: ( session: Session, value: string | string[] | undefined ) => void;
-	onGlobalSpaceChange			: ( value: string | string[] | undefined ) => void;
+	// onGlobalSpaceChange			: ( value: string | string[] | undefined ) => void;
 	onGlobalBuildingChange		: ( buildingId: string | null ) => void;
 	onGlobalProfessorChange		: ( value: string | string[] | undefined ) => void;
 	onUseSameSpaceToggle		: ( checked: boolean ) => void;
@@ -85,14 +85,14 @@ export function SecondPlanning({
 	sessionFilterModes,
 	sessionInEnglish,
 	useSameSpace,
-	globalSpaceId,
+	// globalSpaceId,
 	globalBuildingId,
 	useSameProfessor,
 	globalProfessorId,
 	allInEnglish,
 	onSpaceChange,
 	onProfessorChange,
-	onGlobalSpaceChange,
+	// onGlobalSpaceChange,
 	onGlobalBuildingChange,
 	onGlobalProfessorChange,
 	onUseSameSpaceToggle,
@@ -279,9 +279,7 @@ export function SecondPlanning({
                                         <span className="text-sm font-medium">Profesores</span>
                                     </label>
 
-
 									<ProfessorSelect
-										// label				= {`Profesores para ${ sessionLabels[sessionKey] }`}
 										multiple			= { true }
 										placeholder			= "Seleccionar profesores"
 										defaultValues		= { sessionProfessors[sessionKey] }

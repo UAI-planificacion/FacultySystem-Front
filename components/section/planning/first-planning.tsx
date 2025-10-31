@@ -2,38 +2,37 @@
 
 import { JSX } from "react";
 
-import { Button }                   from "@/components/ui/button";
-import { SessionDayModuleSelector } from "@/components/session/session-day-module-selector";
-import { SessionName }              from "@/components/session/session-name";
+import { Button }                       from "@/components/ui/button";
+import { SessionDayModuleSelector }     from "@/components/session/session-day-module-selector";
 import { sessionLabels, sessionColors } from "@/components/section/section.config";
 
-import { OfferSection } from "@/types/offer-section.model";
+// import { OfferSection } from "@/types/offer-section.model";
 import { Session }      from "@/types/section.model";
 
 
 interface SessionDayModule {
-	session         : Session;
-	dayModuleId     : number;
-	dayId           : number;
-	moduleId        : number;
+	session     : Session;
+	dayModuleId : number;
+	dayId       : number;
+	moduleId    : number;
 }
 
 
 interface Props {
-	section                 : OfferSection;
-	selectedDayModules      : SessionDayModule[];
-	currentSession          : Session | null;
-	sessionRequirements     : Partial<Record<Session, number>>;
-	completedSessions       : Partial<Record<Session, number>>;
-	allSessionsComplete     : boolean;
-	onToggleDayModule       : ( session: Session, dayId: number, moduleId: number, dayModuleId: number ) => void;
-	onSessionChange         : ( session: Session | null ) => void;
-	onNext                  : () => void;
+	// section             : OfferSection;
+	selectedDayModules  : SessionDayModule[];
+	currentSession      : Session | null;
+	sessionRequirements : Partial<Record<Session, number>>;
+	completedSessions   : Partial<Record<Session, number>>;
+	allSessionsComplete : boolean;
+	onToggleDayModule   : ( session: Session, dayId: number, moduleId: number, dayModuleId: number ) => void;
+	onSessionChange     : ( session: Session | null ) => void;
+	onNext              : () => void;
 }
 
 
 export function FirstPlanning({
-	section,
+	// section,
 	selectedDayModules,
 	currentSession,
 	sessionRequirements,

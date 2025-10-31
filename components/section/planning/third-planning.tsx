@@ -13,7 +13,10 @@ import {
 	CardHeader,
 	CardTitle
 }					                from "@/components/ui/card";
-import { MultiSelectCombobox, Option } from "@/components/shared/Combobox";
+import {
+    MultiSelectCombobox,
+    Option
+}                                   from "@/components/shared/Combobox";
 import {
 	Table,
 	TableBody,
@@ -36,11 +39,28 @@ import { Label }                    from "@/components/ui/label";
 import { Badge }                    from "@/components/ui/badge";
 import { Switch }                   from "@/components/ui/switch";
 
+import {
+    getBuildingName,
+    getSpaceType,
+    SPACE_TYPES_WITH_SIZE_FILTER,
+    tempoFormat
+}                                       from "@/lib/utils";
 import { SessionAvailabilityResponse }	from "@/types/session-availability.model";
 import { SessionMassiveCreate }			from "@/types/session-massive-create.model";
 import { Session }						from "@/types/section.model";
 import { fetchApi, Method }				from "@/services/fetch";
-import { getBuildingName, getSpaceType, SPACE_TYPES_WITH_SIZE_FILTER, tempoFormat }					from "@/lib/utils";
+import { errorToast, successToast } from "@/config/toast/toast.config";
+import { OfferSection } from "@/types/offer-section.model";
+
+
+/**
+ * Extract unique groupIds from sections array
+ */
+const getUniqueGroupIds = ( sections: OfferSection[] ): string => {
+	const uniqueIds = Array.from( new Set( sections.map( section => section.groupId )));
+	return uniqueIds.join( ',' );
+};
+
 
 
 interface SessionDayModule {
@@ -57,13 +77,13 @@ interface Props {
 	sessionInEnglish	: Record<string, boolean>;
 	selectedDayModules	: SessionDayModule[];
 	onBack				: () => void;
-	onSuccess			: () => void;
+	onSuccess			: ( sections: OfferSection[] ) => void;
 }
 
 
 interface SessionSelection {
-	spaceId			: string | null;
-	professorId		: string | null;
+	spaceId		: string | null;
+	professorId : string | null;
 }
 
 
@@ -76,21 +96,25 @@ export function ThirdPlanning({
     onSuccess
 }: Props ): JSX.Element {
 	// Estado para las selecciones de cada sesión
-	const [ selections, setSelections ] = useState<Record<string, SessionSelection>>({});
-
-	// Estado para el tab activo
-	const [ activeTab, setActiveTab ] = useState<string>( "spaces" );
-
-	// Estados para espacios y profesores globales
-	const [ useSameSpace, setUseSameSpace ] = useState<boolean>( false );
-	const [ useSameProfessor, setUseSameProfessor ] = useState<boolean>( false );
-	const [ globalSpaceId, setGlobalSpaceId ] = useState<string | undefined>( undefined );
-	const [ globalProfessorId, setGlobalProfessorId ] = useState<string | undefined>( undefined );
+	const [ selections, setSelections ]                 = useState<Record<string, SessionSelection>>({});
+	const [ activeTab, setActiveTab ]                   = useState<string>( "spaces" );
+	const [ useSameSpace, setUseSameSpace ]             = useState<boolean>( false );
+	const [ useSameProfessor, setUseSameProfessor ]     = useState<boolean>( false );
+	const [ globalSpaceId, setGlobalSpaceId ]           = useState<string | undefined>( undefined );
+	const [ globalProfessorId, setGlobalProfessorId ]   = useState<string | undefined>( undefined );
 
 	// Verificar si hay sesiones no disponibles
 	const hasUnavailableSessions = useMemo(() => {
 		return response?.some(( item ) => !item.isReadyToCreate ) ?? false;
 	}, [ response ]);
+
+	// Verificar si hay sesiones sin fechas programadas
+	const sessionsWithoutDates = useMemo(() => {
+		if ( !response ) return [];
+		return response.filter(( item ) => item.scheduledDates.length === 0 );
+	}, [ response ]);
+
+	const hasSessionsWithoutDates = sessionsWithoutDates.length > 0;
 
 	// Verificar si todas las sesiones tienen espacio asignado
 	const allSessionsHaveSpace = useMemo(() => {
@@ -103,23 +127,23 @@ export function ThirdPlanning({
 	}, [ response, selections ]);
 
 	// Verificar si se puede reservar
-	const canReserve = !hasUnavailableSessions && allSessionsHaveSpace;
+	const canReserve = !hasUnavailableSessions && !hasSessionsWithoutDates && allSessionsHaveSpace;
 
 	// Mutación para reservar sesiones
-	const reserveMutation = useMutation({
-		mutationFn: async ( payload: SessionMassiveCreate[] ) => {
-			return fetchApi({
+	const reserveMutation = useMutation<OfferSection[], Error, SessionMassiveCreate[]>({
+		mutationFn: async ( payload: SessionMassiveCreate[] ): Promise<OfferSection[]> => {
+			return fetchApi<OfferSection[]>({
 				url		: `sessions/massive/${sectionId}`,
 				method	: Method.POST,
 				body	: payload
 			});
 		},
-		onSuccess: () => {
-			toast.success( "Sesiones reservadas exitosamente" );
-			onSuccess();
+		onSuccess: ( sections: OfferSection[] ) => {
+			toast( "Sesiones reservadas exitosamente", successToast );
+			onSuccess( sections );
 		},
 		onError: ( error: Error ) => {
-			toast.error( `Error al reservar sesiones: ${error.message}` );
+			toast( `Error al reservar sesiones: intenta con otra combinación de espacios, profesores y/o módulos`, errorToast );
 		}
 	});
 
@@ -379,6 +403,27 @@ export function ThirdPlanning({
 					<AlertDescription>
 						Algunas sesiones no están disponibles para ser reservadas. 
 						Debe volver a los pasos anteriores para ajustar la configuración.
+					</AlertDescription>
+				</Alert>
+			)}
+
+			{/* Alerta si hay sesiones sin fechas programadas */}
+			{ hasSessionsWithoutDates && (
+				<Alert variant="destructive">
+					<AlertCircle className="h-4 w-4" />
+
+					<AlertDescription>
+						{ sessionsWithoutDates.length === 1 ? (
+							<>
+								La sesión <strong>{ sessionsWithoutDates[0].session }</strong> no tiene fechas disponibles según los parámetros ingresados. 
+								Debe volver a los pasos anteriores para seleccionar otros módulos o ajustar la configuración.
+							</>
+						) : (
+							<>
+								Las sesiones <strong>{ sessionsWithoutDates.map( s => s.session ).join( ', ' ) }</strong> no tienen fechas disponibles según los parámetros ingresados. 
+								Debe volver a los pasos anteriores para seleccionar otros módulos o ajustar la configuración.
+							</>
+						)}
 					</AlertDescription>
 				</Alert>
 			)}
