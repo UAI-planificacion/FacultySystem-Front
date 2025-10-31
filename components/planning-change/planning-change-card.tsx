@@ -22,15 +22,18 @@ import { Badge } from "@/components/ui/badge";
 import { ShowStatus } from "@/components/shared/status";
 import { ActionButton } from "@/components/shared/action";
 
-import { type PlanningChangeAll } from "@/types/planning-change.model";
+import type {
+	PlanningChange,
+	PlanningChangeAll
+} from "@/types/planning-change.model";
 import { sessionLabels } from "@/components/section/section.config";
 import { tempoFormat } from "@/lib/utils";
 
 
 export interface Props {
-	planningChange	: PlanningChangeAll;
-	onEdit			: ( planningChange: PlanningChangeAll ) => void;
-	onDelete		: ( planningChange: PlanningChangeAll ) => void;
+	planningChange	: PlanningChangeAll | PlanningChange;
+	onEdit			: ( planningChange: PlanningChangeAll | PlanningChange ) => void;
+	onDelete		: ( planningChange: PlanningChangeAll | PlanningChange ) => void;
 }
 
 
@@ -57,7 +60,7 @@ export function PlanningChangeCard({
 			<CardContent className="space-y-3">
 				<div className="space-y-2 text-sm">
 					{/* Sección */}
-					{ planningChange.section && (
+					{ 'section' in planningChange && planningChange.section && (
 						<div className="flex items-center gap-1.5">
 							<BookOpen className="h-4 w-4" />
 
@@ -79,13 +82,15 @@ export function PlanningChangeCard({
 					)}
 
 					{/* Creado por */}
-					<div className="flex items-center gap-1.5">
-						<User className="h-4 w-4" />
+					{ 'staffCreate' in planningChange && planningChange.staffCreate && (
+						<div className="flex items-center gap-1.5">
+							<User className="h-4 w-4" />
 
-						<span className="max-w-full truncate overflow-hidden whitespace-nowrap">
-							{ planningChange.staffCreate.name }
-						</span>
-					</div>
+							<span className="max-w-full truncate overflow-hidden whitespace-nowrap">
+								{ planningChange.staffCreate.name }
+							</span>
+						</div>
+					)}
 
 					{/* Fecha de creación */}
 					<div className="flex items-center gap-1.5">
