@@ -9,12 +9,12 @@ import { SectionSelect }	from "@/components/shared/item-select/section-select";
 import { SearchInput }		from "@/components/shared/Search-input";
 import { ViewMode }			from "@/components/shared/view-mode";
 
-import { KEY_QUERYS }		from "@/consts/key-queries";
-import { type Status }		from "@/types/request";
 import { type ViewMode as ViewModeType }	from "@/hooks/use-view-mode";
+import { KEY_QUERYS }	                    from "@/consts/key-queries";
+import { type Status }	                    from "@/types/request";
 
 
-interface PlanningChangeFilterProps {
+interface Props {
 	title				: string;
 	setTitle			: ( value: string ) => void;
 	statusFilter		: Status[];
@@ -37,7 +37,7 @@ export function PlanningChangeFilter({
 	viewMode,
 	onViewChange,
 	// onNewPlanningChange
-}: PlanningChangeFilterProps ): JSX.Element {
+}: Props ): JSX.Element {
 	return (
 		<Card>
 			<CardHeader className="p-6">
@@ -63,6 +63,7 @@ export function PlanningChangeFilter({
 						{/* Filtro por estado */}
 						<div className="grid space-y-2">
 							<Label>Estado</Label>
+
 							<ChangeStatus
 								multiple		= { true }
 								value			= { statusFilter }
