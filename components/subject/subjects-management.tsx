@@ -1,13 +1,13 @@
 "use client"
 
-import { useMemo, useState } from "react";
+import { JSX, useMemo, useState } from "react";
 
 import {
     useMutation,
     useQuery,
     useQueryClient
-}                       from "@tanstack/react-query";
-import { toast }        from "sonner";
+}                   from "@tanstack/react-query";
+import { toast }    from "sonner";
 
 import { SubjectForm }          from "@/components/subject/subject-form";
 import { SubjectFilter }        from "@/components/subject/subject-filter";
@@ -24,13 +24,16 @@ import { usePagination }            from "@/hooks/use-pagination";
 import { updateFacultyTotal }       from "@/app/faculties/page";
 
 
-interface SubjectsManagementProps {
+interface Props {
     facultyId   : string;
     enabled     : boolean;
 }
 
 
-export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementProps) {
+export function SubjectsManagement({
+    facultyId,
+    enabled
+}: Props ): JSX.Element {
     const queryClient                                   = useQueryClient();
     const [isFormOpen, setIsFormOpen]                   = useState( false );
     const [isOfferSubjectOpen, setIsOfferSubjectOpen]   = useState( false );
@@ -74,7 +77,6 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
         });
     }, [subjects, searchQuery, selectedSpaceTypes, selectedSizes]);
 
-
     /**
      * Hook de paginación
      */
@@ -91,7 +93,6 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
         data: filteredSubjects,
         initialItemsPerPage: 10
     });
-
 
     /**
      * Manejadores de filtros
@@ -157,12 +158,6 @@ export function SubjectsManagement({ facultyId, enabled }: SubjectsManagementPro
         setOfferingSubject( undefined );
         setIsOfferSubjectOpen( false );
     }
-
-
-    // function handleOfferSubjectSubmit( formData: any ): void {
-    //     closeOfferSubjectForm();
-    //     toast('Oferta de asignatura creada exitosamente', successToast);
-    // }
 
 
     function onOpenDeleteSubject( subject: Subject ): void {
