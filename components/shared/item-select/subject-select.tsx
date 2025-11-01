@@ -31,7 +31,7 @@ export function SubjectSelect({
     } = useQuery<Subject[]>({
         queryKey,
         queryFn : () => fetchApi({
-            url: url ? `subjects/all/${url}` : 'subjects'
+            url: url ? `${KEY_QUERYS.SUBJECTS}/all/${url}` : KEY_QUERYS.SUBJECTS
         }),
         enabled
     });
