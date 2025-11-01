@@ -13,7 +13,6 @@ interface PageLayoutProps {
 	showBack?   : boolean;
 }
 
-
 /**
  * Standard page layout component for consistent formatting across all pages
  */
