@@ -38,7 +38,8 @@ export interface CreateSubject extends BaseSubject {
 
 
 export interface UpdateSubject extends Partial<BaseSubject> {
-    gradeId?         : string | null;
+    gradeId?    : string | null;
+    isActive?   : boolean;
 }
 
 
