@@ -3,7 +3,8 @@
 import {
 	JSX,
 	useEffect,
-	useState
+	useState,
+	useMemo
 }						from "react";
 import { useRouter }	from 'next/navigation';
 
@@ -52,6 +53,7 @@ import { SubjectUpload }    from "@/components/subject/subject-upload";
 import { SizeSelect }       from "@/components/shared/item-select/size-select";
 import { SpaceTypeSelect }  from "@/components/shared/item-select/space-type-select";
 import { GradeSelect }      from "@/components/shared/item-select/grade-select";
+import { FacultySelect }    from "@/components/shared/item-select/faculty-select";
 import { GradeForm }        from "@/components/grade/grade-form";
 import { SessionButton }    from "@/components/session/session-button";
 
@@ -59,60 +61,80 @@ import {
 	Subject,
 	CreateSubject,
 	UpdateSubject
-}									from "@/types/subject.model";
-import { Session }					from "@/types/section.model";
-import { KEY_QUERYS }				from "@/consts/key-queries";
-import { Method, fetchApi }			from "@/services/fetch";
-import { errorToast, successToast } from "@/config/toast/toast.config";
-import { updateFacultyTotal }		from "@/app/faculties/page";
-import { Size, SpaceType }          from "@/types/request-detail.model";
+}								        from "@/types/subject.model";
+import { Session }				        from "@/types/section.model";
+import { KEY_QUERYS }			        from "@/consts/key-queries";
+import { Method, fetchApi }		        from "@/services/fetch";
+import { errorToast, successToast }     from "@/config/toast/toast.config";
+import { updateFacultyTotal }	        from "@/app/faculties/page";
+import { Size, SpaceType }              from "@/types/request-detail.model";
 import { SPACE_TYPES_WITH_SIZE_FILTER } from "@/lib/utils";
 
 
-export type SubjectFormValues = z.infer<typeof formSchema>;
+const createFormSchema = ( isEditing: boolean ) => {
+	const baseSchema = z.object({
+		id: z.string().min(2, {
+			message: "El código de la asignatura debe tener al menos 2 caracteres.",
+		}).max(15, {
+			message: "El código de la asignatura debe tener como máximo 15 caracteres."
+		}),
+		name: z.string().min(2, {
+			message: "El nombre de la asignatura debe tener al menos 2 caracteres.",
+		}).max(200, {
+			message: "El nombre de la asignatura debe tener como máximo 200 caracteres."
+		}),
+		facultyId       : isEditing 
+			? z.string().optional()
+			: z.string().min( 1, { message: "Debe seleccionar una facultad" }),
+		spaceType       : z.nativeEnum( SpaceType ).optional().nullable(),
+		spaceSizeId     : z.nativeEnum( Size ).nullable().optional(),
+		gradeId         : z.string().nullable().optional(),
+		workshop        : z.number().min( 0, "El taller debe ser mayor o igual a 0" ),
+		lecture         : z.number().min( 0, "La conferencia debe ser mayor o igual a 0" ),
+		tutoringSession : z.number().min( 0, "La sesión tutorial debe ser mayor o igual a 0" ),
+		laboratory      : z.number().min( 0, "El laboratorio debe ser mayor o igual a 0" ),
+		isActive        : z.boolean(),
+	});
+
+	return baseSchema.refine(( data ) => {
+		const { workshop, lecture, tutoringSession, laboratory } = data;
+
+		return workshop > 0 || lecture > 0 || tutoringSession > 0 || laboratory > 0;
+	}, {
+		message : "Al menos una sesión debe ser mayor que 0",
+		path    : [ "workshop" ],
+	});
+};
 
 
-interface SubjectFormProps {
+export type SubjectFormValues = {
+	id              : string;
+	name            : string;
+	facultyId?      : string;
+	spaceType?      : SpaceType | null;
+	spaceSizeId?    : Size | null;
+	gradeId?        : string | null;
+	workshop        : number;
+	lecture         : number;
+	tutoringSession : number;
+	laboratory      : number;
+	isActive        : boolean;
+};
+
+
+interface Props {
 	subject?	: Subject;
-	facultyId	: string;
+	facultyId	: string | null;
 	isOpen		: boolean;
 	onClose		: () => void;
 }
 
 
-const formSchema = z.object({
-    id: z.string().min(2, {
-        message: "El código de la asignatura debe tener al menos 2 caracteres.",
-    }).max(30, {
-        message: "El código de la asignatura debe tener como máximo 30 caracteres."
-    }),
-    name: z.string().min(2, {
-        message: "El nombre de la asignatura debe tener al menos 2 caracteres.",
-    }).max(200, {
-        message: "El nombre de la asignatura debe tener como máximo 200 caracteres."
-    }),
-    spaceType       : z.nativeEnum( SpaceType ).optional().nullable(),
-    spaceSizeId     : z.nativeEnum( Size ).nullable().optional(),
-    gradeId         : z.string().nullable().optional(),
-    workshop        : z.number().min( 0, "El taller debe ser mayor o igual a 0" ),
-    lecture         : z.number().min( 0, "La conferencia debe ser mayor o igual a 0" ),
-    tutoringSession : z.number().min( 0, "La sesión tutorial debe ser mayor o igual a 0" ),
-    laboratory      : z.number().min( 0, "El laboratorio debe ser mayor o igual a 0" ),
-    isActive        : z.boolean(),
-}).refine(( data ) => {
-    const { workshop, lecture, tutoringSession, laboratory } = data;
-
-    return workshop > 0 || lecture > 0 || tutoringSession > 0 || laboratory > 0;
-}, {
-    message : "Al menos una sesión debe ser mayor que 0",
-    path    : [ "workshop" ],
-});
-
-
-const emptySubject = ( subject: Subject | undefined ): SubjectFormValues => {
+const emptySubject = ( subject: Subject | undefined, facultyId: string | null ): SubjectFormValues => {
     return {
         id              : subject?.id               || "",
         name            : subject?.name             || "",
+        facultyId       : subject?.facultyId        || facultyId || "",
         spaceType       : subject?.spaceType        || null,
         spaceSizeId     : subject?.spaceSizeId      || null,
         gradeId         : subject?.grade?.id        || null,
@@ -130,21 +152,26 @@ export function SubjectForm({
 	facultyId,
 	isOpen,
 	onClose,
-}: SubjectFormProps ): JSX.Element {
+}: Props ): JSX.Element {
 	const router								= useRouter();
 	const queryClient							= useQueryClient();
 	const [isGradeFormOpen, setIsGradeFormOpen]	= useState( false );
+
+	const formSchema = useMemo(
+		() => createFormSchema( !!subject ),
+		[ subject ]
+	);
+
 	const form									= useForm<SubjectFormValues>({
 		resolver		: zodResolver( formSchema ),
-		defaultValues	: emptySubject( subject ),
+		defaultValues	: emptySubject( subject, facultyId ),
 		mode			: "onChange",
 	});
 
 
 	useEffect(() => {
-		form.reset( emptySubject( subject ));
-	}, [ subject, form, isOpen ]);
-
+		form.reset( emptySubject( subject, facultyId ));
+	}, [ subject, facultyId, form, isOpen ]);
 
 	// API functions
 	const createSubjectApi = async ( newSubject: CreateSubject ): Promise<Subject> =>
@@ -154,16 +181,23 @@ export function SubjectForm({
 	const updateSubjectApi = async ( updatedSubject: UpdateSubject ): Promise<Subject> =>
 		fetchApi<Subject>({ url: `subjects/${updatedSubject.id}`, method: Method.PATCH, body: updatedSubject });
 
-
 	// Success handler
 	function handleSuccess( isCreated: boolean ): void {
-		queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SUBJECTS, facultyId] });
-		if ( isCreated ) updateFacultyTotal( queryClient, facultyId, true, 'totalSubjects' );
+		const currentFacultyId = form.getValues( 'facultyId' );
+
+		// Si facultyId prop era null, invalidar sin facultyId específico
+        const key = facultyId ? [KEY_QUERYS.SUBJECTS, facultyId] : [KEY_QUERYS.SUBJECTS];
+		queryClient.invalidateQueries({ queryKey: key });
+
+		if ( isCreated && currentFacultyId ) {
+			updateFacultyTotal( queryClient, currentFacultyId, true, 'totalSubjects' );
+		}
+
 		onClose();
+
 		form.reset();
 		toast( `Asignatura ${isCreated ? 'creada' : 'actualizada'} exitosamente`, successToast );
 	}
-
 
 	// Mutations
 	const createSubjectMutation = useMutation<Subject, Error, CreateSubject>({
@@ -179,21 +213,20 @@ export function SubjectForm({
 		onError		: ( mutationError ) => toast( `Error al actualizar asignatura: ${mutationError.message}`, errorToast ),
 	});
 
-
 	// Form submit handler
 	const handleSubmit = ( data: SubjectFormValues ) => {
 		if ( subject ) {
-			updateSubjectMutation.mutate({
-				...data,
-			} as UpdateSubject );
+			// Excluir facultyId al actualizar
+			const { facultyId: _, ...updateData } = data;
+			updateSubjectMutation.mutate( updateData as UpdateSubject );
 		} else {
-			createSubjectMutation.mutate({
+			const createData = {
 				...data,
-				facultyId,
-			} as CreateSubject );
+				facultyId: data.facultyId || facultyId
+			};
+			createSubjectMutation.mutate( createData as CreateSubject );
 		}
 	};
-
 
 	/**
 	 * Get form field name for session type
@@ -208,7 +241,6 @@ export function SubjectForm({
 		}
 	}
 
-
 	/**
 	 * Update session count by delta
 	 */
@@ -218,7 +250,6 @@ export function SubjectForm({
 		form.setValue( getSessionFieldName( session ), newValue );
 	}
 
-
 	/**
 	 * Set session count to specific value
 	 */
@@ -226,7 +257,6 @@ export function SubjectForm({
 		const numValue = parseInt( value ) || 0;
 		form.setValue( getSessionFieldName( session ), Math.max( 0, numValue ));
 	}
-
 
 	/**
 	 * Create mock section data for SessionButton
@@ -276,6 +306,26 @@ export function SubjectForm({
 					<TabsContent value="form">
 						<Form {...form}>
 							<form onSubmit={ form.handleSubmit( handleSubmit )} className="space-y-4">
+								{ !facultyId && !subject && (
+									<FormField
+										control = { form.control }
+										name    = "facultyId"
+										render  = {({ field }) => (
+											<FormItem>
+												<FacultySelect
+													label               = "Facultad"
+													placeholder         = "Seleccionar facultad"
+													onSelectionChange   = {( value ) => field.onChange( value as string )}
+													defaultValues       = { field.value ? [ field.value ] : [] }
+													multiple            = { false }
+												/>
+
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								)}
+
 								<FormField
 									control = { form.control }
 									name    = "id"
