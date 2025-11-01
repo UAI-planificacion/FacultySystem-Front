@@ -6,8 +6,8 @@ import {
 	useMutation,
 	useQuery,
 	useQueryClient
-}                               from "@tanstack/react-query";
-import { toast }                from "sonner";
+}                   from "@tanstack/react-query";
+import { toast }    from "sonner";
 
 import { PageLayout }           from "@/components/layout/page-layout";
 import { SubjectForm }          from "@/components/subject/subject-form";
@@ -36,7 +36,6 @@ export default function SubjectsPage() {
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen]   = useState( false );
 	const [deletingSubjectId, setDeletingSubjectId]     = useState<string | undefined>( undefined );
 
-
 	// Fetch all subjects (global)
 	const {
 		data: subjects,
@@ -46,7 +45,6 @@ export default function SubjectsPage() {
 		queryKey	: [ KEY_QUERYS.SUBJECTS ],
 		queryFn		: () => fetchApi({ url: 'subjects' }),
 	});
-
 
 	// Filtrado de subjects
 	const filteredSubjects = useMemo(() => {
@@ -69,7 +67,6 @@ export default function SubjectsPage() {
 		});
 	}, [ subjects, searchQuery, selectedSpaceTypes, selectedSizes ]);
 
-
 	// Paginación
 	const {
 		currentPage,
@@ -84,7 +81,6 @@ export default function SubjectsPage() {
 		data				: filteredSubjects,
 		initialItemsPerPage	: 10
 	});
-
 
 	// Manejadores de filtros
 	const handleSearchChange = ( value: string ) => {
@@ -112,7 +108,6 @@ export default function SubjectsPage() {
 		resetToFirstPage();
 	};
 
-
 	// Delete mutation
 	const deleteSubjectApi = async ( subjectId: string ): Promise<Subject> =>
 		fetchApi<Subject>({ url: `subjects/${subjectId}`, method: Method.DELETE });
@@ -127,7 +122,6 @@ export default function SubjectsPage() {
 		},
 		onError: ( mutationError ) => toast( `Error al eliminar asignatura: ${mutationError.message}`, errorToast ),
 	});
-
 
 	// Handlers
 	const openNewSubjectForm = () => {
@@ -205,7 +199,7 @@ export default function SubjectsPage() {
 				{/* Subject Form Dialog */}
 				<SubjectForm
 					subject		= { editingSubject }
-					facultyId	= { editingSubject?.facultyId || '' }
+					facultyId	= { editingSubject?.facultyId || null }
 					onClose		= { () => setIsFormOpen( false )}
 					isOpen		= { isFormOpen }
 				/>
