@@ -77,7 +77,6 @@ export default function PeriodsPage() {
 		queryFn : () => fetchApi<Period[]>({ url: endpoint }),
 	});
 
-
 	/**
 	 * Filtra la lista de períodos según los criterios de búsqueda
 	 */
@@ -110,7 +109,6 @@ export default function PeriodsPage() {
 		initialItemsPerPage: 10
 	});
 
-
 	/**
 	 * Resetea la página actual cuando cambian los filtros
 	 */
@@ -127,7 +125,6 @@ export default function PeriodsPage() {
 		}
 	};
 
-
 	/**
 	 * Abre el formulario para crear un nuevo período
 	 */
@@ -135,7 +132,6 @@ export default function PeriodsPage() {
 		setEditingPeriod( undefined );
 		setIsFormOpen( true );
 	}
-
 
 	/**
 	 * Abre el formulario para editar un período existente
@@ -145,7 +141,6 @@ export default function PeriodsPage() {
 		setIsFormOpen( true );
 	}
 
-
 	/**
 	 * API call para eliminar un período
 	 */
@@ -154,7 +149,6 @@ export default function PeriodsPage() {
             url     : `${endpoint}/${periodId}`,
             method  : Method.DELETE
         });
-
 
 	/**
 	 * Mutación para eliminar un período
@@ -171,7 +165,6 @@ export default function PeriodsPage() {
 		},
 	});
 
-
 	/**
 	 * Abre el diálogo de confirmación para eliminar un período
 	 */
@@ -180,31 +173,36 @@ export default function PeriodsPage() {
 		setIsDeleteDialogOpen( true );
 	}
 
-
 	/**
 	 * Renderiza el badge para el estado del período
 	 */
 	function renderStatusBadge( status: PeriodStatus ) {
 		const statusConfig = {
+            [PeriodStatus.Pending]: {
+                variant     : 'default' as const,
+                className   : 'bg-amber-500 text-white hover:bg-amber-600',
+                label       : 'Pendiente'
+            },
 			[PeriodStatus.Opened]: {
-				variant: 'default' as const,
-				className: 'bg-green-100 text-green-800',
-				label: 'Abierto'
+				variant     : 'default' as const,
+				className   : 'bg-green-500 text-white hover:bg-green-600',
+				label       : 'Abierto'
 			},
 			[PeriodStatus.InProgress]: {
-				variant: 'secondary' as const,
-				className: 'bg-blue-100 text-blue-800',
-				label: 'En Progreso'
+				variant     : 'default' as const,
+				className   : 'bg-blue-500 text-white hover:bg-blue-600',
+				label       : 'En Progreso'
 			},
-			[PeriodStatus.Completed]: {
-				variant: 'outline' as const,
-				className: 'bg-gray-100 text-gray-800',
-				label: 'Completado'
+			[PeriodStatus.Closed]: {
+				variant     : 'destructive' as const,
+				className   : 'text-white',
+				label       : 'Cerrado'
 			}
 		};
 
 		const config = statusConfig[status];
-		return (
+
+        return (
 			<Badge variant={ config.variant } className={ config.className }>
 				{ config.label }
 			</Badge>
@@ -255,9 +253,10 @@ export default function PeriodsPage() {
 
 										<SelectContent>
 											<SelectItem value="all">Todos</SelectItem>
+											<SelectItem value={ PeriodStatus.Pending }>Pendiente</SelectItem>
 											<SelectItem value={ PeriodStatus.Opened }>Abierto</SelectItem>
 											<SelectItem value={ PeriodStatus.InProgress }>En Progreso</SelectItem>
-											<SelectItem value={ PeriodStatus.Completed }>Completado</SelectItem>
+											<SelectItem value={ PeriodStatus.Closed }>Cerrado</SelectItem>
 										</SelectContent>
 									</Select>
 								</div>
