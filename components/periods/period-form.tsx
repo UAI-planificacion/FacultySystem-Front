@@ -2,13 +2,12 @@
 
 import { useEffect } from "react";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { z } from "zod";
+import { useMutation, useQueryClient }  from "@tanstack/react-query";
+import { zodResolver }                  from "@hookform/resolvers/zod";
+import { useForm }                      from "react-hook-form";
+import { toast }                        from "sonner";
+import { z }                            from "zod";
 
-import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
@@ -16,7 +15,7 @@ import {
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-} from "@/components/ui/dialog";
+}                           from "@/components/ui/dialog";
 import {
 	Form,
 	FormControl,
@@ -24,26 +23,31 @@ import {
 	FormItem,
 	FormLabel,
 	FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+}                           from "@/components/ui/form";
 import {
 	Select,
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
-} from "@/components/ui/select";
-import { CalendarSelect } from "@/components/ui/calendar-select";
+}                           from "@/components/ui/select";
+import { CalendarSelect }   from "@/components/ui/calendar-select";
 import { CostCenterSelect } from "@/components/shared/item-select/cost-center";
+import { Button }           from "@/components/ui/button";
+import { Input }            from "@/components/ui/input";
 
-import { Period, PeriodStatus, PeriodType } from "@/types/periods.model";
-import { KEY_QUERYS } from "@/consts/key-queries";
-import { Method, fetchApi } from "@/services/fetch";
+
+import {
+    Period,
+    PeriodStatus,
+    PeriodType
+}                                   from "@/types/periods.model";
+import { KEY_QUERYS }               from "@/consts/key-queries";
+import { Method, fetchApi }         from "@/services/fetch";
 import { errorToast, successToast } from "@/config/toast/toast.config";
 
 
 const endpoint = 'periods';
-
 
 /**
  * Schema de validación para el formulario de período
@@ -88,7 +92,6 @@ interface PeriodFormProps {
 	onClose  : () => void;
 }
 
-
 /**
  * Formulario para crear y editar períodos
  */
@@ -111,7 +114,6 @@ export function PeriodForm( { period, isOpen, onClose }: PeriodFormProps ) {
 		},
 	});
 
-
 	/**
 	 * Resetea el formulario cuando se abre/cierra o cambia el período
 	 */
@@ -119,9 +121,9 @@ export function PeriodForm( { period, isOpen, onClose }: PeriodFormProps ) {
 		if ( isOpen ) {
 			if ( period ) {
 				// Formatear fechas para inputs de tipo date
-				const parseDate = ( dateString: string | null ) => {
+				const parseDate = ( dateString: Date | string | null ): Date | undefined => {
 					if ( !dateString ) return undefined;
-					return new Date( dateString );
+					return dateString instanceof Date ? dateString : new Date( dateString );
 				};
 
 				form.reset({
@@ -151,7 +153,6 @@ export function PeriodForm( { period, isOpen, onClose }: PeriodFormProps ) {
 		}
 	}, [isOpen, period, form] );
 
-
 	/**
 	 * API call para crear un período
 	 */
@@ -173,7 +174,6 @@ export function PeriodForm( { period, isOpen, onClose }: PeriodFormProps ) {
 		});
 	};
 
-
 	/**
 	 * API call para actualizar un período
 	 */
@@ -191,7 +191,6 @@ export function PeriodForm( { period, isOpen, onClose }: PeriodFormProps ) {
 			},
 		});
 
-
 	/**
 	 * Mutación para crear período
 	 */
@@ -206,7 +205,6 @@ export function PeriodForm( { period, isOpen, onClose }: PeriodFormProps ) {
 			toast( `Error al crear período: ${mutationError.message}`, errorToast );
 		},
 	});
-
 
 	/**
 	 * Mutación para actualizar período
@@ -223,7 +221,6 @@ export function PeriodForm( { period, isOpen, onClose }: PeriodFormProps ) {
 		},
 	});
 
-
 	/**
 	 * Maneja el envío del formulario
 	 */
@@ -235,25 +232,24 @@ export function PeriodForm( { period, isOpen, onClose }: PeriodFormProps ) {
 		}
 	};
 
-
 	/**
 	 * Obtiene las opciones de estado para el select
 	 */
-	const getStatusOptions = () => [
-		{ value: PeriodStatus.Opened, label: 'Abierto' },
-		{ value: PeriodStatus.InProgress, label: 'En Progreso' },
-		{ value: PeriodStatus.Completed, label: 'Completado' },
+    const getStatusOptions = () => [
+        { value: PeriodStatus.Pending,      label: 'Pendiente' },
+        { value: PeriodStatus.Opened,       label: 'Abierto' },
+		{ value: PeriodStatus.InProgress,   label: 'En Progreso' },
+		{ value: PeriodStatus.Closed,       label: 'Cerrado' },
 	];
-
 
 	/**
 	 * Obtiene las opciones de tipo para el select
 	 */
 	const getTypeOptions = () => [
-		{ value: PeriodType.ANUAL, label: 'Anual' },
-		{ value: PeriodType.SEMESTRAL, label: 'Semestral' },
+		{ value: PeriodType.ANUAL,      label: 'Anual' },
+		{ value: PeriodType.SEMESTRAL,  label: 'Semestral' },
 		{ value: PeriodType.TRIMESTRAL, label: 'Trimestral' },
-		{ value: PeriodType.VERANO, label: 'Verano' },
+		{ value: PeriodType.VERANO,     label: 'Verano' },
 	];
 
 
@@ -264,6 +260,7 @@ export function PeriodForm( { period, isOpen, onClose }: PeriodFormProps ) {
 					<DialogTitle>
 						{ isEditing ? 'Editar Período' : 'Crear Nuevo Período' }
 					</DialogTitle>
+
 					<DialogDescription>
 						{ isEditing 
 							? 'Modifica los datos del período seleccionado.' 
@@ -277,18 +274,20 @@ export function PeriodForm( { period, isOpen, onClose }: PeriodFormProps ) {
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							{/* ID */}
 							<FormField
-								control={ form.control }
-								name="id"
-								render={ ({ field }) => (
+								control = { form.control }
+								name    = "id"
+								render  = { ({ field }) => (
 									<FormItem>
 										<FormLabel>ID *</FormLabel>
+
 										<FormControl>
 											<Input
-												placeholder="Ingresa el ID del período"
-												disabled={ isEditing }
+												placeholder = "Ingresa el ID del período"
+												disabled    = { isEditing }
 												{ ...field }
 											/>
 										</FormControl>
+
 										<FormMessage />
 									</FormItem>
 								) }
@@ -296,17 +295,19 @@ export function PeriodForm( { period, isOpen, onClose }: PeriodFormProps ) {
 
 							{/* Nombre */}
 							<FormField
-								control={ form.control }
-								name="name"
-								render={ ({ field }) => (
+								control = { form.control }
+								name    = "name"
+								render  = { ({ field }) => (
 									<FormItem>
 										<FormLabel>Nombre *</FormLabel>
+
 										<FormControl>
 											<Input
 												placeholder="Ingresa el nombre del período"
 												{ ...field }
 											/>
 										</FormControl>
+
 										<FormMessage />
 									</FormItem>
 								) }
@@ -316,25 +317,28 @@ export function PeriodForm( { period, isOpen, onClose }: PeriodFormProps ) {
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							{/* Tipo */}
 							<FormField
-								control={ form.control }
-								name="type"
-								render={ ({ field }) => (
+								control = { form.control }
+								name    = "type"
+								render  = {({ field }) => (
 									<FormItem>
 										<FormLabel>Tipo *</FormLabel>
+
 										<Select onValueChange={ field.onChange } value={ field.value }>
 											<FormControl>
 												<SelectTrigger>
 													<SelectValue placeholder="Selecciona el tipo de período" />
 												</SelectTrigger>
 											</FormControl>
+
 											<SelectContent>
-												{ getTypeOptions().map( ( option ) => (
+												{ getTypeOptions().map(( option ) => (
 													<SelectItem key={ option.value } value={ option.value }>
 														{ option.label }
 													</SelectItem>
-												) ) }
+												))}
 											</SelectContent>
 										</Select>
+
 										<FormMessage />
 									</FormItem>
 								) }
@@ -342,19 +346,21 @@ export function PeriodForm( { period, isOpen, onClose }: PeriodFormProps ) {
 
 							{/* Centro de Costos */}
 							<FormField
-								control={ form.control }
-								name="costCenterId"
-								render={ ({ field }) => (
+								control = { form.control }
+								name    = "costCenterId"
+								render  = { ({ field }) => (
 									<FormItem>
 										<FormLabel>Centro de Costos *</FormLabel>
+
 										<FormControl>
 											<CostCenterSelect
-												defaultValues={ field.value }
-												onSelectionChange={ field.onChange }
-												multiple={ false }
-												placeholder="Selecciona el centro de costos"
+												defaultValues       = { field.value }
+												onSelectionChange   = { field.onChange }
+												multiple            = { false }
+												placeholder         = "Selecciona el centro de costos"
 											/>
 										</FormControl>
+
 										<FormMessage />
 									</FormItem>
 								) }
@@ -364,19 +370,25 @@ export function PeriodForm( { period, isOpen, onClose }: PeriodFormProps ) {
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							{/* Fecha de Inicio */}
 							<FormField
-								control={ form.control }
-								name="startDate"
-								render={ ({ field }) => (
+								control = { form.control }
+								name    = "startDate"
+								render  = {({ field }) => (
 									<FormItem>
 										<FormLabel>Fecha de Inicio *</FormLabel>
+
 										<FormControl>
 											<CalendarSelect
-												value={ field.value }
-												onSelect={ field.onChange }
-												placeholder="Seleccionar fecha de inicio"
-												disabled={ ( date ) => date < new Date() }
+												value       = { field.value }
+												onSelect    = { field.onChange }
+												placeholder = "Seleccionar fecha de inicio"
+                                                disabled    = {( date ) => {
+                                                    const endDate = form.watch( 'endDate' );
+
+                                                    return date < new Date() || ( endDate ? date > endDate : false );
+                                                }}
 											/>
 										</FormControl>
+
 										<FormMessage />
 									</FormItem>
 								) }
@@ -384,22 +396,24 @@ export function PeriodForm( { period, isOpen, onClose }: PeriodFormProps ) {
 
 							{/* Fecha de Fin */}
 							<FormField
-								control={ form.control }
-								name="endDate"
-								render={ ({ field }) => (
+								control = { form.control }
+								name    = "endDate"
+								render  = {({ field }) => (
 									<FormItem>
 										<FormLabel>Fecha de Fin *</FormLabel>
+
 										<FormControl>
 											<CalendarSelect
-												value={ field.value }
-												onSelect={ field.onChange }
-												placeholder="Seleccionar fecha de fin"
-												disabled={ ( date ) => {
+												value       = { field.value }
+												onSelect    = { field.onChange }
+												placeholder = "Seleccionar fecha de fin"
+												disabled    = {( date ) => {
 													const startDate = form.watch( 'startDate' );
 													return date < new Date() || ( startDate ? date <= startDate : false );
-												} }
+												}}
 											/>
 										</FormControl>
+
 										<FormMessage />
 									</FormItem>
 								) }
@@ -409,19 +423,30 @@ export function PeriodForm( { period, isOpen, onClose }: PeriodFormProps ) {
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							{/* Fecha de Apertura */}
 							<FormField
-								control={ form.control }
-								name="openingDate"
-								render={ ({ field }) => (
+								control = { form.control }
+								name    = "openingDate"
+								render  = {({ field }) => (
 									<FormItem>
 										<FormLabel>Fecha de Apertura</FormLabel>
+
 										<FormControl>
 											<CalendarSelect
-												value={ field.value }
-												onSelect={ field.onChange }
-												placeholder="Seleccionar fecha de apertura"
-												disabled={ ( date ) => date < new Date() }
+												value       = { field.value }
+												onSelect    = { field.onChange }
+												placeholder = "Seleccionar fecha de apertura"
+                                                disabled    = {( date ) => {  
+                                                    const startDate = form.watch( 'startDate' );
+                                                    const endDate   = form.watch( 'endDate' );
+
+                                                    if ( !startDate || !endDate ) {
+                                                        return true;
+                                                    }
+
+                                                    return date < startDate || date > endDate;
+                                                }}
 											/>
 										</FormControl>
+
 										<FormMessage />
 									</FormItem>
 								) }
@@ -436,13 +461,19 @@ export function PeriodForm( { period, isOpen, onClose }: PeriodFormProps ) {
 										<FormLabel>Fecha de Cierre</FormLabel>
 										<FormControl>
 											<CalendarSelect
-												value={ field.value }
-												onSelect={ field.onChange }
-												placeholder="Seleccionar fecha de cierre"
-												disabled={ ( date ) => {
-													const openingDate = form.watch( 'openingDate' );
-													return date < new Date() || ( openingDate ? date <= openingDate : false );
-												} }
+												value       = { field.value }
+												onSelect    = { field.onChange }
+												placeholder = "Seleccionar fecha de cierre"
+                                                disabled    = {( date ) => {
+                                                    const openingDate   = form.watch( 'openingDate' );
+                                                    const endDate       = form.watch( 'endDate' );
+
+                                                    if ( !openingDate || !endDate ) {
+                                                        return true;
+                                                    }
+
+                                                    return date <= openingDate || date > endDate;
+                                                }}
 											/>
 										</FormControl>
 										<FormMessage />
@@ -459,18 +490,20 @@ export function PeriodForm( { period, isOpen, onClose }: PeriodFormProps ) {
 								render={ ({ field }) => (
 									<FormItem>
 										<FormLabel>Estado</FormLabel>
+
 										<Select onValueChange={ field.onChange } value={ field.value }>
 											<FormControl>
 												<SelectTrigger>
 													<SelectValue placeholder="Selecciona el estado" />
 												</SelectTrigger>
 											</FormControl>
+
 											<SelectContent>
 												{ getStatusOptions().map( ( option ) => (
 													<SelectItem key={ option.value } value={ option.value }>
 														{ option.label }
 													</SelectItem>
-												) ) }
+												))}
 											</SelectContent>
 										</Select>
 										<FormMessage />
@@ -481,17 +514,17 @@ export function PeriodForm( { period, isOpen, onClose }: PeriodFormProps ) {
 
 						<DialogFooter className="flex justify-between items-center gap-4">
 							<Button
-								type="button"
-								variant="outline"
-								onClick={ onClose }
-								disabled={ createPeriodMutation.isPending || updatePeriodMutation.isPending }
+								type        = "button"
+								variant     = "outline"
+								onClick     = { onClose }
+								disabled    = { createPeriodMutation.isPending || updatePeriodMutation.isPending }
 							>
 								Cancelar
 							</Button>
 
 							<Button
-								type="submit"
-								disabled={ createPeriodMutation.isPending || updatePeriodMutation.isPending }
+								type        = "submit"
+								disabled    = { createPeriodMutation.isPending || updatePeriodMutation.isPending }
 							>
 								{ createPeriodMutation.isPending || updatePeriodMutation.isPending
 									? ( isEditing ? 'Actualizando...' : 'Creando...' )
