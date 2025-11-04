@@ -1,7 +1,8 @@
 export enum PeriodStatus {
+    Pending     = 'Pending',
     Opened      = 'Opened',
     InProgress  = 'InProgress',
-    Completed   = 'Completed'
+    Closed      = 'Closed'
 }
 
 
