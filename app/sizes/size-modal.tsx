@@ -231,6 +231,19 @@ export function SizeModal({
             detail,
         } as SizeSave;
 
+        if ( rangeType === "minMax" ) {
+            sizeSave.greaterThan = undefined;
+            sizeSave.lessThan    = undefined;
+        } else if ( rangeType === "greaterThan" ) {
+            sizeSave.min         = undefined;
+            sizeSave.max         = undefined;
+            sizeSave.lessThan    = undefined;
+        } else if ( rangeType === "lessThan" ) {
+            sizeSave.min         = undefined;
+            sizeSave.max         = undefined;
+            sizeSave.greaterThan = undefined;
+        }
+
         if ( size ) {
             updateSizeMutation.mutate( sizeSave );
         } else {
@@ -303,7 +316,7 @@ export function SizeModal({
                         <div className="space-y-2">
                             <Label htmlFor="detail">Detalle</Label>
 
-                            <Input id="detail" value={detail} disabled />
+                            <Input id="detail" value={ detail } disabled />
                         </div>
                     </div>
 
@@ -316,7 +329,7 @@ export function SizeModal({
                             value           = { rangeType }
                             onValueChange   = {( value ) => handleRangeTypeChange( value as RangeType )}
                         >
-                            <TabsList>
+                            <TabsList className="grid grid-cols-3">
                                 <TabsTrigger value="minMax">Rango</TabsTrigger>
 
                                 <TabsTrigger value="greaterThan">Mayor que</TabsTrigger>
@@ -330,14 +343,14 @@ export function SizeModal({
                                         <Label htmlFor="min">Mínimo</Label>
 
                                         <Input
-                                            id="min"
-                                            type="number"
-                                            min="0"
-                                            value={formData.min ?? ""}
-                                            onChange={(e) => handleChange("min", e.target.value ? Number.parseInt(e.target.value) : undefined)}
+                                            id          = "min"
+                                            type        = "number"
+                                            min         = "0"
+                                            value       = { formData.min ?? "" }
+                                            onChange    = {(e) => handleChange( "min", e.target.value ? Number.parseInt( e.target.value ) : undefined  )}
                                         />
 
-                                        {errors.min && <p className="text-sm text-destructive">{errors.min}</p>}
+                                        { errors.min && <p className="text-sm text-destructive">{ errors.min }</p> }
                                     </div>
 
                                     <div className="space-y-2">
