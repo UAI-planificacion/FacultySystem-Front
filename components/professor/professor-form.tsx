@@ -88,6 +88,8 @@ const emptyProfessor: Professor = {
 }
 
 
+const extensionEmail = '@edu.uai.cl';
+
 /**
  * API call para crear un nuevo profesor
  */
@@ -121,7 +123,7 @@ export function ProfessorForm({
 
 
     if ( professors?.email ) {
-        professors.email = professors.email?.replace( '@uai.cl', '' )
+        professors.email = professors.email?.replace( extensionEmail, '' )
     }
 
 
@@ -181,7 +183,7 @@ export function ProfessorForm({
      */
     const handleSubmit: SubmitHandler<ProfessorFormValues> = ( data ) => {
         if ( data.email ) {
-            data.email = data.email + '@uai.cl';
+            data.email = data.email + extensionEmail;
         }
 
         if ( professors ) {
@@ -310,7 +312,7 @@ export function ProfessorForm({
                                             />
 
                                             <div className="size-5 border border-zinc-300 dark:border-zinc-800 rounded-r-md py-[0.45rem] px-3">
-                                                @uai.cl
+                                                {extensionEmail}
                                             </div>
                                         </div>
                                     </FormControl>
@@ -338,7 +340,7 @@ export function ProfessorForm({
                                         <FormControl>
                                             <Switch
                                                 checked={field.value}
-                                                onCheckedChange={( value ) => onChangeTest( value, field )}
+                                                onCheckedChange={( value ) => onChangeTest( value, field as ControllerRenderProps<ProfessorFormValues> )}
                                             />
                                         </FormControl>
                                     </FormItem>
