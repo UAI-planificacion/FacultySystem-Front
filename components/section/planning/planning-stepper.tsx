@@ -20,16 +20,12 @@ import { FilterMode }       from "@/components/shared/space-filter-selector";
 import {
     SessionAvailabilityRequest,
     SessionAvailabilityResponse
-}                                   from "@/types/session-availability.model";
-import {
-    BuildingEnum,
-    Size,
-    SpaceType
-}                                   from "@/types/request-detail.model";
-import { OfferSection }				from "@/types/offer-section.model";
-import { Session }					from "@/types/section.model";
-import { fetchApi, Method }			from "@/services/fetch";
-import { errorToast, successToast } from "@/config/toast/toast.config";
+}                                           from "@/types/session-availability.model";
+import { BuildingEnum, Size, SpaceType }    from "@/types/request-detail.model";
+import { OfferSection }                     from "@/types/offer-section.model";
+import { Session }			                from "@/types/section.model";
+import { fetchApi, Method }			        from "@/services/fetch";
+import { errorToast, successToast }         from "@/config/toast/toast.config";
 
 
 interface SessionDayModule {
@@ -413,7 +409,6 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 			toast( 'Disponibilidad calculada exitosamente', successToast );
 		},
 		onError     : ( error: any ) => {
-			console.error('❌ Error al calcular disponibilidad:', error);
 			toast( `Error al calcular disponibilidad: ${error.message}`, errorToast );
 		}
 	});
@@ -547,16 +542,13 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 						sessionInEnglish	= { sessionInEnglish }
 						selectedDayModules	= { selectedDayModules }
 						onBack				= {() => goToStep( 2 )}
-						onSuccess			= {( sections: OfferSection[] ) => {
+						onSuccess			= {( section: OfferSection ) => {
 							// Resetear el stepper al paso 1 después de reservar exitosamente
 							setCurrentStep( 1 );
 							setSelectedDayModules([]);
 							setAvailabilityResponse( null );
 
-							// Extraer groupIds únicos y redirigir con filtro
-							const uniqueIds = Array.from( new Set( sections.map( s => s.groupId )));
-							const groupIds = uniqueIds.join( ',' );
-							router.push(`/sections?groupId=${groupIds}`);
+							router.push(`/sections?id=${section.id}`);
 						}}
 					/>
 				)}
