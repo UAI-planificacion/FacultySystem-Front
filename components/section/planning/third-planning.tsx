@@ -3,7 +3,7 @@
 import { JSX, useState, useMemo } from "react";
 
 import { AlertCircle, CheckCircle2 }    from "lucide-react";
-import { useMutation }                  from "@tanstack/react-query";
+import { useMutation, useQueryClient }  from "@tanstack/react-query";
 import { toast }						from "sonner";
 
 import {
@@ -49,9 +49,9 @@ import { SessionAvailabilityResponse }	from "@/types/session-availability.model"
 import { SessionMassiveCreate }			from "@/types/session-massive-create.model";
 import { Session }						from "@/types/section.model";
 import { fetchApi, Method }				from "@/services/fetch";
-import { errorToast, successToast } from "@/config/toast/toast.config";
-import { OfferSection } from "@/types/offer-section.model";
-
+import { errorToast, successToast }     from "@/config/toast/toast.config";
+import { OfferSection }                 from "@/types/offer-section.model";
+import { KEY_QUERYS }                   from "@/consts/key-queries";
 
 /**
  * Extract unique groupIds from sections array
@@ -60,7 +60,6 @@ const getUniqueGroupIds = ( sections: OfferSection[] ): string => {
 	const uniqueIds = Array.from( new Set( sections.map( section => section.groupId )));
 	return uniqueIds.join( ',' );
 };
-
 
 
 interface SessionDayModule {
@@ -77,7 +76,7 @@ interface Props {
 	sessionInEnglish	: Record<string, boolean>;
 	selectedDayModules	: SessionDayModule[];
 	onBack				: () => void;
-	onSuccess			: ( sections: OfferSection[] ) => void;
+	onSuccess			: ( section: OfferSection ) => void;
 }
 
 
@@ -96,6 +95,8 @@ export function ThirdPlanning({
     onSuccess
 }: Props ): JSX.Element {
 	// Estado para las selecciones de cada sesión
+	const queryClient = useQueryClient();
+
 	const [ selections, setSelections ]                 = useState<Record<string, SessionSelection>>({});
 	const [ activeTab, setActiveTab ]                   = useState<string>( "spaces" );
 	const [ useSameSpace, setUseSameSpace ]             = useState<boolean>( false );
@@ -128,19 +129,19 @@ export function ThirdPlanning({
 
 	// Verificar si se puede reservar
 	const canReserve = !hasUnavailableSessions && !hasSessionsWithoutDates && allSessionsHaveSpace;
-
 	// Mutación para reservar sesiones
-	const reserveMutation = useMutation<OfferSection[], Error, SessionMassiveCreate[]>({
-		mutationFn: async ( payload: SessionMassiveCreate[] ): Promise<OfferSection[]> => {
-			return fetchApi<OfferSection[]>({
+	const reserveMutation = useMutation<OfferSection, Error, SessionMassiveCreate[]>({
+		mutationFn: async ( payload: SessionMassiveCreate[] ): Promise<OfferSection> => {
+			return fetchApi<OfferSection>({
 				url		: `sessions/massive/${sectionId}`,
 				method	: Method.POST,
 				body	: payload
 			});
 		},
-		onSuccess: ( sections: OfferSection[] ) => {
+		onSuccess: ( section: OfferSection ) => {
 			toast( "Sesiones reservadas exitosamente", successToast );
-			onSuccess( sections );
+            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
+            onSuccess( section );
 		},
 		onError: ( error: Error ) => {
 			toast( `Error al reservar sesiones: intenta con otra combinación de espacios, profesores y/o módulos`, errorToast );
@@ -169,7 +170,6 @@ export function ThirdPlanning({
 		}));
 	};
 
-
 	// Manejar toggle de espacios globales
 	const handleUseSameSpaceToggle = ( checked: boolean ) => {
 		setUseSameSpace( checked );
@@ -178,7 +178,6 @@ export function ThirdPlanning({
 		}
 	};
 
-
 	// Manejar toggle de profesores globales
 	const handleUseSameProfessorToggle = ( checked: boolean ) => {
 		setUseSameProfessor( checked );
@@ -186,7 +185,6 @@ export function ThirdPlanning({
 			setGlobalProfessorId( undefined );
 		}
 	};
-
 
 	// Manejar cambio de espacio global
 	const handleGlobalSpaceChange = ( value: string | string[] | undefined ) => {
@@ -200,7 +198,6 @@ export function ThirdPlanning({
 			});
 		}
 	};
-
 
 	// Manejar cambio de profesor global
 	const handleGlobalProfessorChange = ( value: string | string[] | undefined ) => {
@@ -243,7 +240,6 @@ export function ThirdPlanning({
 		reserveMutation.mutate( payload );
 	};
 
-
 	// Memoizar opciones de espacios por sesión
 	const spaceOptionsBySession = useMemo(() => {
 		if ( !response ) return {};
@@ -264,7 +260,6 @@ export function ThirdPlanning({
 		return options;
 	}, [ response ]);
 
-
 	// Memoizar opciones de profesores por sesión
 	const professorOptionsBySession = useMemo(() => {
 		if ( !response ) return {};
@@ -283,7 +278,6 @@ export function ThirdPlanning({
 		return options;
 	}, [ response ]);
 
-
 	// Memoizar valores por defecto de espacios
 	const spaceDefaultValues = useMemo(() => {
 		const defaults: Record<string, string | undefined> = {};
@@ -294,7 +288,6 @@ export function ThirdPlanning({
 
 		return defaults;
 	}, [ selections ]);
-
 
 	// Memoizar valores por defecto de profesores
 	const professorDefaultValues = useMemo(() => {
@@ -307,7 +300,6 @@ export function ThirdPlanning({
 
 		return defaults;
 	}, [ selections ]);
-
 
 	// Calcular espacios comunes entre todas las sesiones (intersección)
 	const commonSpaces = useMemo(() => {
@@ -336,7 +328,6 @@ export function ThirdPlanning({
 			}));
 	}, [ response ]);
 
-
 	// Calcular profesores comunes entre todas las sesiones (intersección)
 	const commonProfessors = useMemo(() => {
 		if ( !response || response.length === 0 ) return [];
@@ -361,7 +352,6 @@ export function ThirdPlanning({
 				label	: `${ prof.id } - ${ prof.name }`
 			}));
 	}, [ response ]);
-
 
 	// Verificar si se puede habilitar el switch de espacios globales
 	const canUseGlobalSpaces = commonSpaces.length > 0;
