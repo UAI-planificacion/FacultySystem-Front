@@ -12,7 +12,6 @@ import {
     DialogTitle
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 
@@ -80,10 +79,6 @@ export function ModuleModal({
 
     function validateForm(): boolean {
         const newErrors: Record<string, string> = {};
-
-        if ( !formData.code.trim() ) {
-            newErrors.code = 'El código es requerido';
-        }
 
         if ( !formData.startHour ) {
             newErrors.startHour = 'La hora de inicio es requerida';
@@ -184,15 +179,15 @@ export function ModuleModal({
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="max-w-2xl">
-                <DialogHeader className="pb-6">
+                <DialogHeader>
                     <DialogTitle className="text-2xl font-bold">
                         Editar Módulo
                     </DialogTitle>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
-                        <Label className="text-sm font-medium mb-2 block">
+                        <Label className="text-sm font-medium block">
                             Nombre del Módulo (Generado Automáticamente)
                         </Label>
 
@@ -201,26 +196,7 @@ export function ModuleModal({
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="code">Código del Módulo</Label>
-
-                            <Input
-                                id          = "code"
-                                value       = { formData.code }
-                                onChange    = {( e ) => handleChange( 'code', e.target.value )}
-                                className   = { errors.code ? 'border-destructive' : '' }
-                                placeholder = "Ej: 1, 2, 3..."
-                                type        = "number"
-                                min         = "1"
-                                max         = "99999"
-                            />
-
-                            {errors.code && (
-                                <p className="text-sm text-destructive">{errors.code}</p>
-                            )}
-                        </div>
-
+                    <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="startTime">Hora Inicio</Label>
 
