@@ -89,7 +89,6 @@ export default function TableModules({
         setIsModalDeleteOpen( true );
     }
 
-
     /**
      * API call para eliminar un módulo
      */
@@ -98,7 +97,6 @@ export default function TableModules({
             url    : `${endpoint}/${moduleId}`,
             method : Method.DELETE
         });
-
 
     /**
      * Mutación para eliminar un módulo
@@ -115,7 +113,6 @@ export default function TableModules({
             toast(`Error al eliminar módulo: ${mutationError.message}`, errorToast );
         },
     });
-
 
     /**
      * Filtra la lista de módulos según los criterios de búsqueda y estado
@@ -138,11 +135,11 @@ export default function TableModules({
     /**
      * Paginación
      */
-    const totalItems = filteredModules.length;
-    const totalPages = Math.ceil( totalItems / itemsPerPage );
-    const startIndex = ( currentPage - 1 ) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const paginatedModules = filteredModules.slice( startIndex, endIndex );
+    const totalItems        = filteredModules.length;
+    const totalPages        = Math.ceil( totalItems / itemsPerPage );
+    const startIndex        = ( currentPage - 1 ) * itemsPerPage;
+    const endIndex          = startIndex + itemsPerPage;
+    const paginatedModules  = filteredModules.slice( startIndex, endIndex );
 
     /**
      * Resetea la página actual cuando cambian los filtros
@@ -151,7 +148,6 @@ export default function TableModules({
         setCurrentPage( 1 );
         setSearchQuery( value );
     };
-
 
     /**
      * Maneja el cambio del filtro de estado
@@ -220,13 +216,11 @@ export default function TableModules({
                                 <Table>
                                     <TableHeader className="sticky top-0 z-10 bg-background">
                                         <TableRow>
-                                            <TableHead className="bg-background w-[80px]">ID</TableHead>
                                             <TableHead className="bg-background w-[100px]">Código</TableHead>
-                                            <TableHead className="bg-background w-[200px]">Nombre</TableHead>
-                                            <TableHead className="bg-background w-[120px]">Estado</TableHead>
                                             <TableHead className="bg-background w-[120px]">Hora Inicio</TableHead>
                                             <TableHead className="bg-background w-[120px]">Hora Fin</TableHead>
                                             <TableHead className="bg-background w-[100px]">Diferencia</TableHead>
+                                            <TableHead className="bg-background w-[120px]">Estado</TableHead>
                                             <TableHead className="bg-background w-[120px] text-end">Acciones</TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -237,27 +231,7 @@ export default function TableModules({
                                         <TableBody>
                                             {paginatedModules.map( module => (
                                                 <TableRow key={ module.id }>
-                                                    <TableCell className="font-medium w-[80px]">{ module.id }</TableCell>
-
                                                     <TableCell className="w-[100px]">{ module.code }</TableCell>
-
-                                                    <TableCell className="w-[200px]">{ module.name }</TableCell>
-
-                                                    <TableCell className="w-[120px]">
-                                                        <div className="flex items-center">
-                                                            {module.isActive ? (
-                                                                <>
-                                                                    <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
-                                                                    <Badge className="bg-green-500">Activo</Badge>
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <XCircle className="mr-2 h-4 w-4 text-red-500" />
-                                                                    <Badge className="bg-red-500">Inactivo</Badge>
-                                                                </>
-                                                            )}
-                                                        </div>
-                                                    </TableCell>
 
                                                     <TableCell className="w-[120px]">
                                                         <div className="flex items-center">
@@ -274,6 +248,22 @@ export default function TableModules({
                                                     </TableCell>
 
                                                     <TableCell className="w-[100px]">{ module.difference || '-' }</TableCell>
+
+                                                    <TableCell className="w-[120px]">
+                                                        <div className="flex items-center">
+                                                            {module.isActive ? (
+                                                                <>
+                                                                    <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+                                                                    <Badge className="bg-green-500">Activo</Badge>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <XCircle className="mr-2 h-4 w-4 text-red-500" />
+                                                                    <Badge className="bg-red-500">Inactivo</Badge>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    </TableCell>
 
                                                     <TableCell className="w-[120px]">
                                                         <ActionButton
