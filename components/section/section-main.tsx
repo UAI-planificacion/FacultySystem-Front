@@ -65,6 +65,7 @@ export function SectionMain({
 }: Props ) {
     const router                                    = useRouter();
     const queryClient                               = useQueryClient();
+    const [idFilter, setIdFilter]                   = useState<string>(() => searchParams.get('id') || '');
     const [codeFilter, setCodeFilter]               = useState<string[]>(() => searchParams.get('code')?.split(',').filter(Boolean) || []);
     const [roomFilter, setRoomFilter]               = useState<string[]>(() => searchParams.get('room')?.split(',').filter(Boolean) || []);
     const [dayFilter, setDayFilter]                 = useState<string[]>(() => searchParams.get('day')?.split(',').filter(Boolean) || []);
@@ -121,7 +122,8 @@ export function SectionMain({
 
         // Apply filters
         const filtered = sectionsData.filter(( section ) => {
-            const matchesGroupId    = groupIdFilter.length === 0 || groupIdFilter.includes( section.groupId );
+            const matchesId         = idFilter.length       === 0 || idFilter === section.id;
+            const matchesGroupId    = groupIdFilter.length  === 0 || groupIdFilter.includes( section.groupId );
             const matchesCode       = codeFilter.length     === 0 || codeFilter.includes( section.code.toString() );
             const matchesRoom       = roomFilter.length     === 0 || section.sessions.spaceIds.some( spaceId => roomFilter.includes( spaceId ));
             const matchesDay        = dayFilter.length      === 0 || section.sessions.dayIds.some( dayId => dayFilter.includes( dayId.toString() ));
@@ -141,7 +143,7 @@ export function SectionMain({
             const matchesModule     = moduleFilter.length       === 0 || section.sessions.moduleIds.some( moduleId => moduleFilter.includes( moduleId.toString() ));
             const matchesProfessor  = professorFilter.length    === 0 || section.sessions.professorIds.some( professorId => professorFilter.includes( professorId ));
 
-            return matchesGroupId && matchesCode && matchesRoom && matchesDay && matchesPeriod && matchesStatus && matchesSubject && matchesSize && matchesSession && matchesModule && matchesProfessor;
+            return matchesId && matchesGroupId && matchesCode && matchesRoom && matchesDay && matchesPeriod && matchesStatus && matchesSubject && matchesSize && matchesSession && matchesModule && matchesProfessor;
         });
 
         // Apply pagination
@@ -355,6 +357,7 @@ export function SectionMain({
                             variant     = "outline"
                             className   = "w-full gap-2"
                             onClick     = {() => {
+                                setIdFilter( '' );
                                 setGroupIdFilter( [] );
                                 setCodeFilter( [] );
                                 setRoomFilter( [] );
