@@ -62,7 +62,7 @@ export function SessionTable({
 		data		: sectionSessions,
 		isLoading	: isLoadingSessions,
 	} = useQuery({
-		queryKey	: [ KEY_QUERYS.SECTIONS, 'sessions', section.id ],
+		queryKey	: [ KEY_QUERYS.SESSIONS, section.id ],
 		queryFn		: () => fetchApi<OfferSession[]>({ url: `sessions/section/${ section.id }` }),
 		enabled		: isOpen,
 		staleTime	: 5 * 60 * 1000,
@@ -84,7 +84,7 @@ export function SessionTable({
 	const deleteSessionMutation = useMutation<void, Error, string>({
 		mutationFn: deleteSessionApi,
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
+			queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SESSIONS, section.id] });
 			setIsOpenDelete( false );
 			setSelectedSession( undefined );
 			toast( 'Sesión eliminada exitosamente', successToast );
