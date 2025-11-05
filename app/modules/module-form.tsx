@@ -43,8 +43,7 @@ const endpoint = 'modules';
 const moduleEmpty: ModuleCreate = {
     startHour   : '',
     endHour     : '',
-    code        : '',
-    dayIds      : [],
+    dayIds      : [ 1, 2, 3, 4, 5 ],
 }
 
 
@@ -71,10 +70,6 @@ export function AddModuleModal({
         formData.forEach(( module, index ) => {
             const moduleErrors: string[] = [];
 
-            if ( !module.code.trim() ) {
-                moduleErrors.push( 'El código es requerido' );
-            }
-
             if ( !module.startHour ) {
                 moduleErrors.push( 'La hora de inicio es requerida' );
             }
@@ -97,8 +92,7 @@ export function AddModuleModal({
             const hasBaseFieldErrors = moduleErrors.length > 0;
 
             // Solo validar duplicados si hay datos suficientes (evita ruidos)
-            const hasCode    = !!module.code.trim();
-            const hasHours   = !!module.startHour && !!module.endHour && module.startHour < module.endHour;
+            const hasHours = !!module.startHour && !!module.endHour && module.startHour < module.endHour;
 
             if ( !hasBaseFieldErrors ) {
                 // Duplicados contra módulos existentes
@@ -221,7 +215,7 @@ export function AddModuleModal({
                 <form onSubmit={handleSubmit} className="space-y-3">
                     <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 pt-2">
                         {formData.map((module, index) => (
-                            <Card key={index} className="grid grid-cols-3 gap-x-2 gap-y-4 border border-zinc-300 dark:border-zinc-700 p-4 rounded-lg relative">
+                            <Card key={index} className="grid grid-cols-2 gap-x-2 gap-y-4 border border-zinc-300 dark:border-zinc-700 p-4 rounded-lg relative">
                                 {formData.length > 1 && (
                                     <Button
                                         type        = "button"
@@ -233,26 +227,6 @@ export function AddModuleModal({
                                         <X className="h-3 w-3" />
                                     </Button>
                                 )}
-
-                                <div className="space-y-2">
-                                    <Label
-                                        className='flex items-center gap-0.5'
-                                        htmlFor={`code-${index}`}
-                                    >
-                                        Código del Módulo
-                                        <Asterisk className="w-[0.85rem] h-[0.85rem]" />
-                                    </Label>
-
-                                    <Input
-                                        id          = { `code-${index}` }
-                                        value       = { module.code }
-                                        onChange    = {( e ) => handleChange( index, 'code', e.target.value )}
-                                        placeholder = "Ej: 1, 2, 3..."
-                                        type        = "number"
-                                        min         = "1"
-                                        max         = "99999"
-                                    />
-                                </div>
 
                                 <div className="space-y-2">
                                     <Label
