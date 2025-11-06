@@ -14,7 +14,7 @@ import { fetchApi }     from "@/services/fetch";
 
 
 interface RequestsManagementProps {
-    facultyId   : string;
+    facultyId?  : string;
     enabled     : boolean;
 }
 
@@ -23,9 +23,14 @@ export function RequestsManagement({ facultyId, enabled }: RequestsManagementPro
     const router        = useRouter();
     const searchParams  = useSearchParams();
 
+    // Si facultyId existe, buscar por facultad; si no, buscar todas
+    const url = facultyId 
+        ? `${KEY_QUERYS.REQUESTS}/faculty/${facultyId}`
+        : KEY_QUERYS.REQUESTS;
+
     const { data, isLoading, isError } = useQuery({
-        queryKey    : [ KEY_QUERYS.REQUESTS, facultyId ],
-        queryFn     : () => fetchApi<Request[]>({ url: `requests/faculty/${facultyId}` }),
+        queryKey    : facultyId ? [ KEY_QUERYS.REQUESTS, facultyId ] : [ KEY_QUERYS.REQUESTS ],
+        queryFn     : () => fetchApi<Request[]>({ url }),
         enabled,
     });
 
