@@ -13,6 +13,7 @@ import { RequestFilter }        from "@/components/request/request-filter";
 import { RequestList }          from "@/components/request/request-list";
 import { RequestTable }         from "@/components/request/request-table";
 import { DataPagination }       from "@/components/ui/data-pagination";
+import { RequestForm }          from "@/components/request/request-form";
 
 import { type Request, Status }     from "@/types/request";
 import { Method, fetchApi }         from "@/services/fetch";
@@ -20,13 +21,12 @@ import { errorToast, successToast } from "@/config/toast/toast.config";
 import { KEY_QUERYS }               from "@/consts/key-queries";
 import { useViewMode }              from "@/hooks/use-view-mode";
 import { updateFacultyTotal }       from "@/app/faculties/page";
-import { RequestForm } from "./request-form";
 
 
 interface RequestMainProps {
     requests        : Request[];
     onViewDetails   : ( request: Request ) => void;
-    facultyId       : string;
+    facultyId?      : string;
     isLoading       : boolean;
     isError         : boolean;
 }
@@ -68,8 +68,13 @@ export function RequestMain({
     const deleteRequestMutation = useMutation<Request, Error, string>({
         mutationFn: deleteRequestApi,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.REQUESTS, facultyId] });
-            updateFacultyTotal( queryClient, facultyId, false, 'totalRequests' );
+            // Invalidar queries: si hay facultyId específico, invalidar esa; si no, invalidar todas
+            if ( facultyId ) {
+                queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.REQUESTS, facultyId] });
+                updateFacultyTotal( queryClient, facultyId, false, 'totalRequests' );
+            } else {
+                queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.REQUESTS] });
+            }
             setIsDeleteDialogOpen( false );
             setDeletingRequest( null );
             toast( 'Solicitud eliminada exitosamente', successToast );
