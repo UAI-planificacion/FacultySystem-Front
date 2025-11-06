@@ -30,6 +30,7 @@ import {
 import { Input }                from "@/components/ui/input";
 import { Button }               from "@/components/ui/button";
 import { ShowDateAt }           from "@/components/shared/date-at";
+import { FacultySelect }        from "@/components/shared/item-select/faculty-select";
 import { SectionSelect }        from "@/components/shared/item-select/section-select";
 import { RequestSessionForm }   from "@/components/request/request-session-form";
 import { ChangeStatus }         from "@/components/shared/change-status";
@@ -52,18 +53,19 @@ import { useSession }               from "@/hooks/use-session";
 import { updateFacultyTotal }       from "@/app/faculties/page";
 
 
-export type RequestFormValues = z.infer<typeof formSchema>;
+export type RequestFormValues = z.infer<ReturnType<typeof createFormSchema>>;
 
 
 interface SessionDayModule {
-	session         : Session;
-	dayModuleId     : number;
-	dayId           : number;
-	moduleId        : number;
+	session     : Session;
+	dayModuleId : number;
+	dayId       : number;
+	moduleId    : number;
 }
 
 
 interface CreateRequestWithSessions extends CreateRequest {
+	facultyId?      : string;
 	requestSessions : RequestSessionCreate[];
 }
 
@@ -73,12 +75,15 @@ interface Props {
 	onClose     : () => void;
 	onSuccess?  : () => void;
 	request     : Request | null;
-	facultyId   : string;
+	facultyId?  : string;
 	section?    : OfferSection | null;
 }
 
 
-const formSchema = z.object({
+const createFormSchema = ( requireFacultyId: boolean ) => z.object({
+	facultyId: requireFacultyId 
+		? z.string().min(1, { message: "Debe seleccionar una facultad" })
+		: z.string().optional(),
 	title: z.string({
 		required_error: "El título es obligatorio",
 		invalid_type_error: "El título debe ser un texto"
@@ -95,7 +100,8 @@ const formSchema = z.object({
 })
 
 
-const defaultRequest = ( data : Request | null, sectionId? : string ) => ({
+const defaultRequest = ( data : Request | null, sectionId? : string, facultyId? : string ) => ({
+	facultyId       : data?.facultyId       || facultyId || '',
 	title           : data?.title           || '',
 	status          : data?.status          || Status.PENDING,
 	sectionId       : data?.section?.id     || sectionId || '',
@@ -205,11 +211,15 @@ export function RequestForm({
 	// Mutation para crear request
 	const createRequestMutation = useMutation<Request, Error, CreateRequestWithSessions>({
 		mutationFn  : createRequestWithSessionsApi,
-		onSuccess   : () => {
+		onSuccess   : ( _, variables ) => {
 			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.REQUESTS ]});
 			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.SECTIONS ]});
 			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.SECTIONS, 'not-planning' ]});
-			updateFacultyTotal( queryClient, facultyId, true, 'totalRequests' );
+			// Usar facultyId de props o del formulario
+			const targetFacultyId = facultyId || variables.facultyId;
+			if ( targetFacultyId ) {
+				updateFacultyTotal( queryClient, targetFacultyId, true, 'totalRequests' );
+			}
 			handleClose();
 			toast( 'Solicitud creada exitosamente', successToast );
 			onSuccess?.();
@@ -232,16 +242,16 @@ export function RequestForm({
 
 
 	const form = useForm<RequestFormValues>({
-		resolver        : zodResolver( formSchema ),
-		defaultValues   : defaultRequest( request, propSection?.id )
+		resolver        : zodResolver( createFormSchema( !facultyId )),
+		defaultValues   : defaultRequest( request, propSection?.id, facultyId )
 	});
 
 
 	// Resetear form cuando cambia request o isOpen
 	useEffect(() => {
-		form.reset( defaultRequest( request, propSection?.id ));
+		form.reset( defaultRequest( request, propSection?.id, facultyId ));
 		setSelectedSectionId( propSection?.id || request?.section?.id || null );
-	}, [request, isOpen, propSection]);
+	}, [request, isOpen, propSection, facultyId]);
 
 
 	// Manejar envío del formulario
@@ -373,6 +383,27 @@ export function RequestForm({
                     <Form {...form}>
                         <form onSubmit={ form.handleSubmit( handleSubmit )} className="space-y-4">
                             <div className="grid grid-cols-1 gap-4">
+                                {/* Faculty Select - Solo cuando facultyId es undefined */}
+                                { !facultyId && !request && (
+                                    <FormField
+                                        control = { form.control }
+                                        name    = "facultyId"
+                                        render  = {({ field }) => (
+                                            <FormItem>
+                                                <FacultySelect
+                                                    label               = "Facultad"
+                                                    placeholder         = "Seleccionar facultad"
+                                                    onSelectionChange   = {( value ) => field.onChange( value as string )}
+                                                    defaultValues       = { field.value ? [ field.value ] : [] }
+                                                    multiple            = { false }
+                                                />
+
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
+
                                 {/* Title */}
                                 <FormField
                                     control = { form.control }
