@@ -16,6 +16,7 @@ import { SessionName }				from "@/components/session/session-name";
 import { SessionInfoRequest }		from "@/components/session/session-info-request";
 import { PlanningStepperComponent } from "@/components/section/planning/planning-stepper";
 import { Badge }                    from "@/components/ui/badge";
+import { Skeleton }                 from "@/components/ui/skeleton";
 
 import {
     cn,
@@ -62,95 +63,154 @@ export default function SectionDetailPage(): JSX.Element {
 
 		return requirements;
 	}, [ section ]);
-
+ // ... existing code ...
 
 	if ( !section ) return <></>;
 
 
     return (
-        <PageLayout 
+        <PageLayout
 			title   = {`Planificación de sección ${section.subject.id}-${section.code}`}
 		>
-            <div className="space-y-4">
-                {/* Información de la sección */}
-                <Card>
-                    <CardContent className="mt-4">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
-                            <div>
-                                <Label className="text-xs text-muted-foreground">Asignatura</Label>
+            {isLoading ? (
+                <div className="space-y-4">
+                    <Card>
+                        <CardContent className="mt-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+                                <div>
+                                    <Label className="text-xs text-muted-foreground">Asignatura</Label>
+                                    <Skeleton className="h-5 w-full mt-1" />
+                                </div>
 
-                                <p className="font-medium">{ section.subject.id } - { section.subject.name }</p>
-                            </div>
+                                <div>
+                                    <Label className="text-xs text-muted-foreground">Período</Label>
+                                    <Skeleton className="h-5 w-full mt-1" />
+                                </div>
 
-                            <div>
-                                <Label className="text-xs text-muted-foreground">Período</Label>
-
-                                <p className="font-medium">{ section.period.id } - { section.period.name }</p>
-                            </div>
-
-                            { section.professor && (
                                 <div>
                                     <Label className="text-xs text-muted-foreground">Profesor por Defecto</Label>
-
-                                    <p className="font-medium">{ section.professor.id } - { section.professor.name }</p>
+                                    <Skeleton className="h-5 w-full mt-1" />
                                 </div>
-                            )}
 
-                            <div>
-                                <Label className="text-xs text-muted-foreground">Sesiones Requeridas</Label>
-
-                                <div className="flex gap-2 mt-1">
-                                    {Object.entries( sessionRequirements ).map(([ session, count ]) => (
-                                        <SessionName
-                                            key     = { session }
-                                            session = { session as Session }
-                                            count   = { count }
-                                            isShort = { true }
-                                        />
-                                    ))}
+                                <div>
+                                    <Label className="text-xs text-muted-foreground">Sesiones Requeridas</Label>
+                                    <div className="flex gap-2 mt-1">
+                                        <Skeleton className="h-6 w-16" />
+                                        <Skeleton className="h-6 w-16" />
+                                        <Skeleton className="h-6 w-16" />
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div>
-                                <Label className="text-xs text-muted-foreground">Detalle Espacio por defecto</Label>
+                                <div>
+                                    <Label className="text-xs text-muted-foreground">Detalle Espacio por defecto</Label>
+                                    <div className="flex gap-2 items-center mt-1">
+                                        <Skeleton className="h-5 w-24" />
+                                        <Skeleton className="h-5 w-24" />
+                                        <Skeleton className="h-6 w-12" />
+                                    </div>
+                                </div>
 
-                                <div className="flex gap-2 items-center">
-                                    { section?.building &&
-                                        <span className="font-medium">{ getBuildingName( section.building )}</span>
-                                    }
-                                    { section?.spaceType &&
-                                        <span className="font-medium">{ getSpaceType( section.spaceType )}</span>
-                                    }
-
-                                    { section?.spaceSizeId &&
-                                        <Badge>
-                                            { section.spaceSizeId }
-                                        </Badge>
-                                    }
+                                <div>
+                                    <Label className="text-xs text-muted-foreground">Fechas inicio - fin</Label>
+                                    <Skeleton className="h-5 w-full mt-1" />
                                 </div>
                             </div>
+                        </CardContent>
+                    </Card>
 
-                            <div>
-                                <Label className="text-xs text-muted-foreground">Fechas inicio - fin</Label>
-
-                                <p className="font-medium">{ tempoFormat( section.startDate )} - { tempoFormat( section.endDate )}</p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <div className={cn(
-                    "grid grid-cols-1 gap-4", section.haveRequest && "xl:grid-cols-2"
-                )}>
-                    <SessionInfoRequest
-                        section = { section }
-                        enabled = { !!section }
-                    />
-
-                    {/* Componente de planificación por pasos */}
-                    <PlanningStepperComponent section={ section } />
+                    <div className="grid grid-cols-1 gap-4">
+                        <Card>
+                            <CardContent className="mt-4">
+                                <Skeleton className="h-8 w-48 mb-4" />
+                                <div className="space-y-3">
+                                    <Skeleton className="h-20 w-full" />
+                                    <Skeleton className="h-20 w-full" />
+                                    <Skeleton className="h-20 w-full" />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
                 </div>
-            </div>
+            ) : (
+                <div className="space-y-4">
+                    <Card>
+                        <CardContent className="mt-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+                                <div>
+                                    <Label className="text-xs text-muted-foreground">Asignatura</Label>
+
+                                    <p className="font-medium">{ section.subject.id } - { section.subject.name }</p>
+                                </div>
+
+                                <div>
+                                    <Label className="text-xs text-muted-foreground">Período</Label>
+
+                                    <p className="font-medium">{ section.period.id } - { section.period.name }</p>
+                                </div>
+
+                                { section.professor && (
+                                    <div>
+                                        <Label className="text-xs text-muted-foreground">Profesor por Defecto</Label>
+
+                                        <p className="font-medium">{ section.professor.id } - { section.professor.name }</p>
+                                    </div>
+                                )}
+
+                                <div>
+                                    <Label className="text-xs text-muted-foreground">Sesiones Requeridas</Label>
+
+                                    <div className="flex gap-2 mt-1">
+                                        {Object.entries( sessionRequirements ).map(([ session, count ]) => (
+                                            <SessionName
+                                                key     = { session }
+                                                session = { session as Session }
+                                                count   = { count }
+                                                isShort = { true }
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <Label className="text-xs text-muted-foreground">Detalle Espacio por defecto</Label>
+
+                                    <div className="flex gap-2 items-center">
+                                        { section?.building &&
+                                            <span className="font-medium">{ getBuildingName( section.building )}</span>
+                                        }
+                                        { section?.spaceType &&
+                                            <span className="font-medium">{ getSpaceType( section.spaceType )}</span>
+                                        }
+
+                                        { section?.spaceSizeId &&
+                                            <Badge>
+                                                { section.spaceSizeId }
+                                            </Badge>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <Label className="text-xs text-muted-foreground">Fechas inicio - fin</Label>
+
+                                    <p className="font-medium">{ tempoFormat( section.startDate )} - { tempoFormat( section.endDate )}</p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <div className={cn(
+                        "grid grid-cols-1 gap-4", section.haveRequest && "xl:grid-cols-2"
+                    )}>
+                        <SessionInfoRequest
+                            section = { section }
+                            enabled = { !!section }
+                        />
+
+                        <PlanningStepperComponent section={ section } />
+                    </div>
+                </div>
+            )}
 		</PageLayout>
     );
 }

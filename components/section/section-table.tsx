@@ -49,6 +49,7 @@ import { fetchApi, Method }         from "@/services/fetch"
 import { KEY_QUERYS }               from "@/consts/key-queries"
 import { errorToast, successToast } from "@/config/toast/toast.config"
 import { tempoFormat }              from "@/lib/utils"
+import { Skeleton } from "../ui/skeleton";
 
 
 interface Props {
@@ -242,11 +243,59 @@ export function SectionTable({
 
 				<TableBody>
 					{isLoading ? (
-						<TableRow>
-							<TableCell colSpan={10} className="text-center py-8">
-								Cargando secciones...
-							</TableCell>
-						</TableRow>
+                        <>
+							{Array.from({ length: 15 }).map((_, index) => (
+								<TableRow key={index}>
+                                    {/* Expand */}
+									<TableCell>
+										<Skeleton className="h-8 w-8" />
+									</TableCell>
+                                    {/* Check */}
+									<TableCell>
+										<Skeleton className="h-4 w-4" />
+									</TableCell>
+                                    {/* SSEC */}
+									<TableCell>
+										<Skeleton className="h-4 w-16" />
+									</TableCell>
+                                    {/* Period */}
+									<TableCell>
+										<Skeleton className="h-4 w-12" />
+									</TableCell>
+                                    {/*Sessions  */}
+									<TableCell>
+										<div className="flex gap-1">
+                                            <Skeleton className="h-6 w-8" />
+                                            <Skeleton className="h-6 w-8" />
+                                            <Skeleton className="h-6 w-8" />
+                                            <Skeleton className="h-6 w-8" />
+                                        </div>
+									</TableCell>
+
+                                    {/* Start Date */}
+									<TableCell>
+										<Skeleton className="h-4 w-32" />
+									</TableCell>
+                                    {/* End Date */}
+									<TableCell>
+										<Skeleton className="h-4 w-32" />
+									</TableCell>
+                                    {/* Status */}
+									<TableCell>
+										<Skeleton className="h-8 w-20" />
+									</TableCell>
+
+									<TableCell>
+                                        <div className="flex gap-1">
+                                            <Skeleton className="h-8 w-8" />
+                                            <Skeleton className="h-8 w-8" />
+                                            <Skeleton className="h-8 w-8" />
+                                            <Skeleton className="h-8 w-8" />
+                                        </div>
+									</TableCell>
+								</TableRow>
+							))}
+						</>
 					) : isError ? (
 						<TableRow>
 							<TableCell colSpan={10} className="text-center py-8 text-red-500">
