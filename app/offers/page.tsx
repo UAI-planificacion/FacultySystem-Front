@@ -19,10 +19,14 @@ import { zodResolver }                  from "@hookform/resolvers/zod";
 import { z }                            from "zod";
 
 import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle
+}                           from "@/components/ui/dialog";
+import {
     Card,
     CardContent,
-    CardHeader,
-    CardTitle
 }                           from "@/components/ui/card";
 import { Form}              from "@/components/ui/form";
 import { Button }           from "@/components/ui/button";
@@ -33,19 +37,13 @@ import { PeriodSelect }     from "@/components/shared/item-select/period-select"
 import { OfferList }        from "@/components/offer/offer-list";
 import { OfferTable }       from "@/components/offer/offer-table";
 import { ViewMode }         from "@/components/shared/view-mode";
-import { useViewMode }      from "@/hooks/use-view-mode";
-import {
-	Dialog,
-	DialogContent,
-	DialogHeader,
-	DialogTitle
-}                           from "@/components/ui/dialog";
 import { SubjectUpload }    from "@/components/subject/subject-upload";
 
 import { errorToast, successToast } from "@/config/toast/toast.config";
 import { CreateOfferSubject }       from '@/types/subject.model';
 import { KEY_QUERYS }               from '@/consts/key-queries';
 import { fetchApi, Method }         from '@/services/fetch';
+import { useViewMode }              from "@/hooks/use-view-mode";
 
 
 type BulkOfferSubjectFormValues = z.infer<typeof bulkOfferSchema>;
@@ -86,7 +84,6 @@ const validString = (
 const validBuilding = (
 	value: string | undefined | null
 ): any => value ?? null;
-
 
 /**
  * Extract unique groupIds from offers array
@@ -137,7 +134,9 @@ export default function OffersPage(): JSX.Element {
 		},
 	});
 
-
+	/**
+	 * Handle form submission
+	 */
 	const handleSubmit = ( data: BulkOfferSubjectFormValues ) => {
 		const transformedOffers: CreateOfferSubject[] = data.offers.map( offer => ({
 			...offer,
@@ -169,43 +168,42 @@ export default function OffersPage(): JSX.Element {
 	/**
 	 * Calculate offers statistics
 	 */
+	// Observar todos los cambios del formulario para recalcular stats en tiempo real
+	const formValues = form.watch();
+
 	const offersStats = useMemo(() => {
 		const totalOffers = fields.length;
-		
 		let completedOffers = 0;
 		let totalSectionsToCreate = 0;
 
 		fields.forEach(( field, index ) => {
-			const offer = form.getValues( `offers.${index}` );
+			const offer = formValues?.offers?.[index] || form.getValues(`offers.${index}`);
 			
-			// Check if offer is completed
-			const hasSubject		= !!offer.subjectId;
-			const hasPeriod			= !!offer.periodId;
-			const hasNumberOfSections = (offer.numberOfSections || 0) > 0;
+			// Oferta completada si tiene:
+			const hasSubject = !!offer.subjectId;
+			const hasPeriod = !!offer.periodId;
+			const hasNumberOfSections = ( offer.numberOfSections || 0 ) > 0;
 			const hasAtLeastOneSession = 
-				(offer.lecture || 0) > 0 ||
-				(offer.workshop || 0) > 0 ||
-				(offer.tutoringSession || 0) > 0 ||
-				(offer.laboratory || 0) > 0;
+				( offer.lecture || 0 ) > 0 ||
+				( offer.workshop || 0 ) > 0 ||
+				( offer.tutoringSession || 0 ) > 0 ||
+				( offer.laboratory || 0 ) > 0;
 
 			if ( hasSubject && hasPeriod && hasNumberOfSections && hasAtLeastOneSession ) {
 				completedOffers++;
 			}
 
-			// Calculate total sections to create
-			const numberOfSections = offer.numberOfSections || 0;
-			totalSectionsToCreate += numberOfSections;
+			totalSectionsToCreate += offer.numberOfSections || 0;
 		});
-
-		const incompleteOffers = totalOffers - completedOffers;
 
 		return {
 			totalOffers,
 			completedOffers,
-			incompleteOffers,
+			incompleteOffers   : totalOffers - completedOffers,
 			totalSectionsToCreate,
 		};
-	}, [fields, form]);
+	}, [fields, formValues, form]);
+
 
 
 	return (
@@ -293,28 +291,36 @@ export default function OffersPage(): JSX.Element {
 								{/* Total de ofertas */}
 								<div className="flex items-center gap-2">
 									<Hash className="h-4 w-4 text-muted-foreground" />
+
 									<span className="font-medium">Total:</span>
+
 									<span className="text-muted-foreground">{ offersStats.totalOffers }</span>
 								</div>
 
 								{/* Ofertas completadas */}
 								<div className="flex items-center gap-2">
 									<CheckCircle2 className="h-4 w-4 text-green-500" />
+
 									<span className="font-medium">Completadas:</span>
+
 									<span className="text-green-600">{ offersStats.completedOffers }</span>
 								</div>
 
 								{/* Ofertas incompletas */}
 								<div className="flex items-center gap-2">
 									<AlertCircle className="h-4 w-4 text-orange-500" />
+
 									<span className="font-medium">Incompletas:</span>
+
 									<span className="text-orange-600">{ offersStats.incompleteOffers }</span>
 								</div>
 
 								{/* Total de secciones a crear */}
 								<div className="flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-md">
 									<Save className="h-4 w-4 text-primary" />
+
 									<span className="font-medium">Secciones a crear:</span>
+
 									<span className="text-primary font-bold">{ offersStats.totalSectionsToCreate }</span>
 								</div>
 							</div>
