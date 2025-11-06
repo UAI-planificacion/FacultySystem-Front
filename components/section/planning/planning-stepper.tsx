@@ -403,7 +403,6 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 	const calculateAvailabilityMutation = useMutation({
 		mutationFn  : calculateAvailabilityApi,
 		onSuccess   : ( response ) => {
-			console.log('✅ Respuesta del servicio de disponibilidad:', response);
 			setAvailabilityResponse( response );
 			setCurrentStep( 3 ); // Ir al paso 3
 			toast( 'Disponibilidad calculada exitosamente', successToast );
@@ -461,7 +460,6 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 	// Manejar cálculo de disponibilidad
 	const handleCalculateAvailability = useCallback(() => {
 		const payload = generatePayload();
-		console.log('📤 Payload enviado al servicio de disponibilidad:', payload);
 
 		// Por ahora solo ir al paso 3 sin llamar al servicio
 		setCurrentStep( 3 );
@@ -477,7 +475,7 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 
 
 	return (
-		<Card>
+		<Card className="h-[calc(100vh-500px)] overflow-auto">
 			<CardHeader>
 				<CardTitle className="text-base">
 					Planificación de Sección - Paso {currentStep} de 3
