@@ -9,7 +9,7 @@ import {
 import { Card, CardContent }    from "@/components/ui/card";
 import { RequestCard }          from "@/components/request/request-card";
 
-import { type Request }     from "@/types/request";
+import { type Request } from "@/types/request";
 
 
 interface RequestListProps {
@@ -30,8 +30,6 @@ export function RequestList({
     isLoading,
     isError
 }: RequestListProps ): JSX.Element {
-
-
     if ( isLoading ) {
         return <RequestCardSkeletonGrid count={6} />;
     }
