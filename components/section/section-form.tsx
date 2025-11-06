@@ -1,7 +1,6 @@
 'use client'
 
-import React, { useEffect, useMemo, useState }   from 'react';
-import { useForm }                                  from 'react-hook-form';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import {
     useMutation,
@@ -10,6 +9,7 @@ import {
 import { toast }        from 'sonner';
 import { zodResolver }  from '@hookform/resolvers/zod';
 import * as z           from 'zod';
+import { useForm }      from 'react-hook-form';
 
 import {
     Dialog,
@@ -27,12 +27,15 @@ import {
     FormLabel,
     FormMessage
 }                               from '@/components/ui/form';
+import {
+    SpaceFilterSelector,
+    FilterMode
+}                               from '@/components/shared/space-filter-selector';
 import { Button }               from '@/components/ui/button';
 import { MultiSelectCombobox }  from '@/components/shared/Combobox';
 import { ProfessorSelect }      from '@/components/shared/item-select/professor-select';
 import { BuildingSelect }       from '@/components/shared/item-select/building-select';
 import { CalendarSelect }       from '@/components/ui/calendar-select';
-import { SpaceFilterSelector, FilterMode } from '@/components/shared/space-filter-selector';
 
 import { fetchApi, Method }         from '@/services/fetch';
 import { KEY_QUERYS }               from '@/consts/key-queries';
@@ -132,7 +135,7 @@ export function SectionForm({
             spaceType   : section?.spaceType || '',
             startDate   : section?.startDate ? tempoFormat( section.startDate ) : '',
             endDate     : section?.endDate ? tempoFormat( section.endDate ) : '',
-            professorId : section?.professor.id || '',
+            professorId : section?.professor?.id || '',
         }
     });
 
@@ -146,7 +149,7 @@ export function SectionForm({
                 spaceType   : section.spaceType,
                 startDate   : section.startDate ? tempoFormat( section.startDate ) : '',
                 endDate     : section.endDate ? tempoFormat( section.endDate ) : '',
-                professorId : section.professor.id,
+                professorId : section.professor?.id,
             });
 
             const groupSections = sections.filter( ( s ) => s.groupId === section.groupId );
