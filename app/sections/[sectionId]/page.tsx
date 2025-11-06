@@ -1,9 +1,10 @@
 'use client'
 
-import { JSX, useMemo } from "react";
-import { useParams }    from 'next/navigation';
+import { JSX, useMemo }         from "react";
+import { useParams, useRouter } from 'next/navigation';
 
 import { useQuery } from "@tanstack/react-query";
+import { toast }    from "sonner";
 
 import {
 	Card,
@@ -26,10 +27,12 @@ import { OfferSection } from "@/types/offer-section.model";
 import { Session }	    from "@/types/section.model";
 import { fetchApi }	    from "@/services/fetch";
 import { KEY_QUERYS }   from "@/consts/key-queries";
+import { errorToast }   from "@/config/toast/toast.config";
 
 
 export default function SectionDetailPage(): JSX.Element {
     const params    = useParams();
+    const route     = useRouter();
     const sectionId = params.sectionId as string;
 
     const {
@@ -40,6 +43,11 @@ export default function SectionDetailPage(): JSX.Element {
 		queryKey: [ KEY_QUERYS.SECTIONS, sectionId ],
 		queryFn : () => fetchApi<OfferSection>({ url: `sections/${sectionId}` }),
 	});
+
+    if ( (section?.sessions?.ids?.length ?? 0) > 0 ) {
+        toast('Sección ya está planificada', errorToast);
+        route.push(`/sections?id=${sectionId}`);
+    }
 
 	// Calcular cuántas sesiones de cada tipo necesitamos basado en section
 	const sessionRequirements = useMemo(() => {
