@@ -187,7 +187,7 @@ export function SecondPlanning({
 						)}
 					</div>
 				) : (
-					<div className="space-y-4 max-h-96 overflow-y-auto">
+					<div className="max-h-96 overflow-y-auto grid grid-cols-1 lg:grid-cols-2 gap-4">
 						{Object.entries( sessionRequirements ).map(([ session, required ]) => {
 							const sessionKey = session as Session;
 
