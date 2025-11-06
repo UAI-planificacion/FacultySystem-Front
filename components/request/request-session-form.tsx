@@ -2,7 +2,8 @@
 
 import { JSX, useCallback, useState } from "react"
 
-import { z } from "zod";
+import { z }                from "zod";
+import { TriangleAlert }    from "lucide-react";
 
 import {
 	Tabs,
@@ -14,14 +15,18 @@ import {
 	Card,
 	CardContent,
 }                                   from "@/components/ui/card";
+import {
+    SpaceFilterSelector,
+    FilterMode
+}                                   from "@/components/shared/space-filter-selector";
 import { Button }                   from "@/components/ui/button";
 import { Switch }                   from "@/components/ui/switch";
 import { Textarea }                 from "@/components/ui/textarea";
 import { Label }                    from "@/components/ui/label";
+import { Alert, AlertDescription }  from "@/components/ui/alert";
 import { SessionDayModuleSelector } from "@/components/session/session-day-module-selector";
 import { ProfessorSelect }          from "@/components/shared/item-select/professor-select";
 import { HeadquartersSelect }       from "@/components/shared/item-select/headquarters-select";
-import { SpaceFilterSelector, FilterMode } from "@/components/shared/space-filter-selector";
 
 import { Session }              from "@/types/section.model";
 import { RequestSessionCreate } from "@/types/request-session.model";
@@ -97,6 +102,38 @@ export function RequestSessionForm({
 }: Props ): JSX.Element {
 	// Estado para controlar si usar configuración global
 	const [ useGlobalConfig, setUseGlobalConfig ] = useState<boolean>( false );
+
+	/**
+	 * Detectar si hay diferentes profesores seleccionados entre las sesiones
+	 */
+	const hasDifferentProfessors = (): boolean => {
+		if ( useGlobalConfig ) return false;
+		
+		const professors = availableSessions
+			.map( session => sessionConfigs[session]?.professorId )
+			.filter( id => id !== null && id !== undefined );
+		
+		if ( professors.length <= 1 ) return false;
+		
+		const uniqueProfessors = new Set( professors );
+		return uniqueProfessors.size > 1;
+	};
+
+	/**
+	 * Detectar si hay diferentes edificios seleccionados entre las sesiones
+	 */
+	const hasDifferentBuildings = (): boolean => {
+		if ( useGlobalConfig ) return false;
+		
+		const buildings = availableSessions
+			.map( session => sessionBuildings[session] )
+			.filter( id => id !== null && id !== undefined );
+		
+		if ( buildings.length <= 1 ) return false;
+		
+		const uniqueBuildings = new Set( buildings );
+		return uniqueBuildings.size > 1;
+	};
 
 
 	// Manejar toggle de dayModule
@@ -425,28 +462,52 @@ export function RequestSessionForm({
 							{/* Configuración de la sesión */}
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 								{/* Profesor */}
-								<ProfessorSelect
-									label               = "Profesor"
-									multiple            = { false }
-									placeholder         = "Seleccionar profesor"
-									defaultValues       = { sessionConfigs[session].professorId || undefined }
-									onSelectionChange   = {( value ) => {
-										const professorId = typeof value === 'string' ? value : null;
-										handleSessionConfigChange( session, 'professorId', professorId );
-									}}
-								/>
+								<div className="space-y-2">
+									<ProfessorSelect
+										label               = "Profesor"
+										multiple            = { false }
+										placeholder         = "Seleccionar profesor"
+										defaultValues       = { sessionConfigs[session].professorId || undefined }
+										onSelectionChange   = {( value ) => {
+											const professorId = typeof value === 'string' ? value : null;
+											handleSessionConfigChange( session, 'professorId', professorId );
+										}}
+									/>
+
+									{/* Warning: Diferentes profesores */}
+									{ hasDifferentProfessors() && (
+										<Alert className="border-amber-500/50 bg-amber-500/10">
+											<TriangleAlert className="h-4 w-4 text-amber-500" />
+											<AlertDescription className="text-amber-600 dark:text-amber-400 text-sm">
+												Está seleccionando diferentes profesores
+											</AlertDescription>
+										</Alert>
+									)}
+								</div>
 
 								{/* Edificio */}
-								<HeadquartersSelect
-									label               = "Edificio"
-									multiple            = { false }
-									placeholder         = "Seleccionar edificio"
-									defaultValues       = { sessionBuildings[session] || undefined }
-									onSelectionChange   = {( value ) => {
-										const buildingId = typeof value === 'string' ? value : null;
-										handleBuildingChange( session, buildingId );
-									}}
-								/>
+								<div className="space-y-2">
+									<HeadquartersSelect
+										label               = "Edificio"
+										multiple            = { false }
+										placeholder         = "Seleccionar edificio"
+										defaultValues       = { sessionBuildings[session] || undefined }
+										onSelectionChange   = {( value ) => {
+											const buildingId = typeof value === 'string' ? value : null;
+											handleBuildingChange( session, buildingId );
+										}}
+									/>
+
+									{/* Warning: Diferentes edificios */}
+									{ hasDifferentBuildings() && (
+										<Alert className="border-amber-500/50 bg-amber-500/10">
+											<TriangleAlert className="h-4 w-4 text-amber-500" />
+											<AlertDescription className="text-amber-600 dark:text-amber-400 text-sm">
+												Está seleccionando diferentes edificios
+											</AlertDescription>
+										</Alert>
+									)}
+								</div>
 							</div>
 
 							{/* Selector de filtros de espacio */}
