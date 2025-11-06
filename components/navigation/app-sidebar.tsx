@@ -16,7 +16,8 @@ import {
 	ChevronLeft,
     Album,
     BookOpen,
-    CalendarCog
+    CalendarCog,
+    BookCopy
 } from "lucide-react";
 
 import {
@@ -112,6 +113,12 @@ const navigationItems: NavigationItem[] = [
 		url     : '/sections',
 		icon    : Grid2X2,
 	},
+    {
+        id : 'requests',
+        title : 'Solicitudes',
+        url : '/requests',
+        icon : BookCopy,
+    },
     {
         id : 'planning-change',
         title : 'Cambio de Plan',
