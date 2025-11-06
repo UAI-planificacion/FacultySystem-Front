@@ -151,7 +151,7 @@ export interface OfferSection {
     lecture         : number;
     tutoringSession : number;
     laboratory      : number;
-    professor       : OfferSectionProffesor;
+    professor       : OfferSectionProffesor | null;
     subject         : OfferSectionSubject;
     period          : OfferSectionPeriod;
     sessionsCount   : number;
