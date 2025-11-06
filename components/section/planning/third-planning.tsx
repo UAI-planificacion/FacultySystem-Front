@@ -53,14 +53,6 @@ import { errorToast, successToast }     from "@/config/toast/toast.config";
 import { OfferSection }                 from "@/types/offer-section.model";
 import { KEY_QUERYS }                   from "@/consts/key-queries";
 
-/**
- * Extract unique groupIds from sections array
- */
-const getUniqueGroupIds = ( sections: OfferSection[] ): string => {
-	const uniqueIds = Array.from( new Set( sections.map( section => section.groupId )));
-	return uniqueIds.join( ',' );
-};
-
 
 interface SessionDayModule {
 	session			: Session;
@@ -118,17 +110,18 @@ export function ThirdPlanning({
 	const hasSessionsWithoutDates = sessionsWithoutDates.length > 0;
 
 	// Verificar si todas las sesiones tienen espacio asignado
-	const allSessionsHaveSpace = useMemo(() => {
-		if ( !response ) return false;
+	// const allSessionsHaveSpace = useMemo(() => {
+	// 	if ( !response ) return false;
 		
-		return response.every(( item ) => {
-			const selection = selections[ item.session ];
-			return selection?.spaceId != null;
-		});
-	}, [ response, selections ]);
+	// 	return response.every(( item ) => {
+	// 		const selection = selections[ item.session ];
+	// 		return selection?.spaceId != null;
+	// 	});
+	// }, [ response, selections ]);
 
 	// Verificar si se puede reservar
-	const canReserve = !hasUnavailableSessions && !hasSessionsWithoutDates && allSessionsHaveSpace;
+	const canReserve = !hasUnavailableSessions && !hasSessionsWithoutDates ;
+	// const canReserve = !hasUnavailableSessions && !hasSessionsWithoutDates && allSessionsHaveSpace;
 	// Mutación para reservar sesiones
 	const reserveMutation = useMutation<OfferSection, Error, SessionMassiveCreate[]>({
 		mutationFn: async ( payload: SessionMassiveCreate[] ): Promise<OfferSection> => {
@@ -149,12 +142,12 @@ export function ThirdPlanning({
 	});
 
 	// Manejar cambio de espacio
-	const handleSpaceChange = ( session: string, spaceId: string ) => {
+	const handleSpaceChange = ( session: string, spaceId: string | undefined ) => {
 		setSelections(( prev ) => ({
 			...prev,
 			[ session ]: {
 				...prev[ session ],
-				spaceId
+				spaceId: spaceId || null
 			}
 		}));
 	};
@@ -236,7 +229,6 @@ export function ThirdPlanning({
 			};
 		});
 
-		console.log('🚀 ~ file: third-planning.tsx ~ payload:', payload)
 		reserveMutation.mutate( payload );
 	};
 
@@ -457,7 +449,7 @@ export function ThirdPlanning({
 									<Label className="text-sm font-medium">Espacio Global</Label>
 									<MultiSelectCombobox
 										multiple			= { false }
-										required			= { true }
+										required			= { false }
 										placeholder			= "Seleccione un espacio"
 										searchPlaceholder	= "Buscar espacio..."
 										defaultValues		= { globalSpaceId }
@@ -486,7 +478,7 @@ export function ThirdPlanning({
 
 											<MultiSelectCombobox
 												multiple			= { false }
-												required			= { true }
+												required			= { false }
 												placeholder			= "Seleccione un espacio"
 												searchPlaceholder	= "Buscar espacio..."
 												defaultValues		= { spaceDefaultValues[ item.session ] }
@@ -494,9 +486,7 @@ export function ThirdPlanning({
 												options				= { spaceOptionsBySession[ item.session ] ?? [] }
 												onSelectionChange	= {( value ) => {
 													const spaceId = typeof value === 'string' ? value : undefined;
-													if ( spaceId ) {
-														handleSpaceChange( item.session, spaceId );
-													}
+													handleSpaceChange( item.session, spaceId );
 												}}
 											/>
 
@@ -539,6 +529,7 @@ export function ThirdPlanning({
 							{ useSameProfessor ? (
 								<div className="space-y-3">
 									<Label className="text-sm font-medium">Profesor Global <span className="text-muted-foreground text-xs">(Opcional)</span></Label>
+
 									<MultiSelectCombobox
 										multiple			= { false }
 										required			= { false }
@@ -548,6 +539,7 @@ export function ThirdPlanning({
 										options				= { commonProfessors }
 										onSelectionChange	= { handleGlobalProfessorChange }
 									/>
+
 									<p className="text-xs text-muted-foreground">
 										Este profesor se aplicará a todas las sesiones
 									</p>
