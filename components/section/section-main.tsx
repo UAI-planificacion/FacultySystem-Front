@@ -15,6 +15,7 @@ import {
 	useQueryClient
 }                   from '@tanstack/react-query';
 import { toast }    from 'sonner';
+import * as XLSX    from 'xlsx';
 
 import {
     Card,
@@ -35,12 +36,13 @@ import { ProfessorSelect }          from '@/components/shared/item-select/profes
 import { DaySelect }                from '@/components/shared/item-select/days-select';
 import { SectionTable }             from '@/components/section/section-table';
 import { SessionMassiveUpdateForm } from '@/components/session/session-massive-update-form';
+import { DeleteConfirmDialog }      from '@/components/dialog/DeleteConfirmDialog';
 
 import { KEY_QUERYS }               from '@/consts/key-queries';
 import { fetchApi, Method }         from '@/services/fetch';
 import { OfferSection }             from '@/types/offer-section.model';
 import { errorToast, successToast } from '@/config/toast/toast.config';
-import { DeleteConfirmDialog }      from '@/components/dialog/DeleteConfirmDialog';
+import { ExcelIcon } from '@/icons/ExcelIcon';
 
 
 interface Props {
@@ -55,6 +57,41 @@ const stateOptions = [
     { label: 'Abiertas', value: 'open' },
     { label: 'Cerradas', value: 'closed' }
 ];
+
+
+interface excelColumn {
+    SSEC            : string;
+    sessionId       : string;
+    [key: string]   : string;
+}
+
+/**
+ * Genera y descarga un archivo Excel con las sesiones que no tienen spaceId o professorId asignado
+ * @param sections - Array de secciones a procesar
+ * @param type - Tipo de filtro: 'space' para espacios o 'professor' para profesores
+ */ 
+function generateSessionsExcel(sections: OfferSection[], type: 'space' | 'professor'): void {
+    const fileName      = type === 'space' ? 'sesiones_sin_espacios.xlsx' : 'sesiones_sin_profesores.xlsx';
+    const columnName    = type === 'space' ? 'spaceId' : 'professorId';
+
+    const excelData: excelColumn[] =
+        sections.flatMap(( section ) =>
+            section.sessions
+                .filter(( session ) => !session[columnName])
+                .map(( session ) => ({
+                    SSEC            : `${section.subject.id}-${section.code}`,
+                    sessionId       : session.id,
+                    [columnName]    : ''
+                }))
+        );
+
+    // Crear el libro de trabajo (workbook)
+    const worksheet = XLSX.utils.json_to_sheet( excelData );
+    const workbook  = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet( workbook, worksheet, 'Sesiones' );
+    // Descargar el archivo
+    XLSX.writeFile( workbook, fileName );
+}
 
 
 export function SectionMain({
@@ -103,7 +140,7 @@ export function SectionMain({
         isError     : isErrorSections
     } = useQuery<OfferSection[]>({
         queryKey: [ KEY_QUERYS.SECTIONS ],
-        queryFn : () => fetchApi({ url     : 'Sections' }),
+        queryFn : () => fetchApi<OfferSection[]>({ url: 'Sections' }),
         enabled,
     });
 
@@ -125,8 +162,8 @@ export function SectionMain({
             const matchesId         = idFilter.length       === 0 || idFilter === section.id;
             const matchesGroupId    = groupIdFilter.length  === 0 || groupIdFilter.includes( section.groupId );
             const matchesCode       = codeFilter.length     === 0 || codeFilter.includes( section.code.toString() );
-            const matchesRoom       = roomFilter.length     === 0 || section.sessions.spaceIds.some( spaceId => roomFilter.includes( spaceId ));
-            const matchesDay        = dayFilter.length      === 0 || section.sessions.dayIds.some( dayId => dayFilter.includes( dayId.toString() ));
+            const matchesRoom       = roomFilter.length     === 0 || section.sessions.map( s => s.spaceId ).some( spaceId => roomFilter.includes( spaceId ));
+            const matchesDay        = dayFilter.length      === 0 || section.sessions.map( s => s.dayId ).some( dayId => dayFilter.includes( dayId.toString() ));
             const matchesPeriod     = periodFilter.length   === 0 || periodFilter.includes( section.period.id );
             const matchesStatus     = statusFilter.length   === 0 || statusFilter.includes( section.isClosed ? 'closed' : 'open' );
             const matchesSubject    = subjectFilter.length  === 0 || subjectFilter.includes( section.subject.id );
@@ -140,8 +177,8 @@ export function SectionMain({
                 return false;
             });
 
-            const matchesModule     = moduleFilter.length       === 0 || section.sessions.moduleIds.some( moduleId => moduleFilter.includes( moduleId.toString() ));
-            const matchesProfessor  = professorFilter.length    === 0 || section.sessions.professorIds.some( professorId => professorFilter.includes( professorId ));
+            const matchesModule     = moduleFilter.length       === 0 || section.sessions.map( s => s.moduleId ).some( moduleId => moduleFilter.includes( moduleId.toString() ));
+            const matchesProfessor  = professorFilter.length    === 0 || section.sessions.map( s => s.professorId ).some( professorId => professorFilter.includes( professorId ));
 
             return matchesId && matchesGroupId && matchesCode && matchesRoom && matchesDay && matchesPeriod && matchesStatus && matchesSubject && matchesSize && matchesSession && matchesModule && matchesProfessor;
         });
@@ -377,7 +414,31 @@ export function SectionMain({
                         </Button>
                     </CardContent>
 
-                    <CardFooter className="grid space-y-4">
+                    <CardFooter className="grid space-y-2">
+                        <div className="flex items-center gap-2">
+                            <Button
+                                onClick     = {() => generateSessionsExcel(sectionsData, 'space')}
+                                className   = "gap-2 w-full bg-green-800 hover:bg-green-900"
+                                disabled    = { sectionsData.every( section => section.sessions.every( s => s.spaceId && s.spaceId !== '' ))}
+                                variant     = "secondary"
+                                title       ="Descargar excel con sesiones sin espacios asignados"
+                            >
+                                <ExcelIcon />
+                                Espacios
+                            </Button>
+
+                            <Button
+                                onClick     = {() => generateSessionsExcel(sectionsData, 'professor')}
+                                className   = "gap-2 w-full bg-green-800 hover:bg-green-900"
+                                disabled    = { sectionsData.every( section => section.sessions.every( s => s.professorId && s.professorId !== '' ))}
+                                variant     = "secondary"
+                                title       = "Descargar excel con sesiones sin profesores asignados"
+                            >
+                                <ExcelIcon />
+                                Profesores
+                            </Button>
+                        </div>
+
                         <Button
                             onClick     = { handleOpenDeleteSessions }
                             className   = "gap-2 w-full"
