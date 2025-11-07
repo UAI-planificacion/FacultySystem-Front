@@ -278,7 +278,7 @@ export function SectionForm({
                             </div>
                         </div>
 
-                        {( section?.sessions.ids?.length ?? 0 ) === 0 &&
+                        {( section?.sessions.map( s => s.spaceId ).length ?? 0 ) === 0 &&
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {/* Start Date Field */}
                                 <FormField

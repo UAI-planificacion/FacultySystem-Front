@@ -99,7 +99,7 @@ export function SectionTable({
 	 * Check if section is fully selected
 	 */
 	const isSectionFullySelected = useCallback(( section: OfferSection ): boolean => {
-		const sessionIds = section.sessions.ids || [];
+		const sessionIds = section.sessions.map( s => s.id ) || [];
 		
 		if ( sessionIds.length === 0 ) return false;
 		
@@ -116,9 +116,8 @@ export function SectionTable({
 			return;
 		}
 
-		const sessionIds = section.sessions?.ids || [];
+		const sessionIds = section.sessions.map( s => s.id ) || [];
 		const newSelectedSessions = new Set( selectedSessions );
-
 		const shouldSelect = checked === true || checked === 'indeterminate';
 
 		sessionIds.forEach( ( sessionId ) => {
@@ -137,12 +136,12 @@ export function SectionTable({
 	 * Check if section is partially selected
 	 */
 	const isSectionPartiallySelected = useCallback(( section: OfferSection ): boolean => {
-		const sessionIds = section.sessions.ids || [];
-		
+		const sessionIds = section.sessions.map( s => s.id ) || [];
+
 		if ( sessionIds.length === 0 ) return false;
-		
+
 		const selectedSessionIds = sessionIds.filter( id => selectedSessions.has( id ));
-		
+
 		return selectedSessionIds.length > 0 && selectedSessionIds.length < sessionIds.length;
 	}, [ selectedSessions ]);
 
