@@ -34,10 +34,10 @@ type OfferSubjectFormValues = z.infer<typeof offerSchema>;
 
 
 interface Props {
-	facultyId		: string;
-	subject?		: Subject;
-	isOpen			: boolean;
-	onClose			: () => void;
+	facultyId   : string;
+	subject?    : Subject;
+	isOpen	    : boolean;
+	onClose	    : () => void;
 }
 
 /**
@@ -66,6 +66,7 @@ const emptyOfferSubject = ( subject: Subject | undefined ): OfferSubjectFormValu
 		lecture				: subject?.lecture			|| 0,
 		tutoringSession		: subject?.tutoringSession	|| 0,
 		laboratory			: subject?.laboratory		|| 0,
+        quota				: subject?.quota			|| 1,
 	};
 };
 
