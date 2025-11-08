@@ -109,7 +109,6 @@ export function OfferFormFields({
 			setValue( `${fieldPrefix}.lecture`,				selectedSubject.lecture );
 			setValue( `${fieldPrefix}.tutoringSession`,		selectedSubject.tutoringSession );
 			setValue( `${fieldPrefix}.laboratory`,			selectedSubject.laboratory );
-
             setValue( `${fieldPrefix}.quota`,				selectedSubject.quota );
 		}
 	}, [selectedSubject, setValue, fieldPrefix]);
