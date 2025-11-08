@@ -42,7 +42,7 @@ import { KEY_QUERYS }               from '@/consts/key-queries';
 import { fetchApi, Method }         from '@/services/fetch';
 import { OfferSection }             from '@/types/offer-section.model';
 import { errorToast, successToast } from '@/config/toast/toast.config';
-import { ExcelIcon } from '@/icons/ExcelIcon';
+import { ExcelIcon }                from '@/icons/ExcelIcon';
 
 
 interface Props {
