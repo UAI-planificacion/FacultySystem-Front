@@ -10,6 +10,9 @@ export const offerSchema = z.object({
 	numberOfSections: z.number()
         .min(1, "El número de secciones debe ser mayor o igual a 1")
         .max(100, "El número de secciones no puede ser mayor a 100"),
+	quota: z.number()
+        .min(1, "El cupo debe ser mayor o igual a 1")
+        .max(999, "El cupo no puede ser mayor a 999"),
 	spaceType       : z.string().nullable().optional(),
 	spaceSizeId     : z.string().nullable().optional(),
 	building        : z.string().nullable().optional(),

@@ -109,6 +109,8 @@ export function OfferFormFields({
 			setValue( `${fieldPrefix}.lecture`,				selectedSubject.lecture );
 			setValue( `${fieldPrefix}.tutoringSession`,		selectedSubject.tutoringSession );
 			setValue( `${fieldPrefix}.laboratory`,			selectedSubject.laboratory );
+
+            setValue( `${fieldPrefix}.quota`,				selectedSubject.quota );
 		}
 	}, [selectedSubject, setValue, fieldPrefix]);
 
@@ -235,7 +237,7 @@ export function OfferFormFields({
             {/* Campos habilitados solo cuando hay asignatura seleccionada */}
             {hasSelectedSubject && (
                 <>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Profesor */}
                         <FormField
                             control	= { control }
@@ -293,11 +295,59 @@ export function OfferFormFields({
                         typeFilter			= "type"
                     />
 
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                            control	= { control }
+                            name	= {`${fieldPrefix}.numberOfSections`}
+                            render	= {({ field }) => (
+                                <FormItem>
+                                    <FormLabel>N° Secciones *</FormLabel>
+
+                                    <FormControl>
+                                        <Input
+                                            type		= "number"
+                                            min			= "1"
+                                            max			= "100"
+                                            placeholder	= "Número de Secciones"
+                                            {...field}
+                                            onChange	= {(e) => field.onChange(parseInt(e.target.value) || 1)}
+                                        />
+                                    </FormControl>
+
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control	= { control }
+                            name	= {`${fieldPrefix}.quota`}
+                            render	= {({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Cupo *</FormLabel>
+
+                                    <FormControl>
+                                        <Input
+                                            type		= "number"
+                                            min			= "1"
+                                            max			= "999"
+                                            placeholder	= "Cupo"
+                                            {...field}
+                                            onChange	= {(e) => field.onChange(parseInt(e.target.value) || 1)}
+                                        />
+                                    </FormControl>
+
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+
                     {/* Sesiones */}
                     <div className="space-y-1">
-                        <div className="space-y-3">
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-center">
-                                <FormField
+                        {/* <div className="space-y-3"> */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-center">
+                                {/* <FormField
                                     control	= { control }
                                     name	= {`${fieldPrefix}.numberOfSections`}
                                     render	= {({ field }) => (
@@ -318,7 +368,7 @@ export function OfferFormFields({
                                             <FormMessage />
                                         </FormItem>
                                     )}
-                                />
+                                /> */}
 
                                 <SessionButton
                                     session				= { Session.C }
@@ -352,7 +402,7 @@ export function OfferFormFields({
                                     showLabel			= { true }
                                 />
                             </div>
-                        </div>
+                        {/* </div> */}
 
                         <FormField
                             control	= { control }
