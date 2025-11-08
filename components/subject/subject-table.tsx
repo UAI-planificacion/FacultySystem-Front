@@ -9,18 +9,19 @@ import {
 	TableHead,
 	TableHeader,
 	TableRow
-}                                   from "@/components/ui/table";
-import { Button }                   from "@/components/ui/button";
-import { ScrollArea }               from "@/components/ui/scroll-area";
-import { Card, CardContent }        from "@/components/ui/card";
-import { ActionButton }             from "@/components/shared/action";
-import { ActiveBadge }              from "@/components/shared/active";
-import { SpaceSizeType }            from "@/components/shared/space-size-type";
-import { SessionShort }             from "@/components/session/session-short";
+}                               from "@/components/ui/table";
 import {
 	SubjectTableSkeleton,
 	SubjectErrorMessage
-}                                   from "@/components/subject/subject-table-skeleton";
+}                               from "@/components/subject/subject-table-skeleton";
+import { Button }               from "@/components/ui/button";
+import { ScrollArea }           from "@/components/ui/scroll-area";
+import { Card, CardContent }    from "@/components/ui/card";
+import { ActionButton }         from "@/components/shared/action";
+import { ActiveBadge }          from "@/components/shared/active";
+import { SpaceSizeType }        from "@/components/shared/space-size-type";
+import { SessionShort }         from "@/components/session/session-short";
+
 
 import { Subject } from "@/types/subject.model";
 
@@ -59,14 +60,15 @@ export function SubjectTable({
 						<Table>
 							<TableHeader className="sticky top-0 z-10 bg-background">
 								<TableRow>
-									<TableHead className="bg-background w-[90px]">Sigla</TableHead>
+									<TableHead className="bg-background w-[120px]">Sigla</TableHead>
 									<TableHead className="bg-background w-[400px]">Nombre</TableHead>
 									{ showFacultyColumn && (
 										<TableHead className="bg-background w-[200px] text-start">Facultad</TableHead>
 									)}
-									<TableHead className="bg-background w-[110px] text-start">Espacio</TableHead>
-									<TableHead className="bg-background w-[140px] text-start">Sesiones</TableHead>
+									<TableHead className="bg-background w-[140px] text-start">Espacio</TableHead>
+									<TableHead className="bg-background w-[170px] text-start">Sesiones</TableHead>
 									<TableHead className="bg-background w-[100px] text-start">Grado</TableHead>
+									<TableHead className="bg-background w-[100px] text-start">Cupo</TableHead>
 									<TableHead className="bg-background w-[100px] text-start">Estado</TableHead>
 									<TableHead className="bg-background w-[120px] text-right">Acciones</TableHead>
 								</TableRow>
@@ -84,7 +86,7 @@ export function SubjectTable({
 										{ subjects.map(( subject ) => (
 											<TableRow key={ subject.id }>
 												{/* Sigla */}
-												<TableCell className="font-medium w-[90px] truncate">
+												<TableCell className="font-medium w-[120px] truncate">
 													{ subject.id }
 												</TableCell>
 
@@ -107,7 +109,7 @@ export function SubjectTable({
 												)}
 
 												{/* Espacio */}
-												<TableCell className="w-[110px]">
+												<TableCell className="w-[140px]">
 													<div className="flex justify-end">
 														<SpaceSizeType
 															spaceType	= { subject.spaceType }
@@ -117,7 +119,7 @@ export function SubjectTable({
 												</TableCell>
 
 												{/* Sesiones */}
-												<TableCell className="w-[140px]">
+												<TableCell className="w-[170px]">
 													<div className="flex justify-center">
 														<SessionShort
 															showZero		= { true }
@@ -137,6 +139,13 @@ export function SubjectTable({
 														{ subject.grade?.name }
 													</div>
 												</TableCell>
+
+                                                {/* Cupo */}
+                                                <TableCell className="w-[100px]">
+                                                    <div className="flex justify-center">
+                                                        { subject.quota ?? '-' }
+                                                    </div>
+                                                </TableCell>
 
 												{/* Estado */}
 												<TableCell className="w-[100px] text-end">

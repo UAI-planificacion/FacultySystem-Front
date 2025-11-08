@@ -10,6 +10,7 @@ interface BaseSubject {
     lecture         : number;
     tutoringSession : number;
     laboratory      : number;
+    quota           : number | null;
 }
 
 
@@ -31,9 +32,8 @@ export interface Subject extends BaseSubject {
 
 
 export interface CreateSubject extends BaseSubject {
-    facultyId: string;
-    gradeId         : string | null;
-
+    facultyId   : string;
+    gradeId     : string | null;
 }
 
 
@@ -57,4 +57,5 @@ export interface CreateOfferSubject {
 	laboratory      : number;
 	startDate       : Date;
 	endDate         : Date;
+    quota           : number;
 }

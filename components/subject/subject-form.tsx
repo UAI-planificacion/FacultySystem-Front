@@ -94,6 +94,7 @@ const createFormSchema = ( isEditing: boolean ) => {
 		tutoringSession : z.number().min( 0, "La sesión tutorial debe ser mayor o igual a 0" ),
 		laboratory      : z.number().min( 0, "El laboratorio debe ser mayor o igual a 0" ),
 		isActive        : z.boolean(),
+        quota           : z.number(),
 	});
 
 	return baseSchema.refine(( data ) => {
@@ -119,6 +120,7 @@ export type SubjectFormValues = {
 	tutoringSession : number;
 	laboratory      : number;
 	isActive        : boolean;
+    quota           : number;
 };
 
 
@@ -143,6 +145,7 @@ const emptySubject = ( subject: Subject | undefined, facultyId: string | null ):
         tutoringSession : subject?.tutoringSession  || 0,
         laboratory      : subject?.laboratory       || 0,
         isActive        : subject?.isActive         ?? true,
+        quota           : subject?.quota || 0,
     };
 };
 
@@ -445,7 +448,29 @@ export function SubjectForm({
 									/>
 								</div>
 
-								<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+								<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-center">
+                                    <FormField
+                                        control = { form.control }
+                                        name    = "quota"
+                                        render  = {({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Cupo</FormLabel>
+
+                                                <Input
+                                                    type    = "number"
+                                                    placeholder="Ingrese el cupo"
+                                                    {...field}
+                                                    value   = { field.value || "" }
+                                                    min     = "0"
+                                                    max     = "999"
+                                                    onChange	= {(e) => field.onChange(parseInt(e.target.value) || 1)}
+                                                />
+
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
 									<SessionButton
 										session             = { Session.C }
 										updateSessionCount  = { updateSessionCount }
