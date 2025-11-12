@@ -6,24 +6,25 @@ import {
 	useEffect,
 	useMemo,
 	useState
-} from 'react';
-import { useRouter } from 'next/navigation';
+}                       from 'react';
+import { useRouter }    from 'next/navigation';
 
 import {
 	Upload,
-	HardDriveDownload,
 	FileSpreadsheet,
 	AlertCircle,
+	ChevronRight,
 	Table,
 	Users,
-	X
-} from 'lucide-react';
+	X,
+    DownloadIcon
+}                       from 'lucide-react';
 import {
 	useMutation,
 	useQueryClient
-} from '@tanstack/react-query';
-import { useDropzone } from 'react-dropzone';
-import { toast } from 'sonner';
+}                       from '@tanstack/react-query';
+import { useDropzone }  from 'react-dropzone';
+import { toast }        from 'sonner';
 
 import {
 	Dialog,
@@ -32,78 +33,54 @@ import {
 	DialogFooter,
 	DialogHeader,
 	DialogTitle
-} from '@/components/ui/dialog';
-import {
-	Card,
-	CardContent
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import {
-	ToggleGroup,
-	ToggleGroupItem
-} from '@/components/ui/toggle-group';
+}                                   from '@/components/ui/dialog';
 
+import { Card, CardContent }        from '@/components/ui/card';
+import { Button }                   from '@/components/ui/button';
+import { Alert, AlertDescription }  from '@/components/ui/alert';
+
+import { SessionAvailabilityResult } from '@/types/session-availability.model';
+import { OfferSection }             from '@/types/offer-section.model';
 import { successToast, errorToast } from '@/config/toast/toast.config';
-import { ENV } from '@/config/envs/env';
-import { KEY_QUERYS } from '@/consts/key-queries';
-import { cn } from '@/lib/utils';
-import { Method } from '@/services/fetch';
-import { ExcelIcon } from '@/icons/ExcelIcon';
-import {
-	SessionAvailabilityResult,
-	SessionAssignmentCache,
-	SessionAssignmentType
-} from '@/types/session-availability.model';
-import { OfferSection } from '@/types/offer-section.model';
+import { ENV }                      from '@/config/envs/env';
+import { KEY_QUERYS }               from '@/consts/key-queries';
+import { cn }                       from '@/lib/utils';
+import { Method }                   from '@/services/fetch';
+import { ExcelIcon }                from '@/icons/ExcelIcon';
+
 
 interface UploadError {
-	type  : 'format' | 'size' | 'general';
-	message  : string;
+	type    : 'format' | 'size' | 'general';
+	message : string;
 }
 
-interface UploadVariables {
-	file  : File;
-	type  : SessionAssignmentType;
-}
 
 interface FileFormProps {
-	isOpen  : boolean;
-	onClose  : () => void;
-	sections  : OfferSection[];
+	isOpen      : boolean;
+	onClose     : () => void;
+	sections    : OfferSection[];
 }
 
-interface DownloadAvailability {
-	space  : boolean;
-	professor  : boolean;
-}
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
-
+const MAX_FILE_SIZE     = 10 * 1024 * 1024;
 const DOWNLOAD_ENDPOINT = `${ENV.REQUEST_BACK_URL}${KEY_QUERYS.SESSIONS}/without-reservation`;
+const UPLOAD_ENDPOINT   = `${ENV.REQUEST_BACK_URL}${KEY_QUERYS.SESSIONS}/bulk-upload`;
+console.log('🚀 ~ file: file-form.tsx:67 ~ UPLOAD_ENDPOINT:', UPLOAD_ENDPOINT)
 
-const UPLOAD_ENDPOINT = `${ENV.REQUEST_BACK_URL}${KEY_QUERYS.SESSIONS}/bulk-upload`;
-
-const FILE_NAMES: Record<SessionAssignmentType, string> = {
-	space  : 'sesiones_sin_espacios.xlsx',
-	professor  : 'sesiones_sin_profesores.xlsx',
-	registrants  : 'sesiones_registros.xlsx'
-};
 
 export function FileForm({
 	isOpen,
 	onClose,
 	sections
 }: FileFormProps ): JSX.Element {
-	const router  = useRouter();
-	const queryClient  = useQueryClient();
-	const [ selectedType, setSelectedType ] = useState<SessionAssignmentType | null>( null );
-	const [ selectedFile, setSelectedFile ] = useState<File | null>( null );
-	const [ uploadError, setUploadError ] = useState<UploadError | null>( null );
-	const [ isDownloading, setIsDownloading ] = useState<boolean>( false );
+	const router        = useRouter();
+	const queryClient   = useQueryClient();
 
-	const availability = useMemo<DownloadAvailability>(() => {
+	const [ selectedFile, setSelectedFile ]     = useState<File | null>( null );
+	const [ uploadError, setUploadError ]       = useState<UploadError | null>( null );
+	const [ isDownloading, setIsDownloading ]   = useState<boolean>( false );
+	const [ currentDownload, setCurrentDownload ] = useState<string | null>( null );
+
+	const availability = useMemo(() => {
 		const hasMissingSpaces = sections.some(( section ) =>
 			section.sessions.some(( session ) => !session.spaceId || session.spaceId.trim() === '' )
 		);
@@ -113,25 +90,22 @@ export function FileForm({
 		);
 
 		return {
-			space  : hasMissingSpaces,
-			professor  : hasMissingProfessors
+			space       : hasMissingSpaces,
+			professor   : hasMissingProfessors
 		};
 	}, [ sections ]);
 
+
 	useEffect(() => {
 		if ( !isOpen ) {
-			setSelectedType( null );
 			setSelectedFile( null );
 			setUploadError( null );
+			setCurrentDownload( null );
 		}
 	}, [ isOpen ]);
 
-	useEffect(() => {
-		setSelectedFile( null );
-		setUploadError( null );
-	}, [ selectedType ]);
 
-	const validateFile = useCallback(( file: File ): UploadError | null => {
+    const validateFile = useCallback(( file: File ): UploadError | null => {
 		const allowedTypes = [
 			'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 			'application/vnd.ms-excel',
@@ -140,28 +114,29 @@ export function FileForm({
 
 		if ( !allowedTypes.includes( file.type )) {
 			return {
-				type  : 'format',
-				message  : 'Solo se permiten archivos Excel (.xlsx, .xls) o CSV (.csv)'
+				type    : 'format',
+				message : 'Solo se permiten archivos Excel (.xlsx, .xls) o CSV (.csv)'
 			};
 		}
 
 		if ( file.size > MAX_FILE_SIZE ) {
 			return {
-				type  : 'size',
-				message  : 'El archivo no puede ser mayor a 10MB'
+				type    : 'size',
+				message : 'El archivo no puede ser mayor a 10MB'
 			};
 		}
 
 		return null;
 	}, []);
 
+
 	const onDrop = useCallback(( acceptedFiles: File[] ) => {
 		setUploadError( null );
 
 		if ( acceptedFiles.length === 0 ) {
 			setUploadError({
-				type  : 'general',
-				message  : 'No se pudo procesar el archivo seleccionado'
+				type    : 'general',
+				message : 'No se pudo procesar el archivo seleccionado'
 			});
 			return;
 		}
@@ -179,11 +154,12 @@ export function FileForm({
 		toast( 'Archivo seleccionado correctamente', successToast );
 	}, [ validateFile ]);
 
-	const uploadMutation = useMutation<SessionAvailabilityResult[], Error, UploadVariables>({
-		mutationFn  : async ({ file, type }) => {
+
+	const uploadMutation = useMutation<SessionAvailabilityResult[], Error, File>({
+		mutationFn  : async ( file ) => {
 			const formData = new FormData();
 			formData.append( 'file', file );
-			const response = await fetch( `${UPLOAD_ENDPOINT}/${type}`, {
+			const response = await fetch( `${UPLOAD_ENDPOINT}`, {
 				method  : Method.POST,
 				body  : formData
 			});
@@ -195,18 +171,13 @@ export function FileForm({
 
 			return await response.json() as SessionAvailabilityResult[];
 		},
-		onSuccess  : ( data, variables ) => {
-			const cacheValue: SessionAssignmentCache = {
-				type  : variables.type,
-				results  : data
-			};
-
-			queryClient.setQueryData<SessionAssignmentCache>(
-				[ KEY_QUERYS.SESSIONS ],
-				cacheValue
+		onSuccess  : ( data ) => {
+			queryClient.setQueryData<SessionAvailabilityResult[]>(
+				[ KEY_QUERYS.SESSIONS, 'assignment' ],
+				data
 			);
 
-			console.log( 'SessionAvailabilityResult', cacheValue );
+			console.log( 'SessionAvailabilityResult', data );
 			toast( 'Archivo procesado correctamente ✅', successToast );
 			router.push( '/sections/assignment' );
 		},
@@ -216,51 +187,29 @@ export function FileForm({
 	});
 
 	const handleUpload = (): void => {
-		if ( !selectedType ) {
-			toast( 'Selecciona un tipo antes de subir un archivo', errorToast );
-			return;
-		}
-
-		if ( selectedType === 'registrants' ) {
-			toast( 'La subida para Registros estará disponible próximamente', errorToast );
-			return;
-		}
-
 		if ( !selectedFile ) {
 			toast( 'Por favor selecciona un archivo primero', errorToast );
 			return;
 		}
 
-		uploadMutation.mutate({
-			file  : selectedFile,
-			type  : selectedType
-		});
+		uploadMutation.mutate( selectedFile );
 	};
 
-	const handleDownload = async (): Promise<void> => {
-		if ( !selectedType ) {
-			toast( 'Selecciona un tipo antes de descargar', errorToast );
-			return;
-		}
-
-		if ( selectedType === 'registrants' ) {
-			toast( 'La descarga para Registros estará disponible próximamente', errorToast );
-			return;
-		}
-
-		if ( selectedType === 'space' && !availability.space ) {
+	const handleDownload = async ( type: 'space' | 'professor' | 'registrants' ): Promise<void> => {
+		if ( type === 'space' && !availability.space ) {
 			toast( 'Todas las sesiones tienen espacios asignados', errorToast );
 			return;
 		}
 
-		if ( selectedType === 'professor' && !availability.professor ) {
+		if ( type === 'professor' && !availability.professor ) {
 			toast( 'Todas las sesiones tienen profesores asignados', errorToast );
 			return;
 		}
 
 		try {
 			setIsDownloading( true );
-			const response = await fetch( `${DOWNLOAD_ENDPOINT}/${selectedType}`, {
+			setCurrentDownload( type );
+			const response = await fetch( `${DOWNLOAD_ENDPOINT}/${type}`, {
 				method  : Method.GET,
 				headers  : {
 					'Accept' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -271,28 +220,33 @@ export function FileForm({
 				throw new Error(`Error al descargar el Excel (${response.status})`);
 			}
 
-			const blob = await response.blob();
-			const url = window.URL.createObjectURL( blob );
-			const link = document.createElement( 'a' );
-			link.href = url;
-			link.setAttribute( 'download', FILE_NAMES[selectedType] );
-			document.body.appendChild( link );
+			const blob  = await response.blob();
+			const url   = window.URL.createObjectURL( blob );
+			const link  = document.createElement( 'a' );
+			link.href   = url;
+
+			link.setAttribute( 'download', `sesiones_${type}.xlsx` );
+
+            document.body.appendChild( link );
 			link.click();
 			link.remove();
-			window.URL.revokeObjectURL( url );
+
+            window.URL.revokeObjectURL( url );
 			toast( 'Excel descargado correctamente ✅', successToast );
 		} catch ( error ) {
 			console.error( 'Error generando Excel:', error );
 			toast( 'Error al descargar el Excel ❌', errorToast );
 		} finally {
 			setIsDownloading( false );
+			setCurrentDownload( null );
 		}
 	};
+
 
 	const { getRootProps, getInputProps, isDragActive } = useDropzone({
 		onDrop,
 		multiple  : false,
-		disabled  : uploadMutation.isPending || !selectedType || selectedType === 'registrants',
+		disabled  : uploadMutation.isPending,
 		accept  : {
 			'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : [ '.xlsx' ],
 			'application/vnd.ms-excel' : [ '.xls' ],
@@ -300,74 +254,80 @@ export function FileForm({
 		}
 	});
 
-	const canDownload = useMemo(() => {
-		if ( !selectedType || selectedType === 'registrants' ) return false;
-		if ( selectedType === 'space' ) return availability.space;
-		if ( selectedType === 'professor' ) return availability.professor;
-		return false;
-	}, [ selectedType, availability ]);
 
-	const canUpload = useMemo(() => {
-		return Boolean( selectedType && selectedType !== 'registrants' && selectedFile && !uploadMutation.isPending );
-	}, [ selectedType, selectedFile, uploadMutation.isPending ]);
+	// const canUpload = useMemo(() => {
+	// 	return Boolean( selectedFile && !uploadMutation.isPending );
+	// }, [ selectedFile, uploadMutation.isPending ]);
 
 	return (
 		<Dialog open = { isOpen } onOpenChange = { onClose }>
-			<DialogContent className = "max-w-3xl max-h-[90vh] overflow-y-auto space-y-6">
+			<DialogContent className = "max-w-2xl max-h-[90vh] overflow-y-auto space-y-2">
 				<DialogHeader>
 					<DialogTitle>Gestión de archivos de sesiones</DialogTitle>
+
 					<DialogDescription>
 						Descarga el Excel correspondiente, complétalo y vuelve a subirlo para validar la disponibilidad.
 					</DialogDescription>
 				</DialogHeader>
 
 				<Card>
-					<CardContent className = "p-4 space-y-4">
-						<h3 className = "text-sm font-semibold">Selecciona el tipo de archivo</h3>
-
-						<ToggleGroup
-							type  = "single"
-							value  = { selectedType || undefined }
-							onValueChange  = {( value ) => setSelectedType( ( value || null ) as SessionAssignmentType | null ) }
-							className  = "grid grid-cols-3 gap-3"
-						>
-							<ToggleGroupItem
-								value  = "space"
-								className  = { cn( 'gap-2 py-3', selectedType === 'space' ? 'bg-primary/10' : '' ) }
-								disabled  = { uploadMutation.isPending }
+					<CardContent className = "p-4 space-y-3">
+						<h3 className = "text-sm font-semibold">Descarga el tipo de archivo que necesitas</h3>
+						<div className = "space-y-2">
+							<Button
+								variant     = "outline"
+								className   = "w-full justify-between"
+								onClick     = {() => handleDownload( 'space' )}
+								disabled    = { !availability.space || ( isDownloading && currentDownload !== 'space' ) }
 							>
-								<span className = "h-4 w-4">
+								<span className = "flex items-center gap-2">
 									<ExcelIcon />
+									<span>Sesiones sin espacios</span>
 								</span>
-								<span>Espacios</span>
-								{ !availability.space && (
-									<Badge variant = "outline" className = "ml-auto">Sin pendientes</Badge>
-								)}
-							</ToggleGroupItem>
 
-							<ToggleGroupItem
-								value  = "professor"
-								className  = { cn( 'gap-2 py-3', selectedType === 'professor' ? 'bg-primary/10' : '' ) }
-								disabled  = { uploadMutation.isPending }
-							>
-								<Users className = "h-4 w-4" />
-								<span>Profesores</span>
-								{ !availability.professor && (
-									<Badge variant = "outline" className = "ml-auto">Sin pendientes</Badge>
-								)}
-							</ToggleGroupItem>
+								<span className = "ml-auto flex items-center gap-2 text-sm text-muted-foreground">
+									{ !availability.space ? 'Sin pendientes' : 'Descargar' }
+									{/* <ChevronRight className = "h-4 w-4" /> */}
+                                    <DownloadIcon className = "h-4 w-4" />
+								</span>
+							</Button>
 
-							<ToggleGroupItem
-								value  = "registrants"
-								className  = { cn( 'gap-2 py-3', selectedType === 'registrants' ? 'bg-primary/10' : '' ) }
-								disabled  = { true }
-								title  = "Disponible próximamente"
+							<Button
+								variant     = "outline"
+								className   = "w-full justify-between"
+								onClick     = {() => handleDownload( 'professor' )}
+								disabled    = { !availability.professor || ( isDownloading && currentDownload !== 'professor' ) }
 							>
-								<Table className = "h-4 w-4" />
-								<span>Registros</span>
-								<Badge variant = "outline" className = "ml-auto">Próximamente</Badge>
-							</ToggleGroupItem>
-						</ToggleGroup>
+								<span className = "flex items-center gap-2">
+									<Users className = "h-4 w-4" />
+									<span>Sesiones sin profesores</span>
+								</span>
+								<span className = "ml-auto flex items-center gap-2 text-sm text-muted-foreground">
+									{ !availability.professor ? 'Sin pendientes' : 'Descargar' }
+									{/* <ChevronRight className = "h-4 w-4" /> */}
+                                    <DownloadIcon className = "h-4 w-4" />
+
+								</span>
+							</Button>
+
+							<Button
+								variant     = "outline"
+								className   = "w-full justify-between"
+								disabled    = { true }
+								title       = "Disponible próximamente"
+							>
+								<span className = "flex items-center gap-2">
+									<Table className = "h-4 w-4" />
+									<span>Sesiones con registros</span>
+								</span>
+								<span className = "ml-auto flex items-center gap-2 text-sm text-muted-foreground">
+									Próximamente
+									{/* <ChevronRight className = "h-4 w-4" /> */}
+                                    <DownloadIcon className = "h-4 w-4" />
+
+								</span>
+							</Button>
+						</div>
 					</CardContent>
 				</Card>
 
@@ -377,7 +337,7 @@ export function FileForm({
 							{ ...getRootProps() }
 							className = { cn(
 								'border-4 border-dashed rounded-lg p-8 text-center transition-colors',
-								uploadMutation.isPending || !selectedType || selectedType === 'registrants'
+								uploadMutation.isPending
 									? 'cursor-not-allowed opacity-60'
 									: 'cursor-pointer hover:border-primary/50',
 								isDragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
@@ -430,53 +390,46 @@ export function FileForm({
 									</div>
 								</div>
 
-								<Button
-									variant  = "ghost"
-									size  = "sm"
-									onClick  = {() => {
-										setSelectedFile( null );
-										setUploadError( null );
-									}}
-									disabled  = { uploadMutation.isPending }
-								>
-									<X className = "h-4 w-4" />
-								</Button>
+                                <div className = "flex items-center gap-2">
+                                    <Button
+										className   = "w-full sm:w-auto gap-2"
+										onClick     = { handleUpload }
+									>
+										<Upload className = "h-4 w-4" />
+                                        { uploadMutation.isPending ? 'Subiendo...' : 'Subir archivo' }
+                                    </Button>
+
+                                    <Button
+                                        variant     = "ghost"
+                                        size        = "sm"
+                                        disabled    = { uploadMutation.isPending }
+                                        onClick     = {() => {
+                                            setSelectedFile( null );
+                                            setUploadError( null );
+                                        }}
+                                    >
+                                        <X className = "h-4 w-4" />
+                                    </Button>
+                                </div>
 							</div>
 						</CardContent>
 					</Card>
 				)}
 
-				<Card>
-					<CardContent className = "p-4 space-y-2">
-						<h4 className = "font-medium">Instrucciones para el archivo Excel:</h4>
-						<ul className = "text-sm text-muted-foreground space-y-1 list-disc list-inside">
-							<li>Solo debe ser formato .xls, .xlsx o .csv.</li>
-							<li>No puede superar los 10mb.</li>
-							<li>Solo se realiza la lectura de la hoja 1.</li>
-							<li>Si se registra con algún problema puedes modificarlo manualmente.</li>
-						</ul>
-					</CardContent>
-				</Card>
+				<DialogFooter className = "flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+                    <Card>
+                        <CardContent className = "p-4 space-y-2">
+                            <h4 className = "font-medium">Instrucciones para el archivo Excel:</h4>
 
-				<DialogFooter className = "flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-					<Button
-						variant  = "secondary"
-						className  = "w-full sm:w-auto gap-2"
-						onClick  = { handleDownload }
-						disabled  = { !canDownload || isDownloading }
-					>
-						<HardDriveDownload className = "h-4 w-4" />
-						Descargar Excel
-					</Button>
-
-					<Button
-						className  = "w-full sm:w-auto gap-2"
-						onClick  = { handleUpload }
-						disabled  = { !canUpload }
-					>
-						<Upload className = "h-4 w-4" />
-						{ uploadMutation.isPending ? 'Subiendo...' : 'Subir archivo' }
-					</Button>
+                            <ul className = "text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                                <li>Solo debe ser formato .xls, .xlsx o .csv.</li>
+                                <li>No puede superar los 10mb.</li>
+                                <li>Solo se realiza la lectura de la hoja 1.</li>
+                                <li>Si se registra con algún problema puedes modificarlo manualmente.</li>
+                                <li>No elimine ni modifique la hoja _meta, esto sirve para identificar el tipo de archivo.</li>
+                            </ul>
+                        </CardContent>
+                    </Card>
 				</DialogFooter>
 			</DialogContent>
 		</Dialog>
