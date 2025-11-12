@@ -2,8 +2,11 @@ import { clsx, type ClassValue }    from 'clsx';
 import { twMerge }                  from 'tailwind-merge';
 import { format }                   from "@formkit/tempo"
 
-import { Status }       from '@/types/request';
-import { BuildingEnum, SpaceType }    from '@/types/request-detail.model';
+import {
+    BuildingEnum,
+    SpaceType
+}                   from '@/types/request-detail.model';
+import { Status }   from '@/types/request';
 
 
 export function cn(...inputs: ClassValue[]) {
