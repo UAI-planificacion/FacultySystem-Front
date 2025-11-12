@@ -2,12 +2,12 @@ import {
     BuildingEnum,
     Size,
     SpaceType
-}                   from "@/types/request-detail.model";
-import { Professor }  from "@/types/professor";
-import { Session }  from "@/types/section.model";
+}                       from "@/types/request-detail.model";
+import { Professor }    from "@/types/professor";
+import { Session }      from "@/types/section.model";
 
 
-export type SessionAvailabilityStatus = "Available" | "Unavailable" | "Probable";
+export type Status = "Available" | "Unavailable" | "Probable";
 
 
 export interface SessionAvailabilityResult {
@@ -17,7 +17,7 @@ export interface SessionAvailabilityResult {
     module          : string;
     spaceId?        : string;
     professor?      : Professor;
-    status          : SessionAvailabilityStatus;
+    status          : Status;
     detalle         : string;
     sessionId       : string;
 }
