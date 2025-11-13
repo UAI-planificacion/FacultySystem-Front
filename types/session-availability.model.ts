@@ -32,6 +32,13 @@ export interface SessionAssignmentCache {
 }
 
 
+export interface SessionAssignment {
+    sessionId       : string;
+    spaceId?        : string;
+    professorId?    : string;
+}
+
+
 export interface AvailableSpace {
     id          : string;
     name        : string;
