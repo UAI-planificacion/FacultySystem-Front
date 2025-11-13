@@ -32,8 +32,8 @@ import { errorToast }   from "@/config/toast/toast.config";
 
 
 export default function SectionDetailPage(): JSX.Element {
-    const params    = useParams();
     const route     = useRouter();
+    const params    = useParams();
     const sectionId = params.sectionId as string;
 
     const {
