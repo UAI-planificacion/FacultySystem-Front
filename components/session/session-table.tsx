@@ -53,7 +53,6 @@ export function SessionTable({
 	const [ selectedSessionEdit, setSelectedSesionEdit ]    = useState<OfferSession | null>( null );
 	const [ isOpenDelete, setIsOpenDelete ]                 = useState( false );
 	const [ selectedSession, setSelectedSession ]           = useState<OfferSession | undefined>( undefined );
-
     const [ isOpenPlanningChange, setIsOpenPlanningChange ] = useState<boolean>( false );
 	const [ selectedSectionEdit, setSelectedSectionEdit ]   = useState<OfferSection | null>( null );
 
