@@ -13,7 +13,6 @@ import {
 	Upload,
 	FileSpreadsheet,
 	AlertCircle,
-	ChevronRight,
 	Table,
 	Users,
 	X,
@@ -64,7 +63,6 @@ interface FileFormProps {
 const MAX_FILE_SIZE     = 10 * 1024 * 1024;
 const DOWNLOAD_ENDPOINT = `${ENV.REQUEST_BACK_URL}${KEY_QUERYS.SESSIONS}/without-reservation`;
 const UPLOAD_ENDPOINT   = `${ENV.REQUEST_BACK_URL}${KEY_QUERYS.SESSIONS}/bulk-upload`;
-console.log('🚀 ~ file: file-form.tsx:67 ~ UPLOAD_ENDPOINT:', UPLOAD_ENDPOINT)
 
 
 export function FileForm({
@@ -75,10 +73,10 @@ export function FileForm({
 	const router        = useRouter();
 	const queryClient   = useQueryClient();
 
-	const [ selectedFile, setSelectedFile ]     = useState<File | null>( null );
-	const [ uploadError, setUploadError ]       = useState<UploadError | null>( null );
-	const [ isDownloading, setIsDownloading ]   = useState<boolean>( false );
-	const [ currentDownload, setCurrentDownload ] = useState<string | null>( null );
+	const [ selectedFile, setSelectedFile ]         = useState<File | null>( null );
+	const [ uploadError, setUploadError ]           = useState<UploadError | null>( null );
+	const [ isDownloading, setIsDownloading ]       = useState<boolean>( false );
+	const [ currentDownload, setCurrentDownload ]   = useState<string | null>( null );
 
 	const availability = useMemo(() => {
 		const hasMissingSpaces = sections.some(( section ) =>
@@ -172,14 +170,15 @@ export function FileForm({
 			return await response.json() as SessionAvailabilityResult[];
 		},
 		onSuccess  : ( data ) => {
-			queryClient.setQueryData<SessionAvailabilityResult[]>(
-				[ KEY_QUERYS.SESSIONS, 'assignment' ],
+			const ulid = crypto.randomUUID();
+
+            queryClient.setQueryData<SessionAvailabilityResult[]>(
+				[ KEY_QUERYS.SESSIONS, 'assignment', ulid ],
 				data
 			);
 
-			console.log( 'SessionAvailabilityResult', data );
 			toast( 'Archivo procesado correctamente ✅', successToast );
-			router.push( '/sections/assignment' );
+			router.push( `/sections/assignment/${ ulid }` );
 		},
 		onError  : ( mutationError ) => {
 			toast( `Error al cargar archivo: ${mutationError.message}`, errorToast );
@@ -255,10 +254,6 @@ export function FileForm({
 	});
 
 
-	// const canUpload = useMemo(() => {
-	// 	return Boolean( selectedFile && !uploadMutation.isPending );
-	// }, [ selectedFile, uploadMutation.isPending ]);
-
 	return (
 		<Dialog open = { isOpen } onOpenChange = { onClose }>
 			<DialogContent className = "max-w-2xl max-h-[90vh] overflow-y-auto space-y-2">
@@ -322,9 +317,8 @@ export function FileForm({
 								</span>
 								<span className = "ml-auto flex items-center gap-2 text-sm text-muted-foreground">
 									Próximamente
-									{/* <ChevronRight className = "h-4 w-4" /> */}
-                                    <DownloadIcon className = "h-4 w-4" />
 
+                                    <DownloadIcon className = "h-4 w-4" />
 								</span>
 							</Button>
 						</div>
