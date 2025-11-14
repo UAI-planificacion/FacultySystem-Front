@@ -93,6 +93,9 @@ export function FileForm({
 		};
 	}, [ sections ]);
 
+		console.log('🚀 ~ file: file-form.tsx:82 ~ availability:', availability)
+
+
 
 	useEffect(() => {
 		if ( !isOpen ) {
@@ -194,7 +197,7 @@ export function FileForm({
 		uploadMutation.mutate( selectedFile );
 	};
 
-	const handleDownload = async ( type: 'space' | 'professor' | 'registrants' ): Promise<void> => {
+	const handleDownload = async ( type: 'space' | 'professor' | 'registered' ): Promise<void> => {
 		if ( type === 'space' && !availability.space ) {
 			toast( 'Todas las sesiones tienen espacios asignados', errorToast );
 			return;
@@ -282,7 +285,7 @@ export function FileForm({
 
 								<span className = "ml-auto flex items-center gap-2 text-sm text-muted-foreground">
 									{ !availability.space ? 'Sin pendientes' : 'Descargar' }
-									{/* <ChevronRight className = "h-4 w-4" /> */}
+
                                     <DownloadIcon className = "h-4 w-4" />
 								</span>
 							</Button>
@@ -299,24 +302,22 @@ export function FileForm({
 								</span>
 								<span className = "ml-auto flex items-center gap-2 text-sm text-muted-foreground">
 									{ !availability.professor ? 'Sin pendientes' : 'Descargar' }
-									{/* <ChevronRight className = "h-4 w-4" /> */}
-                                    <DownloadIcon className = "h-4 w-4" />
 
+                                    <DownloadIcon className = "h-4 w-4" />
 								</span>
 							</Button>
 
 							<Button
 								variant     = "outline"
 								className   = "w-full justify-between"
-								disabled    = { true }
-								title       = "Disponible próximamente"
+								onClick     = {() => handleDownload( 'registered' )}
 							>
 								<span className = "flex items-center gap-2">
 									<Table className = "h-4 w-4" />
-									<span>Sesiones con registros</span>
+									<span>Asignar registros a sesiones</span>
 								</span>
 								<span className = "ml-auto flex items-center gap-2 text-sm text-muted-foreground">
-									Próximamente
+                                    Descargar
 
                                     <DownloadIcon className = "h-4 w-4" />
 								</span>
