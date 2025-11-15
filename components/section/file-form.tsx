@@ -93,9 +93,6 @@ export function FileForm({
 		};
 	}, [ sections ]);
 
-		console.log('🚀 ~ file: file-form.tsx:82 ~ availability:', availability)
-
-
 
 	useEffect(() => {
 		if ( !isOpen ) {
@@ -156,7 +153,8 @@ export function FileForm({
 	}, [ validateFile ]);
 
 
-	const uploadMutation = useMutation<SessionAvailabilityResult[], Error, File>({
+	// const uploadMutation = useMutation<SessionAvailabilityResult[] | OfferSection[], Error, File>({
+	const uploadMutation = useMutation<any[], Error, File>({
 		mutationFn  : async ( file ) => {
 			const formData = new FormData();
 			formData.append( 'file', file );
@@ -175,13 +173,19 @@ export function FileForm({
 		onSuccess  : ( data ) => {
 			const ulid = crypto.randomUUID();
 
+            if ( data[0].id ) {
+                toast( 'Registros actualizados correctamente ✅', successToast );
+                return;
+            }
+
             queryClient.setQueryData<SessionAvailabilityResult[]>(
 				[ KEY_QUERYS.SESSIONS, 'assignment', ulid ],
-				data
+				data as SessionAvailabilityResult[]
 			);
 
-			toast( 'Archivo procesado correctamente ✅', successToast );
 			router.push( `/sections/assignment/${ ulid }` );
+
+            toast( 'Archivo procesado correctamente ✅', successToast );
 		},
 		onError  : ( mutationError ) => {
 			toast( `Error al cargar archivo: ${mutationError.message}`, errorToast );
