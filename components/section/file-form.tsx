@@ -80,11 +80,13 @@ export function FileForm({
 
 	const availability = useMemo(() => {
 		const hasMissingSpaces = sections.some(( section ) =>
-			section.sessions.some(( session ) => !session.spaceId || session.spaceId.trim() === '' )
+			// section.sessions.some(( session ) => !session.spaceId || session.spaceId.trim() === '' )
+        section.sessions.spaceIds.some(( spaceId ) => !spaceId || spaceId.trim() === '' )
 		);
 
 		const hasMissingProfessors = sections.some(( section ) =>
-			section.sessions.some(( session ) => !session.professorId || session.professorId.trim() === '' )
+            section.sessions.professorIds.some(( professorId ) => !professorId || professorId.trim() === '' )
+			// section.sessions.some(( session ) => !session.professorId || session.professorId.trim() === '' )
 		);
 
 		return {
