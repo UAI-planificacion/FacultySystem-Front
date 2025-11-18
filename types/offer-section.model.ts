@@ -128,12 +128,20 @@ export interface RequestSession {
 }
 
 
+// export interface SectionSession {
+//     id          : string;
+//     spaceId     : string;
+//     dayId       : number;
+//     moduleId    : number;
+//     professorId : string;
+// }
+
 export interface SectionSession {
-    id          : string;
-    spaceId     : string;
-    dayId       : number;
-    moduleId    : number;
-    professorId : string;
+    ids             : string[];
+    spaceIds        : string[];
+    dayIds          : number[];
+    moduleIds       : number[];
+    professorIds    : string[];
 }
 
 
@@ -156,5 +164,6 @@ export interface OfferSection {
     period          : OfferSectionPeriod;
     sessionsCount   : number;
     haveRequest     : boolean;
-    sessions        : SectionSession[];
+    // sessions        : SectionSession[];
+    sessions        : SectionSession;
 }
