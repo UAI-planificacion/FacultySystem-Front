@@ -61,7 +61,7 @@ export function SubjectTable({
 							<TableHeader className="sticky top-0 z-10 bg-background">
 								<TableRow>
 									<TableHead className="bg-background w-[120px]">Sigla</TableHead>
-									<TableHead className="bg-background w-[400px]">Nombre</TableHead>
+									<TableHead className="bg-background w-[370px]">Nombre</TableHead>
 									{ showFacultyColumn && (
 										<TableHead className="bg-background w-[200px] text-start">Facultad</TableHead>
 									)}
@@ -104,7 +104,7 @@ export function SubjectTable({
 														className	= "w-[200px] truncate"
 														title		= { subject.facultyId }
 													>
-														{ subject.facultyId || '-' }
+														{ subject.faculty.name || '-' }
 													</TableCell>
 												)}
 
