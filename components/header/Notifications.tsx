@@ -50,7 +50,7 @@ function NotificationItem({
 		switch ( type ) {
 			case Type.REQUEST:
 				return 'Solicitud';
-			case Type.DETAIL:
+			case Type.REQUEST_SESSION:
 				return 'Detalle';
 			default:
 				return 'Elemento';
@@ -126,7 +126,7 @@ export function Notifications({
 		if ( notification.type === Type.REQUEST ) {
 			console.log( 'Calling onRequestClick with entityId:', notification.entityId );
 			onRequestClick( notification.entityId );
-		} else if ( notification.type === Type.DETAIL && notification.requestId ) {
+		} else if ( notification.type === Type.REQUEST_SESSION && notification.requestId ) {
 			console.log( 'Calling onRequestDetailClick with requestId:', notification.requestId, 'entityId:', notification.entityId );
 			onRequestDetailClick( notification.requestId, notification.entityId );
 		}

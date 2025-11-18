@@ -6,8 +6,8 @@ export enum EnumAction {
 
 
 export enum Type {
-    REQUEST = 'request',
-    DETAIL  = 'detail'
+    REQUEST         = 'request',
+    REQUEST_SESSION = 'request_session'
 }
 
 

@@ -155,17 +155,19 @@ export const useSSE = () => {
 
     useEffect(() => {
         const url = `${ENV.REQUEST_BACK_URL}${ENV.SSE_ENDPOINT}`;
+        console.log('🚀 ~ file: use-sse.ts:158 ~ url:', url)
         const eventSource = new EventSource( url );
 
         eventSource.onmessage = ( event: MessageEvent ) => {
             try {
                 const emitEvent: EmitEvent = JSON.parse( event.data );
+                console.log('🚀 ~ file: use-sse.ts:164 ~ emitEvent:', emitEvent)
                 const { message, action, type, origin } = emitEvent;
 
-                console.log(`********SSE Event Received: Type=${type}, Action=${action}, Origin=${origin}`,message);
+                console.log( `********SSE Event Received: Type=${ type }, Action=${ action }, Origin=${ origin }`, message );
 
                 if ( origin === window.origin ) {
-                    console.log("🚀 origin same:", window.origin);
+                    console.log( "🚀 origin same:", window.origin );
                     return;
                 }
 
@@ -175,7 +177,7 @@ export const useSSE = () => {
                 }
 
                 switch ( type ) {
-                    case Type.DETAIL:
+                    case Type.REQUEST_SESSION:
                         handleRequestDetail( action, message as RequestDetail );
                     break;
 
@@ -265,7 +267,7 @@ export const useSSE = () => {
                     queryKey, 
                     detail, 
                     `Nuevo detalle de solicitud: ${detail.id}`,
-                    Type.DETAIL,
+                    Type.REQUEST_SESSION,
                     { 
                         entityId    : detail.id, 
                         requestId   : detail.requestId
@@ -279,7 +281,7 @@ export const useSSE = () => {
                     queryKey, 
                     detail, 
                     `Detalle de Solicitud Actualizado: ${detail.id}`,
-                    Type.DETAIL,
+                    Type.REQUEST_SESSION,
                     { 
                         entityId    : detail.id, 
                         requestId   : detail.requestId
@@ -293,7 +295,7 @@ export const useSSE = () => {
                     queryKey, 
                     detail, 
                     `Detalle de Solicitud Eliminado: ${detail.id}`,
-                    Type.DETAIL,
+                    Type.REQUEST_SESSION,
                     { 
                         entityId    : detail.id, 
                         requestId   : detail.requestId
