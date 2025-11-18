@@ -78,18 +78,23 @@ export function NotificationDialogManager({
 			console.log( 'Request not found in cache for ID:', requestId );
 			console.log( 'Attempting to fetch request directly...' );
 
-			// If not found in cache, try to fetch the specific request
-			fetchApi<Request>({ url: `requests/${requestId}` })
-				.then( ( request ) => {
-					console.log( 'Fetched request directly:', request );
-					setRequestDialog({
+			queryClient.fetchQuery({
+				queryKey    : [ KEY_QUERYS.REQUESTS, 'single', requestId ],
+				queryFn     : () => fetchApi<Request[]>({ url: KEY_QUERYS.REQUESTS }),
+			}).then( ( requests ) => {
+				if ( requests ) {
+					console.log( 'Fetched request directly:', requests );
+
+                    setRequestDialog({
 						isOpen      : true,
-						request     : request,
+						request     : requests.find( r => r.id === requestId ) || null,
 					});
-				})
-				.catch( ( error ) => {
-					console.error( 'Error fetching request:', error );
-				});
+				} else {
+					console.log( 'Request not found after direct fetch for ID:', requestId );
+				}
+			}).catch( ( error ) => {
+				console.error( 'Error fetching request:', error );
+			});
 		}
 	};
 
