@@ -1,6 +1,12 @@
 import { BuildingEnum, Size, SpaceType } from "@/types/request-detail.model";
 
 
+interface Faculty {
+    id      : string;
+    name    : string;
+}
+
+
 interface BaseSubject {
     id              : string;
     name            : string;
@@ -11,6 +17,7 @@ interface BaseSubject {
     tutoringSession : number;
     laboratory      : number;
     quota           : number | null;
+    faculty         : Faculty;
 }
 
 
