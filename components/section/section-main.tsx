@@ -65,26 +65,26 @@ export function SectionMain({
     enabled,
     searchParams,
 }: Props ) {
-    const router                                    = useRouter();
-    const queryClient                               = useQueryClient();
-    const [idFilter, setIdFilter]                   = useState<string>(() => searchParams.get('id') || '');
-    const [codeFilter, setCodeFilter]               = useState<string[]>(() => searchParams.get('code')?.split(',').filter(Boolean) || []);
-    const [roomFilter, setRoomFilter]               = useState<string[]>(() => searchParams.get('room')?.split(',').filter(Boolean) || []);
-    const [dayFilter, setDayFilter]                 = useState<string[]>(() => searchParams.get('day')?.split(',').filter(Boolean) || []);
-    const [periodFilter, setPeriodFilter]           = useState<string[]>(() => searchParams.get('period')?.split(',').filter(Boolean) || []);
-    const [statusFilter, setStatusFilter]           = useState<string[]>(() => searchParams.get('status')?.split(',').filter(Boolean) || []);
-    const [subjectFilter, setSubjectFilter]         = useState<string[]>(() => searchParams.get('subject')?.split(',').filter(Boolean) || []);
-    const [sizeFilter, setSizeFilter]               = useState<string[]>(() => searchParams.get('size')?.split(',').filter(Boolean) || []);
-    const [sessionFilter, setSessionFilter]         = useState<string[]>(() => searchParams.get('session')?.split(',').filter(Boolean) || []);
-    const [moduleFilter, setModuleFilter]           = useState<string[]>(() => searchParams.get('module')?.split(',').filter(Boolean) || []);
-    const [professorFilter, setProfessorFilter]     = useState<string[]>(() => searchParams.get('professor')?.split(',').filter(Boolean) || []);
-    const [groupIdFilter, setGroupIdFilter]         = useState<string[]>(() => searchParams.get('groupId')?.split(',').filter(Boolean) || []);
-    const [selectedSections, setSelectedSections]   = useState<Set<string>>( new Set() );
-    const [currentPage, setCurrentPage]             = useState<number>( 1 );
-    const [itemsPerPage, setItemsPerPage]           = useState<number>( 10 );
-    const [isEditSection, setIsEditSection]         = useState<boolean>( false );
-    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>( false );
-    const [isFileFormOpen, setIsFileFormOpen]         = useState<boolean>( false );
+    const router                                        = useRouter();
+    const queryClient                                   = useQueryClient();
+    const [idFilter, setIdFilter]                       = useState<string>(() => searchParams.get('id') || '');
+    const [codeFilter, setCodeFilter]                   = useState<string[]>(() => searchParams.get('code')?.split(',').filter(Boolean) || []);
+    const [roomFilter, setRoomFilter]                   = useState<string[]>(() => searchParams.get('room')?.split(',').filter(Boolean) || []);
+    const [dayFilter, setDayFilter]                     = useState<string[]>(() => searchParams.get('day')?.split(',').filter(Boolean) || []);
+    const [periodFilter, setPeriodFilter]               = useState<string[]>(() => searchParams.get('period')?.split(',').filter(Boolean) || []);
+    const [statusFilter, setStatusFilter]               = useState<string[]>(() => searchParams.get('status')?.split(',').filter(Boolean) || []);
+    const [subjectFilter, setSubjectFilter]             = useState<string[]>(() => searchParams.get('subject')?.split(',').filter(Boolean) || []);
+    const [sizeFilter, setSizeFilter]                   = useState<string[]>(() => searchParams.get('size')?.split(',').filter(Boolean) || []);
+    const [sessionFilter, setSessionFilter]             = useState<string[]>(() => searchParams.get('session')?.split(',').filter(Boolean) || []);
+    const [moduleFilter, setModuleFilter]               = useState<string[]>(() => searchParams.get('module')?.split(',').filter(Boolean) || []);
+    const [professorFilter, setProfessorFilter]         = useState<string[]>(() => searchParams.get('professor')?.split(',').filter(Boolean) || []);
+    const [groupIdFilter, setGroupIdFilter]             = useState<string[]>(() => searchParams.get('groupId')?.split(',').filter(Boolean) || []);
+    const [selectedSections, setSelectedSections]       = useState<Set<string>>( new Set() );
+    const [currentPage, setCurrentPage]                 = useState<number>( 1 );
+    const [itemsPerPage, setItemsPerPage]               = useState<number>( 10 );
+    const [isEditSection, setIsEditSection]             = useState<boolean>( false );
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen]   = useState<boolean>( false );
+    const [isFileFormOpen, setIsFileFormOpen]           = useState<boolean>( false );
 
     // Function to update URL with filter parameters
     const updateUrlParams = ( filterName: string, values: string[] ) => {
@@ -128,23 +128,23 @@ export function SectionMain({
             const matchesId         = idFilter.length       === 0 || idFilter === section.id;
             const matchesGroupId    = groupIdFilter.length  === 0 || groupIdFilter.includes( section.groupId );
             const matchesCode       = codeFilter.length     === 0 || codeFilter.includes( section.code.toString() );
-            const matchesRoom       = roomFilter.length     === 0 || section.sessions.map( s => s.spaceId ).some( spaceId => roomFilter.includes( spaceId ));
-            const matchesDay        = dayFilter.length      === 0 || section.sessions.map( s => s.dayId ).some( dayId => dayFilter.includes( dayId.toString() ));
+            const matchesRoom       = roomFilter.length     === 0 || section.sessions.spaceIds.some( spaceId => roomFilter.includes( spaceId ));
+            const matchesDay        = dayFilter.length      === 0 || section.sessions.dayIds.some( dayId => dayFilter.includes( dayId.toString() ));
             const matchesPeriod     = periodFilter.length   === 0 || periodFilter.includes( section.period.id );
             const matchesStatus     = statusFilter.length   === 0 || statusFilter.includes( section.isClosed ? 'closed' : 'open' );
             const matchesSubject    = subjectFilter.length  === 0 || subjectFilter.includes( section.subject.id );
             const matchesSize       = sizeFilter.length     === 0 || sizeFilter.includes( section.spaceSizeId || '' );
             const matchesSession    = sessionFilter.length  === 0 || sessionFilter.some( sessionType => {
-                if ( sessionType === 'C' ) return section.lecture > 0;
-                if ( sessionType === 'A' ) return section.tutoringSession > 0;
-                if ( sessionType === 'T' ) return section.workshop > 0;
-                if ( sessionType === 'L' ) return section.laboratory > 0;
+                if ( sessionType === 'C' ) return section.lecture           > 0;
+                if ( sessionType === 'A' ) return section.tutoringSession   > 0;
+                if ( sessionType === 'T' ) return section.workshop          > 0;
+                if ( sessionType === 'L' ) return section.laboratory        > 0;
 
                 return false;
             });
 
-            const matchesModule     = moduleFilter.length       === 0 || section.sessions.map( s => s.moduleId ).some( moduleId => moduleFilter.includes( moduleId.toString() ));
-            const matchesProfessor  = professorFilter.length    === 0 || section.sessions.map( s => s.professorId ).some( professorId => professorFilter.includes( professorId ));
+            const matchesModule     = moduleFilter.length       === 0 || section.sessions.moduleIds.some( moduleId => moduleFilter.includes( moduleId.toString() ));
+            const matchesProfessor  = professorFilter.length    === 0 || section.sessions.professorIds.some( professorId => professorFilter.includes( professorId ));
 
             return matchesId && matchesGroupId && matchesCode && matchesRoom && matchesDay && matchesPeriod && matchesStatus && matchesSubject && matchesSize && matchesSession && matchesModule && matchesProfessor;
         });
