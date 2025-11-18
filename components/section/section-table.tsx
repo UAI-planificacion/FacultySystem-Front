@@ -26,8 +26,7 @@ import {
 	TableHeader,
 	TableRow
 }                               from "@/components/ui/table"
-import { Button }               from "@/components/ui/button"
-import { Checkbox }             from "@/components/ui/checkbox"
+
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -43,13 +42,15 @@ import { SessionForm }          from "@/components/session/session-form"
 import { SessionTable }         from "@/components/session/session-table"
 import { SectionForm }          from "@/components/section/section-form"
 import { PlanningChangeForm }   from "@/components/planning-change/planning-change-form"
+import { Skeleton }             from "@/components/ui/skeleton";
+import { Button }               from "@/components/ui/button"
+import { Checkbox }             from "@/components/ui/checkbox"
 
 import { OfferSection }             from "@/types/offer-section.model"
 import { fetchApi, Method }         from "@/services/fetch"
 import { KEY_QUERYS }               from "@/consts/key-queries"
 import { errorToast, successToast } from "@/config/toast/toast.config"
 import { tempoFormat }              from "@/lib/utils"
-import { Skeleton } from "../ui/skeleton";
 
 
 interface Props {
@@ -99,10 +100,10 @@ export function SectionTable({
 	 * Check if section is fully selected
 	 */
 	const isSectionFullySelected = useCallback(( section: OfferSection ): boolean => {
-		const sessionIds = section.sessions.map( s => s.id ) || [];
-		
+		const sessionIds = section.sessions.ids || [];
+
 		if ( sessionIds.length === 0 ) return false;
-		
+
 		return sessionIds.every( id => selectedSessions.has( id ));
 	}, [ selectedSessions ]);
 
@@ -116,9 +117,9 @@ export function SectionTable({
 			return;
 		}
 
-		const sessionIds = section.sessions.map( s => s.id ) || [];
-		const newSelectedSessions = new Set( selectedSessions );
-		const shouldSelect = checked === true || checked === 'indeterminate';
+		const sessionIds            = section.sessions.ids || [];
+		const newSelectedSessions   = new Set( selectedSessions );
+		const shouldSelect          = checked === true || checked === 'indeterminate';
 
 		sessionIds.forEach( ( sessionId ) => {
 			if ( shouldSelect ) {
@@ -136,7 +137,7 @@ export function SectionTable({
 	 * Check if section is partially selected
 	 */
 	const isSectionPartiallySelected = useCallback(( section: OfferSection ): boolean => {
-		const sessionIds = section.sessions.map( s => s.id ) || [];
+		const sessionIds = section.sessions.ids || [];
 
 		if ( sessionIds.length === 0 ) return false;
 
