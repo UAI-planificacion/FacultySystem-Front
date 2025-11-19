@@ -52,6 +52,8 @@ function NotificationItem({
 				return 'Solicitud';
 			case Type.REQUEST_SESSION:
 				return 'Detalle';
+			case Type.PLANNING_CHANGE:
+				return 'Cambio de Planificación';
 			default:
 				return 'Elemento';
 		}
@@ -99,8 +101,9 @@ function NotificationItem({
 
 
 interface NotificationsProps {
-	onRequestClick      : ( requestId: string ) => void;
-	onRequestDetailClick: ( requestId: string, detailId: string ) => void;
+	onRequestClick          : ( requestId: string ) => void;
+	onRequestSessionClick   : ( requestId: string, sessionId: string ) => void;
+	onPlanningChangeClick   : ( planningChangeId: string ) => void;
 }
 
 
@@ -109,7 +112,8 @@ interface NotificationsProps {
  */
 export function Notifications({ 
 	onRequestClick, 
-	onRequestDetailClick 
+	onRequestSessionClick,
+	onPlanningChangeClick
 }: NotificationsProps ): JSX.Element {
 	const [isOpen, setIsOpen] = useState( false );
 	const { 
@@ -122,13 +126,16 @@ export function Notifications({
 	const handleNotificationClick = ( notification: Notification ): void => {
 		console.log( 'Notification clicked:', notification );
 		setIsOpen( false );
-		
+
 		if ( notification.type === Type.REQUEST ) {
 			console.log( 'Calling onRequestClick with entityId:', notification.entityId );
 			onRequestClick( notification.entityId );
-		} else if ( notification.type === Type.REQUEST_SESSION && notification.requestId ) {
-			console.log( 'Calling onRequestDetailClick with requestId:', notification.requestId, 'entityId:', notification.entityId );
-			onRequestDetailClick( notification.requestId, notification.entityId );
+		} else if ( notification.type === Type.REQUEST_SESSION ) {
+			console.log( 'Calling onRequestSessionClick with requestId:', notification.requestId, 'entityId:', notification.entityId );
+			onRequestSessionClick( notification.requestId || '', notification.entityId );
+		} else if ( notification.type === Type.PLANNING_CHANGE ) {
+			console.log( 'Calling onPlanningChangeClick with entityId:', notification.entityId );
+			onPlanningChangeClick( notification.entityId );
 		}
 	};
 
