@@ -12,7 +12,8 @@ import { Notification, NotificationState }  from '@/types/notification';
 import { KEY_QUERYS }                       from '@/consts/key-queries';
 import { errorToast, successToast }         from '@/config/toast/toast.config';
 import { ENV }                              from '@/config/envs/env';
-import { RequestDetail }                    from '@/types/request-detail.model';
+import { PlanningChange }                   from '@/types/planning-change.model';
+import { RequestSession }                   from '@/types/request-session.model';
 
 
 /**
@@ -171,18 +172,22 @@ export const useSSE = () => {
                     return;
                 }
 
-                if ( !( message as Request | RequestDetail ).id ) {
+                if ( !( message as Request | RequestSession | PlanningChange ).id ) {
                     console.error( 'Request received via SSE is missing id, cannot update specific query cache.' );
                     return;
                 }
 
                 switch ( type ) {
                     case Type.REQUEST_SESSION:
-                        handleRequestDetail( action, message as RequestDetail );
+                        handleRequestSession( action, message as RequestSession );
                     break;
 
                     case Type.REQUEST:
                         handleRequest( action, message as Request );
+                    break;
+
+                    case Type.PLANNING_CHANGE:
+                        handlePlanningChange( action, message as PlanningChange );
                     break;
                 }
             } catch ( error ) {
@@ -253,55 +258,139 @@ export const useSSE = () => {
 
 
     /**
-     * Maneja las actualizaciones de la entidad RequestDetail en la caché.
+     * Maneja las actualizaciones de la entidad RequestSession en la caché.
      * @param action El tipo de acción (CREATE, UPDATE, DELETE)
-     * @param detail La entidad RequestDetail recibida
+     * @param requestSession La entidad RequestSession recibida
      */
-    function handleRequestDetail( action: EnumAction, detail: RequestDetail ): void {
-        const queryKey = [KEY_QUERYS.REQUEST_DETAIL, detail.requestId]; 
+    function handleRequestSession( action: EnumAction, requestSession: RequestSession ): void {
+        const requestId = requestSession.requestId;
+
+        if ( !requestId ) {
+            console.warn( 'RequestSession SSE event without requestId. Skipping cache update.' );
+
+            notifyRequestSession( action, requestSession, undefined );
+            return;
+        }
+
+        const queryKey = [KEY_QUERYS.REQUEST_SESSION, requestId];
 
         switch ( action ) {
             case EnumAction.CREATE:
-                onCreateQuery<RequestDetail>( 
+                onCreateQuery<RequestSession>( 
                     queryClient, 
                     queryKey, 
-                    detail, 
-                    `Nuevo detalle de solicitud: ${detail.id}`,
+                    requestSession, 
+                    `Nueva sesión de solicitud (${requestSession.session})`,
                     Type.REQUEST_SESSION,
                     { 
-                        entityId    : detail.id, 
-                        requestId   : detail.requestId
+                        entityId    : requestSession.id, 
+                        requestId   : requestId
                     }
                 );
             break;
 
             case EnumAction.UPDATE:
-                onUpdateQuery<RequestDetail>( 
+                onUpdateQuery<RequestSession>( 
                     queryClient, 
                     queryKey, 
-                    detail, 
-                    `Detalle de Solicitud Actualizado: ${detail.id}`,
+                    requestSession, 
+                    `Sesión de solicitud actualizada (${requestSession.session})`,
                     Type.REQUEST_SESSION,
                     { 
-                        entityId    : detail.id, 
-                        requestId   : detail.requestId
+                        entityId    : requestSession.id, 
+                        requestId   : requestId
                     }
                 );
             break;
 
             case EnumAction.DELETE:
-                onDeleteQuery<RequestDetail>( 
+                onDeleteQuery<RequestSession>( 
                     queryClient, 
                     queryKey, 
-                    detail, 
-                    `Detalle de Solicitud Eliminado: ${detail.id}`,
+                    requestSession, 
+                    `Sesión de solicitud eliminada (${requestSession.session})`,
                     Type.REQUEST_SESSION,
                     { 
-                        entityId    : detail.id, 
-                        requestId   : detail.requestId
+                        entityId    : requestSession.id, 
+                        requestId   : requestId
                     }
                 );
             break;
+        }
+
+        notifyRequestSession( action, requestSession, requestId );
+    };
+
+
+    function notifyRequestSession( action: EnumAction, requestSession: RequestSession, requestId: string | undefined ): void {
+        let title       = '';
+        let toastLabel  = '';
+
+        switch ( action ) {
+            case EnumAction.CREATE:
+                title       = 'Nueva Sesión de Solicitud';
+                toastLabel  = `Se creó una sesión (${requestSession.session})`;
+            break;
+
+            case EnumAction.UPDATE:
+                title       = 'Sesión de Solicitud Actualizada';
+                toastLabel  = `Se actualizó una sesión (${requestSession.session})`;
+            break;
+
+            case EnumAction.DELETE:
+                title       = 'Sesión de Solicitud Eliminada';
+                toastLabel  = `Se eliminó una sesión (${requestSession.session})`;
+            break;
+        }
+
+        if ( title ) {
+            addNotification( queryClient, {
+                title,
+                message     : requestSession.description || `Sesión ${requestSession.session}`,
+                action,
+                type        : Type.REQUEST_SESSION,
+                entityId    : requestSession.id,
+                requestId,
+            });
+
+            toast( toastLabel, successToast );
+        }
+    }
+
+
+    function handlePlanningChange( action: EnumAction, planningChange: PlanningChange ): void {
+        queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.PLANNING_CHANGE] });
+
+        let title       = '';
+        let toastLabel  = '';
+
+        switch ( action ) {
+            case EnumAction.CREATE:
+                title       = 'Nuevo Cambio de Planificación';
+                toastLabel  = `Cambio de planificación creado: ${planningChange.title}`;
+            break;
+
+            case EnumAction.UPDATE:
+                title       = 'Cambio de Planificación Actualizado';
+                toastLabel  = `Cambio de planificación actualizado: ${planningChange.title}`;
+            break;
+
+            case EnumAction.DELETE:
+                title       = 'Cambio de Planificación Eliminado';
+                toastLabel  = `Cambio de planificación eliminado: ${planningChange.title}`;
+            break;
+        }
+
+        if ( title ) {
+            addNotification( queryClient, {
+                title,
+                message     : planningChange.title,
+                action,
+                type        : Type.PLANNING_CHANGE,
+                entityId    : planningChange.id,
+            });
+
+            toast( toastLabel, successToast );
         }
     };
 };
