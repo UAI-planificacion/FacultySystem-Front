@@ -10,6 +10,7 @@ interface SessionSize {
 
 export interface RequestSession {
     id                  : string;
+    requestId?          : string;
     session             : Session;
     spaceId             : string | null;
     description         : string | null;
