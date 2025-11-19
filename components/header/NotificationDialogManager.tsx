@@ -4,22 +4,24 @@ import { JSX, useState } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import { RequestForm }          from '@/components/request/request-form';
-import { RequestDetailForm }    from '@/components/request-detail/request-detail-form';
+import { RequestForm }              from '@/components/request/request-form';
+import { RequestSessionEditForm }   from '@/components/request-session/request-session-edit-form';
+import { PlanningChangeForm }       from '@/components/planning-change/planning-change-form';
 
-import { Request }          from '@/types/request';
-import { KEY_QUERYS }       from '@/consts/key-queries';
-import { fetchApi }         from '@/services/fetch';
-import { RequestDetail }    from '@/types/request-detail.model';
+import { Request }              from '@/types/request';
+import { KEY_QUERYS }           from '@/consts/key-queries';
+import { fetchApi }             from '@/services/fetch';
+import { PlanningChange }       from '@/types/planning-change.model';
+import { RequestSession }       from '@/types/request-session.model';
 
 
 interface NotificationDialogManagerProps {
 	children: React.ReactNode | (( props: {
-		onRequestClick      : ( requestId: string ) => void;
-		onRequestDetailClick: ( requestId: string, detailId: string ) => void;
+		onRequestClick              : ( requestId: string ) => void;
+		onRequestSessionClick       : ( requestId: string, sessionId: string ) => void;
+		onPlanningChangeClick       : ( planningChangeId: string ) => void;
 	}) => React.ReactNode );
 }
-
 
 /**
  * Manager component for handling notification-triggered dialogs
@@ -37,14 +39,22 @@ export function NotificationDialogManager({
 		request     : null,
 	});
 
-	const [requestDetailDialog, setRequestDetailDialog] = useState<{
-		isOpen          : boolean;
-		requestDetail   : RequestDetail | null;
-		requestId       : string;
+	const [requestSessionDialog, setRequestSessionDialog] = useState<{
+		isOpen              : boolean;
+		requestSession      : RequestSession | null;
+		requestId           : string;
 	}>({
-		isOpen          : false,
-		requestDetail   : null,
-		requestId       : '',
+		isOpen              : false,
+		requestSession      : null,
+		requestId           : '',
+	});
+
+	const [planningChangeDialog, setPlanningChangeDialog] = useState<{
+		isOpen              : boolean;
+		planningChange      : PlanningChange | null;
+	}>({
+		isOpen              : false,
+		planningChange      : null,
 	});
 
 
@@ -99,73 +109,104 @@ export function NotificationDialogManager({
 	};
 
 
-    function handleRequestDetailClick( requestId: string, detailId: string ): void {
-		console.log( 'handleRequestDetailClick called with requestId:', requestId, 'detailId:', detailId );
+	function handlePlanningChangeClick( planningChangeId: string ): void {
+		console.log( 'handlePlanningChangeClick called with planningChangeId:', planningChangeId );
 
-		// First check if request details are in cache
-		const cachedRequestDetails = queryClient.getQueryData<RequestDetail[]>([KEY_QUERYS.REQUEST_DETAIL, requestId]);
-		console.log( 'Request details found in cache:', cachedRequestDetails );
-
-		if ( cachedRequestDetails ) {
-			// If in cache, find the specific detail
-			const requestDetail = cachedRequestDetails.find( rd => rd.id === detailId );
-			console.log( 'Found request detail in cache:', requestDetail );
-
-			if ( requestDetail ) {
-				console.log( 'Opening request detail dialog for:', requestDetail );
-				setRequestDetailDialog({
-					isOpen          : true,
-					requestDetail   : requestDetail,
-					requestId,
-				});
-				return;
-			}
-		}
-
-		// If not in cache, fetch the request details
-		console.log( 'Request details not in cache, fetching...' );
 		queryClient.fetchQuery({
-			queryKey    : [KEY_QUERYS.REQUEST_DETAIL, requestId],
-			queryFn     : () => fetchApi<RequestDetail[]>({ url: `request-details/request/${requestId}` }),
-		}).then( ( requestDetails ) => {
-			console.log( 'Fetched request details:', requestDetails );
-			const requestDetail = requestDetails?.find( rd => rd.id === detailId );
-			console.log( 'Found request detail after fetch:', requestDetail );
-
-			if ( requestDetail ) {
-				console.log( 'Opening request detail dialog after fetch:', requestDetail );
-				setRequestDetailDialog({
-					isOpen          : true,
-					requestDetail   : requestDetail,
-					requestId,
+			queryKey    : [ KEY_QUERYS.PLANNING_CHANGE, 'single', planningChangeId ],
+			queryFn     : () => fetchApi<PlanningChange>({ url: `planning-change/${ planningChangeId }` }),
+		}).then(( planningChange ) => {
+			if ( planningChange ) {
+				setPlanningChangeDialog({
+					isOpen              : true,
+					planningChange      : planningChange,
 				});
 			} else {
-				console.log( 'Request detail not found after fetch for detailId:', detailId );
+				console.log( 'Planning change not found after fetch for ID:', planningChangeId );
 			}
-		}).catch( ( error ) => {
-			console.error( 'Error fetching request details:', error );
+		}).catch(( error ) => {
+			console.error( 'Error fetching planning change:', error );
 		});
 	};
 
-	// const handleRequestSubmit = ( data: any ): void => {
-	// 	// Handle request form submission
-	// 	console.log( 'Request form submitted:', data );
-	// 	setRequestDialog( prev => ({ ...prev, isOpen: false }));
-	// };
 
-	// const handleRequestDetailSubmit = ( data: any ): void => {
-	// 	// Handle request detail form submission
-	// 	console.log( 'Request detail form submitted:', data );
-	// 	setRequestDetailDialog( prev => ({ ...prev, isOpen: false }));
-	// };
+    function handleRequestSessionClick( requestId: string, sessionId: string ): void {
+		console.log( 'handleRequestSessionClick called with requestId:', requestId, 'sessionId:', sessionId );
+
+		// Si no hay requestId, buscar la sesión directamente por ID
+		if ( !requestId ) {
+			console.log( 'No requestId provided, fetching session directly by ID:', sessionId );
+			queryClient.fetchQuery({
+				queryKey    : [KEY_QUERYS.REQUEST_SESSION, sessionId],
+				queryFn     : () => fetchApi<RequestSession>({ url: `request-sessions/${ sessionId }` }),
+			}).then(( requestSession ) => {
+				console.log( 'Fetched request session by ID:', requestSession );
+
+				if ( requestSession ) {
+					setRequestSessionDialog({
+						isOpen              : true,
+						requestSession      : requestSession,
+						requestId           : requestSession.requestId || '',
+					});
+				} else {
+					console.log( 'Request session not found for sessionId:', sessionId );
+				}
+			}).catch(( error ) => {
+				console.error( 'Error fetching request session by ID:', error );
+			});
+			return;
+		}
+
+		const cachedSessions = queryClient.getQueryData<RequestSession[]>([KEY_QUERYS.REQUEST_SESSION, requestId]);
+		console.log( 'Request sessions found in cache:', cachedSessions );
+
+		if ( cachedSessions ) {
+			const requestSession = cachedSessions.find( rs => rs.id === sessionId );
+			console.log( 'Found request session in cache:', requestSession );
+
+			if ( requestSession ) {
+				setRequestSessionDialog({
+					isOpen              : true,
+					requestSession      : requestSession,
+					requestId           : requestId,
+				});
+
+                return;
+			}
+		}
+
+		console.log( 'Request sessions not in cache, fetching...' );
+		queryClient.fetchQuery({
+			queryKey    : [KEY_QUERYS.REQUEST_SESSION, requestId],
+			queryFn     : () => fetchApi<RequestSession[]>({ url: `request-sessions/request/${ requestId }` }),
+		}).then(( requestSessions ) => {
+			console.log( 'Fetched request sessions:', requestSessions );
+			const requestSession = requestSessions?.find( rs => rs.id === sessionId );
+			console.log( 'Found request session after fetch:', requestSession );
+
+			if ( requestSession ) {
+				setRequestSessionDialog({
+					isOpen              : true,
+					requestSession      : requestSession,
+					requestId           : requestId,
+				});
+			} else {
+				console.log( 'Request session not found after fetch for sessionId:', sessionId );
+			}
+		}).catch(( error ) => {
+			console.error( 'Error fetching request sessions:', error );
+		});
+	};
+
 
 	return (
 		<>
 			{/* Pass handlers to children (Notifications component) */}
 			{typeof children === 'function' 
 				? children({ 
-					onRequestClick      : handleRequestClick, 
-					onRequestDetailClick: handleRequestDetailClick 
+					onRequestClick          : handleRequestClick, 
+					onRequestSessionClick   : handleRequestSessionClick,
+					onPlanningChangeClick   : handlePlanningChangeClick,
 				})
 				: children
 			}
@@ -180,14 +221,27 @@ export function NotificationDialogManager({
 				/>
 			)}
 
-			{/* Request Detail Dialog */}
-			{requestDetailDialog.requestDetail && (
-				<RequestDetailForm
-					isOpen              = { requestDetailDialog.isOpen }
-					onClose             = {() => setRequestDetailDialog( prev => ({ ...prev, isOpen: false }))}
-					onCancel            = {() => setRequestDetailDialog( prev => ({ ...prev, isOpen: false }))}
-					requestDetail       = { requestDetailDialog.requestDetail }
-                    requestId           = { requestDetailDialog.requestDetail.requestId }
+			{/* Request Session Dialog */}
+			{requestSessionDialog.requestSession && (
+				<RequestSessionEditForm
+					isOpen              = { requestSessionDialog.isOpen }
+					onClose             = { () => setRequestSessionDialog({ isOpen: false, requestSession: null, requestId: '' }) }
+					onCancel            = { () => setRequestSessionDialog({ isOpen: false, requestSession: null, requestId: '' }) }
+					onSuccess           = { () => setRequestSessionDialog({ isOpen: false, requestSession: null, requestId: '' }) }
+					requestSession      = { requestSessionDialog.requestSession }
+					requestId           = { requestSessionDialog.requestId }
+				/>
+			)}
+
+			{/* Planning Change Dialog */}
+			{planningChangeDialog.planningChange && (
+				<PlanningChangeForm
+					isOpen              = { planningChangeDialog.isOpen }
+					onClose             = { () => setPlanningChangeDialog({ isOpen: false, planningChange: null }) }
+					onCancel            = { () => setPlanningChangeDialog({ isOpen: false, planningChange: null }) }
+					onSuccess           = { () => setPlanningChangeDialog({ isOpen: false, planningChange: null }) }
+					planningChange      = { planningChangeDialog.planningChange }
+					section             = { null }
 				/>
 			)}
 		</>
