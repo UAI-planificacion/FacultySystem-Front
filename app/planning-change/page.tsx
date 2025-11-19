@@ -1,34 +1,42 @@
 'use client'
 
-import { JSX, useState, useMemo }   from "react";
+import { JSX, useMemo, useState }   from "react";
 import { useSearchParams }          from "next/navigation";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast }                                      from "sonner";
 
-import { PageLayout }           from "@/components/layout/page-layout";
-import { PlanningChangeFilter } from "@/components/planning-change/planning-change-filter";
-import { PlanningChangeList }   from "@/components/planning-change/planning-change-list";
-import { PlanningChangeTable }  from "@/components/planning-change/planning-change-table";
+import { PageLayout }               from "@/components/layout/page-layout";
+import { DeleteConfirmDialog }      from "@/components/dialog/DeleteConfirmDialog";
+import { PlanningChangeFilter }     from "@/components/planning-change/planning-change-filter";
+import { PlanningChangeForm }       from "@/components/planning-change/planning-change-form";
+import { PlanningChangeList }       from "@/components/planning-change/planning-change-list";
+import { PlanningChangeTable }      from "@/components/planning-change/planning-change-table";
 
 import { useViewMode }              from "@/hooks/use-view-mode";
-import { fetchApi }                 from "@/services/fetch";
+import { Method, fetchApi }         from "@/services/fetch";
 import { KEY_QUERYS }               from "@/consts/key-queries";
-import { type PlanningChangeAll }   from "@/types/planning-change.model";
+import { errorToast, successToast } from "@/config/toast/toast.config";
+import {
+	type PlanningChange,
+	type PlanningChangeAll
+}                                      from "@/types/planning-change.model";
 import { type Status }              from "@/types/request";
 
 
 export default function PlanningChangePage(): JSX.Element {
-	const searchParams                  = useSearchParams();
+    const searchParams                  = useSearchParams();
 	const { viewMode, onViewChange }    = useViewMode({ queryName: 'viewPlanningChange', defaultMode: 'cards' });
+    const sectionId                     = searchParams.get( 'sectionId' );
 
 	// Estados de filtros
-	const [title, setTitle]                 = useState<string>( "" );
-	const [statusFilter, setStatusFilter]   = useState<Status[]>([]);
-	const [sectionFilter, setSectionFilter] = useState<string[]>(() => {
-		const sectionId = searchParams.get( 'sectionId' );
-
-        return sectionId ? [sectionId] : [];
-	});
+	const [title, setTitle]                                     = useState<string>( "" );
+	const [statusFilter, setStatusFilter]                       = useState<Status[]>([]);
+	const [sectionFilter, setSectionFilter]                     = useState<string[]>( sectionId ? [sectionId] : [] );
+    const [isFormOpen, setIsFormOpen]                           = useState<boolean>( false );
+	const [editingPlanningChange, setEditingPlanningChange]     = useState<PlanningChange | null>( null );
+	const [isDeleteDialogOpen, setIsDeleteDialogOpen]           = useState<boolean>( false );
+	const [deletingPlanningChange, setDeletingPlanningChange]   = useState<PlanningChangeAll | null>( null );
 
 	// Query para obtener todos los planning changes
 	const {
@@ -39,6 +47,52 @@ export default function PlanningChangePage(): JSX.Element {
 		queryKey	: [KEY_QUERYS.PLANNING_CHANGE],
 		queryFn		: () => fetchApi<PlanningChangeAll[]>({ url: KEY_QUERYS.PLANNING_CHANGE }),
 		staleTime	: 5 * 60 * 1000,
+	});
+
+	const queryClient = useQueryClient();
+
+	/**
+	 * Maps PlanningChangeAll into PlanningChange for the form component.
+	 */
+	const mapPlanningChangeAllToPlanningChange = ( planningChange: PlanningChangeAll ): PlanningChange => ({
+		id              : planningChange.id,
+		title           : planningChange.title,
+		status          : planningChange.status,
+		sessionName     : planningChange.sessionName,
+		building        : planningChange.building,
+		spaceId         : planningChange.spaceId,
+		isEnglish       : planningChange.isEnglish,
+		isConsecutive   : planningChange.isConsecutive,
+		description     : planningChange.description,
+		spaceType       : planningChange.spaceType,
+		inAfternoon     : planningChange.inAfternoon,
+		professor       : planningChange.professor,
+		spaceSize       : planningChange.spaceSize,
+		sessionId       : planningChange.session?.id || null,
+		sectionId       : planningChange.section?.id || null,
+		createdAt       : planningChange.createdAt,
+		updatedAt       : planningChange.updatedAt,
+		staffCreate     : planningChange.staffCreate,
+		staffUpdate     : planningChange.staffUpdate,
+		dayModulesId    : planningChange.dayModulesId,
+	});
+
+	const deletePlanningChangeMutation = useMutation<void, Error, string>({
+		mutationFn	: async ( planningChangeId ) => {
+			await fetchApi({
+				url		: `planning-change/${planningChangeId}`,
+				method	: Method.DELETE,
+			});
+		},
+		onSuccess	: () => {
+			queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.PLANNING_CHANGE] });
+			setIsDeleteDialogOpen( false );
+			setDeletingPlanningChange( null );
+			toast( 'Cambio de planificación eliminado exitosamente', successToast );
+		},
+		onError		: ( mutationError ) => {
+			toast( `Error al eliminar cambio de planificación: ${mutationError.message}`, errorToast );
+		}
 	});
 
 	// Filtrar planning changes
@@ -64,18 +118,39 @@ export default function PlanningChangePage(): JSX.Element {
 
 	// Handlers
 	const handleEdit = ( planningChange: PlanningChangeAll ): void => {
-		console.log( "Editar:", planningChange );
-		// TODO: Implementar edición
+		setEditingPlanningChange( mapPlanningChangeAllToPlanningChange( planningChange ));
+		setIsFormOpen( true );
 	};
 
 	const handleDelete = ( planningChange: PlanningChangeAll ): void => {
-		console.log( "Eliminar:", planningChange );
-		// TODO: Implementar eliminación
+		setDeletingPlanningChange( planningChange );
+		setIsDeleteDialogOpen( true );
 	};
 
 	const handleNewPlanningChange = (): void => {
-		console.log( "Crear nuevo planning change" );
-		// TODO: Implementar creación
+		setEditingPlanningChange( null );
+		setIsFormOpen( true );
+	};
+
+	const handleFormSuccess = (): void => {
+		setIsFormOpen( false );
+		setEditingPlanningChange( null );
+	};
+
+	const handleCloseForm = (): void => {
+		setIsFormOpen( false );
+		setEditingPlanningChange( null );
+	};
+
+	const handleCloseDeleteDialog = (): void => {
+		setIsDeleteDialogOpen( false );
+		setDeletingPlanningChange( null );
+	};
+
+	const handleConfirmDelete = (): void => {
+		if ( deletingPlanningChange ) {
+			deletePlanningChangeMutation.mutate( deletingPlanningChange.id );
+		}
 	};
 
 	return (
@@ -112,6 +187,23 @@ export default function PlanningChangePage(): JSX.Element {
 						isError			= { isError }
 					/>
 				)}
+
+				<PlanningChangeForm
+					isOpen			= { isFormOpen }
+					onClose			= { handleCloseForm }
+					onCancel		= { handleCloseForm }
+					onSuccess       = { handleFormSuccess }
+					planningChange	= { editingPlanningChange }
+					section	        = { null }
+				/>
+
+				<DeleteConfirmDialog
+					isOpen		= { isDeleteDialogOpen }
+					onClose     = { handleCloseDeleteDialog }
+					onConfirm	= { handleConfirmDelete }
+					name		= { deletingPlanningChange?.title || '' }
+					type		= "el Cambio de Planificación"
+				/>
 			</div>
 		</PageLayout>
 	);
