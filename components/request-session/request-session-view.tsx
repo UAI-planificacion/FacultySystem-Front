@@ -356,9 +356,11 @@ export function RequestSessionView({
 
 									<div className="flex flex-wrap gap-2">
 										{availableSessions.map( session => {
-											const isCurrent = currentSessionForModules === session;
-											const requestSession = data.find( rs => rs.session === session );
-											const count = requestSession ? ( editingSessionDayModules[requestSession.id]?.length || 0 ) : 0;
+											const isCurrent         = currentSessionForModules === session;
+											const requestSession    = data.find( rs => rs.session === session );
+											const count             = requestSession
+                                                ? ( editingSessionDayModules[requestSession.id]?.length || 0 )
+                                                : 0;
 
 											const sessionColors: Record<Session, string> = {
 												[Session.C]	: 'bg-blue-500',
