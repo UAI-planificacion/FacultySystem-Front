@@ -47,7 +47,6 @@ import { Session }					from "@/types/section.model";
 import { KEY_QUERYS }				from "@/consts/key-queries";
 import { Method, fetchApi }			from "@/services/fetch";
 import { errorToast, successToast }	from "@/config/toast/toast.config";
-import { cn }						from "@/lib/utils";
 
 
 interface Props {
