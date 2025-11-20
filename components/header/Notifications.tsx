@@ -16,6 +16,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Notification } from '@/types/notification';
 import { EnumAction, Type } from '@/types/emit-event';
 import { useNotifications } from '@/hooks/use-notifications';
+import { Comment } from '@/types/comment.model';
 
 
 interface NotificationItemProps {
@@ -54,6 +55,8 @@ function NotificationItem({
 				return 'Detalle';
 			case Type.PLANNING_CHANGE:
 				return 'Cambio de Planificación';
+			case Type.COMMENT:
+				return 'Comentario';
 			default:
 				return 'Elemento';
 		}
@@ -104,6 +107,7 @@ interface NotificationsProps {
 	onRequestClick          : ( requestId: string ) => void;
 	onRequestSessionClick   : ( requestId: string, sessionId: string ) => void;
 	onPlanningChangeClick   : ( planningChangeId: string ) => void;
+	onCommentClick          : ( comment: Comment ) => void;
 }
 
 
@@ -113,7 +117,8 @@ interface NotificationsProps {
 export function Notifications({ 
 	onRequestClick, 
 	onRequestSessionClick,
-	onPlanningChangeClick
+	onPlanningChangeClick,
+	onCommentClick
 }: NotificationsProps ): JSX.Element {
 	const [isOpen, setIsOpen] = useState( false );
 	const { 
@@ -136,6 +141,9 @@ export function Notifications({
 		} else if ( notification.type === Type.PLANNING_CHANGE ) {
 			console.log( 'Calling onPlanningChangeClick with entityId:', notification.entityId );
 			onPlanningChangeClick( notification.entityId );
+		} else if ( notification.type === Type.COMMENT && notification.comment ) {
+			console.log( 'Calling onCommentClick with comment:', notification.comment );
+			onCommentClick( notification.comment );
 		}
 	};
 
