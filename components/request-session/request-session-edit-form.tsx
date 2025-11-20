@@ -56,6 +56,7 @@ interface Props {
 	isOpen			: boolean;
 	onClose			: () => void;
 	requestId		: string;
+	defaultTab?		: Tab;
 }
 
 
@@ -105,9 +106,10 @@ export function RequestSessionEditForm({
 	isOpen,
 	onClose,
 	requestId,
+	defaultTab = 'form',
 }: Props ): JSX.Element {
 	const queryClient = useQueryClient();
-	const [ tab, setTab ] = useState<Tab>( 'form' );
+	const [ tab, setTab ] = useState<Tab>( defaultTab );
 
 	const form = useForm<RequestSessionEditFormValues>({
 		resolver	: zodResolver( requestSessionEditSchema ),
@@ -223,163 +225,163 @@ export function RequestSessionEditForm({
 					<TabsContent value="form" className="space-y-4 mt-4">
 						<Form {...form}>
 							<form onSubmit={ form.handleSubmit( onSubmit ) } className="space-y-4">
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-							{/* Profesor */}
-							<FormField
-								control	= { form.control }
-								name	= "professorId"
-								render	= {({ field }) => (
-									<FormItem>
-										<FormLabel>Profesor</FormLabel>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {/* Profesor */}
+                                    <FormField
+                                        control	= { form.control }
+                                        name	= "professorId"
+                                        render	= {({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Profesor</FormLabel>
 
-										<FormControl>
-											<ProfessorSelect
-												multiple			= { false }
-												placeholder			= "Seleccionar profesor"
-												defaultValues		= { field.value || undefined }
-												onSelectionChange	= {( value ) => {
-													const professorId = typeof value === 'string' ? value : null;
-													field.onChange( professorId );
-												}}
-											/>
-										</FormControl>
+                                                <FormControl>
+                                                    <ProfessorSelect
+                                                        multiple			= { false }
+                                                        placeholder			= "Seleccionar profesor"
+                                                        defaultValues		= { field.value || undefined }
+                                                        onSelectionChange	= {( value ) => {
+                                                            const professorId = typeof value === 'string' ? value : null;
+                                                            field.onChange( professorId );
+                                                        }}
+                                                    />
+                                                </FormControl>
 
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
 
-							{/* Edificio */}
-							<FormField
-								control	= { form.control }
-								name	= "building"
-								render	= {({ field }) => (
-									<FormItem>
-										<FormLabel>Edificio</FormLabel>
+                                    {/* Edificio */}
+                                    <FormField
+                                        control	= { form.control }
+                                        name	= "building"
+                                        render	= {({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Edificio</FormLabel>
 
-										<FormControl>
-											<HeadquartersSelect
-												multiple			= { false }
-												placeholder			= "Seleccionar edificio"
-												defaultValues		= { field.value || undefined }
-												onSelectionChange	= {( value ) => {
-													const buildingId = typeof value === 'string' ? value : null;
-													field.onChange( buildingId );
-													handleBuildingChange( buildingId );
-												}}
-											/>
-										</FormControl>
+                                                <FormControl>
+                                                    <HeadquartersSelect
+                                                        multiple			= { false }
+                                                        placeholder			= "Seleccionar edificio"
+                                                        defaultValues		= { field.value || undefined }
+                                                        onSelectionChange	= {( value ) => {
+                                                            const buildingId = typeof value === 'string' ? value : null;
+                                                            field.onChange( buildingId );
+                                                            handleBuildingChange( buildingId );
+                                                        }}
+                                                    />
+                                                </FormControl>
 
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-						</div>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
 
-						{/* Selector de filtros de espacio */}
-					{ form.watch( 'building' ) && (
-						<SpaceFilterSelector
-							buildingId          = { form.watch( 'building' ) }
-							filterMode          = { form.watch( 'filterMode' ) }
-							spaceId             = { form.watch( 'spaceId' ) }
-							spaceType           = { form.watch( 'spaceType' ) }
-							spaceSizeId         = { form.watch( 'spaceSizeId' ) }
-							onFilterModeChange  = {( mode ) => form.setValue( 'filterMode', mode )}
-							onSpaceIdChange     = {( spaceId ) => form.setValue( 'spaceId', typeof spaceId === 'string' ? spaceId : null )}
-							onSpaceTypeChange   = {( spaceType ) => form.setValue( 'spaceType', spaceType )}
-							onSpaceSizeIdChange = {( spaceSizeId ) => form.setValue( 'spaceSizeId', spaceSizeId )}
-						/>
-					)}
+                                {/* Selector de filtros de espacio */}
+                                { form.watch( 'building' ) && (
+                                    <SpaceFilterSelector
+                                        buildingId          = { form.watch( 'building' ) }
+                                        filterMode          = { form.watch( 'filterMode' ) }
+                                        spaceId             = { form.watch( 'spaceId' ) }
+                                        spaceType           = { form.watch( 'spaceType' ) }
+                                        spaceSizeId         = { form.watch( 'spaceSizeId' ) }
+                                        onFilterModeChange  = {( mode ) => form.setValue( 'filterMode', mode )}
+                                        onSpaceIdChange     = {( spaceId ) => form.setValue( 'spaceId', typeof spaceId === 'string' ? spaceId : null )}
+                                        onSpaceTypeChange   = {( spaceType ) => form.setValue( 'spaceType', spaceType )}
+                                        onSpaceSizeIdChange = {( spaceSizeId ) => form.setValue( 'spaceSizeId', spaceSizeId )}
+                                    />
+                                )}
 
-						{/* Switches */}
-						<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-							<FormField
-								control	= { form.control }
-								name	= "isEnglish"
-								render	= {({ field }) => (
-									<FormItem>
-										<div className="flex items-center justify-between rounded-lg border p-3">
-											<Label htmlFor="isEnglish" className="cursor-pointer">
-												En inglés
-											</Label>
+                                {/* Switches */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                    <FormField
+                                        control	= { form.control }
+                                        name	= "isEnglish"
+                                        render	= {({ field }) => (
+                                            <FormItem>
+                                                <div className="flex items-center justify-between rounded-lg border p-3">
+                                                    <Label htmlFor="isEnglish" className="cursor-pointer">
+                                                        En inglés
+                                                    </Label>
 
-											<FormControl>
-												<Switch
-													id				= "isEnglish"
-													checked			= { field.value }
-													onCheckedChange	= { field.onChange }
-												/>
-											</FormControl>
-										</div>
-									</FormItem>
-								)}
-							/>
+                                                    <FormControl>
+                                                        <Switch
+                                                            id				= "isEnglish"
+                                                            checked			= { field.value }
+                                                            onCheckedChange	= { field.onChange }
+                                                        />
+                                                    </FormControl>
+                                                </div>
+                                            </FormItem>
+                                        )}
+                                    />
 
-							<FormField
-								control	= { form.control }
-								name	= "isConsecutive"
-								render	= {({ field }) => (
-									<FormItem>
-										<div className="flex items-center justify-between rounded-lg border p-3">
-											<Label htmlFor="isConsecutive" className="cursor-pointer">
-												Consecutivo
-											</Label>
+                                    <FormField
+                                        control	= { form.control }
+                                        name	= "isConsecutive"
+                                        render	= {({ field }) => (
+                                            <FormItem>
+                                                <div className="flex items-center justify-between rounded-lg border p-3">
+                                                    <Label htmlFor="isConsecutive" className="cursor-pointer">
+                                                        Consecutivo
+                                                    </Label>
 
-											<FormControl>
-												<Switch
-													id				= "isConsecutive"
-													checked			= { field.value }
-													onCheckedChange	= { field.onChange }
-												/>
-											</FormControl>
-										</div>
-									</FormItem>
-								)}
-							/>
+                                                    <FormControl>
+                                                        <Switch
+                                                            id				= "isConsecutive"
+                                                            checked			= { field.value }
+                                                            onCheckedChange	= { field.onChange }
+                                                        />
+                                                    </FormControl>
+                                                </div>
+                                            </FormItem>
+                                        )}
+                                    />
 
-							<FormField
-								control	= { form.control }
-								name	= "inAfternoon"
-								render	= {({ field }) => (
-									<FormItem>
-										<div className="flex items-center justify-between rounded-lg border p-3">
-											<Label htmlFor="inAfternoon" className="cursor-pointer">
-												En la tarde
-											</Label>
+                                    <FormField
+                                        control	= { form.control }
+                                        name	= "inAfternoon"
+                                        render	= {({ field }) => (
+                                            <FormItem>
+                                                <div className="flex items-center justify-between rounded-lg border p-3">
+                                                    <Label htmlFor="inAfternoon" className="cursor-pointer">
+                                                        En la tarde
+                                                    </Label>
 
-											<FormControl>
-												<Switch
-													id				= "inAfternoon"
-													checked			= { field.value }
-													onCheckedChange	= { field.onChange }
-												/>
-											</FormControl>
-										</div>
-									</FormItem>
-								)}
-							/>
-						</div>
+                                                    <FormControl>
+                                                        <Switch
+                                                            id				= "inAfternoon"
+                                                            checked			= { field.value }
+                                                            onCheckedChange	= { field.onChange }
+                                                        />
+                                                    </FormControl>
+                                                </div>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
 
-						{/* Descripción */}
-						<FormField
-							control	= { form.control }
-							name	= "description"
-							render	= {({ field }) => (
-								<FormItem>
-									<FormLabel>Descripción de la sesión</FormLabel>
+                                {/* Descripción */}
+                                <FormField
+                                    control	= { form.control }
+                                    name	= "description"
+                                    render	= {({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Descripción de la sesión</FormLabel>
 
-									<FormControl>
-										<Textarea
-											placeholder	= "Descripción opcional"
-											value		= { field.value || '' }
-											onChange	= { field.onChange }
-										/>
-									</FormControl>
+                                            <FormControl>
+                                                <Textarea
+                                                    placeholder	= "Descripción opcional"
+                                                    value		= { field.value || '' }
+                                                    onChange	= { field.onChange }
+                                                />
+                                            </FormControl>
 
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
 
 								<DialogFooter className="flex justify-between border-t pt-4">
 									<Button

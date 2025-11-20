@@ -74,6 +74,7 @@ interface Props {
 	onClose			: () => void;
     section         : OfferSection | null;
     session?        : OfferSession | null;
+	defaultTab?		: Tab;
 }
 
 // Base Zod schema for planning change validation
@@ -200,7 +201,8 @@ export function PlanningChangeForm({
 	isOpen,
 	onClose,
     section,
-    session
+    session,
+	defaultTab = 'form'
 }: Props ): JSX.Element {
 	const {
         staff,
@@ -208,7 +210,7 @@ export function PlanningChangeForm({
     }                   = useSession();
 	const queryClient   = useQueryClient();
 
-	const [ tab, setTab ]                                   = useState<Tab>( 'form' );
+	const [ tab, setTab ]                                   = useState<Tab>( defaultTab );
 	const [ requestDetailModule, setRequestDetailModule ]   = useState<Array<{ id?: string; day: string; moduleId: string }>>([]);
 	const [ selectedSessionId, setSelectedSessionId ]       = useState<string | null>( null );
 	const [ filterMode, setFilterMode ]                     = useState<FilterMode>( 'space' );
