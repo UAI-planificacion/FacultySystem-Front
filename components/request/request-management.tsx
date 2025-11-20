@@ -39,7 +39,6 @@ export function RequestsManagement({ facultyId, enabled }: RequestsManagementPro
     // Get detail ID from URL params
     const detailId = searchParams.get( 'detail' );
 
-
     /**
      * Effect to handle URL-based request selection
      * When detailId changes in URL, find and set the corresponding request
@@ -58,7 +57,6 @@ export function RequestsManagement({ facultyId, enabled }: RequestsManagementPro
         }
     }, [detailId, data]);
 
-
     /**
      * Update URL parameters with detail ID
      */
@@ -75,7 +73,6 @@ export function RequestsManagement({ facultyId, enabled }: RequestsManagementPro
         router.replace( newUrl );
     };
 
-
     /**
      * Handle viewing request details
      * Updates both state and URL
@@ -84,7 +81,6 @@ export function RequestsManagement({ facultyId, enabled }: RequestsManagementPro
         setSelectedRequest( request );
         updateUrlParams( request.id );
     };
-
 
     /**
      * Handle going back to request list
