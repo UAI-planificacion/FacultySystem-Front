@@ -13,6 +13,7 @@ import {
 }								from '@/components/ui/form';
 import { Input }				from '@/components/ui/input';
 import { SessionTypeSelector }  from '@/components/shared/session-type-selector';
+import { cn }                   from '@/lib/utils';
 
 
 interface SessionFormFieldsProps {
@@ -133,23 +134,36 @@ export function SessionFormFields({
 				<FormField
 					control = { control }
 					name    = "chairsAvailable"
-					render  = {({ field }) => (
-						<FormItem>
-							<FormLabel>Sillas Disponibles</FormLabel>
+					render  = {({ field }) => {
+						const isNegative = field.value !== null && field.value !== undefined && field.value < 0;
 
-							<FormControl>
-								<Input
-									type        = "number"
-									placeholder = "Número de sillas disponibles"
-									{...field}
-									value       = { field.value || '' }
-									onChange    = {( e ) => field.onChange( e.target.value ? parseInt( e.target.value ) : null )}
-								/>
-							</FormControl>
+						return (
+							<FormItem>
+								<FormLabel className={ cn( isNegative && "text-destructive" ) }>
+									Sillas Disponibles
+								</FormLabel>
 
-							<FormMessage />
-						</FormItem>
-					)}
+								<FormControl>
+									<Input
+										type        = "number"
+										placeholder = "Número de sillas disponibles"
+										{...field}
+										value       = { field.value || '' }
+										onChange    = {( e ) => field.onChange( e.target.value ? parseInt( e.target.value ) : null )}
+										className   = { cn( isNegative && "border-destructive focus-visible:ring-destructive" ) }
+									/>
+								</FormControl>
+
+								{ isNegative && (
+									<p className="text-sm text-destructive">
+										El número de sillas no puede ser negativo
+									</p>
+								)}
+
+								<FormMessage />
+							</FormItem>
+						);
+					}}
 				/>
 			</div>
 		</>
