@@ -8,18 +8,20 @@ import { RequestForm }              from '@/components/request/request-form';
 import { RequestSessionEditForm }   from '@/components/request-session/request-session-edit-form';
 import { PlanningChangeForm }       from '@/components/planning-change/planning-change-form';
 
-import { Request }              from '@/types/request';
-import { KEY_QUERYS }           from '@/consts/key-queries';
-import { fetchApi }             from '@/services/fetch';
-import { PlanningChange }       from '@/types/planning-change.model';
-import { RequestSession }       from '@/types/request-session.model';
+import { Request }          from '@/types/request';
+import { KEY_QUERYS }       from '@/consts/key-queries';
+import { fetchApi }         from '@/services/fetch';
+import { PlanningChange }   from '@/types/planning-change.model';
+import { RequestSession }   from '@/types/request-session.model';
+import { Comment }          from '@/types/comment.model';
 
 
 interface NotificationDialogManagerProps {
 	children: React.ReactNode | (( props: {
-		onRequestClick              : ( requestId: string ) => void;
-		onRequestSessionClick       : ( requestId: string, sessionId: string ) => void;
-		onPlanningChangeClick       : ( planningChangeId: string ) => void;
+		onRequestClick          : ( requestId: string )                     => void;
+		onRequestSessionClick   : ( requestId: string, sessionId: string )  => void;
+		onPlanningChangeClick   : ( planningChangeId: string )              => void;
+		onCommentClick          : ( comment: Comment )                      => void;
 	}) => React.ReactNode );
 }
 
@@ -52,9 +54,23 @@ export function NotificationDialogManager({
 	const [planningChangeDialog, setPlanningChangeDialog] = useState<{
 		isOpen              : boolean;
 		planningChange      : PlanningChange | null;
+		openInComments      : boolean;
 	}>({
 		isOpen              : false,
 		planningChange      : null,
+		openInComments      : false,
+	});
+
+	const [requestSessionCommentDialog, setRequestSessionCommentDialog] = useState<{
+		isOpen              : boolean;
+		requestSession      : RequestSession | null;
+		requestId           : string;
+		openInComments      : boolean;
+	}>({
+		isOpen              : false,
+		requestSession      : null,
+		requestId           : '',
+		openInComments      : false,
 	});
 
 
@@ -120,6 +136,7 @@ export function NotificationDialogManager({
 				setPlanningChangeDialog({
 					isOpen              : true,
 					planningChange      : planningChange,
+					openInComments      : false,
 				});
 			} else {
 				console.log( 'Planning change not found after fetch for ID:', planningChangeId );
@@ -199,6 +216,63 @@ export function NotificationDialogManager({
 	};
 
 
+	/**
+	 * Handle comment click notification
+	 * Fetches the related RequestSession or PlanningChange and opens the form in comments tab
+	 */
+	function handleCommentClick( comment: Comment ): void {
+		console.log( 'handleCommentClick called with comment:', comment );
+
+		// Si el comentario es de un RequestSession
+		if ( comment.requestSessionId ) {
+			console.log( 'Fetching RequestSession for comment:', comment.requestSessionId );
+
+			queryClient.fetchQuery({
+				queryKey    : [KEY_QUERYS.REQUEST_SESSION, comment.requestSessionId],
+				queryFn     : () => fetchApi<RequestSession>({ url: `request-sessions/${ comment.requestSessionId }` }),
+			}).then(( requestSession ) => {
+				if ( requestSession ) {
+					console.log( 'Fetched RequestSession:', requestSession );
+
+					setRequestSessionCommentDialog({
+						isOpen              : true,
+						requestSession      : requestSession,
+						requestId           : requestSession.requestId || '',
+						openInComments      : true,
+					});
+				} else {
+					console.log( 'RequestSession not found for ID:', comment.requestSessionId );
+				}
+			}).catch(( error ) => {
+				console.error( 'Error fetching RequestSession:', error );
+			});
+		}
+		// Si el comentario es de un PlanningChange
+		else if ( comment.planningChangeId ) {
+			console.log( 'Fetching PlanningChange for comment:', comment.planningChangeId );
+
+			queryClient.fetchQuery({
+				queryKey    : [KEY_QUERYS.PLANNING_CHANGE, 'single', comment.planningChangeId],
+				queryFn     : () => fetchApi<PlanningChange>({ url: `planning-change/${ comment.planningChangeId }` }),
+			}).then(( planningChange ) => {
+				if ( planningChange ) {
+					console.log( 'Fetched PlanningChange:', planningChange );
+
+					setPlanningChangeDialog({
+						isOpen              : true,
+						planningChange      : planningChange,
+						openInComments      : true,
+					});
+				} else {
+					console.log( 'PlanningChange not found for ID:', comment.planningChangeId );
+				}
+			}).catch(( error ) => {
+				console.error( 'Error fetching PlanningChange:', error );
+			});
+		}
+	};
+
+
 	return (
 		<>
 			{/* Pass handlers to children (Notifications component) */}
@@ -207,6 +281,7 @@ export function NotificationDialogManager({
 					onRequestClick          : handleRequestClick, 
 					onRequestSessionClick   : handleRequestSessionClick,
 					onPlanningChangeClick   : handlePlanningChangeClick,
+					onCommentClick          : handleCommentClick,
 				})
 				: children
 			}
@@ -237,11 +312,25 @@ export function NotificationDialogManager({
 			{planningChangeDialog.planningChange && (
 				<PlanningChangeForm
 					isOpen              = { planningChangeDialog.isOpen }
-					onClose             = { () => setPlanningChangeDialog({ isOpen: false, planningChange: null }) }
-					onCancel            = { () => setPlanningChangeDialog({ isOpen: false, planningChange: null }) }
-					onSuccess           = { () => setPlanningChangeDialog({ isOpen: false, planningChange: null }) }
+					onClose             = { () => setPlanningChangeDialog({ isOpen: false, planningChange: null, openInComments: false }) }
+					onCancel            = { () => setPlanningChangeDialog({ isOpen: false, planningChange: null, openInComments: false }) }
+					onSuccess           = { () => setPlanningChangeDialog({ isOpen: false, planningChange: null, openInComments: false }) }
 					planningChange      = { planningChangeDialog.planningChange }
 					section             = { null }
+					defaultTab          = { planningChangeDialog.openInComments ? 'comments' : 'form' }
+				/>
+			)}
+
+			{/* Request Session Dialog for Comments */}
+			{requestSessionCommentDialog.requestSession && (
+				<RequestSessionEditForm
+					isOpen              = { requestSessionCommentDialog.isOpen }
+					onClose             = { () => setRequestSessionCommentDialog({ isOpen: false, requestSession: null, requestId: '', openInComments: false }) }
+					onCancel            = { () => setRequestSessionCommentDialog({ isOpen: false, requestSession: null, requestId: '', openInComments: false }) }
+					onSuccess           = { () => setRequestSessionCommentDialog({ isOpen: false, requestSession: null, requestId: '', openInComments: false }) }
+					requestSession      = { requestSessionCommentDialog.requestSession }
+					requestId           = { requestSessionCommentDialog.requestId }
+					defaultTab          = { requestSessionCommentDialog.openInComments ? 'comments' : 'form' }
 				/>
 			)}
 		</>
