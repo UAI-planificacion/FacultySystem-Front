@@ -12,6 +12,7 @@ import {
 	CardHeader,
 	CardTitle
 }							from "@/components/ui/card";
+import { Skeleton }         from "@/components/ui/skeleton";
 import { FirstPlanning }	from "@/components/section/planning/first-planning";
 import { SecondPlanning }	from "@/components/section/planning/second-planning";
 import { ThirdPlanning }	from "@/components/section/planning/third-planning";
@@ -534,21 +535,70 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 				)}
 
 				{currentStep === 3 && (
-					<ThirdPlanning
-						response			= { availabilityResponse }
-						sectionId			= { section.id }
-						sessionInEnglish	= { sessionInEnglish }
-						selectedDayModules	= { selectedDayModules }
-						onBack				= {() => goToStep( 2 )}
-						onSuccess			= {( section: OfferSection ) => {
-							// Resetear el stepper al paso 1 después de reservar exitosamente
-							setCurrentStep( 1 );
-							setSelectedDayModules([]);
-							setAvailabilityResponse( null );
+					<>
+						{/* Skeleton mientras se calcula la disponibilidad */}
+						{ calculateAvailabilityMutation.isPending ? (
+							<div className="space-y-6">
+								{/* Skeleton para tabs de Espacios/Profesores */}
+								<Card>
+									<CardContent className="mt-5 space-y-4">
+										<div className="flex gap-2">
+											<Skeleton className="h-10 w-full" />
+											<Skeleton className="h-10 w-full" />
+										</div>
 
-							router.push(`/sections?id=${section.id}`);
-						}}
-					/>
+										<Skeleton className="h-8 w-64" />
+
+										<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+											<Skeleton className="h-20 w-full" />
+											<Skeleton className="h-20 w-full" />
+											<Skeleton className="h-20 w-full" />
+											<Skeleton className="h-20 w-full" />
+										</div>
+									</CardContent>
+								</Card>
+
+								{/* Skeleton para tabla de Fechas Programadas */}
+								<Card>
+									<CardHeader>
+										<Skeleton className="h-6 w-48" />
+										<Skeleton className="h-4 w-64 mt-2" />
+									</CardHeader>
+
+									<CardContent>
+										<div className="space-y-2">
+											{ Array.from({ length: 5 }).map(( _, index ) => (
+												<Skeleton key={ index } className="h-12 w-full" />
+											))}
+										</div>
+									</CardContent>
+								</Card>
+
+								{/* Skeleton para botones */}
+								<div className="flex justify-between border-t pt-4">
+									<Skeleton className="h-10 w-24" />
+									<Skeleton className="h-10 w-40" />
+								</div>
+							</div>
+						) : (
+							<ThirdPlanning
+								response			= { availabilityResponse }
+								sectionId			= { section.id }
+								sessionInEnglish	= { sessionInEnglish }
+								selectedDayModules	= { selectedDayModules }
+								isCalculating		= { calculateAvailabilityMutation.isPending }
+								onBack				= {() => goToStep( 2 )}
+								onSuccess			= {( section: OfferSection ) => {
+									// Resetear el stepper al paso 1 después de reservar exitosamente
+									setCurrentStep( 1 );
+									setSelectedDayModules([]);
+									setAvailabilityResponse( null );
+
+									router.push(`/sections?id=${section.id}`);
+								}}
+							/>
+						)}
+					</>
 				)}
 			</CardContent>
 		</Card>
