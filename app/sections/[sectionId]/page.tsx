@@ -11,12 +11,15 @@ import {
 	CardContent
 }									from "@/components/ui/card";
 import { Label }					from "@/components/ui/label";
+import { Button }                   from "@/components/ui/button";
+import { Alert, AlertDescription }  from "@/components/ui/alert";
 import { PageLayout }				from "@/components/layout";
 import { SessionName }				from "@/components/session/session-name";
 import { SessionInfoRequest }		from "@/components/session/session-info-request";
 import { PlanningStepperComponent } from "@/components/section/planning/planning-stepper";
 import { Badge }                    from "@/components/ui/badge";
 import { Skeleton }                 from "@/components/ui/skeleton";
+import { AlertCircle, ArrowLeft }   from "lucide-react";
 
 import {
     cn,
@@ -32,7 +35,7 @@ import { errorToast }   from "@/config/toast/toast.config";
 
 
 export default function SectionDetailPage(): JSX.Element {
-    const route     = useRouter();
+    const router    = useRouter();
     const params    = useParams();
     const sectionId = params.sectionId as string;
 
@@ -45,9 +48,9 @@ export default function SectionDetailPage(): JSX.Element {
 		queryFn : () => fetchApi<OfferSection>({ url: `sections/${sectionId}` }),
 	});
 
-    if ( (section?.sessions?.ids?.length ?? 0) > 0 ) {
-        toast('Sección ya está planificada', errorToast);
-        route.push(`/sections?id=${sectionId}`);
+    if (( section?.sessions?.ids?.length ?? 0 ) > 0 ) {
+        toast( 'Sección ya está planificada', errorToast );
+        router.push( `/sections?id=${sectionId}` );
     }
 
 	// Calcular cuántas sesiones de cada tipo necesitamos basado en section
@@ -65,14 +68,47 @@ export default function SectionDetailPage(): JSX.Element {
 	}, [ section ]);
  // ... existing code ...
 
+	// Manejo de error
+	if ( isError ) {
+		return (
+			<PageLayout title="Error al cargar sección">
+				<div className="space-y-4">
+					<Alert variant="destructive">
+						<AlertCircle className="h-4 w-4" />
+						<AlertDescription>
+							No se pudo cargar la información de la sección. 
+							Por favor, verifica que el ID sea correcto o intenta nuevamente más tarde.
+						</AlertDescription>
+					</Alert>
+
+					<div className="flex gap-2">
+						<Button
+							variant	= "outline"
+							onClick	= {() => router.push( '/sections' )}
+						>
+							<ArrowLeft className="h-4 w-4 mr-2" />
+							Volver a Secciones
+						</Button>
+
+						<Button
+							onClick	= {() => window.location.reload()}
+						>
+							Reintentar
+						</Button>
+					</div>
+				</div>
+			</PageLayout>
+		);
+	}
+
 	if ( !section ) return <></>;
 
 
-    return (
-        <PageLayout
-			title   = {`Planificación de sección ${section.subject.id}-${section.code}`}
+	return (
+		<PageLayout
+			title	= {`Planificación de sección ${section.subject.id}-${section.code}`}
 		>
-            {isLoading ? (
+			{ isLoading ? (
                 <div className="space-y-4">
                     <Card>
                         <CardContent className="mt-4">
