@@ -507,7 +507,7 @@ export function SessionForm({
 
                                 <CardContent className="py-3 px-5 grid grid-cols-4 gap-4">
                                     <span>{ session?.spaceId }</span>
-                                    <span>{ session?.professor.name }</span>
+                                    {/* <span>{ session?.professor.name }</span> */}
                                     <span>{ session?.date && tempoFormat( session?.date )  }</span>
                                     <span>{ session?.module.name }</span>
                                 </CardContent>
