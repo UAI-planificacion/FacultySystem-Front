@@ -14,7 +14,7 @@ import { errorToast, successToast }         from '@/config/toast/toast.config';
 import { ENV }                              from '@/config/envs/env';
 import { PlanningChange }                   from '@/types/planning-change.model';
 import { RequestSession }                   from '@/types/request-session.model';
-
+import { Comment }                          from '@/types/comment.model';
 
 /**
  * Creates a notification and adds it to the notifications state
@@ -172,8 +172,8 @@ export const useSSE = () => {
                     return;
                 }
 
-                if ( !( message as Request | RequestSession | PlanningChange ).id ) {
-                    console.error( 'Request received via SSE is missing id, cannot update specific query cache.' );
+                if ( !( message as Request | RequestSession | PlanningChange | Comment ).id ) {
+                    console.error( 'Message received via SSE is missing id, cannot update specific query cache.' );
                     return;
                 }
 
@@ -188,6 +188,10 @@ export const useSSE = () => {
 
                     case Type.PLANNING_CHANGE:
                         handlePlanningChange( action, message as PlanningChange );
+                    break;
+
+                    case Type.COMMENT:
+                        handleComment( action, message as Comment );
                     break;
                 }
             } catch ( error ) {
@@ -255,7 +259,6 @@ export const useSSE = () => {
             break;
         }
     };
-
 
     /**
      * Maneja las actualizaciones de la entidad RequestSession en la caché.
@@ -388,6 +391,56 @@ export const useSSE = () => {
                 action,
                 type        : Type.PLANNING_CHANGE,
                 entityId    : planningChange.id,
+            });
+
+            toast( toastLabel, successToast );
+        }
+    };
+
+
+    /**
+     * Maneja las notificaciones de comentarios
+     * @param action El tipo de acción (CREATE, UPDATE, DELETE)
+     * @param comment El comentario recibido
+     */
+    function handleComment( action: EnumAction, comment: Comment ): void {
+        let title       = '';
+        let message     = '';
+        let toastLabel  = '';
+
+        // Determinar el título y mensaje según la acción
+        switch ( action ) {
+            case EnumAction.CREATE:
+                title       = 'Nuevo Comentario';
+                toastLabel  = 'Se creó un nuevo comentario';
+            break;
+
+            case EnumAction.UPDATE:
+                title       = 'Comentario Actualizado';
+                toastLabel  = 'Se actualizó un comentario';
+            break;
+
+            case EnumAction.DELETE:
+                title       = 'Comentario Eliminado';
+                toastLabel  = 'Se eliminó un comentario';
+            break;
+        }
+
+        // Determinar el tipo de entidad según los IDs
+        if ( comment.requestSessionId ) {
+            message = `${title} en sesión de solicitud`;
+        } else if ( comment.planningChangeId ) {
+            message = `${title} en cambio de planificación`;
+        }
+
+        if ( message ) {
+            addNotification( queryClient, {
+                title,
+                message,
+                action,
+                type        : Type.COMMENT,
+                entityId    : comment.id,
+                comment     : comment,
             });
 
             toast( toastLabel, successToast );
