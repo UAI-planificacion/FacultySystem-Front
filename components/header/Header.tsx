@@ -62,11 +62,12 @@ export default function Header() {
 					<div className="flex items-center gap-3">
 						{staff && (
 							<NotificationDialogManager>
-								{({ onRequestClick, onRequestSessionClick, onPlanningChangeClick }) => (
+								{({ onRequestClick, onRequestSessionClick, onPlanningChangeClick, onCommentClick }) => (
 									<Notifications
 										onRequestClick          = { onRequestClick }
 										onRequestSessionClick   = { onRequestSessionClick }
 										onPlanningChangeClick   = { onPlanningChangeClick }
+										onCommentClick          = { onCommentClick }
 									/>
 								)}
 							</NotificationDialogManager>
