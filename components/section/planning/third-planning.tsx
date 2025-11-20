@@ -67,6 +67,7 @@ interface Props {
 	sectionId			: string;
 	sessionInEnglish	: Record<string, boolean>;
 	selectedDayModules	: SessionDayModule[];
+	isCalculating		: boolean;
 	onBack				: () => void;
 	onSuccess			: ( section: OfferSection ) => void;
 }
@@ -83,6 +84,7 @@ export function ThirdPlanning({
     sectionId,
     sessionInEnglish,
     selectedDayModules,
+    isCalculating,
     onBack,
     onSuccess
 }: Props ): JSX.Element {
@@ -467,7 +469,8 @@ export function ThirdPlanning({
 											<Label htmlFor={`space-${item.session}`} className="flex items-center gap-2">
 												<SessionType session={ item.session } />
 
-												<span className="text-destructive">*</span>
+												<span className="text-xs text-muted-foreground">(Opcional)</span>
+
 												{ !item.isReadyToCreate && (
 													<Badge variant="destructive" className="ml-auto">
 														<AlertCircle className="h-3 w-3 mr-1" />
@@ -640,14 +643,14 @@ export function ThirdPlanning({
 				<Button
 					variant		= "outline"
 					onClick		= { onBack }
-					disabled	= { reserveMutation.isPending }
+					disabled	= { isCalculating || reserveMutation.isPending }
 				>
 					Atrás
 				</Button>
 
 				<Button
 					onClick		= { handleReserve }
-					disabled	= { !canReserve || reserveMutation.isPending }
+					disabled	= { isCalculating || !canReserve || reserveMutation.isPending }
 				>
 					{ reserveMutation.isPending ? "Reservando..." : "Reservar Sesiones" }
 				</Button>
