@@ -8,7 +8,8 @@ export enum EnumAction {
 export enum Type {
     REQUEST         = 'request',
     REQUEST_SESSION = 'request_session',
-    PLANNING_CHANGE = 'planning_change'
+    PLANNING_CHANGE = 'planning_change',
+    COMMENT         = 'comment'
 }
 
 
