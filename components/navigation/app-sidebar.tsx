@@ -91,7 +91,7 @@ const navigationItems: NavigationItem[] = [
 	},
 	{
 		id      : 'grades',
-		title   : 'Grados',
+		title   : 'Unidades Académicas',
 		url     : '/grades',
 		icon    : GraduationCap,
 	},
