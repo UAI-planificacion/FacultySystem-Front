@@ -233,7 +233,7 @@ export function FileForm({
 			const link  = document.createElement( 'a' );
 			link.href   = url;
 
-			link.setAttribute( 'download', `sesiones_${type}.xlsx` );
+			link.setAttribute( 'download', `session_${type}.xlsx` );
 
             document.body.appendChild( link );
 			link.click();
@@ -286,7 +286,7 @@ export function FileForm({
 							>
 								<span className = "flex items-center gap-2">
 									<ExcelIcon />
-									<span>Sesiones sin espacios</span>
+									<span>Asignar espacios</span>
 								</span>
 
 								<span className = "ml-auto flex items-center gap-2 text-sm text-muted-foreground">
@@ -304,7 +304,7 @@ export function FileForm({
 							>
 								<span className = "flex items-center gap-2">
 									<Users className = "h-4 w-4" />
-									<span>Sesiones sin profesores</span>
+									<span>Asignar profesores</span>
 								</span>
 								<span className = "ml-auto flex items-center gap-2 text-sm text-muted-foreground">
 									{ !availability.professor ? 'Sin pendientes' : 'Descargar' }
@@ -320,7 +320,7 @@ export function FileForm({
 							>
 								<span className = "flex items-center gap-2">
 									<Table className = "h-4 w-4" />
-									<span>Asignar registros a sesiones</span>
+									<span>Asignar registros</span>
 								</span>
 								<span className = "ml-auto flex items-center gap-2 text-sm text-muted-foreground">
                                     Descargar
