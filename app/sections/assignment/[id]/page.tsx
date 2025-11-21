@@ -1,7 +1,7 @@
 'use client'
 
 import type { ComponentType, JSX }  from 'react';
-import { useMemo, useCallback }      from 'react';
+import { useMemo, useCallback }     from 'react';
 import { useParams }                from 'next/navigation';
 
 import {
@@ -12,9 +12,13 @@ import {
     HelpCircle,
     TriangleAlert,
     XCircle
-}                                   from 'lucide-react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast }                    from 'sonner';
+}                   from 'lucide-react';
+import {
+    useMutation,
+    useQuery,
+    useQueryClient
+}                   from '@tanstack/react-query';
+import { toast }    from 'sonner';
 
 import {
     Card,
@@ -48,6 +52,7 @@ import { successToast, errorToast } from '@/config/toast/toast.config';
 import { OfferSession }             from '@/types/offer-section.model';
 import * as XLSX                    from 'xlsx';
 
+
 const statusLabels    : Record<Status, string> = {
     Available       : 'Disponible',
     Unavailable     : 'No disponible',
@@ -77,6 +82,7 @@ export default function AssignmentPage(): JSX.Element {
     const params        = useParams();
     const id            = params.id as string;
 
+
     const { data } = useQuery<SessionAvailabilityResult[]>({
         queryKey                : [ KEY_QUERYS.SESSIONS, 'assignment', id ],
         queryFn                 : async () => queryClient.getQueryData<SessionAvailabilityResult[]>( [ KEY_QUERYS.SESSIONS, 'assignment', id ] ) ?? [],
@@ -86,7 +92,10 @@ export default function AssignmentPage(): JSX.Element {
         refetchOnWindowFocus    : false
     });
 
+
     const rows = useMemo(() => data ?? [], [ data ]);
+
+
     const assignmentColumnLabel = useMemo(() => {
         const columnName = 'Espacio/Profesor';
 
@@ -95,19 +104,21 @@ export default function AssignmentPage(): JSX.Element {
         return data[0] ? Object.keys( data[0] ).includes( 'spaceId' ) ? 'Espacio' : 'Profesor' : columnName;
     }, [ data ]);
 
+
     const assignmentType = useMemo<'space' | 'professor' | null>(() => {
         if ( rows.length === 0 ) return null;
 
-        if ( rows.some(( session ) => session.spaceId && session.spaceId.trim() !== '' )) {
+        if ( rows.some(( session ) => session.Espacio && session.Espacio.trim() !== '' )) {
             return 'space';
         }
 
-        if ( rows.some(( session ) => session.professor?.id )) {
+        if ( rows.some(( session ) => session.Profesor && session.Profesor.trim() !== '' )) {
             return 'professor';
         }
 
         return null;
     }, [ rows ]);
+
 
     const updateSessionsCache = useCallback(( updatedSessions: OfferSession[] ) => {
         if ( updatedSessions.length === 0 ) {
@@ -139,34 +150,36 @@ export default function AssignmentPage(): JSX.Element {
         });
     }, [ queryClient ]);
 
+
     const createAssignments = useCallback(( statuses: Status[] ): SessionAssignment[] => {
         if ( !assignmentType ) {
             return [];
         }
 
         return rows.reduce<SessionAssignment[]>(( accumulator, session ) => {
-            if ( !statuses.includes( session.status )) {
+            if ( !statuses.includes( session.Estado! )) {
                 return accumulator;
             }
 
-            if ( assignmentType === 'space' && session.spaceId ) {
+            if ( assignmentType === 'space' && session.Espacio ) {
                 accumulator.push({
-                    sessionId   : session.sessionId,
-                    spaceId     : session.spaceId
+                    sessionId   : session.SesionId,
+                    spaceId     : session.Espacio
                 });
                 return accumulator;
             }
 
-            if ( assignmentType === 'professor' && session.professor?.id ) {
+            if ( assignmentType === 'professor' && session.Profesor ) {
                 accumulator.push({
-                    sessionId      : session.sessionId,
-                    professorId    : session.professor.id
+                    sessionId      : session.SesionId,
+                    professorId    : session.Profesor
                 });
             }
 
             return accumulator;
         }, [] );
     }, [ assignmentType, rows ]);
+
 
     const assignSessionsMutation = useMutation<OfferSession[], Error, { assignments: SessionAssignment[]; seamlessly: boolean }>({
         mutationFn  : async ({ assignments, seamlessly }) => {
@@ -188,7 +201,7 @@ export default function AssignmentPage(): JSX.Element {
 
                 const assignedIds = new Set( assignments.map(( assignment ) => assignment.sessionId ));
 
-                return currentData.filter(( session ) => !assignedIds.has( session.sessionId ));
+                return currentData.filter(( session ) => !assignedIds.has( session.SesionId ));
             });
 
             toast( 'Sesiones asignadas correctamente ', successToast );
@@ -198,21 +211,23 @@ export default function AssignmentPage(): JSX.Element {
         }
     });
 
+
     const handleExportErrors = (): void => {
-        const unavailableSessions = rows.filter(( session ) => session.status === 'Unavailable' );
+        // const unavailableSessions = rows.filter(( session ) => session.status === 'Unavailable' );
 
-        if ( unavailableSessions.length === 0 ) {
-            toast( 'No hay sesiones con errores para exportar.', errorToast );
-            return;
-        }
+        // if ( unavailableSessions.length === 0 ) {
+        //     toast( 'No hay sesiones con errores para exportar.', errorToast );
+        //     return;
+        // }
 
-        const worksheet = XLSX.utils.json_to_sheet( unavailableSessions );
+        const worksheet = XLSX.utils.json_to_sheet( rows );
         const workbook  = XLSX.utils.book_new();
 
         XLSX.utils.book_append_sheet( workbook, worksheet, 'Sesiones' );
         XLSX.writeFile( workbook, 'reporte_errores_sesiones.xlsx' );
         toast( 'Reporte exportado correctamente ', successToast );
     };
+
 
     const handleAssignOnlyAvailable = (): void => {
         const assignments = createAssignments([ 'Available' ]);
@@ -225,6 +240,7 @@ export default function AssignmentPage(): JSX.Element {
         assignSessionsMutation.mutate({ assignments, seamlessly : true });
     };
 
+
     const handleAssignWithIssues = (): void => {
         const assignments = createAssignments([ 'Available', 'Probable' ]);
 
@@ -235,6 +251,7 @@ export default function AssignmentPage(): JSX.Element {
 
         assignSessionsMutation.mutate({ assignments, seamlessly : false });
     };
+
 
     return (
         <PageLayout title = "Validación de Sesiones">
@@ -248,8 +265,8 @@ export default function AssignmentPage(): JSX.Element {
                                 <TableHead className = "w-[180px]">Fecha</TableHead>
                                 <TableHead className = "w-[180px]">Módulo</TableHead>
                                 <TableHead className = "w-[220px]">{ assignmentColumnLabel }</TableHead>
-                                <TableHead className = "w-[200px]">Estado</TableHead>
-                                <TableHead className = "min-w-[240px]">Mensaje</TableHead>
+                                <TableHead className = "w-[170px]">Estado</TableHead>
+                                <TableHead className = "w-[320px]">Mensaje</TableHead>
                             </TableRow>
                         </TableHeader>
                     </Table>
@@ -265,37 +282,37 @@ export default function AssignmentPage(): JSX.Element {
                                     </TableRow>
                                 ) : (
                                     rows.map(( session ) => (
-                                        <TableRow key = { session.sessionId }>
+                                        <TableRow key = { session.SesionId }>
                                             <TableCell className="w-[150px]">{ session.SSEC }</TableCell>
 
                                             <TableCell className="w-[180px]">
-                                                <SessionName session={ session.session as Session } />
+                                                <SessionName session={ session.TipoSesion as Session } />
                                             </TableCell>
 
-                                            <TableCell className="w-[180px]">{ tempoFormat( session.date )}</TableCell>
+                                            <TableCell className="w-[180px]">{ tempoFormat( session.Fecha )}</TableCell>
 
-                                            <TableCell className="w-[180px]">{ session.module }</TableCell>
+                                            <TableCell className="w-[180px]">{ session.Modulo }</TableCell>
 
-                                            <TableCell className="w-[220px]">{ session.spaceId || session.professor?.name || '-' }</TableCell>
+                                            <TableCell className="w-[220px]">{ session.Espacio || session.Profesor || '-' }</TableCell>
 
-                                            <TableCell className="w-[180px]">
+                                            <TableCell className="w-[170px]">
                                                 {(() => {
-                                                    const IconComponent = statusIcon[session.status];
-                                                    const iconColor     = statusIconColor[session.status];
+                                                    const IconComponent = statusIcon[session.Estado!];
+                                                    const iconColor     = statusIconColor[session.Estado!];
 
                                                     return (
                                                         <div className="flex items-center">
                                                             <IconComponent className={`${iconColor} w-4 h-4 mr-2`} />
 
-                                                            <Badge className={`${statusStyles[session.status]} text-white flex items-center`}>
-                                                                { statusLabels[ session.status ]}
+                                                            <Badge className={`${statusStyles[session.Estado!]} text-white flex items-center`}>
+                                                                { statusLabels[ session.Estado! ]}
                                                             </Badge>
                                                         </div>
                                                     );
                                                 })()}
                                             </TableCell>
 
-                                            <TableCell className="min-w-[240px]">{ session.detalle }</TableCell>
+                                            <TableCell className="w-[320px]">{ session.Detalle }</TableCell>
                                         </TableRow>
                                     ))
                                 )}
@@ -308,7 +325,7 @@ export default function AssignmentPage(): JSX.Element {
                     <Button
                         className   = "gap-2 text-red-500 hover:text-red-600 items-center"
                         variant     = "outline"
-                        disabled    = { !rows.some(( session ) => session.status === 'Unavailable' ) }
+                        disabled    = { !rows.some(( session ) => session.Estado === 'Unavailable' ) }
                         onClick     = { handleExportErrors }
                     >
                         <CircleX className="w-4 h-4" />
@@ -321,7 +338,7 @@ export default function AssignmentPage(): JSX.Element {
                     <div className="flex gap-2">
                         <Button
                             className = "bg-amber-500 hover:bg-amber-600 text-white gap-2"
-                            disabled    = { assignSessionsMutation.isPending || !rows.some(( session ) => session.status === 'Probable' ) }
+                            disabled    = { assignSessionsMutation.isPending || !rows.some(( session ) => session.Estado === 'Probable' ) }
                             onClick     = { handleAssignWithIssues }
                         >
                             Asignar con problemas
@@ -331,7 +348,7 @@ export default function AssignmentPage(): JSX.Element {
 
                         <Button
                             className = "bg-green-500 hover:bg-green-600 text-white gap-2"
-                            disabled    = { assignSessionsMutation.isPending || !rows.some(( session ) => session.status === 'Available' ) }
+                            disabled    = { assignSessionsMutation.isPending || !rows.some(( session ) => session.Estado === 'Available' ) }
                             onClick     = { handleAssignOnlyAvailable }
                         >
                             Asignar solo disponibles
