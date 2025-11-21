@@ -85,21 +85,21 @@ export default function ModulesPage() {
             }
         >
 
-            <Tabs defaultValue="modules" className="flex-1 flex flex-col">
-                <TabsList className="grid grid-cols-2 mb-2">
+            {/* <Tabs defaultValue="modules" className="flex-1 flex flex-col"> */}
+                {/* <TabsList className="grid grid-cols-2 mb-2">
                     <TabsTrigger value="modules">Módulos</TabsTrigger>
                     <TabsTrigger value="byDays">Módulos por Día</TabsTrigger>
-                </TabsList>
+                </TabsList> */}
 
-                <TabsContent value="modules" className="flex-1 overflow-hidden">
+                {/* <TabsContent value="modules" className="flex-1 overflow-hidden"> */}
                     <TableModules
                         modules = { modulesOriginal }
                         onSave  = { () => {} }
                         days    = { availableDays }
                     />
-                </TabsContent>
+                {/* </TabsContent> */}
 
-                <TabsContent value="byDays" className="flex-1 overflow-hidden">
+                {/* <TabsContent value="byDays" className="flex-1 overflow-hidden">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 grid-rows-2 gap-4 h-full">
                         { days.map(( day: Day, index: number ) => (
                             <ModuleDay
@@ -110,8 +110,8 @@ export default function ModulesPage() {
                             />
                         ))}
                     </div>
-                </TabsContent>
-            </Tabs>
+                </TabsContent> */}
+            {/* </Tabs> */}
 
             <AddModuleModal
                 isOpen  = { isModalOpen }
