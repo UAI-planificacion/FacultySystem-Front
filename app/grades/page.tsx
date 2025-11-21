@@ -170,11 +170,11 @@ export default function GradesPage() {
 
 	return (
 		<PageLayout 
-			title="Gestión de Grados"
+			title="Gestión de Unidades Académicas"
 			actions={
 				<Button onClick={ openNewGradeForm }>
 					<Plus className="mr-2 h-4 w-4" />
-					Crear Grado
+					Crear Unidad Académica
 				</Button>
 			}
 		>
