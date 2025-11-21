@@ -10,25 +10,48 @@ import { Session }      from "@/types/section.model";
 export type Status = "Available" | "Unavailable" | "Probable";
 
 
+// export interface SessionAvailabilityResult {
+//     SSEC        : string;
+//     session     : string;
+//     date        : string;
+//     module      : string;
+//     spaceId?    : string;
+//     professor?  : Professor;
+//     status      : Status;
+//     detalle     : string;
+//     sessionId   : string;
+// }
+
+
 export interface SessionAvailabilityResult {
-    SSEC            : string;
-    session         : string;
-    date            : string;
-    module          : string;
-    spaceId?        : string;
-    professor?      : Professor;
-    status          : Status;
-    detalle         : string;
-    sessionId       : string;
+    SSEC                : string;
+    SesionId            : string;
+    Numero              : number;
+    NombreAsignatura    : string;
+    Fecha               : Date;
+    Dia                 : number;
+    Modulo              : string;
+    Periodo             : string;
+    TipoPeriodo         : string;
+    Edificio            : string | null;
+    TipoEspacio         : string | null;
+    TamanoEspacio       : string | null;
+    TipoSesion          : string;
+    Cupos               : number;
+    Profesor            : string | null;
+    Espacio             : string | null;
+    Estado?             : Status;
+    Detalle?            : string;
 }
+
 
 
 export type SessionAssignmentType = 'space' | 'professor' | 'registrants';
 
 
 export interface SessionAssignmentCache {
-    type        : SessionAssignmentType;
-    results     : SessionAvailabilityResult[];
+    type    : SessionAssignmentType;
+    results : SessionAvailabilityResult[];
 }
 
 
@@ -57,29 +80,29 @@ export interface AvailableProfessor {
 
 
 export interface ScheduledDate {
-    date            : Date;
-    dayModuleId     : number;
-    dayName         : string;
-    timeRange       : string;
+    date        : Date;
+    dayModuleId : number;
+    dayName     : string;
+    timeRange   : string;
 }
 
 
 export interface SessionAvailabilityResponse {
-	session                 : Session;
-	availableSpaces         : AvailableSpace[];
-	availableProfessors     : AvailableProfessor[];
-	scheduledDates          : ScheduledDate[];
-	isReadyToCreate         : boolean;
+	session             : Session;
+	availableSpaces     : AvailableSpace[];
+	availableProfessors : AvailableProfessor[];
+	scheduledDates      : ScheduledDate[];
+	isReadyToCreate     : boolean;
 }
 
 
-export interface SessionAvailabilityRequest {
-	session         : Session;
-	dayModuleIds    : number[];
-	spaceIds        : string[] | null;
-	professorIds    : string[];
-	isEnglish       : boolean;
-	building        : BuildingEnum | null;
-	spaceType       : SpaceType | null;
-	spaceSize       : Size | null;
-}
+// export interface SessionAvailabilityRequest {
+// 	session         : Session;
+// 	dayModuleIds    : number[];
+// 	spaceIds        : string[] | null;
+// 	professorIds    : string[];
+// 	isEnglish       : boolean;
+// 	building        : BuildingEnum | null;
+// 	spaceType       : SpaceType | null;
+// 	spaceSize       : Size | null;
+// }
