@@ -226,7 +226,8 @@ export default function TableModules({
                                     </TableHeader>
                                 </Table>
 
-                                <ScrollArea className="h-[calc(100vh-555px)]">
+                                {/* <ScrollArea className="h-[calc(100vh-555px)]"> */}
+                                <ScrollArea className="h-[calc(100vh-500px)]">
                                     <Table>
                                         <TableBody>
                                             {paginatedModules.map( module => (
