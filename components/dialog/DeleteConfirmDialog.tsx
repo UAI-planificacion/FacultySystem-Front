@@ -15,13 +15,14 @@ import {
 
 
 interface Props {
-    isOpen      : boolean;
-    onClose     : () => void;
-    onConfirm   : () => void;
-    type        : string;
-    name        : string;
-    isDeleted?  : boolean;
-    isClosed?   : boolean;
+    isOpen          : boolean;
+    onClose         : () => void;
+    onConfirm       : () => void;
+    type            : string;
+    name            : string;
+    isDeleted?      : boolean;
+    confirmText?    : string;
+    secondText?     : string;
 }
 
 
@@ -31,8 +32,9 @@ export function DeleteConfirmDialog({
     onConfirm,
     type,
     name,
-    isDeleted = true,
-    isClosed = false,
+    isDeleted   = true,
+    confirmText = "Eliminar",
+    secondText  = ""
 }: Props ): React.JSX.Element {
     return (
         <AlertDialog open={isOpen} onOpenChange={onClose}>
@@ -43,7 +45,7 @@ export function DeleteConfirmDialog({
                     <AlertDialogDescription>
                         { isDeleted 
                             ? `Esta acción no se puede deshacer. Se eliminará permanentemente ${ type } `
-                            : `Esta acción ${ isClosed ? 'abrirá' : 'cerrará' } la sección `
+                            : `Esta acción ${ secondText } `
                         }
 
                         <span className="font-semibold">"{ name }"</span> del sistema.
@@ -54,15 +56,10 @@ export function DeleteConfirmDialog({
                     <AlertDialogCancel onClick={onClose}>Cancelar</AlertDialogCancel>
 
                     <AlertDialogAction
-                        onClick={onConfirm}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        onClick     = { onConfirm }
+                        className   = "bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
-                        { isDeleted
-                            ? "Eliminar"
-                            : isClosed
-                                ? "Abrir"
-                                : "Cerrar"
-                        }
+                        { confirmText }
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
