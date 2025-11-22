@@ -1,8 +1,8 @@
 'use client'
 
-import type { ComponentType, JSX }  from 'react';
-import { useMemo, useCallback }     from 'react';
-import { useParams }                from 'next/navigation';
+import type { ComponentType, JSX }          from 'react';
+import { useMemo, useCallback, useState }   from 'react';
+import { useParams }                        from 'next/navigation';
 
 import {
     CheckCircle,
@@ -38,6 +38,7 @@ import { PageLayout }   from '@/components/layout/page-layout';
 import { ScrollArea }   from '@/components/ui/scroll-area';
 import { Button }       from '@/components/ui/button';
 import { SessionName }  from '@/components/session/session-name';
+import { FileForm }     from '@/components/section/file-form';
 
 import {
     SessionAvailabilityResult,
@@ -51,19 +52,22 @@ import { fetchApi, Method }         from '@/services/fetch';
 import { successToast, errorToast } from '@/config/toast/toast.config';
 import { OfferSession }             from '@/types/offer-section.model';
 import * as XLSX                    from 'xlsx';
+import { ExcelIcon }                from '@/icons/ExcelIcon';
 
 
-const statusLabels    : Record<Status, string> = {
-    Available       : 'Disponible',
-    Unavailable     : 'No disponible',
-    Probable        : 'Probable'
+const statusLabels: Record<Status, string> = {
+    Available   : 'Disponible',
+    Unavailable : 'No disponible',
+    Probable    : 'Probable'
 };
 
-const statusStyles    : Record<Status, string> = {
-    Available       : 'bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700',
-    Unavailable     : 'bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700',
-    Probable        : 'bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-700'
+
+const statusStyles: Record<Status, string> = {
+    Available   : 'bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700',
+    Unavailable : 'bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700',
+    Probable    : 'bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-700'
 };
+
 
 const statusIcon: Record<Status, ComponentType<{ className?: string }>> = {  
     Available   : CheckCircle,  
@@ -71,16 +75,20 @@ const statusIcon: Record<Status, ComponentType<{ className?: string }>> = {
     Probable    : HelpCircle  
 };
 
+
 const statusIconColor : Record<Status, string> = {
     Available   : 'text-green-500 dark:text-green-600',
     Unavailable : 'text-red-500 dark:text-red-600',
     Probable    : 'text-amber-500 dark:text-amber-600'
 };
 
+
 export default function AssignmentPage(): JSX.Element {
     const queryClient   = useQueryClient();
     const params        = useParams();
     const id            = params.id as string;
+
+    const [ isUploadDialogOpen, setIsUploadDialogOpen ] = useState<boolean>( false );
 
 
     const { data } = useQuery<SessionAvailabilityResult[]>({
@@ -101,7 +109,11 @@ export default function AssignmentPage(): JSX.Element {
 
         if ( !data || data.length === 0 ) return columnName;
 
-        return data[0] ? Object.keys( data[0] ).includes( 'spaceId' ) ? 'Espacio' : 'Profesor' : columnName;
+        return data[0] 
+            ? Object.keys( data[0] ).includes( 'spaceId' )
+                ? 'Espacio'
+                : 'Profesor'
+            : columnName;
     }, [ data ]);
 
 
@@ -182,7 +194,7 @@ export default function AssignmentPage(): JSX.Element {
 
 
     const assignSessionsMutation = useMutation<OfferSession[], Error, { assignments: SessionAssignment[]; seamlessly: boolean }>({
-        mutationFn  : async ({ assignments, seamlessly }) => {
+        mutationFn: async ({ assignments, seamlessly }) => {
             const queryParam = seamlessly ? '' : '?seamlessly=false';
 
             return fetchApi<OfferSession[]>({
@@ -191,7 +203,7 @@ export default function AssignmentPage(): JSX.Element {
                 body    : assignments
             });
         },
-        onSuccess  : ( updatedSessions, { assignments }) => {
+        onSuccess: ( updatedSessions, { assignments }) => {
             updateSessionsCache( updatedSessions );
 
             queryClient.setQueryData<SessionAvailabilityResult[]>( [ KEY_QUERYS.SESSIONS, 'assignment', id ], ( currentData ) => {
@@ -206,7 +218,7 @@ export default function AssignmentPage(): JSX.Element {
 
             toast( 'Sesiones asignadas correctamente ', successToast );
         },
-        onError    : ( mutationError ) => {
+        onError: ( mutationError ) => {
             toast( `Error al asignar sesiones: ${mutationError.message}`, errorToast );
         }
     });
@@ -322,22 +334,34 @@ export default function AssignmentPage(): JSX.Element {
                 </CardContent>
 
                 <CardFooter className="border-t pt-6 flex justify-between gap-4">
-                    <Button
-                        className   = "gap-2 text-red-500 hover:text-red-600 items-center"
-                        variant     = "outline"
-                        disabled    = { !rows.some(( session ) => session.Estado === 'Unavailable' ) }
-                        onClick     = { handleExportErrors }
-                    >
-                        <CircleX className="w-4 h-4" />
+                    <div className="flex gap-2">
+                        <Button
+                            className   = "gap-2 text-red-500 hover:text-red-600 items-center"
+                            variant     = "outline"
+                            disabled    = { !rows.some(( session ) => session.Estado === 'Unavailable' ) }
+                            onClick     = { handleExportErrors }
+                        >
+                            <CircleX className="w-4 h-4" />
 
-                        Exportar reporte de errores
+                            Exportar reporte de errores
 
-                        <Download className="w-4 h-4" />
-                    </Button>
+                            <Download className="w-4 h-4" />
+                        </Button>
+
+                        <Button
+                            className   = "gap-2"
+                            onClick     = {() => setIsUploadDialogOpen( true )}
+                            variant     = "outline"
+                        >
+                            <ExcelIcon />
+
+                            Gestionar archivos
+                        </Button>
+                    </div>
 
                     <div className="flex gap-2">
                         <Button
-                            className = "bg-amber-500 hover:bg-amber-600 text-white gap-2"
+                            className   = "bg-amber-500 hover:bg-amber-600 text-white gap-2"
                             disabled    = { assignSessionsMutation.isPending || !rows.some(( session ) => session.Estado === 'Probable' ) }
                             onClick     = { handleAssignWithIssues }
                         >
@@ -347,7 +371,7 @@ export default function AssignmentPage(): JSX.Element {
                         </Button>
 
                         <Button
-                            className = "bg-green-500 hover:bg-green-600 text-white gap-2"
+                            className   = "bg-green-500 hover:bg-green-600 text-white gap-2"
                             disabled    = { assignSessionsMutation.isPending || !rows.some(( session ) => session.Estado === 'Available' ) }
                             onClick     = { handleAssignOnlyAvailable }
                         >
@@ -358,6 +382,15 @@ export default function AssignmentPage(): JSX.Element {
                     </div>
                 </CardFooter>
 			</Card>
+
+            <FileForm
+                isOpen      = { isUploadDialogOpen }
+                isRouting   = { false }
+                onClose     = {() => {
+                    setIsUploadDialogOpen( false );
+                    queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.SESSIONS, 'assignment', id ] });
+                }}
+            />
 		</PageLayout>
 	);
 }
