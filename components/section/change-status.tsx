@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react";
+import { JSX, useState } from "react";
 
 import { Ban, CircleCheckBig }          from "lucide-react";
 import { useMutation, useQueryClient }  from "@tanstack/react-query";
@@ -23,7 +23,7 @@ interface Props {
 
 export function ChangeStatusSection({
     section
-}: Props ) {
+}: Props ): JSX.Element {
     const queryClient                       = useQueryClient();
     const [ isOpenAlert, setIsOpenAlert ]   = useState( false );
 
@@ -74,7 +74,8 @@ export function ChangeStatusSection({
                 name        = { `SSEC: ${ section.subject.id }-${ section.code }` }
                 type        = { "la Sección" }
                 isDeleted   = { false }
-                isClosed    = { section.isClosed }
+                confirmText = { section.isClosed ? "Abrir" : "Cerrar" }
+                secondText  = { section.isClosed ? "abrirá" : "cerrará" }
             />
         </>
     );
