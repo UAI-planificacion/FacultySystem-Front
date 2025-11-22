@@ -59,6 +59,8 @@ interface Props {
 	isError                     : boolean;
 	selectedSessions            : Set<string>;
 	onSelectedSessionsChange    : ( selectedSessions: Set<string> ) => void;
+	selectedSections            : Set<string>;
+	onSelectedSectionsChange    : ( selectedSections: Set<string> ) => void;
 }
 
 
@@ -67,7 +69,9 @@ export function SectionTable({
 	isLoading,
 	isError,
 	selectedSessions,
-	onSelectedSessionsChange
+	onSelectedSessionsChange,
+	selectedSections,
+	onSelectedSectionsChange
 }: Props ) {
 	const queryClient   = useQueryClient();
     const router        = useRouter();
@@ -119,6 +123,7 @@ export function SectionTable({
 
 		const sessionIds            = section.sessions.ids || [];
 		const newSelectedSessions   = new Set( selectedSessions );
+		const newSelectedSections   = new Set( selectedSections );
 		const shouldSelect          = checked === true || checked === 'indeterminate';
 
 		sessionIds.forEach( ( sessionId ) => {
@@ -129,8 +134,16 @@ export function SectionTable({
 			}
 		});
 
+		// Agregar/remover sectionId de selectedSections
+		if ( shouldSelect ) {
+			newSelectedSections.add( sectionId );
+		} else {
+			newSelectedSections.delete( sectionId );
+		}
+
 		onSelectedSessionsChange( newSelectedSessions );
-	}, [ sections, selectedSessions, onSelectedSessionsChange ]);
+		onSelectedSectionsChange( newSelectedSections );
+	}, [ sections, selectedSessions, selectedSections, onSelectedSessionsChange, onSelectedSectionsChange ]);
 
 
 	/**
@@ -492,11 +505,11 @@ export function SectionTable({
                 section         = { selectedSection }
 				isOpen			= { isOpenPlanningChange }
 				onClose			= { () => setIsOpenPlanningChange( false )}
+                onCancel		= { () => setIsOpenPlanningChange( false )}
 				onSuccess		= { () => {
 					setIsOpenPlanningChange( false );
 					queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.PLANNING_CHANGE ] });
 				}}
-				onCancel		= { () => setIsOpenPlanningChange( false )}
 			/>
 		</>
 	);
