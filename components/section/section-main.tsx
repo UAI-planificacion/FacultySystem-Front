@@ -1,12 +1,18 @@
 'use client'
 
-import React, { useState, useMemo, useEffect }  from 'react';
-import { useRouter }                            from 'next/navigation';
+import
+    React, {
+        useState,
+        useMemo,
+        useEffect
+    }                   from 'react';
+import { useRouter }    from 'next/navigation';
 
 import {
     BrushCleaning,
     Filter,
     Pencil,
+    RefreshCw,
     Trash
 }                   from 'lucide-react';
 import {
@@ -46,8 +52,6 @@ import { ExcelIcon }                from '@/icons/ExcelIcon';
 
 
 interface Props {
-    onEdit?         : ( section: OfferSection ) => void;
-    onDelete?       : ( section: OfferSection ) => void;
     enabled         : boolean;
     searchParams    : URLSearchParams;
 }
@@ -60,8 +64,6 @@ const stateOptions = [
 
 
 export function SectionMain({
-    onEdit,
-    onDelete,
     enabled,
     searchParams,
 }: Props ) {
@@ -79,12 +81,14 @@ export function SectionMain({
     const [moduleFilter, setModuleFilter]               = useState<string[]>(() => searchParams.get('module')?.split(',').filter(Boolean) || []);
     const [professorFilter, setProfessorFilter]         = useState<string[]>(() => searchParams.get('professor')?.split(',').filter(Boolean) || []);
     const [groupIdFilter, setGroupIdFilter]             = useState<string[]>(() => searchParams.get('groupId')?.split(',').filter(Boolean) || []);
+    const [selectedSessions, setSelectedSessions]       = useState<Set<string>>( new Set() );
     const [selectedSections, setSelectedSections]       = useState<Set<string>>( new Set() );
     const [currentPage, setCurrentPage]                 = useState<number>( 1 );
     const [itemsPerPage, setItemsPerPage]               = useState<number>( 10 );
     const [isEditSection, setIsEditSection]             = useState<boolean>( false );
     const [isDeleteDialogOpen, setIsDeleteDialogOpen]   = useState<boolean>( false );
     const [isFileFormOpen, setIsFileFormOpen]           = useState<boolean>( false );
+    const [cleanDialogType, setCleanDialogType]         = useState<number>( 0 ); // 0=cerrado, 1=spaces, 2=professors
 
     // Function to update URL with filter parameters
     const updateUrlParams = ( filterName: string, values: string[] ) => {
@@ -181,7 +185,7 @@ export function SectionMain({
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
 			setIsDeleteDialogOpen( false );
-			setSelectedSections( new Set() );
+			setSelectedSessions( new Set() );
 			toast( 'Sesiones eliminadas exitosamente', successToast );
 		},
 		onError: ( mutationError ) => {
@@ -193,7 +197,7 @@ export function SectionMain({
 	 * Abre el diálogo de confirmación para eliminar sesiones
 	 */
 	function handleOpenDeleteSessions(): void {
-		if ( selectedSections.size === 0 ) return;
+		if ( selectedSessions.size === 0 ) return;
 		setIsDeleteDialogOpen( true );
 	}
 
@@ -201,245 +205,340 @@ export function SectionMain({
 	 * Confirma y ejecuta la eliminación masiva de sesiones
 	 */
 	function handleConfirmDeleteSessions(): void {
-		const sessionIds = Array.from( selectedSections ).join( ',' );
+		const sessionIds = Array.from( selectedSessions ).join( ',' );
 		deleteSessionsMutation.mutate( sessionIds );
+	}
+
+	/**
+	 * API call para limpiar espacios o profesores
+	 */
+	const cleanApi = async ({ ids, type }: { ids: string[]; type: 'space' | 'professor' }): Promise<void> =>
+		fetchApi<void>({
+			url     : `${KEY_QUERYS.SECTIONS}/clean/${type}`,
+			method  : Method.PATCH,
+			body    : { ids }
+		});
+
+	/**
+	 * Mutación para limpiar espacios o profesores
+	 */
+	const cleanMutation = useMutation<void, Error, { ids: string[]; type: 'space' | 'professor' }>({
+		mutationFn: cleanApi,
+		onSuccess: ( _, variables ) => {
+			const typeLabel = variables.type === 'space' ? 'Espacios' : 'Profesores';
+
+			queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SESSIONS] });
+			setCleanDialogType( 0 );
+			setSelectedSections( new Set() );
+			setSelectedSessions( new Set() );
+			toast( `${typeLabel} limpiados correctamente`, successToast );
+		},
+		onError: ( mutationError, variables ) => {
+			const typeLabel = variables.type === 'space' ? 'espacios' : 'profesores';
+			toast( `Error al limpiar ${typeLabel}: ${mutationError.message}`, errorToast );
+		},
+	});
+
+	/**
+	 * Abre el diálogo de confirmación para limpiar espacios
+	 */
+	function handleOpenCleanSpaces(): void {
+		if ( selectedSections.size === 0 ) return;
+		setCleanDialogType( 1 );
+	}
+
+	/**
+	 * Abre el diálogo de confirmación para limpiar profesores
+	 */
+	function handleOpenCleanProfessors(): void {
+		if ( selectedSections.size === 0 ) return;
+		setCleanDialogType( 2 );
+	}
+
+	/**
+	 * Confirma y ejecuta la limpieza según el tipo
+	 */
+	function handleConfirmClean(): void {
+		const sectionIds = Array.from( selectedSections );
+		const type = cleanDialogType === 1 ? 'space' : 'professor';
+
+		cleanMutation.mutate({ ids: sectionIds, type });
 	}
 
 
     return (
         <>
-        <div className="w-full mt-4">
-            <div className="flex gap-4">
-                {/* Table */}
-                <Card className="flex-1">
-                    <CardContent className="mt-5 overflow-x-auto overflow-y-auto h-[calc(100vh-300px)] w-full">
-                        <SectionTable
-                            sections                    = { filteredAndPaginatedSections.sections }
-                            isLoading                   = { isLoadingSections }
-                            isError                     = { isErrorSections }
-                            selectedSessions            = { selectedSections }
-                            onSelectedSessionsChange    = { setSelectedSections }
-                        />
-                    </CardContent>
-
-                    {/* Pagination */}
-                    {filteredAndPaginatedSections.totalItems > 0 && (
-                        <div className="p-4 border-t">
-                            <DataPagination
-                                currentPage             = { currentPage }
-                                totalPages              = { filteredAndPaginatedSections.totalPages }
-                                totalItems              = { filteredAndPaginatedSections.totalItems }
-                                itemsPerPage            = { itemsPerPage }
-                                onPageChange            = { setCurrentPage }
-                                onItemsPerPageChange    = { setItemsPerPage }
+            <div className="w-full mt-4">
+                <div className="flex gap-4">
+                    {/* Table */}
+                    <Card className="flex-1">
+                        <CardContent className="mt-5 overflow-x-auto overflow-y-auto h-[calc(100vh-300px)] w-full">
+                            <SectionTable
+                                sections                    = { filteredAndPaginatedSections.sections }
+                                isLoading                   = { isLoadingSections }
+                                isError                     = { isErrorSections }
+                                selectedSessions            = { selectedSessions }
+                                onSelectedSessionsChange    = { setSelectedSessions }
+                                selectedSections            = { selectedSections }
+                                onSelectedSectionsChange    = { setSelectedSections }
                             />
-                        </div>
-                    )}
-                </Card>
+                        </CardContent>
 
-                {/* Filters Sidebar */}
-                <Card className="w-80 flex-shrink-0">
-                    <CardContent className="p-4 h-[calc(100vh-380px)] overflow-y-auto space-y-4">
-                        <div className="flex items-center gap-2">
-                            <Filter className="w-5 h-5" />
+                        {/* Pagination */}
+                        {filteredAndPaginatedSections.totalItems > 0 && (
+                            <div className="p-4 border-t">
+                                <DataPagination
+                                    currentPage             = { currentPage }
+                                    totalPages              = { filteredAndPaginatedSections.totalPages }
+                                    totalItems              = { filteredAndPaginatedSections.totalItems }
+                                    itemsPerPage            = { itemsPerPage }
+                                    onPageChange            = { setCurrentPage }
+                                    onItemsPerPageChange    = { setItemsPerPage }
+                                />
+                            </div>
+                        )}
+                    </Card>
 
-                            <h3 className="text-lg font-semibold">Filtros</h3>
-                        </div>
+                    {/* Filters Sidebar */}
+                    <Card className="w-80 flex-shrink-0">
+                        <CardContent className="p-4 h-[calc(100vh-420px)] overflow-y-auto space-y-4">
+                            <div className="flex items-center gap-2">
+                                <Filter className="w-5 h-5" />
 
-                        <div className="space-y-2">
-                            <Label htmlFor="code-filter">Filtrar por Números</Label>
+                                <h3 className="text-lg font-semibold">Filtros</h3>
+                            </div>
 
-                            <MultiSelectCombobox
-                                options             = { uniqueCodes.map( code => ({ label: code, value: code }))}
-                                defaultValues       = { codeFilter }
-                                placeholder         = "Seleccionar Números"
+                            <div className="space-y-2">
+                                <Label htmlFor="code-filter">Filtrar por Números</Label>
+
+                                <MultiSelectCombobox
+                                    options             = { uniqueCodes.map( code => ({ label: code, value: code }))}
+                                    defaultValues       = { codeFilter }
+                                    placeholder         = "Seleccionar Números"
+                                    onSelectionChange   = {( value ) => {
+                                        const newValues = value as string[];
+                                        setCodeFilter( newValues );
+                                        updateUrlParams( 'code', newValues );
+                                    }}
+                                />
+                            </div>
+
+                            <SpaceSelect
+                                label               = "Filtrar por Espacios"
+                                defaultValues       = { roomFilter }
                                 onSelectionChange   = {( value ) => {
                                     const newValues = value as string[];
-                                    setCodeFilter( newValues );
-                                    updateUrlParams( 'code', newValues );
+                                    setRoomFilter(newValues);
+                                    updateUrlParams('room', newValues);
                                 }}
                             />
-                        </div>
 
-                        <SpaceSelect
-                            label               = "Filtrar por Espacios"
-                            defaultValues       = { roomFilter }
-                            onSelectionChange   = {( value ) => {
-                                const newValues = value as string[];
-                                setRoomFilter(newValues);
-                                updateUrlParams('room', newValues);
-                            }}
-                        />
-
-                        <DaySelect
-                            label               = "Filtrar por Días"
-                            defaultValues       = { dayFilter }
-                            onSelectionChange   = {( value ) => {
-                                const newValues = value as string[];
-                                setDayFilter( newValues );
-                                updateUrlParams( 'day', newValues );
-                            }}
-                        />
-
-                        <PeriodSelect
-                            label               = "Filtrar por Períodos"
-                            defaultValues       = { periodFilter }
-                            onSelectionChange   = {( value ) => {
-                                const newValues = value as string[];
-                                setPeriodFilter( newValues );
-                                updateUrlParams( 'period', newValues );
-                            }}
-                        />
-
-                        <div className="space-y-2">
-                            <Label htmlFor="status-filter">Filtrar por Estados</Label>
-
-                            <MultiSelectCombobox
-                                defaultValues       = { statusFilter }
-                                placeholder         = "Seleccionar estados"
-                                options             = { stateOptions }
+                            <DaySelect
+                                label               = "Filtrar por Días"
+                                defaultValues       = { dayFilter }
                                 onSelectionChange   = {( value ) => {
                                     const newValues = value as string[];
-                                    setStatusFilter( newValues );
-                                    updateUrlParams( 'status', newValues );
+                                    setDayFilter( newValues );
+                                    updateUrlParams( 'day', newValues );
                                 }}
                             />
-                        </div>
 
-                        <SubjectSelect
-                            label               = "Filtrar por Asignaturas"
-                            defaultValues       = { subjectFilter }
-                            onSelectionChange   = {( value ) => {
-                                const newValues = value as string[];
-                                setSubjectFilter( newValues );
-                                updateUrlParams( 'subject', newValues );
-                            }}
-                        />
+                            <PeriodSelect
+                                label               = "Filtrar por Períodos"
+                                defaultValues       = { periodFilter }
+                                onSelectionChange   = {( value ) => {
+                                    const newValues = value as string[];
+                                    setPeriodFilter( newValues );
+                                    updateUrlParams( 'period', newValues );
+                                }}
+                            />
 
-                        <SizeSelect
-                            label               = "Filtrar por Tamaños"
-                            defaultValues       = { sizeFilter }
-                            onSelectionChange   = {( value ) => {
-                                const newValues = value as string[];
-                                setSizeFilter( newValues );
-                                updateUrlParams( 'size', newValues );
-                            }}
-                        />
+                            <div className="space-y-2">
+                                <Label htmlFor="status-filter">Filtrar por Estados</Label>
 
-                        <SessionTypeSelect
-                            label               = "Filtrar por Sesiones"
-                            defaultValues       = { sessionFilter }
-                            onSelectionChange   = {( value ) => {
-                                const newValues = value as string[];
-                                setSessionFilter( newValues );
-                                updateUrlParams( 'session', newValues );
-                            }}
-                        />
+                                <MultiSelectCombobox
+                                    defaultValues       = { statusFilter }
+                                    placeholder         = "Seleccionar estados"
+                                    options             = { stateOptions }
+                                    onSelectionChange   = {( value ) => {
+                                        const newValues = value as string[];
+                                        setStatusFilter( newValues );
+                                        updateUrlParams( 'status', newValues );
+                                    }}
+                                />
+                            </div>
 
-                        <ModuleSelect
-                            label               = "Filtrar por Módulos"
-                            defaultValues       = { moduleFilter }
-                            onSelectionChange   = {( value ) => {
-                                const newValues = value as string[];
-                                setModuleFilter( newValues );
-                                updateUrlParams( 'module', newValues );
-                            }}
-                        />
+                            <SubjectSelect
+                                label               = "Filtrar por Asignaturas"
+                                defaultValues       = { subjectFilter }
+                                onSelectionChange   = {( value ) => {
+                                    const newValues = value as string[];
+                                    setSubjectFilter( newValues );
+                                    updateUrlParams( 'subject', newValues );
+                                }}
+                            />
 
-                        <ProfessorSelect
-                            label               = "Filtrar por Profesores"
-                            defaultValues       = { professorFilter }
-                            onSelectionChange   = {( value ) => {
-                                const newValues = value as string[];
-                                setProfessorFilter( newValues );
-                                updateUrlParams( 'professor', newValues );
-                            }}
-                        />
+                            <SizeSelect
+                                label               = "Filtrar por Tamaños"
+                                defaultValues       = { sizeFilter }
+                                onSelectionChange   = {( value ) => {
+                                    const newValues = value as string[];
+                                    setSizeFilter( newValues );
+                                    updateUrlParams( 'size', newValues );
+                                }}
+                            />
 
-                        <Button
-                            variant     = "outline"
-                            className   = "w-full gap-2"
-                            onClick     = {() => {
-                                setIdFilter( '' );
-                                setGroupIdFilter( [] );
-                                setCodeFilter( [] );
-                                setRoomFilter( [] );
-                                setDayFilter( [] );
-                                setPeriodFilter( [] );
-                                setStatusFilter( [] );
-                                setSubjectFilter( [] );
-                                setSizeFilter( [] );
-                                setSessionFilter( [] );
-                                setModuleFilter( [] );
-                                setProfessorFilter( [] );
-                                router.push( '/sections' );
-                            }}
-                        >
-                            <BrushCleaning className="w-5 h-5" />
-                            Limpiar filtros
-                        </Button>
-                    </CardContent>
+                            <SessionTypeSelect
+                                label               = "Filtrar por Sesiones"
+                                defaultValues       = { sessionFilter }
+                                onSelectionChange   = {( value ) => {
+                                    const newValues = value as string[];
+                                    setSessionFilter( newValues );
+                                    updateUrlParams( 'session', newValues );
+                                }}
+                            />
 
-                    <CardFooter className="grid space-y-2">
-                        <Button
-                            onClick     = {() => setIsFileFormOpen( true )}
-                            className   = "gap-2 w-full bg-green-800 hover:bg-green-900"
-                            disabled    = { sectionsData.length === 0 }
-                            variant     = "secondary"
-                            title       = "Gestionar archivos de sesiones"
-                        >
-                            <ExcelIcon />
-                            Gestionar archivos de sesiones
-                        </Button>
+                            <ModuleSelect
+                                label               = "Filtrar por Módulos"
+                                defaultValues       = { moduleFilter }
+                                onSelectionChange   = {( value ) => {
+                                    const newValues = value as string[];
+                                    setModuleFilter( newValues );
+                                    updateUrlParams( 'module', newValues );
+                                }}
+                            />
 
-                        <Button
-                            onClick     = { handleOpenDeleteSessions }
-                            className   = "gap-2 w-full"
-                            disabled    = { selectedSections.size === 0 }
-                            variant     = "destructive"
-                        >
-                            <Trash className="w-4 h-4" />
+                            <ProfessorSelect
+                                label               = "Filtrar por Profesores"
+                                defaultValues       = { professorFilter }
+                                onSelectionChange   = {( value ) => {
+                                    const newValues = value as string[];
+                                    setProfessorFilter( newValues );
+                                    updateUrlParams( 'professor', newValues );
+                                }}
+                            />
 
-                            Eliminar sesiones ({ selectedSections.size })
-                        </Button>
+                            <Button
+                                variant     = "outline"
+                                className   = "w-full gap-2"
+                                onClick     = {() => {
+                                    setIdFilter( '' );
+                                    setGroupIdFilter( [] );
+                                    setCodeFilter( [] );
+                                    setRoomFilter( [] );
+                                    setDayFilter( [] );
+                                    setPeriodFilter( [] );
+                                    setStatusFilter( [] );
+                                    setSubjectFilter( [] );
+                                    setSizeFilter( [] );
+                                    setSessionFilter( [] );
+                                    setModuleFilter( [] );
+                                    setProfessorFilter( [] );
+                                    router.push( '/sections' );
+                                }}
+                            >
+                                <BrushCleaning className="w-5 h-5" />
 
-                        <Button
-                            onClick     = {() => setIsEditSection( true )}
-                            className   = "gap-2 w-full"
-                            disabled    = { selectedSections.size === 0 }
-                        >
-                            <Pencil className="w-4 h-4" />
+                                Limpiar filtros
+                            </Button>
+                        </CardContent>
 
-                            Modificar sesiones ({ selectedSections.size })
-                        </Button>
-                    </CardFooter>
-                </Card>
+                        <CardFooter className="grid space-y-2">
+                            <div className="flex gap-2">
+                                <Button
+                                    onClick     = { handleOpenCleanProfessors }
+                                    className   = "gap-2 w-full"
+                                    disabled    = { selectedSections.size === 0 }
+                                    variant     = "outline"
+                                    title       = "Limpiar Profesores"
+                                >
+                                    <RefreshCw className="w-5 h-5" />
+
+                                    Profesores
+                                </Button>
+
+                                <Button
+                                    onClick     = { handleOpenCleanSpaces }
+                                    className   = "gap-2 w-full"
+                                    disabled    = { selectedSections.size === 0 }
+                                    variant     = "outline"
+                                    title       = "Limpiar Espacios"
+                                >
+                                    <RefreshCw className="w-5 h-5" />
+
+                                    Espacios
+                                </Button>
+                            </div>
+
+                            <Button
+                                onClick     = {() => setIsFileFormOpen( true )}
+                                className   = "gap-2 w-full bg-green-800 hover:bg-green-900"
+                                disabled    = { sectionsData.length === 0 }
+                                variant     = "secondary"
+                                title       = "Gestionar archivos de sesiones"
+                            >
+                                <ExcelIcon />
+
+                                Gestionar archivos
+                            </Button>
+
+                            <Button
+                                onClick     = { handleOpenDeleteSessions }
+                                className   = "gap-2 w-full"
+                                disabled    = { selectedSessions.size === 0 }
+                                variant     = "destructive"
+                            >
+                                <Trash className="w-4 h-4" />
+
+                                Eliminar sesiones ({ selectedSessions.size })
+                            </Button>
+
+                            <Button
+                                onClick     = {() => setIsEditSection( true )}
+                                className   = "gap-2 w-full"
+                                disabled    = { selectedSessions.size === 0 }
+                            >
+                                <Pencil className="w-4 h-4" />
+
+                                Modificar sesiones ({ selectedSessions.size })
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                </div>
             </div>
-        </div>
 
-        <FileForm
-            isOpen      = { isFileFormOpen }
-            onClose     = { () => setIsFileFormOpen( false ) }
-            sections    = { sectionsData }
-        />
+            <FileForm
+                isOpen  = { isFileFormOpen }
+                onClose = { () => setIsFileFormOpen( false )}
+            />
 
-        <SessionMassiveUpdateForm
-            isOpen      = { isEditSection }
-            onClose     = { () => setIsEditSection( false ) }
-            ids         = { Array.from( selectedSections ) }
-            onSuccess   = { () => {
-                queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
-            }}
-        />
+            <SessionMassiveUpdateForm
+                isOpen      = { isEditSection }
+                onClose     = { () => setIsEditSection( false )}
+                ids         = { Array.from( selectedSessions )}
+                onSuccess   = { () => queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.SECTIONS ]})}
+            />
 
-		{/* Delete Confirmation Dialog */}
-		<DeleteConfirmDialog
-			isOpen      = { isDeleteDialogOpen }
-			onClose     = { () => setIsDeleteDialogOpen( false ) }
-			onConfirm   = { handleConfirmDeleteSessions }
-			name        = { `${selectedSections.size} sesiones seleccionadas` }
-			type        = "las sesiones"
-		/>
+            {/* Delete Confirmation Dialog */}
+            <DeleteConfirmDialog
+                isOpen      = { isDeleteDialogOpen }
+                onClose     = { () => setIsDeleteDialogOpen( false )}
+                onConfirm   = { handleConfirmDeleteSessions }
+                name        = { `${selectedSessions.size} sesiones seleccionadas` }
+                type        = "las sesiones"
+            />
+
+            {/* Clean Confirmation Dialog */}
+            <DeleteConfirmDialog
+                isOpen      = { cleanDialogType > 0 }
+                onClose     = { () => setCleanDialogType( 0 )}
+                onConfirm   = { handleConfirmClean }
+                name        = { `${selectedSections.size} ${selectedSections.size === 1 ? 'sección': 'secciones'}` }
+                type        = { cleanDialogType === 1 ? "los espacios de" : "los profesores de" }
+                isDeleted   = { false }
+                confirmText = { 'Limpiar' }
+                secondText  = { cleanDialogType === 1 ? "limpiará los espacios de" : "limpiará los profesores de" }
+            />
 		</>
 	);
 }
