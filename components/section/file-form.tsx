@@ -57,7 +57,7 @@ interface UploadError {
 interface FileFormProps {
 	isOpen      : boolean;
 	onClose     : () => void;
-	sections    : OfferSection[];
+	isRouting?  : boolean;
 }
 
 const MAX_FILE_SIZE     = 10 * 1024 * 1024;
@@ -68,7 +68,7 @@ const UPLOAD_ENDPOINT   = `${ENV.REQUEST_BACK_URL}${KEY_QUERYS.SESSIONS}/bulk-up
 export function FileForm({
 	isOpen,
 	onClose,
-	sections
+	isRouting = true
 }: FileFormProps ): JSX.Element {
 	const router        = useRouter();
 	const queryClient   = useQueryClient();
@@ -77,23 +77,6 @@ export function FileForm({
 	const [ uploadError, setUploadError ]           = useState<UploadError | null>( null );
 	const [ isDownloading, setIsDownloading ]       = useState<boolean>( false );
 	const [ currentDownload, setCurrentDownload ]   = useState<string | null>( null );
-
-	const availability = useMemo(() => {
-		const hasMissingSpaces = sections.some(( section ) =>
-			// section.sessions.some(( session ) => !session.spaceId || session.spaceId.trim() === '' )
-        section.sessions.spaceIds.some(( spaceId ) => !spaceId || spaceId.trim() === '' )
-		);
-
-		const hasMissingProfessors = sections.some(( section ) =>
-            section.sessions.professorIds.some(( professorId ) => !professorId || professorId.trim() === '' )
-			// section.sessions.some(( session ) => !session.professorId || session.professorId.trim() === '' )
-		);
-
-		return {
-			space       : hasMissingSpaces,
-			professor   : hasMissingProfessors
-		};
-	}, [ sections ]);
 
 
 	useEffect(() => {
@@ -154,7 +137,6 @@ export function FileForm({
 		toast( 'Archivo seleccionado correctamente', successToast );
 	}, [ validateFile ]);
 
-
 	// const uploadMutation = useMutation<SessionAvailabilityResult[] | OfferSection[], Error, File>({
 	const uploadMutation = useMutation<any[], Error, File>({
 		mutationFn  : async ( file ) => {
@@ -173,28 +155,34 @@ export function FileForm({
 			return await response.json() as SessionAvailabilityResult[];
 		},
 		onSuccess  : ( data ) => {
-			const ulid = crypto.randomUUID();
+			if ( data[0].id ) {
+				toast( 'Registros actualizados correctamente ✅', successToast );
+				return;
+			}
 
-            if ( data[0].id ) {
-                toast( 'Registros actualizados correctamente ✅', successToast );
-                return;
-            }
+			if ( isRouting ) {
+				const ulid = crypto.randomUUID();
 
-            queryClient.setQueryData<SessionAvailabilityResult[]>(
-				[ KEY_QUERYS.SESSIONS, 'assignment', ulid ],
-				data as SessionAvailabilityResult[]
-			);
+				queryClient.setQueryData<SessionAvailabilityResult[]>(
+					[ KEY_QUERYS.SESSIONS, 'assignment', ulid ],
+					data as SessionAvailabilityResult[]
+				);
 
-			router.push( `/sections/assignment/${ ulid }` );
-
-            toast( 'Archivo procesado correctamente ✅', successToast );
+				router.push( `/sections/assignment/${ ulid }` );
+				toast( 'Archivo procesado correctamente ✅', successToast );
+			} else {
+				queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.SESSIONS ] });
+				onClose();
+				toast( 'Archivo cargado correctamente ✅', successToast );
+			}
 		},
 		onError  : ( mutationError ) => {
 			toast( `Error al cargar archivo: ${mutationError.message}`, errorToast );
 		}
 	});
 
-	const handleUpload = (): void => {
+
+    const handleUpload = (): void => {
 		if ( !selectedFile ) {
 			toast( 'Por favor selecciona un archivo primero', errorToast );
 			return;
@@ -203,23 +191,15 @@ export function FileForm({
 		uploadMutation.mutate( selectedFile );
 	};
 
-	const handleDownload = async ( type: 'space' | 'professor' | 'registered' ): Promise<void> => {
-		if ( type === 'space' && !availability.space ) {
-			toast( 'Todas las sesiones tienen espacios asignados', errorToast );
-			return;
-		}
 
-		if ( type === 'professor' && !availability.professor ) {
-			toast( 'Todas las sesiones tienen profesores asignados', errorToast );
-			return;
-		}
+    const handleDownload = async ( type: 'space' | 'professor' | 'registered' ): Promise<void> => {
 
 		try {
 			setIsDownloading( true );
 			setCurrentDownload( type );
-			const response = await fetch( `${DOWNLOAD_ENDPOINT}/${type}`, {
+			const response = await fetch( `${ DOWNLOAD_ENDPOINT }/${ type }`, {
 				method  : Method.GET,
-				headers  : {
+				headers : {
 					'Accept' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 				}
 			});
@@ -233,7 +213,7 @@ export function FileForm({
 			const link  = document.createElement( 'a' );
 			link.href   = url;
 
-			link.setAttribute( 'download', `session_${type}.xlsx` );
+			link.setAttribute( 'download', `session_${ type }.xlsx` );
 
             document.body.appendChild( link );
 			link.click();
@@ -282,7 +262,7 @@ export function FileForm({
 								variant     = "outline"
 								className   = "w-full justify-between"
 								onClick     = {() => handleDownload( 'space' )}
-								disabled    = { !availability.space || ( isDownloading && currentDownload !== 'space' ) }
+								disabled    = { isDownloading && currentDownload !== 'space' }
 							>
 								<span className = "flex items-center gap-2">
 									<ExcelIcon />
@@ -290,7 +270,7 @@ export function FileForm({
 								</span>
 
 								<span className = "ml-auto flex items-center gap-2 text-sm text-muted-foreground">
-									{ !availability.space ? 'Sin pendientes' : 'Descargar' }
+									Descargar
 
                                     <DownloadIcon className = "h-4 w-4" />
 								</span>
@@ -300,14 +280,14 @@ export function FileForm({
 								variant     = "outline"
 								className   = "w-full justify-between"
 								onClick     = {() => handleDownload( 'professor' )}
-								disabled    = { !availability.professor || ( isDownloading && currentDownload !== 'professor' ) }
+								disabled    = { isDownloading && currentDownload !== 'professor' }
 							>
 								<span className = "flex items-center gap-2">
 									<Users className = "h-4 w-4" />
 									<span>Asignar profesores</span>
 								</span>
 								<span className = "ml-auto flex items-center gap-2 text-sm text-muted-foreground">
-									{ !availability.professor ? 'Sin pendientes' : 'Descargar' }
+									Descargar
 
                                     <DownloadIcon className = "h-4 w-4" />
 								</span>
