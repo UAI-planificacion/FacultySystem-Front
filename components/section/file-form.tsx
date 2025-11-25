@@ -155,11 +155,6 @@ export function FileForm({
 			return await response.json() as SessionAvailabilityResult[];
 		},
 		onSuccess  : ( data ) => {
-			if ( data[0].id ) {
-				toast( 'Registros actualizados correctamente ✅', successToast );
-				return;
-			}
-
 			if ( isRouting ) {
 				const ulid = crypto.randomUUID();
 
