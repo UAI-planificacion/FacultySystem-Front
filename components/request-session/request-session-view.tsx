@@ -147,30 +147,25 @@ export function RequestSessionView({
 					[requestSession.id]: currentModules.filter(( _, index ) => index !== existingIndex ),
 				};
 			} else {
-				// Check if this dayModule is used by another session
-				const isUsedByOther = Object.entries( prev ).some(([ rsId, modules ]) => {
-					if ( rsId === requestSession.id ) return false;
+				// Validar que no se repita el mismo tipo de sesión en el mismo día/módulo
+				const sessionsOfThisType = data.filter( rs => rs.session === session );
+				const isDayModuleUsedByThisSessionType = sessionsOfThisType.some( rs => {
+					const modules = prev[rs.id] || [];
 					return modules.includes( dayModuleId );
 				});
 
-				if ( isUsedByOther ) {
-					const usedBySession = data.find( rs => {
-						const modules = prev[rs.id] || [];
-						return rs.id !== requestSession.id && modules.includes( dayModuleId );
-					});
-
+				if ( isDayModuleUsedByThisSessionType ) {
 					toast(
-						`Este horario ya está siendo usado por ${usedBySession?.session || 'otra sesión'}`,
+						`Este horario ya está siendo usado por otra ${session}`,
 						{
 							...errorToast,
-							description: 'Un mismo horario no puede ser seleccionado por múltiples sesiones'
+							description: 'No puedes seleccionar el mismo horario para el mismo tipo de sesión'
 						}
 					);
-
 					return prev;
 				}
 
-				// Add
+				// Add (permitir múltiples sesiones en el mismo día/módulo de diferentes tipos)
 				return {
 					...prev,
 					[requestSession.id]: [...currentModules, dayModuleId],
@@ -398,6 +393,7 @@ export function RequestSessionView({
 								currentSession		= { currentSessionForModules }
 								availableSessions	= { availableSessions }
 								enabled				= { isEditingModules }
+								multiple			= { true }
 							/>
 						</CardContent>
 					</Card>
