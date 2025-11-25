@@ -41,9 +41,9 @@ import { SessionName }  from '@/components/session/session-name';
 import { FileForm }     from '@/components/section/file-form';
 
 import {
-    SessionAvailabilityResult,
     SessionAssignment,
-    Status
+    Status,
+    AssignmentData
 }                                   from '@/types/session-availability.model';
 import { tempoFormat }              from '@/lib/utils';
 import { KEY_QUERYS }               from '@/consts/key-queries';
@@ -91,45 +91,18 @@ export default function AssignmentPage(): JSX.Element {
     const [ isUploadDialogOpen, setIsUploadDialogOpen ] = useState<boolean>( false );
 
 
-    const { data } = useQuery<SessionAvailabilityResult[]>({
+    const { data = { type: 'space' as const, data: [] } } = useQuery<AssignmentData>({
         queryKey                : [ KEY_QUERYS.SESSIONS, 'assignment', id ],
-        queryFn                 : async () => queryClient.getQueryData<SessionAvailabilityResult[]>( [ KEY_QUERYS.SESSIONS, 'assignment', id ] ) ?? [],
-        initialData             : () => queryClient.getQueryData<SessionAvailabilityResult[]>( [ KEY_QUERYS.SESSIONS, 'assignment', id ] ) ?? [],
+        queryFn                 : async () => queryClient.getQueryData<AssignmentData>( [ KEY_QUERYS.SESSIONS, 'assignment', id ] ) ?? { type: 'space' as const, data: [] },
+        initialData             : () => queryClient.getQueryData<AssignmentData>( [ KEY_QUERYS.SESSIONS, 'assignment', id ] ) ?? { type: 'space' as const, data: [] },
         refetchOnMount          : false,
         refetchOnReconnect      : false,
         refetchOnWindowFocus    : false
     });
 
 
-    const rows = useMemo(() => data ?? [], [ data ]);
-
-
-    const assignmentColumnLabel = useMemo(() => {
-        const columnName = 'Espacio/Profesor';
-
-        if ( !data || data.length === 0 ) return columnName;
-
-        return data[0] 
-            ? Object.keys( data[0] ).includes( 'spaceId' )
-                ? 'Espacio'
-                : 'Profesor'
-            : columnName;
-    }, [ data ]);
-
-
-    const assignmentType = useMemo<'space' | 'professor' | null>(() => {
-        if ( rows.length === 0 ) return null;
-
-        if ( rows.some(( session ) => session.Espacio && session.Espacio.trim() !== '' )) {
-            return 'space';
-        }
-
-        if ( rows.some(( session ) => session.Profesor && session.Profesor.trim() !== '' )) {
-            return 'professor';
-        }
-
-        return null;
-    }, [ rows ]);
+    const rows              = useMemo(() => data.data, [ data ]);
+    const assignmentType    = useMemo(() => data.type, [ data ]);
 
 
     const updateSessionsCache = useCallback(( updatedSessions: OfferSession[] ) => {
@@ -164,7 +137,7 @@ export default function AssignmentPage(): JSX.Element {
 
 
     const createAssignments = useCallback(( statuses: Status[] ): SessionAssignment[] => {
-        if ( !assignmentType ) {
+        if ( !assignmentType || assignmentType === 'registered' ) {
             return [];
         }
 
@@ -206,14 +179,17 @@ export default function AssignmentPage(): JSX.Element {
         onSuccess: ( updatedSessions, { assignments }) => {
             updateSessionsCache( updatedSessions );
 
-            queryClient.setQueryData<SessionAvailabilityResult[]>( [ KEY_QUERYS.SESSIONS, 'assignment', id ], ( currentData ) => {
+            queryClient.setQueryData<AssignmentData>( [ KEY_QUERYS.SESSIONS, 'assignment', id ], ( currentData ) => {
                 if ( !currentData ) {
                     return currentData;
                 }
 
                 const assignedIds = new Set( assignments.map(( assignment ) => assignment.sessionId ));
 
-                return currentData.filter(( session ) => !assignedIds.has( session.SesionId ));
+                return {
+                    ...currentData,
+                    data : currentData.data.filter(( session ) => !assignedIds.has( session.SesionId ))
+                };
             });
 
             toast( 'Sesiones asignadas correctamente ', successToast );
@@ -276,7 +252,20 @@ export default function AssignmentPage(): JSX.Element {
                                 <TableHead className = "w-[180px]">Sesión</TableHead>
                                 <TableHead className = "w-[180px]">Fecha</TableHead>
                                 <TableHead className = "w-[180px]">Módulo</TableHead>
-                                <TableHead className = "w-[220px]">{ assignmentColumnLabel }</TableHead>
+                                
+                                { assignmentType === 'registered' ? (
+                                    <>
+                                        <TableHead className = "w-[180px]">Espacio</TableHead>
+                                        <TableHead className = "w-[180px]">Profesor</TableHead>
+                                        <TableHead className = "w-[120px]">Registrados</TableHead>
+                                        <TableHead className = "w-[150px]">Sillas Disponibles</TableHead>
+                                    </>
+                                ) : (
+                                    <TableHead className = "w-[220px]">
+                                        { assignmentType === 'space' ? 'Espacio' : assignmentType === 'professor' ? 'Profesor' : 'Espacio/Profesor' }
+                                    </TableHead>
+                                )}
+                                
                                 <TableHead className = "w-[170px]">Estado</TableHead>
                                 <TableHead className = "w-[320px]">Mensaje</TableHead>
                             </TableRow>
@@ -288,7 +277,7 @@ export default function AssignmentPage(): JSX.Element {
                             <TableBody>
                                 { rows.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan = { 7 } className = "py-6 text-center text-muted-foreground">
+                                        <TableCell colSpan = { assignmentType === 'registered' ? 10 : 7 } className = "py-6 text-center text-muted-foreground">
                                             No hay resultados. Sube un archivo para ver la validación.
                                         </TableCell>
                                     </TableRow>
@@ -305,7 +294,18 @@ export default function AssignmentPage(): JSX.Element {
 
                                             <TableCell className="w-[180px]">{ session.Modulo }</TableCell>
 
-                                            <TableCell className="w-[220px]">{ session.Espacio || session.Profesor || '-' }</TableCell>
+                                            { assignmentType === 'registered' ? (
+                                                <>
+                                                    <TableCell className="w-[180px]">{ session.Espacio || '-' }</TableCell>
+                                                    <TableCell className="w-[180px]">{ session.Profesor || '-' }</TableCell>
+                                                    <TableCell className="w-[120px]">{ session.Inscritos ?? '-' }</TableCell>
+                                                    <TableCell className="w-[150px]">{ session.SillasDisponibles ?? '-' }</TableCell>
+                                                </>
+                                            ) : (
+                                                <TableCell className="w-[220px]">
+                                                    { assignmentType === 'space' ? ( session.Espacio || '-' ) : ( session.Profesor || '-' )}
+                                                </TableCell>
+                                            )}
 
                                             <TableCell className="w-[170px]">
                                                 {(() => {
@@ -360,25 +360,29 @@ export default function AssignmentPage(): JSX.Element {
                     </div>
 
                     <div className="flex gap-2">
-                        <Button
-                            className   = "bg-amber-500 hover:bg-amber-600 text-white gap-2"
-                            disabled    = { assignSessionsMutation.isPending || !rows.some(( session ) => session.Estado === 'Probable' ) }
-                            onClick     = { handleAssignWithIssues }
-                        >
-                            Asignar con problemas
+                        { assignmentType !== 'registered' && (
+                            <>
+                                <Button
+                                    className   = "bg-amber-500 hover:bg-amber-600 text-white gap-2"
+                                    disabled    = { assignSessionsMutation.isPending || !rows.some(( session ) => session.Estado === 'Probable' ) }
+                                    onClick     = { handleAssignWithIssues }
+                                >
+                                    Asignar con problemas
 
-                            <TriangleAlert className="w-4 h-4" />
-                        </Button>
+                                    <TriangleAlert className="w-4 h-4" />
+                                </Button>
 
-                        <Button
-                            className   = "bg-green-500 hover:bg-green-600 text-white gap-2"
-                            disabled    = { assignSessionsMutation.isPending || !rows.some(( session ) => session.Estado === 'Available' ) }
-                            onClick     = { handleAssignOnlyAvailable }
-                        >
-                            Asignar solo disponibles
+                                <Button
+                                    className   = "bg-green-500 hover:bg-green-600 text-white gap-2"
+                                    disabled    = { assignSessionsMutation.isPending || !rows.some(( session ) => session.Estado === 'Available' ) }
+                                    onClick     = { handleAssignOnlyAvailable }
+                                >
+                                    Asignar solo disponibles
 
-                            <CircleCheckBig className="w-4 h-4" />
-                        </Button>
+                                    <CircleCheckBig className="w-4 h-4" />
+                                </Button>
+                            </>
+                        )}
                     </div>
                 </CardFooter>
 			</Card>
