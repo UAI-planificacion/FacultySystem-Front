@@ -4,23 +4,19 @@ import {
     SpaceType
 }                   from "@/types/request-detail.model";
 import { Session }  from "@/types/section.model";
-// import { Professor }    from "@/types/professor";
 
 
 export type Status = "Available" | "Unavailable" | "Probable";
 
 
-// export interface SessionAvailabilityResult {
-//     SSEC        : string;
-//     session     : string;
-//     date        : string;
-//     module      : string;
-//     spaceId?    : string;
-//     professor?  : Professor;
-//     status      : Status;
-//     detalle     : string;
-//     sessionId   : string;
-// }
+
+export type Type = 'space' | 'professor' | 'registered';
+
+
+export interface AssignmentData {
+    type : Type;
+    data : SessionAvailabilityResult[];
+}
 
 
 export interface SessionAvailabilityResult {
@@ -38,18 +34,17 @@ export interface SessionAvailabilityResult {
     TamanoEspacio       : string | null;
     TipoSesion          : string;
     Cupos               : number;
+    Inscritos?          : number;
     Profesor            : string | null;
     Espacio             : string | null;
+    SillasDisponibles?  : number | null;
     Estado?             : Status;
     Detalle?            : string;
 }
 
 
-export type SessionAssignmentType = 'space' | 'professor' | 'registrants';
-
-
 export interface SessionAssignmentCache {
-    type    : SessionAssignmentType;
+    type    : Type;
     results : SessionAvailabilityResult[];
 }
 
@@ -93,15 +88,3 @@ export interface SessionAvailabilityResponse {
 	scheduledDates      : ScheduledDate[];
 	isReadyToCreate     : boolean;
 }
-
-
-// export interface SessionAvailabilityRequest {
-// 	session         : Session;
-// 	dayModuleIds    : number[];
-// 	spaceIds        : string[] | null;
-// 	professorIds    : string[];
-// 	isEnglish       : boolean;
-// 	building        : BuildingEnum | null;
-// 	spaceType       : SpaceType | null;
-// 	spaceSize       : Size | null;
-// }
