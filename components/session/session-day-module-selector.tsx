@@ -30,6 +30,7 @@ interface Props {
 	currentSession      : Session | null;
 	availableSessions   : Session[];
 	enabled             : boolean;
+	multiple?           : boolean;
 }
 
 
@@ -38,7 +39,8 @@ export function SessionDayModuleSelector({
 	onToggleDayModule,
 	currentSession,
 	availableSessions,
-	enabled
+	enabled,
+	multiple = false
 }: Props ): JSX.Element {
 	const {
 		data        : modules = [],
@@ -83,23 +85,27 @@ export function SessionDayModuleSelector({
 	}, [ modules ]);
 
 
-	// Map para saber qué sesión tiene cada dayModuleId
+	// Map para saber qué sesión(es) tiene cada dayModuleId
 	const dayModuleSessionMap = useMemo(() => {
-		const map = new Map<string, Session>();
+		const map = new Map<string, Session[]>();
 
 		selectedSessions.forEach( item => {
 			const key = `${item.dayId}-${item.moduleId}`;
-			map.set( key, item.session );
+			const existing = map.get( key ) || [];
+			
+			if ( !existing.includes( item.session )) {
+				map.set( key, [...existing, item.session] );
+			}
 		});
 
 		return map;
 	}, [ selectedSessions ]);
 
 
-	// Verificar si un dayModule está seleccionado
-	const getSessionForDayModule = useCallback(( dayId: number, moduleId: string ): Session | null => {
+	// Obtener sesiones para un dayModule
+	const getSessionsForDayModule = useCallback(( dayId: number, moduleId: string ): Session[] => {
 		const key = `${dayId}-${moduleId}`;
-		return dayModuleSessionMap.get( key ) || null;
+		return dayModuleSessionMap.get( key ) || [];
 	}, [ dayModuleSessionMap ]);
 
 
@@ -115,11 +121,28 @@ export function SessionDayModuleSelector({
 	const handleCellClick = useCallback(( dayId: number, moduleId: number ): void => {
 		if ( !currentSession || !enabled ) return;
 
-		// const sessionForThisDayModule = getSessionForDayModule( dayId, moduleId );
+		const sessionsInCell = getSessionsForDayModule( dayId, moduleId.toString() );
 		const dayModuleId = calculateDayModuleId( dayId, moduleId );
 
-		onToggleDayModule( currentSession, dayId, moduleId, dayModuleId );
-	}, [ currentSession, enabled, getSessionForDayModule, calculateDayModuleId, onToggleDayModule ]);
+		// Si multiple = false, comportamiento original (reemplazar)
+		if ( !multiple ) {
+			onToggleDayModule( currentSession, dayId, moduleId, dayModuleId );
+			return;
+		}
+
+		// Si multiple = true, agregar/quitar sesión
+		const isSessionInCell = sessionsInCell.includes( currentSession );
+
+		if ( isSessionInCell ) {
+			// Quitar la sesión
+			onToggleDayModule( currentSession, dayId, moduleId, dayModuleId );
+		} else {
+			// Agregar la sesión (sin validación de límite aquí)
+			// La validación de límite se debe hacer en el componente padre
+			// que conoce el número real de RequestSession de cada tipo
+			onToggleDayModule( currentSession, dayId, moduleId, dayModuleId );
+		}
+	}, [ currentSession, enabled, getSessionsForDayModule, calculateDayModuleId, onToggleDayModule, multiple, selectedSessions, availableSessions ]);
 
 
 	// Obtener el color de fondo según la sesión
@@ -201,48 +224,52 @@ export function SessionDayModuleSelector({
 									{ availableDays.map( day => {
 										// Verificar si este módulo está disponible en este día
 										const isModuleAvailableOnDay    = module.days.includes( day.id );
-										const sessionForThisCell        = getSessionForDayModule( day.id, module.id.toString() );
-										const isSelected                = sessionForThisCell !== null;
+										const sessionsInCell            = getSessionsForDayModule( day.id, module.id.toString() );
+										const isSelected                = sessionsInCell.length > 0;
 										const canSelect                 = enabled && currentSession && availableSessions.includes( currentSession );
 
-										let cellStyle: React.CSSProperties = {};
-
-                                        if ( isSelected && sessionForThisCell ) {
-											const colorMap: Record<Session, string> = {
-												[Session.C]: '#3b82f6', // blue-500
-												[Session.A]: '#22c55e', // green-500
-												[Session.T]: '#f97316', // orange-500
-												[Session.L]: '#a855f7', // purple-500
-											};
-
-                                            cellStyle = {
-												backgroundColor : colorMap[sessionForThisCell],
-												color           : 'white'
-											};
-										}
+										const colorMap: Record<Session, string> = {
+											[Session.C]: '#3b82f6', // blue-500
+											[Session.A]: '#22c55e', // green-500
+											[Session.T]: '#f97316', // orange-500
+											[Session.L]: '#a855f7', // purple-500
+										};
 
 										return (
 											<TableCell
 												key         = { `${ module.id }-${ day.id }` }
-												className   = {`text-center w-20 min-w-20 p-2 transition-colors ${
+												className   = {`text-center w-20 min-w-20 p-0 transition-colors overflow-hidden ${
 													isModuleAvailableOnDay 
 														? ( canSelect ? 'hover:bg-zinc-200/50 dark:hover:bg-zinc-800 cursor-pointer' : 'cursor-not-allowed opacity-70' )
 														: 'bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-50'
 												}`}
-												style       = { cellStyle }
 												onClick     = {() => {
 													if ( !isModuleAvailableOnDay || !canSelect ) return;
 													handleCellClick( day.id, module.id );
 												}}
 											>
 												{ isModuleAvailableOnDay ? (
-													isSelected && sessionForThisCell ? (
-														<span className="font-semibold">{ sessionForThisCell }</span>
+													isSelected ? (
+														<div className="flex h-full w-full">
+															{ sessionsInCell.map(( session, index ) => (
+																<div
+																	key         = { `${session}-${index}` }
+																	className   = "flex items-center justify-center font-semibold text-white"
+																	style       = {{
+																		backgroundColor : colorMap[session],
+																		width           : `${100 / sessionsInCell.length}%`,
+																		padding         : '0.5rem'
+																	}}
+																>
+																	{ session }
+																</div>
+															))}
+														</div>
 													) : (
-														<span className="text-gray-400">—</span>
+														<span className="text-gray-400 p-2 block">—</span>
 													)
 												) : (
-													<span className="text-gray-400">—</span>
+													<span className="text-gray-400 p-2 block">—</span>
 												)}
 											</TableCell>
 										);
