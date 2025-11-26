@@ -19,6 +19,7 @@ import {
     useQueryClient
 }                   from '@tanstack/react-query';
 import { toast }    from 'sonner';
+import * as XLSX    from 'xlsx';
 
 import {
     Card,
@@ -39,20 +40,21 @@ import { ScrollArea }   from '@/components/ui/scroll-area';
 import { Button }       from '@/components/ui/button';
 import { SessionName }  from '@/components/session/session-name';
 import { FileForm }     from '@/components/section/file-form';
+import { ActiveBadge }  from '@/components/shared/active';
 
 import {
     SessionAssignment,
+    SectionAssignment,
     Status,
     AssignmentData
-}                                   from '@/types/session-availability.model';
-import { tempoFormat }              from '@/lib/utils';
-import { KEY_QUERYS }               from '@/consts/key-queries';
-import { Session }                  from '@/types/section.model';
-import { fetchApi, Method }         from '@/services/fetch';
-import { successToast, errorToast } from '@/config/toast/toast.config';
-import { OfferSession }             from '@/types/offer-section.model';
-import * as XLSX                    from 'xlsx';
-import { ExcelIcon }                from '@/icons/ExcelIcon';
+}                                       from '@/types/session-availability.model';
+import { tempoFormat }                  from '@/lib/utils';
+import { KEY_QUERYS }                   from '@/consts/key-queries';
+import { Session }                      from '@/types/section.model';
+import { fetchApi, Method }             from '@/services/fetch';
+import { successToast, errorToast }     from '@/config/toast/toast.config';
+import { OfferSession, OfferSection }   from '@/types/offer-section.model';
+import { ExcelIcon }                    from '@/icons/ExcelIcon';
 
 
 const statusLabels: Record<Status, string> = {
@@ -166,6 +168,31 @@ export default function AssignmentPage(): JSX.Element {
     }, [ assignmentType, rows ]);
 
 
+    const createSectionAssignments = useCallback(( statuses: Status[] ): SectionAssignment[] => {
+        if ( assignmentType !== 'registered' ) {
+            return [];
+        }
+
+        const sectionMap = new Map<string, number | null>();
+
+        rows.forEach(( session ) => {
+            if ( !statuses.includes( session.Estado! ) || !session.SectionId ) {
+                return;
+            }
+
+            // Solo agregar si no existe en el Map (tomar el primer valor)
+            if ( !sectionMap.has( session.SectionId )) {
+                sectionMap.set( session.SectionId, session.Inscritos ?? null );
+            }
+        });
+
+        return Array.from( sectionMap.entries()).map(([ sectionId, registered ]) => ({
+            sectionId,
+            registered
+        }));
+    }, [ assignmentType, rows ]);
+
+
     const assignSessionsMutation = useMutation<OfferSession[], Error, { assignments: SessionAssignment[]; seamlessly: boolean }>({
         mutationFn: async ({ assignments, seamlessly }) => {
             const queryParam = seamlessly ? '' : '?seamlessly=false';
@@ -200,6 +227,49 @@ export default function AssignmentPage(): JSX.Element {
     });
 
 
+    const assignRegisteredMutation = useMutation<OfferSection[], Error, SectionAssignment[]>({
+        mutationFn: async ( assignments ) => {
+            return fetchApi<OfferSection[]>({
+                url     : `${KEY_QUERYS.SESSIONS}/availability/assign-registered`,
+                method  : Method.PATCH,
+                body    : assignments
+            });
+        },
+        onSuccess: ( updatedSections, assignments ) => {
+            // Actualizar AssignmentData local para remover las filas asignadas
+            queryClient.setQueryData<AssignmentData>( [ KEY_QUERYS.SESSIONS, 'assignment', id ], ( currentData ) => {
+                if ( !currentData ) {
+                    return currentData;
+                }
+
+                const assignedSectionIds = new Set( assignments.map(( assignment ) => assignment.sectionId ));
+
+                return {
+                    ...currentData,
+                    data : currentData.data.filter(( session ) => !session.SectionId || !assignedSectionIds.has( session.SectionId ))
+                };
+            });
+
+            // Invalidar caché de sections
+            queryClient.invalidateQueries({ 
+                queryKey        : [ KEY_QUERYS.SECTIONS ],
+                refetchType     : 'active'
+            });
+
+            // Invalidar todas las sessions
+            queryClient.invalidateQueries({ 
+                queryKey        : [ KEY_QUERYS.SESSIONS ],
+                refetchType     : 'active'
+            });
+
+            toast( 'Registros asignados correctamente ', successToast );
+        },
+        onError: ( mutationError ) => {
+            toast( `Error al asignar registros: ${mutationError.message}`, errorToast );
+        }
+    });
+
+
     const handleExportErrors = (): void => {
         // const unavailableSessions = rows.filter(( session ) => session.status === 'Unavailable' );
 
@@ -218,14 +288,28 @@ export default function AssignmentPage(): JSX.Element {
 
 
     const handleAssignOnlyAvailable = (): void => {
-        const assignments = createAssignments([ 'Available' ]);
+        if ( assignmentType !== 'registered' ) {
+            const assignments = createAssignments([ 'Available' ]);
 
-        if ( assignments.length === 0 ) {
-            toast( 'No hay sesiones disponibles para asignar.', errorToast );
+            if ( assignments.length === 0 ) {
+                toast( 'No hay sesiones disponibles para asignar.', errorToast );
+                return;
+            }
+
+            assignSessionsMutation.mutate({ assignments, seamlessly : true });
+
             return;
         }
 
-        assignSessionsMutation.mutate({ assignments, seamlessly : true });
+        // Para tipo registered
+        const sectionAssignments = createSectionAssignments([ 'Available' ]);
+
+        if ( sectionAssignments.length === 0 ) {
+            toast( 'No hay secciones disponibles para asignar.', errorToast );
+            return;
+        }
+
+        assignRegisteredMutation.mutate( sectionAssignments );
     };
 
 
@@ -255,8 +339,8 @@ export default function AssignmentPage(): JSX.Element {
                                 
                                 { assignmentType === 'registered' ? (
                                     <>
-                                        <TableHead className = "w-[180px]">Espacio</TableHead>
                                         <TableHead className = "w-[180px]">Profesor</TableHead>
+                                        <TableHead className = "w-[180px]">Espacio</TableHead>
                                         <TableHead className = "w-[120px]">Registrados</TableHead>
                                         <TableHead className = "w-[150px]">Sillas Disponibles</TableHead>
                                     </>
@@ -296,8 +380,8 @@ export default function AssignmentPage(): JSX.Element {
 
                                             { assignmentType === 'registered' ? (
                                                 <>
-                                                    <TableCell className="w-[180px]">{ session.Espacio || '-' }</TableCell>
                                                     <TableCell className="w-[180px]">{ session.Profesor || '-' }</TableCell>
+                                                    <TableCell className="w-[180px]">{ session.Espacio || '-' }</TableCell>
                                                     <TableCell className="w-[120px]">{ session.Inscritos ?? '-' }</TableCell>
                                                     <TableCell className="w-[150px]">{ session.SillasDisponibles ?? '-' }</TableCell>
                                                 </>
@@ -308,20 +392,28 @@ export default function AssignmentPage(): JSX.Element {
                                             )}
 
                                             <TableCell className="w-[170px]">
-                                                {(() => {
-                                                    const IconComponent = statusIcon[session.Estado!];
-                                                    const iconColor     = statusIconColor[session.Estado!];
+                                                { assignmentType === 'space' ? (
+                                                    (() => {
+                                                        const IconComponent = statusIcon[session.Estado!];
+                                                        const iconColor     = statusIconColor[session.Estado!];
 
-                                                    return (
-                                                        <div className="flex items-center">
-                                                            <IconComponent className={`${iconColor} w-4 h-4 mr-2`} />
+                                                        return (
+                                                            <div className="flex items-center">
+                                                                <IconComponent className={`${iconColor} w-4 h-4 mr-2`} />
 
-                                                            <Badge className={`${statusStyles[session.Estado!]} text-white flex items-center`}>
-                                                                { statusLabels[ session.Estado! ]}
-                                                            </Badge>
-                                                        </div>
-                                                    );
-                                                })()}
+                                                                <Badge className={`${statusStyles[session.Estado!]} text-white flex items-center`}>
+                                                                    { statusLabels[ session.Estado! ]}
+                                                                </Badge>
+                                                            </div>
+                                                        );
+                                                    })()
+                                                ) : (
+                                                    <ActiveBadge
+                                                        isActive        = { session.Estado === 'Available' }
+                                                        activeText      = { assignmentType === 'professor' ? 'Disponible' : 'Válido' }
+                                                        inactiveText    = { assignmentType === 'professor' ? 'No disponible' : 'No válido' }
+                                                    />
+                                                )}
                                             </TableCell>
 
                                             <TableCell className="w-[320px]">{ session.Detalle }</TableCell>
@@ -360,39 +452,39 @@ export default function AssignmentPage(): JSX.Element {
                     </div>
 
                     <div className="flex gap-2">
-                        { assignmentType !== 'registered' && (
-                            <>
-                                <Button
-                                    className   = "bg-amber-500 hover:bg-amber-600 text-white gap-2"
-                                    disabled    = { assignSessionsMutation.isPending || !rows.some(( session ) => session.Estado === 'Probable' ) }
-                                    onClick     = { handleAssignWithIssues }
-                                >
-                                    Asignar con problemas
+                        { assignmentType === 'space' &&
+                            <Button
+                                className   = "bg-amber-500 hover:bg-amber-600 text-white gap-2"
+                                disabled    = { assignSessionsMutation.isPending || !rows.some(( session ) => session.Estado === 'Probable' ) }
+                                onClick     = { handleAssignWithIssues }
+                            >
+                                Asignar con problemas
 
-                                    <TriangleAlert className="w-4 h-4" />
-                                </Button>
+                                <TriangleAlert className="w-4 h-4" />
+                            </Button>
+                        }
 
-                                <Button
-                                    className   = "bg-green-500 hover:bg-green-600 text-white gap-2"
-                                    disabled    = { assignSessionsMutation.isPending || !rows.some(( session ) => session.Estado === 'Available' ) }
-                                    onClick     = { handleAssignOnlyAvailable }
-                                >
-                                    Asignar solo disponibles
+                        <Button
+                            className   = "bg-green-500 hover:bg-green-600 text-white gap-2"
+                            disabled    = { 
+                                assignSessionsMutation.isPending || 
+                                assignRegisteredMutation.isPending || 
+                                !rows.some(( session ) => session.Estado === 'Available' ) 
+                            }
+                            onClick     = { handleAssignOnlyAvailable }
+                        >
+                            Asignar solo disponibles
 
-                                    <CircleCheckBig className="w-4 h-4" />
-                                </Button>
-                            </>
-                        )}
+                            <CircleCheckBig className="w-4 h-4" />
+                        </Button>
                     </div>
                 </CardFooter>
 			</Card>
 
             <FileForm
                 isOpen      = { isUploadDialogOpen }
-                isRouting   = { false }
                 onClose     = {() => {
                     setIsUploadDialogOpen( false );
-                    queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.SESSIONS, 'assignment', id ] });
                 }}
             />
 		</PageLayout>
