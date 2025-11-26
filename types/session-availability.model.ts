@@ -22,6 +22,7 @@ export interface AssignmentData {
 export interface SessionAvailabilityResult {
     SSEC                : string;
     SesionId            : string;
+    SectionId?          : string;
     Numero              : number;
     NombreAsignatura    : string;
     Fecha               : Date;
@@ -46,6 +47,12 @@ export interface SessionAvailabilityResult {
 export interface SessionAssignmentCache {
     type    : Type;
     results : SessionAvailabilityResult[];
+}
+
+
+export interface SectionAssignment {
+    sectionId : string; 
+    registered : number | null;
 }
 
 
