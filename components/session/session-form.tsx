@@ -55,7 +55,7 @@ import {
 import { fetchApi, Method }             from '@/services/fetch';
 import { KEY_QUERYS }                   from '@/consts/key-queries';
 import { errorToast, successToast }     from '@/config/toast/toast.config';
-import { tempoFormat }                  from '@/lib/utils';
+import { cn, tempoFormat }              from '@/lib/utils';
 import { useAvailableDates }            from '@/hooks/use-available-dates';
 import { Session }                      from '@/types/section.model';
 import { DayModule }                    from '@/types/day-module.model';
@@ -467,7 +467,7 @@ export function SessionForm({
                         }
                     </DialogDescription>
 
-                    <div className="space-y-4">
+                    <div className="space-y-4 text-sm">
                         <Card>
                             <CardHeader className="py-3 px-5 border-b grid grid-cols-4 gap-4 items-center">
                                 <span className="font-medium">SSEC</span>
@@ -481,6 +481,22 @@ export function SessionForm({
                                 <span>{ section?.period?.name }</span>
                                 <span>{ section?.startDate && tempoFormat( section.startDate )}</span>
                                 <span>{ section?.endDate && tempoFormat( section.endDate )}</span>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader className="py-3 px-5 border-b grid grid-cols-4 gap-4 items-center">
+                                <span className="font-medium">Cupos</span>
+                                <span className="font-medium">Registrados</span>
+                                <span className="font-medium">Sillas disponibles</span>
+                            </CardHeader>
+
+                            <CardContent className="py-3 px-5 grid grid-cols-4 gap-4">
+                                <span>{ section?.quota }</span>
+                                <span>{ section?.registered }</span>
+                                <span className={ cn(( session?.chairsAvailable ?? 0 ) < 0 && "text-destructive", 'font-semibold' )}>
+                                    { session?.chairsAvailable }
+                                </span>
                             </CardContent>
                         </Card>
 
@@ -518,12 +534,12 @@ export function SessionForm({
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit( onSubmit )} className="space-y-4">
-                        <SessionFormFields
+                        {/* <SessionFormFields
                             control         = { form.control }
                             sessionRequired = { sessionRequired }
                             onSessionChange = {() => setSessionRequired( false )}
                             showSessionType = { true }
-                        />
+                        /> */}
 
                         {/* Is English Field */}
                         <FormField
