@@ -57,7 +57,6 @@ interface UploadError {
 interface FileFormProps {
 	isOpen      : boolean;
 	onClose     : () => void;
-	isRouting?  : boolean;
 }
 
 const MAX_FILE_SIZE     = 10 * 1024 * 1024;
@@ -67,8 +66,7 @@ const UPLOAD_ENDPOINT   = `${ENV.REQUEST_BACK_URL}${KEY_QUERYS.SESSIONS}/bulk-up
 
 export function FileForm({
 	isOpen,
-	onClose,
-	isRouting = true
+	onClose
 }: FileFormProps ): JSX.Element {
 	const router        = useRouter();
 	const queryClient   = useQueryClient();
@@ -155,21 +153,16 @@ export function FileForm({
 			return await response.json() as SessionAvailabilityResult[];
 		},
 		onSuccess  : ( data ) => {
-			if ( isRouting ) {
-				const ulid = crypto.randomUUID();
+			const ulid = crypto.randomUUID();
 
-				queryClient.setQueryData<SessionAvailabilityResult[]>(
-					[ KEY_QUERYS.SESSIONS, 'assignment', ulid ],
-					data as SessionAvailabilityResult[]
-				);
+			queryClient.setQueryData<SessionAvailabilityResult[]>(
+				[ KEY_QUERYS.SESSIONS, 'assignment', ulid ],
+				data as SessionAvailabilityResult[]
+			);
 
-				router.push( `/sections/assignment/${ ulid }` );
-				toast( 'Archivo procesado correctamente ✅', successToast );
-			} else {
-				queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.SESSIONS ] });
-				onClose();
-				toast( 'Archivo cargado correctamente ✅', successToast );
-			}
+			onClose();
+			router.push( `/sections/assignment/${ ulid }` );
+			toast( 'Archivo procesado correctamente ✅', successToast );
 		},
 		onError  : ( mutationError ) => {
 			toast( `Error al cargar archivo: ${mutationError.message}`, errorToast );
@@ -370,6 +363,7 @@ export function FileForm({
                                     <Button
 										className   = "w-full sm:w-auto gap-2"
 										onClick     = { handleUpload }
+                                        disabled    = { uploadMutation.isPending }
 									>
 										<Upload className = "h-4 w-4" />
                                         { uploadMutation.isPending ? 'Subiendo...' : 'Subir archivo' }
