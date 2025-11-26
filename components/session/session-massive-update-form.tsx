@@ -199,12 +199,12 @@ export function SessionMassiveUpdateForm({
 
 				<Form {...form}>
 					<form onSubmit={form.handleSubmit( onSubmit )} className="space-y-4">
-						<SessionFormFields
+						{/* <SessionFormFields
 							control         = { form.control }
 							sessionRequired = { sessionRequired }
 							onSessionChange = {() => setSessionRequired( false )}
 							showSessionType = { true }
-						/>
+						/> */}
 
 						{/* Is English Field */}
 						<FormField
@@ -278,6 +278,15 @@ export function SessionMassiveUpdateForm({
                                             <div>
                                                 <strong className="font-bold">Sin cambios:</strong>
                                                 <p className="inline"> Si no hay disponibilidad, la sesión conservará el espacio/profesor que ya tenía.</p>
+                                            </div>
+                                        </li>
+
+                                        <li className="flex items-start">
+                                            <span className="mr-2" aria-hidden="true">❌</span>
+
+                                            <div>
+                                                <strong className="font-bold">Sin cambios:</strong>
+                                                <p className="inline"> Si es el espacio no tiene la capacidad necesaria con los cupos o registrados.</p>
                                             </div>
                                         </li>
                                     </ul>
