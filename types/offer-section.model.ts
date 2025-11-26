@@ -164,6 +164,8 @@ export interface OfferSection {
     period          : OfferSectionPeriod;
     sessionsCount   : number;
     haveRequest     : boolean;
+    quota           : number;
+    registered      : number;
     // sessions        : SectionSession[];
     sessions        : SectionSession;
 }
