@@ -6,11 +6,8 @@ import {
 import { Session }  from "@/types/section.model";
 
 
-export type Status = "Available" | "Unavailable" | "Probable";
-
-
-
-export type Type = 'space' | 'professor' | 'registered';
+export type Status  = "Available" | "Unavailable" | "Probable";
+export type Type    = 'space' | 'professor' | 'registered';
 
 
 export interface AssignmentData {
@@ -94,4 +91,16 @@ export interface SessionAvailabilityResponse {
 	availableProfessors : AvailableProfessor[];
 	scheduledDates      : ScheduledDate[];
 	isReadyToCreate     : boolean;
+}
+
+
+export interface SessionAvailabilityRequest {
+	session         : Session;
+	dayModuleIds    : number[];
+	spaceIds        : string[] | null;
+	professorIds    : string[];
+	isEnglish       : boolean;
+	building        : BuildingEnum | null;
+	spaceType       : SpaceType | null;
+	spaceSize       : Size | null;
 }
