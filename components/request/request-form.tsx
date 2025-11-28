@@ -275,6 +275,54 @@ export function RequestForm({
 				staffUpdateId   : staff.id,
 			});
 		} else {
+			// Validar que todas las sesiones tengan al menos un dayModule
+			const invalidSessions = availableSessions.filter( session =>
+				sessionDayModules[session].length === 0
+			);
+
+			if ( invalidSessions.length > 0 ) {
+				toast(
+					`Debe seleccionar al menos un horario para: ${invalidSessions.map( s => sessionLabels[s] ).join( ', ' )}`,
+					errorToast
+				);
+
+				return;
+			}
+
+			// Validar que todas las sesiones tengan edificio seleccionado
+			const sessionsWithoutBuilding = availableSessions.filter( session => {
+				const building = sessionConfigs[session]?.building;
+				return !building || building.trim() === '';
+			});
+
+			if ( sessionsWithoutBuilding.length > 0 ) {
+				toast(
+					`Debe seleccionar un edificio para: ${sessionsWithoutBuilding.map( s => sessionLabels[s] ).join( ', ' )}`,
+					errorToast
+				);
+
+				return;
+			}
+
+			// Validar que todas las sesiones tengan al menos un filtro de espacio seleccionado
+			const sessionsWithoutSpaceFilter = availableSessions.filter( session => {
+				const config = sessionConfigs[session];
+				const hasSpaceId = config?.spaceId !== null && config?.spaceId !== undefined;
+				const hasSpaceType = config?.spaceType !== null && config?.spaceType !== undefined;
+				const hasSpaceSizeId = config?.spaceSizeId !== null && config?.spaceSizeId !== undefined;
+
+				return !hasSpaceId && !hasSpaceType && !hasSpaceSizeId;
+			});
+
+			if ( sessionsWithoutSpaceFilter.length > 0 ) {
+				toast(
+					`Debe seleccionar al menos un filtro de espacio (Espacio específico, Tipo o Tamaño) para: ${sessionsWithoutSpaceFilter.map( s => sessionLabels[s] ).join( ', ' )}`,
+					errorToast
+				);
+
+				return;
+			}
+
 			const requestSessions: RequestSessionCreate[] = availableSessions.map( session => {
 				const dayModuleIds  = sessionDayModules[session].map( dm => dm.dayModuleId );
 				const config        = sessionConfigs[session];
@@ -294,32 +342,14 @@ export function RequestForm({
 				};
 			});
 
-			// Validar que todas las sesiones tengan al menos un dayModule
-			const invalidSessions = availableSessions.filter( session =>
-				sessionDayModules[session].length === 0
-			);
-
-			if ( invalidSessions.length > 0 ) {
-				toast(
-					`Debe seleccionar al menos un horario para: ${invalidSessions.map( s => sessionLabels[s] ).join( ', ' )}`,
-					errorToast
-				);
-
-				return;
-			}
-
-			const dataS = {
+			const request = {
 				...data,
 				staffCreateId   : staff.id,
 				requestSessions
 			}
-			console.log('🚀 ~ file: request-form.tsx:395 ~ dataS:', dataS)
+			console.log('🚀 ~ file: request-form.tsx:395 ~ dataS:', request)
 
-			createRequestMutation.mutate({
-				...data,
-				staffCreateId   : staff.id,
-				requestSessions
-			});
+			createRequestMutation.mutate( request );
 		}
 	}
 
