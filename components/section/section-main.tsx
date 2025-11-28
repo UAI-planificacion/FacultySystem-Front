@@ -69,7 +69,7 @@ export function SectionMain({
 }: Props ) {
     const router                                        = useRouter();
     const queryClient                                   = useQueryClient();
-    const [idFilter, setIdFilter]                       = useState<string>(() => searchParams.get('id') || '');
+    const [idsFilter, setIdsFilter]                     = useState<string[]>(() => searchParams.get('ids')?.split(',').filter(Boolean) || []);
     const [codeFilter, setCodeFilter]                   = useState<string[]>(() => searchParams.get('code')?.split(',').filter(Boolean) || []);
     const [roomFilter, setRoomFilter]                   = useState<string[]>(() => searchParams.get('room')?.split(',').filter(Boolean) || []);
     const [dayFilter, setDayFilter]                     = useState<string[]>(() => searchParams.get('day')?.split(',').filter(Boolean) || []);
@@ -129,7 +129,7 @@ export function SectionMain({
 
         // Apply filters
         const filtered = sectionsData.filter(( section ) => {
-            const matchesId         = idFilter.length       === 0 || idFilter === section.id;
+            const matchesIds        = idsFilter.length      === 0 || idsFilter.includes( section.id );
             const matchesGroupId    = groupIdFilter.length  === 0 || groupIdFilter.includes( section.groupId );
             const matchesCode       = codeFilter.length     === 0 || codeFilter.includes( section.code.toString() );
             const matchesRoom       = roomFilter.length     === 0 || section.sessions.spaceIds.some( spaceId => roomFilter.includes( spaceId ));
@@ -150,7 +150,7 @@ export function SectionMain({
             const matchesModule     = moduleFilter.length       === 0 || section.sessions.moduleIds.some( moduleId => moduleFilter.includes( moduleId.toString() ));
             const matchesProfessor  = professorFilter.length    === 0 || section.sessions.professorIds.some( professorId => professorFilter.includes( professorId ));
 
-            return matchesId && matchesGroupId && matchesCode && matchesRoom && matchesDay && matchesPeriod && matchesStatus && matchesSubject && matchesSize && matchesSession && matchesModule && matchesProfessor;
+            return matchesIds && matchesGroupId && matchesCode && matchesRoom && matchesDay && matchesPeriod && matchesStatus && matchesSubject && matchesSize && matchesSession && matchesModule && matchesProfessor;
         });
 
         // Apply pagination
@@ -161,12 +161,32 @@ export function SectionMain({
         const sections   = filtered.slice( startIndex, endIndex );
 
         return { sections, totalItems, totalPages };
-    }, [ sectionsData, groupIdFilter, codeFilter, roomFilter, dayFilter, periodFilter, statusFilter, subjectFilter, sizeFilter, sessionFilter, moduleFilter, professorFilter, currentPage, itemsPerPage ]);
+    }, [ sectionsData, idsFilter, groupIdFilter, codeFilter, roomFilter, dayFilter, periodFilter, statusFilter, subjectFilter, sizeFilter, sessionFilter, moduleFilter, professorFilter, currentPage, itemsPerPage ]);
 
 
     useEffect(() => {
         setCurrentPage( 1 );
-    }, [ groupIdFilter, codeFilter, roomFilter, dayFilter, periodFilter, statusFilter, subjectFilter, sizeFilter, sessionFilter, moduleFilter, professorFilter, itemsPerPage ]);
+    }, [ idsFilter, groupIdFilter, codeFilter, roomFilter, dayFilter, periodFilter, statusFilter, subjectFilter, sizeFilter, sessionFilter, moduleFilter, professorFilter, itemsPerPage ]);
+
+    // Contar filtros activos
+    const activeFiltersCount = useMemo(() => {
+        let count = 0;
+
+        if ( idsFilter.length > 0 )         count++;
+        if ( groupIdFilter.length > 0 )     count++;
+        if ( codeFilter.length > 0 )        count++;
+        if ( roomFilter.length > 0 )        count++;
+        if ( dayFilter.length > 0 )         count++;
+        if ( periodFilter.length > 0 )      count++;
+        if ( statusFilter.length > 0 )      count++;
+        if ( subjectFilter.length > 0 )     count++;
+        if ( sizeFilter.length > 0 )        count++;
+        if ( sessionFilter.length > 0 )     count++;
+        if ( moduleFilter.length > 0 )      count++;
+        if ( professorFilter.length > 0 )   count++;
+
+        return count;
+    }, [ idsFilter, groupIdFilter, codeFilter, roomFilter, dayFilter, periodFilter, statusFilter, subjectFilter, sizeFilter, sessionFilter, moduleFilter, professorFilter ]);
 
     // Aplicar filtro de groupId cuando se carga la página con el parámetro en la URL
     useEffect(() => {
@@ -433,7 +453,7 @@ export function SectionMain({
                                 variant     = "outline"
                                 className   = "w-full gap-2"
                                 onClick     = {() => {
-                                    setIdFilter( '' );
+                                    setIdsFilter( [] );
                                     setGroupIdFilter( [] );
                                     setCodeFilter( [] );
                                     setRoomFilter( [] );
@@ -450,7 +470,7 @@ export function SectionMain({
                             >
                                 <BrushCleaning className="w-5 h-5" />
 
-                                Limpiar filtros
+                                Limpiar filtros { activeFiltersCount > 0 && `(${activeFiltersCount})` }
                             </Button>
                         </CardContent>
 
