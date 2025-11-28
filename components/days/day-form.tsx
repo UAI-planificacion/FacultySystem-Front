@@ -209,19 +209,19 @@ export function DayForm( { day, isOpen, onClose }: DayFormProps ) {
 							) }
 						/>
 
-						<DialogFooter>
+						<DialogFooter className="flex items-center justify-between gap-4">
 							<Button
-								type="button"
-								variant="outline"
-								onClick={ onClose }
-								disabled={ updateDayMutation.isPending }
+								type        = "button"
+								variant     = "outline"
+								onClick     = { onClose }
+								disabled    = { updateDayMutation.isPending }
 							>
 								Cancelar
 							</Button>
 
 							<Button
-								type="submit"
-								disabled={ updateDayMutation.isPending }
+								type        = "submit"
+								disabled    = { updateDayMutation.isPending }
 							>
 								{ updateDayMutation.isPending ? 'Actualizando...' : 'Actualizar' }
 							</Button>
