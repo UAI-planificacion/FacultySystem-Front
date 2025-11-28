@@ -21,6 +21,7 @@ import { ViewMode }					from "@/components/shared/view-mode";
 import { SessionDayModuleSelector }	from "@/components/session/session-day-module-selector";
 import { Card, CardContent }		from "@/components/ui/card";
 import { Label }					from "@/components/ui/label";
+import { ScrollArea }               from "@/components/ui/scroll-area";
 
 import {
 	errorToast,
@@ -287,126 +288,128 @@ export function RequestSessionView({
 					/>
 				</div>
 
-				{isError ? (
-					<RequestSessionErrorCard />
-				) : (
-					<>
-						{ viewMode === 'cards' ? (
-							<RequestSessionList
-								data		= { data }
-								isLoading	= { isLoading }
-								onEdit		= { onEditRequestSession }
-							/>
-						) : (
-							<RequestSessionTable
-								data		= { data }
-								isLoading	= { isLoading }
-								onEdit		= { onEditRequestSession }
-							/>
-						)}
-					</>
-				)}
+                <ScrollArea className="h-[calc(100vh-580px)]"> 
+                    {isError ? (
+                        <RequestSessionErrorCard />
+                    ) : (
+                        <>
+                            { viewMode === 'cards' ? (
+                                <RequestSessionList
+                                    data		= { data }
+                                    isLoading	= { isLoading }
+                                    onEdit		= { onEditRequestSession }
+                                />
+                            ) : (
+                                <RequestSessionTable
+                                    data		= { data }
+                                    isLoading	= { isLoading }
+                                    onEdit		= { onEditRequestSession }
+                                />
+                            )}
+                        </>
+                    )}
 
-				{/* Unified SessionDayModuleSelector */}
-				{!isLoading && !isError && data && data.length > 0 && (
-					<Card>
-						<CardContent className="space-y-4 mt-4">
-							<div className="flex items-center justify-between">
-								<h3 className="text-lg font-semibold">Horarios de Sesiones</h3>
+                    {/* Unified SessionDayModuleSelector */}
+                    { !isLoading && !isError && data && data.length > 0 && (
+                        <Card className="mt-4">
+                            <CardContent className="space-y-4 mt-4">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-lg font-semibold">Horarios de Sesiones</h3>
 
-								{!isEditingModules ? (
-									<Button
-										variant	= "outline"
-										size	= "sm"
-										onClick	= { handleStartEditingModules }
-									>
-										<Edit className="h-4 w-4 mr-2" />
-										Editar Horarios
-									</Button>
-								) : (
-									<div className="flex gap-2">
-										<Button
-											variant		= "outline"
-											size		= "sm"
-											onClick		= { handleCancelEditModules }
-											disabled	= { updateModulesMutation.isPending }
-										>
-											Cancelar
-										</Button>
+                                    {!isEditingModules ? (
+                                        <Button
+                                            variant	= "outline"
+                                            size	= "sm"
+                                            onClick	= { handleStartEditingModules }
+                                        >
+                                            <Edit className="h-4 w-4 mr-2" />
+                                            Editar Horarios
+                                        </Button>
+                                    ) : (
+                                        <div className="flex gap-2">
+                                            <Button
+                                                variant		= "outline"
+                                                size		= "sm"
+                                                onClick		= { handleCancelEditModules }
+                                                disabled	= { updateModulesMutation.isPending }
+                                            >
+                                                Cancelar
+                                            </Button>
 
-										<Button
-											size		= "sm"
-											onClick		= { handleSaveModules }
-											disabled	= { updateModulesMutation.isPending }
-										>
-											{ updateModulesMutation.isPending ? 'Guardando...' : 'Guardar Cambios' }
-										</Button>
-									</div>
-								)}
-							</div>
+                                            <Button
+                                                size		= "sm"
+                                                onClick		= { handleSaveModules }
+                                                disabled	= { updateModulesMutation.isPending }
+                                            >
+                                                { updateModulesMutation.isPending ? 'Guardando...' : 'Guardar Cambios' }
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
 
-							{isEditingModules && (
-								<div className="space-y-2">
-									<Label>Selecciona la sesión para marcar posibles horarios semanales</Label>
+                                {isEditingModules && (
+                                    <div className="space-y-2">
+                                        <Label>Selecciona la sesión para marcar posibles horarios semanales</Label>
 
-									<div className="flex flex-wrap gap-2">
-										{availableSessions.map( session => {
-											const isCurrent         = currentSessionForModules === session;
-											const requestSession    = data.find( rs => rs.session === session );
-											const count             = requestSession
-                                                ? ( editingSessionDayModules[requestSession.id]?.length || 0 )
-                                                : 0;
+                                        <div className="flex flex-wrap gap-2">
+                                            {availableSessions.map( session => {
+                                                const isCurrent         = currentSessionForModules === session;
+                                                const requestSession    = data.find( rs => rs.session === session );
+                                                const count             = requestSession
+                                                    ? ( editingSessionDayModules[requestSession.id]?.length || 0 )
+                                                    : 0;
 
-											const sessionColors: Record<Session, string> = {
-												[Session.C]	: 'bg-blue-500',
-												[Session.A]	: 'bg-green-500',
-												[Session.T]	: 'bg-orange-500',
-												[Session.L]	: 'bg-purple-500',
-											};
+                                                const sessionColors: Record<Session, string> = {
+                                                    [Session.C]	: 'bg-blue-500',
+                                                    [Session.A]	: 'bg-green-500',
+                                                    [Session.T]	: 'bg-orange-500',
+                                                    [Session.L]	: 'bg-purple-500',
+                                                };
 
-											const sessionLabels: Record<Session, string> = {
-												[Session.C]	: 'Cátedra',
-												[Session.A]	: 'Ayudantía',
-												[Session.T]	: 'Taller',
-												[Session.L]	: 'Laboratorio',
-											};
+                                                const sessionLabels: Record<Session, string> = {
+                                                    [Session.C]	: 'Cátedra',
+                                                    [Session.A]	: 'Ayudantía',
+                                                    [Session.T]	: 'Taller',
+                                                    [Session.L]	: 'Laboratorio',
+                                                };
 
-											return (
-												<Button
-													key			= { session }
-													variant		= { isCurrent ? "default" : "outline" }
-													size		= "sm"
-													onClick		= {() => setCurrentSessionForModules( session )}
-													className	= {`${ isCurrent ? sessionColors[session] + ' text-white hover:' + sessionColors[session] : '' }`}
-												>
-													{ sessionLabels[session] } ({ count })
-												</Button>
-											);
-										})}
-									</div>
-								</div>
-							)}
+                                                return (
+                                                    <Button
+                                                        key			= { session }
+                                                        variant		= { isCurrent ? "default" : "outline" }
+                                                        size		= "sm"
+                                                        onClick		= {() => setCurrentSessionForModules( session )}
+                                                        className	= {`${ isCurrent ? sessionColors[session] + ' text-white hover:' + sessionColors[session] : '' }`}
+                                                    >
+                                                        { sessionLabels[session] } ({ count })
+                                                    </Button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
 
-							<SessionDayModuleSelector
-								selectedSessions	= { selectedSessionDayModules }
-								onToggleDayModule	= { handleToggleDayModule }
-								currentSession		= { currentSessionForModules }
-								availableSessions	= { availableSessions }
-								enabled				= { isEditingModules }
-								multiple			= { true }
-							/>
-						</CardContent>
-					</Card>
-				)}
+                                <SessionDayModuleSelector
+                                    selectedSessions	= { selectedSessionDayModules }
+                                    onToggleDayModule	= { handleToggleDayModule }
+                                    currentSession		= { currentSessionForModules }
+                                    availableSessions	= { availableSessions }
+                                    enabled				= { isEditingModules }
+                                    multiple			= { true }
+                                />
+                            </CardContent>
+                        </Card>
+                    )}
 
-				<RequestSessionEditForm
-					requestSession	= { selectedSession }
-					onSuccess		= { onSuccess }
-					onCancel		= { () => setIsOpenEdit( false )}
-					isOpen			= { isOpenEdit }
-					onClose			= { () => setIsOpenEdit( false )}
-					requestId		= { request.id }
-				/>
+                    <RequestSessionEditForm
+                        requestSession	= { selectedSession }
+                        onSuccess		= { onSuccess }
+                        onCancel		= { () => setIsOpenEdit( false )}
+                        isOpen			= { isOpenEdit }
+                        onClose			= { () => setIsOpenEdit( false )}
+                        requestId		= { request.id }
+                    />
+                </ScrollArea>
 			</div>
 		</div>
 	);
