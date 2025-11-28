@@ -76,7 +76,6 @@ export default function ProfessorsPage() {
 		queryFn : () => fetchApi<Professor[]>({ url: endpoint }),
 	});
 
-
 	/**
 	 * Filtra la lista de profesores según los criterios de búsqueda
 	 */
@@ -95,7 +94,6 @@ export default function ProfessorsPage() {
 		return matchesSearch && matchesMock;
 	}) || [];
 
-
 	/**
 	 * Hook de paginación
 	 */
@@ -113,7 +111,6 @@ export default function ProfessorsPage() {
 		initialItemsPerPage: 10
 	});
 
-
 	/**
 	 * Resetea la página actual cuando cambian los filtros
 	 */
@@ -130,7 +127,6 @@ export default function ProfessorsPage() {
 		}
 	};
 
-
 	/**
 	 * Abre el formulario para crear un nuevo profesor
 	 */
@@ -138,7 +134,6 @@ export default function ProfessorsPage() {
 		setEditingProfessor( undefined );
 		setIsFormOpen( true );
 	}
-
 
 	/**
 	 * Abre el formulario para editar un profesor existente
@@ -148,7 +143,6 @@ export default function ProfessorsPage() {
 		setIsFormOpen( true );
 	}
 
-
 	/**
 	 * API call para eliminar un profesor
 	 */
@@ -157,7 +151,6 @@ export default function ProfessorsPage() {
             url     : `${endpoint}/${professorId}`,
             method  : Method.DELETE
         });
-
 
 	/**
 	 * Mutación para eliminar un profesor
@@ -174,7 +167,6 @@ export default function ProfessorsPage() {
 		},
 	});
 
-
 	/**
 	 * Abre el diálogo de confirmación para eliminar un profesor
 	 */
@@ -182,7 +174,6 @@ export default function ProfessorsPage() {
 		setDeletingProfessorId( professor.id );
 		setIsDeleteDialogOpen( true );
 	}
-
 
 	/**
 	 * Renderiza el badge para indicar si es profesor de prueba
@@ -289,7 +280,7 @@ export default function ProfessorsPage() {
 
                                                             <TableCell className="w-[250px]">{ professor.name }</TableCell>
 
-                                                            <TableCell className="w-[250px]">{ professor.email || '-' }</TableCell>
+                                                            <TableCell className="w-[250px]">{ professor.email ? `${professor.email}@edu.uai.cl` : '-' }</TableCell>
 
                                                             <TableCell className="w-[120px]">
                                                                 { renderMockBadge( professor.isMock ) }
