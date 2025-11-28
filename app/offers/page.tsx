@@ -53,6 +53,7 @@ const emptyOffer = {
 	periodId			: "",
 	professorId			: "",
 	numberOfSections    : 1,
+    quota               : 1,
 	startDate			: new Date(),
 	endDate				: new Date(),
 	subjectId			: "",
@@ -365,16 +366,18 @@ export default function OffersPage(): JSX.Element {
 			<Dialog open={ isUploadDialogOpen } onOpenChange={ setIsUploadDialogOpen }>
 				<DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
 					<DialogHeader>
-						<DialogTitle>Subir Archivo de Ofertas</DialogTitle>
+						<DialogTitle>Subir Archivo de Ofertas dsdfsdfdf</DialogTitle>
 					</DialogHeader>
 
 					<SubjectUpload
 						service		= "offer"
 						isUploading	= { false }
 						onSuccess	= {( offers ) => {
+							// console.log('🚀 ~ file: page.tsx:375 ~ offers:', offers)
 							setIsUploadDialogOpen( false );
-							const groupIds = getUniqueGroupIds( offers );
-							router.push(`/sections?groupId=${groupIds}`);
+							// const groupIds = getUniqueGroupIds( offers );
+							// router.push(`/sections?groupId=${groupIds}`);
+							router.push(`/sections`);
 						}}
 					/>
 				</DialogContent>
