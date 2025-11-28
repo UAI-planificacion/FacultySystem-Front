@@ -15,14 +15,16 @@ export function QueryProvider({ children }: QueryProviderProps) {
     const [queryClient] = useState(() => new QueryClient({
         defaultOptions: {
             queries: {
-                // Tiempo de cache por defecto (24 horas)
-                staleTime: 1000 * 60 * 1,
-                // Tiempo antes de garbage collection (24 horas)
-                gcTime: 1000 * 60 * 1,
+                // Tiempo de cache por defecto
+                staleTime               : 1000 * 60 * 5,        // 5 minutos
+                // Tiempo antes de garbage collection
+                gcTime                  : 1000 * 60 * 60,       // 1 hora
                 // Reintentos en caso de error
-                retry: 1,
-                // No refetch automático al enfocar la ventana en desarrollo
-                refetchOnWindowFocus: process.env.NODE_ENV === 'production',
+                retry                   : 1,
+                // NO refetch automático - mantener caché estable
+                refetchOnWindowFocus    : false,
+                refetchOnMount          : false,
+                refetchOnReconnect      : false,
             },
             mutations: {
                 // Reintentos para mutaciones
