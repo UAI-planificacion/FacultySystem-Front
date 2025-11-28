@@ -1,7 +1,10 @@
 'use client'
 
-import { JSX } from "react";
-import { UseFormReturn, FieldArrayWithId } from "react-hook-form";
+import {
+    UseFormReturn,
+    FieldArrayWithId
+}               from "react-hook-form";
+import { JSX }  from "react";
 
 import { Trash2 } from "lucide-react";
 
@@ -12,19 +15,18 @@ import {
 	TableHead,
 	TableHeader,
 	TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
+}                       from "@/components/ui/table";
+import { Button }       from "@/components/ui/button";
+import { ScrollArea }   from "@/components/ui/scroll-area";
+import { Badge }        from "@/components/ui/badge";
+
 import { getBuildingName, getSpaceType, tempoFormat } from "@/lib/utils";
 
 
 interface Props {
-	fields				: FieldArrayWithId<any, "offers", "id">[];
-	form				: UseFormReturn<any>;
-	removeOffer			: ( index: number ) => void;
-	globalSubjectId		: string | null;
-	globalPeriodId		: string | null;
+	fields		: FieldArrayWithId<any, "offers", "id">[];
+	form		: UseFormReturn<any>;
+	removeOffer : ( index: number ) => void;
 }
 
 
@@ -32,8 +34,6 @@ export function OfferTable({
 	fields,
 	form,
 	removeOffer,
-	globalSubjectId,
-	globalPeriodId,
 }: Props ): JSX.Element {
 	return (
 		<ScrollArea className="h-[calc(100vh-25rem)]">
