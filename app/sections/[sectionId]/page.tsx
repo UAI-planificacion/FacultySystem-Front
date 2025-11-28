@@ -1,7 +1,7 @@
 'use client'
 
-import { JSX, useMemo }         from "react";
-import { useParams, useRouter } from 'next/navigation';
+import { JSX, useMemo, useRef, useEffect } from "react";
+import { useParams, useRouter }            from 'next/navigation';
 
 import { useQuery } from "@tanstack/react-query";
 import { toast }    from "sonner";
@@ -39,6 +39,9 @@ export default function SectionDetailPage(): JSX.Element {
     const params    = useParams();
     const sectionId = params.sectionId as string;
 
+	// Flag para indicar que la planificación se completó exitosamente en esta sesión
+	const planningCompletedRef = useRef<boolean>( false );
+
     const {
         data: section,
         isLoading,
@@ -48,10 +51,22 @@ export default function SectionDetailPage(): JSX.Element {
 		queryFn : () => fetchApi<OfferSection>({ url: `sections/${sectionId}` }),
 	});
 
-    if (( section?.sessions?.ids?.length ?? 0 ) > 0 ) {
-        toast( 'Sección ya está planificada', errorToast );
-        router.push( `/sections?id=${sectionId}` );
-    }
+	// Validar si la sección ya está planificada (solo si NO se acaba de planificar en esta sesión)
+	useEffect(() => {
+		if ( !section || isLoading || planningCompletedRef.current ) return;
+
+		const isPlanned = ( section?.sessions?.ids?.length ?? 0 ) > 0;
+
+		if ( isPlanned ) {
+			toast( 'Sección ya está planificada', errorToast );
+			router.push( `/sections?id=${sectionId}` );
+		}
+	}, [ section, isLoading, router, sectionId ]);
+
+	// Callback cuando la planificación se completa exitosamente
+	const handlePlanningSuccess = () => {
+		planningCompletedRef.current = true;
+	};
 
 	// Calcular cuántas sesiones de cada tipo necesitamos basado en section
 	const sessionRequirements = useMemo(() => {
@@ -66,10 +81,9 @@ export default function SectionDetailPage(): JSX.Element {
 
 		return requirements;
 	}, [ section ]);
- // ... existing code ...
 
-	// Manejo de error
-	if ( isError ) {
+
+    if ( isError ) {
 		return (
 			<PageLayout title="Error al cargar sección">
 				<div className="space-y-4">
@@ -243,7 +257,10 @@ export default function SectionDetailPage(): JSX.Element {
                             enabled = { !!section }
                         />
 
-                        <PlanningStepperComponent section={ section } />
+                        <PlanningStepperComponent 
+							section		= { section }
+							onSuccess	= { handlePlanningSuccess }
+						/>
                     </div>
                 </div>
             )}
