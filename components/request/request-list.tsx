@@ -8,6 +8,7 @@ import {
 }                               from "@/components/request/request-card-skeleton";
 import { Card, CardContent }    from "@/components/ui/card";
 import { RequestCard }          from "@/components/request/request-card";
+import { ScrollArea }           from "@/components/ui/scroll-area";
 
 import { type Request } from "@/types/request";
 
@@ -49,16 +50,18 @@ export function RequestList({
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {requests.map( request => (
-                <RequestCard
-                    request         = { request }
-                    key             = { request.id }
-                    onViewDetails   = { () => onViewDetails( request )}
-                    onEdit          = { () => onEdit( request )}
-                    onDelete        = { () => onDelete( request )}
-                />
-            ))}
-        </div>
+        <ScrollArea className="h-[calc(100vh-400px)]">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {requests.map( request => (
+                    <RequestCard
+                        request         = { request }
+                        key             = { request.id }
+                        onViewDetails   = { () => onViewDetails( request )}
+                        onEdit          = { () => onEdit( request )}
+                        onDelete        = { () => onDelete( request )}
+                    />
+                ))}
+            </div>
+        </ScrollArea>
     );
 }
