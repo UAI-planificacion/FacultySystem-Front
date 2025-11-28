@@ -148,29 +148,19 @@ export function RequestSessionForm({
 					// Remover
 					return sessionModules.filter(( _, index ) => index !== existingIndex );
 				} else {
-					// Validar que el dayModule no esté siendo usado por otra sesión
-					const isUsedByOtherSession = Object.entries( sessionDayModules ).some(([ otherSession, modules ]) => {
-						if ( otherSession === session ) return false; // Ignorar la sesión actual
-						return modules.some( dm => dm.dayModuleId === dayModuleId );
-					});
+					// Validar que el MISMO TIPO de sesión no se repita en el mismo día/módulo
+					// PERMITIR que diferentes tipos de sesión compartan el mismo día/módulo
+					const isDayModuleUsedBySameSessionType = sessionModules.some( dm => dm.dayModuleId === dayModuleId );
 
-					if ( isUsedByOtherSession ) {
-						// Encontrar qué sesión está usando este dayModule
-						const usedBySession = Object.entries( sessionDayModules ).find(([ otherSession, modules ]) => {
-							if ( otherSession === session ) return false;
-							return modules.some( dm => dm.dayModuleId === dayModuleId );
-						});
-
-						const sessionName = usedBySession ? sessionLabels[usedBySession[0] as Session] : 'otra sesión';
-
+					if ( isDayModuleUsedBySameSessionType ) {
 						// Importar toast aquí si es necesario
 						import( "sonner" ).then(({ toast }) => {
 							import( "@/config/toast/toast.config" ).then(({ errorToast }) => {
 								toast(
-									`Este horario ya está siendo usado por ${sessionName}`,
+									`Este horario ya está siendo usado por otra ${sessionLabels[session]}`,
 									{
 										...errorToast,
-										description: 'Un mismo horario no puede ser seleccionado por múltiples sesiones'
+										description: 'No puedes seleccionar el mismo horario para el mismo tipo de sesión'
 									}
 								);
 							});
@@ -179,7 +169,7 @@ export function RequestSessionForm({
 						return sessionModules; // No hacer cambios
 					}
 
-					// Agregar
+					// Agregar - PERMITIR múltiples tipos de sesión en el mismo día/módulo
 					return [...sessionModules, {
 						session,
 						dayModuleId,
@@ -611,6 +601,7 @@ export function RequestSessionForm({
 					currentSession      = { currentSession }
 					availableSessions   = { availableSessions }
 					enabled             = { true }
+					multiple            = { true }
 				/>
 			</CardContent>
 		</Card>
