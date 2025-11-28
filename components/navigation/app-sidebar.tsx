@@ -3,22 +3,7 @@
 import { useRouter, usePathname }   from "next/navigation";
 import Image                        from "next/image";
 
-import { 
-	Building, 
-	Calendar, 
-	CalendarClock, 
-	Clock, 
-	GraduationCap, 
-	Grid2X2, 
-	Home, 
-	Ruler, 
-	UsersRound,
-	ChevronLeft,
-    Album,
-    BookOpen,
-    CalendarCog,
-    BookCopy
-} from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 
 import {
 	Sidebar,
@@ -32,101 +17,11 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 	useSidebar,
-}                   from "@/components/ui/sidebar";
-import { Button }   from "@/components/ui/button";
+}                           from "@/components/ui/sidebar";
+import { Button }           from "@/components/ui/button";
+import { featuresConfig }   from "@/components/home/features-config";
 
 import { useSession } from "@/hooks/use-session";
-
-
-interface NavigationItem {
-	id      : string;
-	title   : string;
-	url     : string;
-	icon    : any;
-}
-
-
-const navigationItems: NavigationItem[] = [
-    {
-		id      : 'home',
-		title   : 'Inicio',
-		url     : '/',
-		icon    : Home,
-	},
-    {
-		id      : 'periods',
-		title   : 'Períodos',
-		url     : '/periods',
-		icon    : CalendarClock,
-	},
-    {
-		id      : 'days',
-		title   : 'Días',
-		url     : '/days',
-		icon    : Calendar,
-	},
-	{
-		id      : 'modules',
-		title   : 'Módulos',
-		url     : '/modules',
-		icon    : Clock,
-	},
-	{
-		id      : 'sizes',
-		title   : 'Tamaños',
-		url     : '/sizes',
-		icon    : Ruler,
-	},
-    {
-		id      : 'subjects',
-		title   : 'Asignaturas',
-		url     : '/subjects',
-		icon    : BookOpen,
-	},
-	{
-		id      : 'professors',
-		title   : 'Profesores',
-		url     : '/professors',
-		icon    : UsersRound,
-	},
-	{
-		id      : 'grades',
-		title   : 'Unidades Académicas',
-		url     : '/grades',
-		icon    : GraduationCap,
-	},
-    {
-		id      : 'faculties',
-		title   : 'Facultades',
-		url     : '/faculties',
-		icon    : Building,
-	},
-	{
-		id      : 'offers',
-		title   : 'Ofertas',
-		url     : '/offers',
-		icon    : Album,
-	},
-	{
-		id      : 'sections',
-		title   : 'Secciones',
-		url     : '/sections',
-		icon    : Grid2X2,
-	},
-    {
-        id : 'requests',
-        title : 'Solicitudes',
-        url : '/requests',
-        icon : BookCopy,
-    },
-    {
-        id : 'planning-change',
-        title : 'Cambio de Plan',
-        url : '/planning-change',
-        icon : CalendarCog,
-    }
-];
-
 
 /**
  * Application sidebar component with navigation menu
@@ -196,10 +91,10 @@ export function AppSidebar() {
 
 					<SidebarGroupContent>
 						<SidebarMenu>
-							{navigationItems.map( ( item ) => {
-								const Icon = item.icon;
-								const active = isActive( item.url );
-								const disabled = !staff && item.url !== '/';
+							{featuresConfig.map( ( item ) => {
+								const Icon      = item.icon;
+								const active    = isActive( item.url );
+								const disabled  = !staff && item.url !== '/';
 
 								return (
 									<SidebarMenuItem key={ item.id }>
@@ -215,7 +110,7 @@ export function AppSidebar() {
 											`}
 										>
 											<Icon className="h-4 w-4" />
-											<span>{ item.title }</span>
+											<span>{ item.titleShort }</span>
 										</SidebarMenuButton>
 									</SidebarMenuItem>
 								);
