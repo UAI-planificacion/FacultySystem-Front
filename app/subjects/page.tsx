@@ -157,7 +157,6 @@ export default function SubjectsPage() {
 	return (
 		<PageLayout
 			title		= "Asignaturas"
-			showBack	= { false }
 		>
 			<div className="space-y-4">
 				{/* Filtros */}
