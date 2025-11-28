@@ -304,7 +304,7 @@ export function ProfessorForm({
                                     <FormControl>
                                         <div className="flex items-center">
                                             <Input
-                                                placeholder = "Ej: juan.perez, sin @uai.cl"
+                                                placeholder = {`Ej: juan.perez, sin ${extensionEmail}`}
                                                 type        = "text"
                                                 className   = "rounded-none rounded-l-md z-10"
                                                 {...field}
