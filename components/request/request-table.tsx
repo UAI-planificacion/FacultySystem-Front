@@ -65,7 +65,7 @@ export function RequestTable({
     return (
         <Card>
             <CardContent className="mt-5">
-                <ScrollArea className="h-[calc(100vh-507px)]">
+                <ScrollArea className="h-[calc(100vh-450px)]">
                     <Table>
                         <TableHeader>
                             <TableRow>
