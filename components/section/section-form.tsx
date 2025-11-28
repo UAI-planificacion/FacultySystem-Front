@@ -32,10 +32,12 @@ import {
     FilterMode
 }                               from '@/components/shared/space-filter-selector';
 import { Button }               from '@/components/ui/button';
+import { Input }                from '@/components/ui/input';
 import { MultiSelectCombobox }  from '@/components/shared/Combobox';
 import { ProfessorSelect }      from '@/components/shared/item-select/professor-select';
 import { BuildingSelect }       from '@/components/shared/item-select/building-select';
 import { CalendarSelect }       from '@/components/ui/calendar-select';
+import { DeleteConfirmDialog }  from '@/components/dialog/DeleteConfirmDialog';
 
 import { fetchApi, Method }         from '@/services/fetch';
 import { KEY_QUERYS }               from '@/consts/key-queries';
@@ -61,6 +63,8 @@ const formSchema = z.object({
     startDate   : z.string().min( 1, 'La fecha de inicio es requerida' ),
     endDate     : z.string().min( 1, 'La fecha de fin es requerida' ),
     professorId : z.string().optional().nullable(),
+    quota       : z.number().min( 1, 'El cupo debe ser mayor a 0' ),
+    registered  : z.number().optional(),
 }).refine(( data ) => {
     if ( data.startDate && data.endDate ) {
         const start = new Date( data.startDate );
@@ -89,6 +93,8 @@ export function SectionForm({
 
     const [ groupSections, setGroupSections ] = useState<OfferSection[]>([]);
     const [ filterMode, setFilterMode ] = useState<FilterMode>( 'type-size' );
+    const [ isConfirmDialogOpen, setIsConfirmDialogOpen ] = useState( false );
+    const [ pendingData, setPendingData ] = useState<FormData | null>( null );
 
     // Generate available code options (1-100) excluding codes already used in the group
     const availableCodeOptions = useMemo(() => {
@@ -136,6 +142,8 @@ export function SectionForm({
             startDate   : section?.startDate ? tempoFormat( section.startDate ) : '',
             endDate     : section?.endDate ? tempoFormat( section.endDate ) : '',
             professorId : section?.professor?.id || '',
+            quota       : section?.quota || 0,
+            registered  : section?.registered || 0,
         }
     });
 
@@ -150,6 +158,8 @@ export function SectionForm({
                 startDate   : section.startDate ? tempoFormat( section.startDate ) : '',
                 endDate     : section.endDate ? tempoFormat( section.endDate ) : '',
                 professorId : section.professor?.id,
+                quota       : section.quota,
+                registered  : section.registered,
             });
 
             const groupSections = sections.filter( ( s ) => s.groupId === section.groupId );
@@ -159,6 +169,22 @@ export function SectionForm({
 
 
     function onSubmit( data: FormData ): void {
+        // Detectar si quota o registered cambiaron
+        const quotaChanged = section && data.quota !== section.quota;
+        const registeredChanged = section && data.registered !== section.registered;
+
+        if ( quotaChanged || registeredChanged ) {
+            // Guardar datos pendientes y abrir diálogo de confirmación
+            setPendingData( data );
+            setIsConfirmDialogOpen( true );
+        } else {
+            // Si no cambiaron, proceder directamente
+            performUpdate( data );
+        }
+    };
+
+
+    function performUpdate( data: FormData ): void {
         const updatedSection = {
             code        : data.code,
             building    : data.building     || null,
@@ -167,11 +193,48 @@ export function SectionForm({
             startDate   : data.startDate,
             endDate     : data.endDate,
             professorId : data.professorId  || null,
+            quota       : data.quota,
+            registered  : data.registered  || 0,
         };
 
         console.log('🚀 ~ updatedSection:', updatedSection);
 
         updateSectionMutation.mutate( updatedSection );
+    };
+
+
+    function handleConfirmUpdate(): void {
+        if ( pendingData ) {
+            performUpdate( pendingData );
+            setIsConfirmDialogOpen( false );
+            setPendingData( null );
+        }
+    };
+
+
+    function handleCancelUpdate(): void {
+        setIsConfirmDialogOpen( false );
+        setPendingData( null );
+    };
+
+
+    function getConfirmationMessage(): string {
+        if ( !section || !pendingData ) return '';
+
+        const quotaChanged = pendingData.quota !== section.quota;
+        const registeredChanged = pendingData.registered !== section.registered;
+
+        const changes: string[] = [];
+
+        if ( quotaChanged ) {
+            changes.push( `Cupo (${section.quota} → ${pendingData.quota})` );
+        }
+
+        if ( registeredChanged ) {
+            changes.push( `Registrados (${section.registered} → ${pendingData.registered})` );
+        }
+
+        return `actualizará ${changes.join( ' y ' )}`;
     };
 
 
@@ -188,6 +251,7 @@ export function SectionForm({
                     <DialogTitle>Editar Sección</DialogTitle>
 
                     <DialogDescription>
+                        {section?.id}
                         Modifica los datos de la sección. Los cambios se aplicarán inmediatamente.
                     </DialogDescription>
                 </DialogHeader>
@@ -235,6 +299,52 @@ export function SectionForm({
                                             onSelectionChange   = {( values ) => field.onChange( values as string || null )}
                                             multiple            = { false }
                                         />
+
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            {/* Quota Field */}
+                            <FormField
+                                control = { form.control }
+                                name    = "quota"
+                                render  = {({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Cupo</FormLabel>
+
+                                        <FormControl>
+                                            <Input
+                                                type        = "number"
+                                                min         = { 1 }
+                                                placeholder = "Cupo disponible"
+                                                {...field}
+                                                onChange    = {( e ) => field.onChange( parseInt( e.target.value ) || 0 )}
+                                            />
+                                        </FormControl>
+
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            {/* Registered Field */}
+                            <FormField
+                                control = { form.control }
+                                name    = "registered"
+                                render  = {({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Registrados</FormLabel>
+
+                                        <FormControl>
+                                            <Input
+                                                type        = "number"
+                                                min         = { 0 }
+                                                placeholder = "Estudiantes registrados"
+                                                {...field}
+                                                onChange    = {( e ) => field.onChange( parseInt( e.target.value ) || 0 )}
+                                            />
+                                        </FormControl>
 
                                         <FormMessage />
                                     </FormItem>
@@ -362,6 +472,18 @@ export function SectionForm({
                     </form>
                 </Form>
             </DialogContent>
+
+            {/* Diálogo de confirmación para cambios en quota/registered */}
+            <DeleteConfirmDialog
+                isOpen      = { isConfirmDialogOpen }
+                onClose     = { handleCancelUpdate }
+                onConfirm   = { handleConfirmUpdate }
+                type        = "la sección"
+                name        = { section?.subject.name || '' }
+                isDeleted   = { false }
+                confirmText = "Confirmar"
+                secondText  = { getConfirmationMessage() }
+            />
         </Dialog>
     );
 }
