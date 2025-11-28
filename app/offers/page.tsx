@@ -94,6 +94,14 @@ const getUniqueGroupIds = ( offers: any[] ): string => {
 	return uniqueIds.join( ',' );
 };
 
+/**
+ * Extract unique section IDs from offers array
+ */
+const getUniqueSectionIds = ( offers: any[] ): string => {
+	const uniqueIds = Array.from( new Set( offers.map( offer => offer.id )));
+	return uniqueIds.join( ',' );
+};
+
 
 export default function OffersPage(): JSX.Element {
 	const queryClient									= useQueryClient();
@@ -125,8 +133,8 @@ export default function OffersPage(): JSX.Element {
 				offers: [ emptyOffer ],
 			});
 
-			const groupIds = getUniqueGroupIds( createdOffers );
-			router.push(`/sections?groupId=${groupIds}`);
+			const sectionIds = getUniqueSectionIds( createdOffers );
+			router.push(`/sections?ids=${sectionIds}`);
 
 			toast( `${createdOffers.length} ofertas creadas exitosamente`, successToast );
 		},
@@ -206,7 +214,6 @@ export default function OffersPage(): JSX.Element {
 	}, [fields, formValues, form]);
 
 
-
 	return (
 		<PageLayout title="Ofertar Asignaturas">
 			<Form {...form}>
@@ -276,11 +283,9 @@ export default function OffersPage(): JSX.Element {
 						/>
 					) : (
 						<OfferTable
-							fields				= { fields }
-							form				= { form }
-							removeOffer			= { removeOffer }
-							globalSubjectId		= { globalSubjectId }
-							globalPeriodId		= { globalPeriodId }
+							fields		= { fields }
+							form		= { form }
+							removeOffer = { removeOffer }
 						/>
 					)}
 
@@ -373,11 +378,10 @@ export default function OffersPage(): JSX.Element {
 						service		= "offer"
 						isUploading	= { false }
 						onSuccess	= {( offers ) => {
-							// console.log('🚀 ~ file: page.tsx:375 ~ offers:', offers)
 							setIsUploadDialogOpen( false );
-							// const groupIds = getUniqueGroupIds( offers );
-							// router.push(`/sections?groupId=${groupIds}`);
-							router.push(`/sections`);
+
+							const sectionIds = getUniqueSectionIds( offers );
+							router.push(`/sections?ids=${sectionIds}`);
 						}}
 					/>
 				</DialogContent>
