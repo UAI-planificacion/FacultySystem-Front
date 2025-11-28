@@ -3,7 +3,7 @@ import { createAuthClient } from "better-auth/client";
 import { ENV } from "@/config/envs/env";
 
 
-const authClient = createAuthClient({
+export const authClient = createAuthClient({
     baseURL         : ENV.URL,
     credentials     : 'include',
     fetchOptions    : {
