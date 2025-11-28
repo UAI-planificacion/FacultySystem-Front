@@ -1,13 +1,12 @@
 import { NextResponse }     from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const BETTER_AUTH_SESSION_COOKIE_NAME = 'better-auth.session_token-faculty';
+import { featuresConfig } from '@/components/home/features-config';
 
-const protectedRoutes = [
-    '/faculties',
-    '/professors',
-    '/grades'
-];
+
+const BETTER_AUTH_SESSION_COOKIE_NAME   = 'better-auth.session_token-faculty';
+const PROTECTED_ROUTES                  = [ ...featuresConfig.map( feature => feature.url )]
+
 
 export async function middleware( request: NextRequest ): Promise<NextResponse> {
     const { pathname } = request.nextUrl;
@@ -17,7 +16,7 @@ export async function middleware( request: NextRequest ): Promise<NextResponse> 
         return NextResponse.next();
     }
 
-    const isProtectedRoute = protectedRoutes
+    const isProtectedRoute = PROTECTED_ROUTES
         .some( route => pathname === route || pathname.startsWith( `${route}/` ));
 
     if ( !isProtectedRoute ) return NextResponse.next();
