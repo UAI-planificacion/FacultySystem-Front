@@ -111,20 +111,10 @@ export function ThirdPlanning({
 
 	const hasSessionsWithoutDates = sessionsWithoutDates.length > 0;
 
-	// Verificar si todas las sesiones tienen espacio asignado
-	// const allSessionsHaveSpace = useMemo(() => {
-	// 	if ( !response ) return false;
-		
-	// 	return response.every(( item ) => {
-	// 		const selection = selections[ item.session ];
-	// 		return selection?.spaceId != null;
-	// 	});
-	// }, [ response, selections ]);
-
 	// Verificar si se puede reservar
 	const canReserve = !hasUnavailableSessions && !hasSessionsWithoutDates ;
-	// const canReserve = !hasUnavailableSessions && !hasSessionsWithoutDates && allSessionsHaveSpace;
-	// Mutación para reservar sesiones
+
+    // Mutación para reservar sesiones
 	const reserveMutation = useMutation<OfferSection, Error, SessionMassiveCreate[]>({
 		mutationFn: async ( payload: SessionMassiveCreate[] ): Promise<OfferSection> => {
 			return fetchApi<OfferSection>({
@@ -133,10 +123,36 @@ export function ThirdPlanning({
 				body	: payload
 			});
 		},
-		onSuccess: ( section: OfferSection ) => {
+		onSuccess: ( updatedSection: OfferSection ) => {
 			toast( "Sesiones reservadas exitosamente", successToast );
-            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
-            onSuccess( section );
+
+			// 1. Actualizar la caché de la sección específica
+			queryClient.setQueryData(
+				[ KEY_QUERYS.SECTIONS, sectionId ],
+				updatedSection
+			);
+
+			// 2. Actualizar la caché de la lista de secciones
+			queryClient.setQueryData<OfferSection[]>(
+				[ KEY_QUERYS.SECTIONS ],
+				( oldSections ) => {
+					if ( !oldSections ) return oldSections;
+
+					return oldSections.map( section => 
+						section.id === sectionId ? updatedSection : section
+					);
+				}
+			);
+
+			// 3. Invalidar queries relacionadas (sin refetch inmediato)
+			queryClient.invalidateQueries({ 
+				queryKey: [ KEY_QUERYS.SECTIONS ],
+				exact: false,
+				refetchType: 'none'
+			});
+
+			// Llamar al callback de éxito
+			onSuccess( updatedSection );
 		},
 		onError: ( error: Error ) => {
 			toast( `Error al reservar sesiones: intenta con otra combinación de espacios, profesores y/o módulos`, errorToast );
