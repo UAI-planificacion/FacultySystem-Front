@@ -24,7 +24,7 @@ export function FeaturesGrid() {
 						icon        = { feature.icon }
 						title       = { feature.title }
 						description = { feature.description }
-						href        = { feature.href }
+						href        = { feature.url }
 					/>
 				</div>
 			))}
