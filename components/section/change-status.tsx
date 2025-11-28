@@ -17,12 +17,16 @@ import { ENV }                      from "@/config/envs/env";
 
 
 interface Props {
-    section : OfferSection;
+    section             : OfferSection;
+    selectedSections?   : Set<string>;
+    onDeselectSection?  : ( sectionId: string ) => void;
 }
 
 
 export function ChangeStatusSection({
-    section
+    section,
+    selectedSections,
+    onDeselectSection
 }: Props ): JSX.Element {
     const queryClient                       = useQueryClient();
     const [ isOpenAlert, setIsOpenAlert ]   = useState( false );
@@ -42,6 +46,11 @@ export function ChangeStatusSection({
             const isOpen = section.isClosed
             toast( `Sección ${ isOpen ? 'Cerrada' : 'Abierta' } exitosamente`, successToast );
             setIsOpenAlert( false );
+
+            // Si se está cerrando la sección (actualmente abierta) y está seleccionada, deseleccionarla
+            if ( !section.isClosed && selectedSections?.has( section.id ) && onDeselectSection ) {
+                onDeselectSection( section.id );
+            }
         },
         onError: ( mutationError: any ) => toast( `Error al cambiar el estado de la sección: ${mutationError.message}`, errorToast )
     });
