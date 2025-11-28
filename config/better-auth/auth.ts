@@ -4,8 +4,8 @@ import { ENV } from "../envs/env"
 
 export const auth = betterAuth({
     session: {
-        expiresIn: 60 * 60 * 24 * 7,
-        updateAge: 60 * 60 * 24,
+        expiresIn   : 60 * 60 * 24 * 7,     // 7 días
+        updateAge   : 60 * 60 * 24,         // 1 día
     },
     cookies: {
         sessionToken: {
@@ -14,9 +14,8 @@ export const auth = betterAuth({
                 httpOnly    : true,
                 sameSite    : "lax",
                 path        : "/",
-                secure      : false,
-                maxAge      : 60 * 60 * 24 * 7,
-                // domain      : undefined
+                secure      : process.env.NODE_ENV === 'production',
+                maxAge      : 60 * 60 * 24 * 7,     // 7 días
             }
         }
     },
