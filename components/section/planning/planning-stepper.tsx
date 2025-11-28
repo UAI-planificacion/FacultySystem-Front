@@ -38,11 +38,12 @@ interface SessionDayModule {
 
 
 interface Props {
-	section : OfferSection;
+	section		: OfferSection;
+	onSuccess?	: () => void;
 }
 
 
-export function PlanningStepperComponent({ section }: Props ): JSX.Element {
+export function PlanningStepperComponent({ section, onSuccess }: Props ): JSX.Element {
     const router = useRouter();
 
 	// Estado del paso actual
@@ -208,23 +209,6 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 			[session]: professorIds
 		}));
 	}, []);
-
-	// Manejar cambio de espacio global (múltiples)
-	// const handleGlobalSpaceChange = useCallback(( value: string | string[] | undefined ) => {
-	// 	const spaceIds = Array.isArray( value ) ? value : ( value ? [value] : [] );
-	// 	setGlobalSpaceId( spaceIds );
-
-	// 	if ( useSameSpace ) {
-	// 		// Actualizar todos los espacios de sesión
-	// 		setSessionSpaces( prev => {
-	// 			const updated = { ...prev };
-	// 			Object.keys( sessionRequirements ).forEach( session => {
-	// 				updated[session as Session] = spaceIds;
-	// 			});
-	// 			return updated;
-	// 		});
-	// 	}
-	// }, [ useSameSpace, sessionRequirements ]);
 
 	// Manejar cambio de edificio global
 	const handleGlobalBuildingChange = useCallback(( buildingId: string | null ) => {
@@ -431,9 +415,9 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 		return Object.entries( sessionRequirements )
 			.filter(([ _, required ]) => required && required > 0 )
 			.map(([ session ]) => {
-				const sessionKey = session as Session;
-				const spaceIds = sessionSpaces[sessionKey];
-				const professorIds = sessionProfessors[sessionKey];
+				const sessionKey    = session as Session;
+				const spaceIds      = sessionSpaces[sessionKey];
+				const professorIds  = sessionProfessors[sessionKey];
 
                 return {
 					session         : sessionKey,
@@ -441,9 +425,9 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 					spaceIds        : spaceIds.length > 0 ? spaceIds : null,
 					professorIds    : professorIds,
 					isEnglish       : allInEnglish ? true : sessionInEnglish[sessionKey],
-					building        : spaceIds.length === 0 ? ( sessionBuildings[sessionKey] as BuildingEnum | null ) : null,
-					spaceType       : spaceIds.length === 0 ? ( sessionSpaceTypes[sessionKey] as SpaceType | null ) : null,
-					spaceSize       : spaceIds.length === 0 ? ( sessionSpaceSizes[sessionKey] as Size | null ) : null,
+					building        : spaceIds.length === 0 ? ( sessionBuildings[sessionKey] as BuildingEnum | null )   : null,
+					spaceType       : spaceIds.length === 0 ? ( sessionSpaceTypes[sessionKey] as SpaceType | null )     : null,
+					spaceSize       : spaceIds.length === 0 ? ( sessionSpaceSizes[sessionKey] as Size | null )          : null,
 				};
 			});
 	}, [
@@ -534,7 +518,7 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 					/>
 				)}
 
-				{currentStep === 3 && (
+				{ currentStep === 3 && (
 					<>
 						{/* Skeleton mientras se calcula la disponibilidad */}
 						{ calculateAvailabilityMutation.isPending ? (
@@ -589,12 +573,12 @@ export function PlanningStepperComponent({ section }: Props ): JSX.Element {
 								isCalculating		= { calculateAvailabilityMutation.isPending }
 								onBack				= {() => goToStep( 2 )}
 								onSuccess			= {( section: OfferSection ) => {
-									// Resetear el stepper al paso 1 después de reservar exitosamente
+									onSuccess?.();
 									setCurrentStep( 1 );
 									setSelectedDayModules([]);
 									setAvailabilityResponse( null );
 
-									router.push(`/sections?id=${section.id}`);
+									router.push(`/sections?ids=${section.id}`);
 								}}
 							/>
 						)}
