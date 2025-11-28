@@ -78,9 +78,29 @@ export function SectionTable({
 
 	const [ expandedSections, setExpandedSections ]         = useState<Set<string>>( new Set() );
 	const [ isOpenDelete, setIsOpenDelete ]                 = useState( false );
-	const [ isOpenSessionForm, setIsOpenSessionForm ]       = useState<boolean>( false );
-	const [ isOpenSectionForm, setIsOpenSectionForm ]       = useState<boolean>( false );
+	const [ isOpenSessionForm, setIsOpenSessionForm ]       = useState( false );
+	const [ isOpenSectionForm, setIsOpenSectionForm ]       = useState( false );
+	const [ isOpenPlanningChangeForm, setIsOpenPlanningChangeForm ] = useState( false );
 	const [ selectedSection, setSelectedSection ]           = useState<OfferSection | null>( null );
+
+	/**
+	 * Deseleccionar una sección específica
+	 */
+	const handleDeselectSection = useCallback(( sectionId: string ): void => {
+		const newSelectedSections = new Set( selectedSections );
+		newSelectedSections.delete( sectionId );
+		onSelectedSectionsChange( newSelectedSections );
+
+		// También deseleccionar todas las sesiones de esa sección
+		const section = sections.find( s => s.id === sectionId );
+		if ( section ) {
+			const sessionIds = section.sessions.ids || [];
+			const newSelectedSessions = new Set( selectedSessions );
+			sessionIds.forEach( sessionId => newSelectedSessions.delete( sessionId ));
+			onSelectedSessionsChange( newSelectedSessions );
+		}
+	}, [ selectedSections, selectedSessions, sections, onSelectedSectionsChange, onSelectedSessionsChange ]);
+
 	const [ isOpenPlanningChange, setIsOpenPlanningChange ] = useState<boolean>( false );
 
 	/**
@@ -392,7 +412,11 @@ export function SectionTable({
 											/>
 
 											{/* ChangeStatusSection */}
-											<ChangeStatusSection section={ section } />
+											<ChangeStatusSection 
+												section				= { section }
+												selectedSections	= { selectedSections }
+												onDeselectSection	= { handleDeselectSection }
+											/>
 
 											{/* Dropdown Menu con acciones */}
 											<DropdownMenu>
