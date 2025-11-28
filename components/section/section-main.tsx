@@ -168,6 +168,17 @@ export function SectionMain({
         setCurrentPage( 1 );
     }, [ groupIdFilter, codeFilter, roomFilter, dayFilter, periodFilter, statusFilter, subjectFilter, sizeFilter, sessionFilter, moduleFilter, professorFilter, itemsPerPage ]);
 
+    // Aplicar filtro de groupId cuando se carga la página con el parámetro en la URL
+    useEffect(() => {
+        const groupIdFromUrl = searchParams.get( 'groupId' );
+
+        if ( groupIdFromUrl ) {
+            const groupIds = groupIdFromUrl.split( ',' ).filter( Boolean );
+            setGroupIdFilter( groupIds );
+            console.log( '🚀 ~ Filtro groupId aplicado desde URL:', groupIds );
+        }
+    }, [ searchParams ]);
+
 	/**
 	 * API call para eliminar sesiones masivamente
 	 */
