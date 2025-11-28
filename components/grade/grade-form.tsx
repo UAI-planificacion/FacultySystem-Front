@@ -79,7 +79,6 @@ const emptyGrade: Partial<GradeFormValues> = {
     headquartersId  : undefined,
 }
 
-
 /**
  * API call para crear un nuevo grado
  */
@@ -89,7 +88,6 @@ const createGradeApi = async ( newGrade: GradeFormData ): Promise<Grade>  =>
         method  : Method.POST,
         body    : newGrade
     });
-
 
 /**
  * API call para actualizar un grado existente
@@ -107,15 +105,11 @@ export function GradeForm({
     isOpen,
     onClose,
 }: GradeFormProps ): JSX.Element {
-    const queryClient                               = useQueryClient();
-    const defaultValues: Partial<GradeFormValues>   = emptyGrade;
-
-
-    const form = useForm<GradeFormValues>({
-        resolver: zodResolver(formSchema),
-        defaultValues: emptyGrade,
+    const queryClient   = useQueryClient();
+    const form          = useForm<GradeFormValues>({
+        resolver        : zodResolver( formSchema ),
+        defaultValues   : emptyGrade,
     });
-
 
     /**
      * Mutación para crear un grado
@@ -131,7 +125,6 @@ export function GradeForm({
             toast( `Error al crear grado: ${mutationError.message}`, errorToast );
         },
     });
-
 
     /**
      * Mutación para actualizar un grado
@@ -156,7 +149,6 @@ export function GradeForm({
         });
     }, [grade, form]);
 
-
     /**
      * Maneja el envío del formulario de grado
      */
@@ -174,37 +166,34 @@ export function GradeForm({
     }
 
 
-    const isLoading = createGradeMutation.isPending || updateGradeMutation.isPending;
-
-
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
                     <DialogTitle>
-                        {grade ? "Editar Grado" : "Agregar Nuevo Grado"}
+                        {grade ? "Editar Unidad Académica" : "Agregar Nueva Unidad Académica"}
                     </DialogTitle>
 
                     <DialogDescription>
                         {grade
-                            ? "Actualice los datos del grado"
-                            : "Complete los datos del nuevo grado"}
+                            ? "Actualice los datos de la unidad académica"
+                            : "Complete los datos de la nueva unidad académica"}
                     </DialogDescription>
                 </DialogHeader>
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-
-
                         <FormField
                             control = { form.control }
                             name    = "name"
                             render  = {({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Nombre del Grado</FormLabel>
+                                    <FormLabel>Nombre de la Unidad Académica</FormLabel>
+
                                     <FormControl>
                                         <Input placeholder="Ej: Ingeniería Civil" {...field} />
                                     </FormControl>
+
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -250,13 +239,13 @@ export function GradeForm({
                             </Button>
 
                             <Button
-                                type="submit"
-                                disabled={createGradeMutation.isPending || updateGradeMutation.isPending}
+                                type        = "submit"
+                                disabled    = { createGradeMutation.isPending || updateGradeMutation.isPending }
                             >
-                                {createGradeMutation.isPending || updateGradeMutation.isPending ? (
+                                { createGradeMutation.isPending || updateGradeMutation.isPending ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        {grade ? "Actualizando..." : "Creando..."}
+                                        { grade ? "Actualizando..." : "Creando..." }
                                     </>
                                 ) : (
                                     grade ? "Actualizar" : "Agregar"
