@@ -488,13 +488,13 @@ export function SessionForm({
                             <CardHeader className="py-3 px-5 border-b grid grid-cols-4 gap-4 items-center">
                                 <span className="font-medium">Cupos</span>
                                 <span className="font-medium">Registrados</span>
-                                <span className="font-medium">Sillas disponibles</span>
+                                <span className={cn(( session?.chairsAvailable ?? 0 ) < 0 && "text-destructive", 'font-medium')}>Sillas disponibles</span>
                             </CardHeader>
 
                             <CardContent className="py-3 px-5 grid grid-cols-4 gap-4">
                                 <span>{ section?.quota }</span>
                                 <span>{ section?.registered }</span>
-                                <span className={ cn(( session?.chairsAvailable ?? 0 ) < 0 && "text-destructive", 'font-semibold' )}>
+                                <span className={ cn(( session?.chairsAvailable ?? 0 ) < 0 && "text-destructive font-bold", 'font-medium' )}>
                                     { session?.chairsAvailable }
                                 </span>
                             </CardContent>
