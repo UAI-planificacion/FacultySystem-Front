@@ -9,8 +9,10 @@ import {
     CalendarClock,
     ChevronDown,
     ChevronRight,
+    Edit,
     MoreVertical,
-    Plus
+    Plus,
+    Trash2
 }                   from "lucide-react"
 import {
     useMutation,
@@ -262,11 +264,13 @@ export function SectionTable({
 			<Table className="min-w-full">
 				<TableHeader>
 					<TableRow>
-						<TableHead className="w-8"></TableHead>
-						<TableHead className="w-14"></TableHead>
+						<TableHead className="w-0"></TableHead>
+						<TableHead className="w-10"></TableHead>
 						<TableHead>SSEC</TableHead>
 						<TableHead>Período</TableHead>
 						<TableHead>Sesiones</TableHead>
+						<TableHead>Cupos</TableHead>
+						<TableHead>Registrados</TableHead>
 						<TableHead>Fecha Inicio</TableHead>
 						<TableHead>Fecha Fin</TableHead>
 						<TableHead>Estado</TableHead>
@@ -305,6 +309,16 @@ export function SectionTable({
                                         </div>
 									</TableCell>
 
+                                    {/* "Cupos" */}
+                                    <TableCell>
+										<Skeleton className="h-4 w-8" />
+									</TableCell>
+
+                                    {/* "Registrados" */}
+                                    <TableCell>
+										<Skeleton className="h-4 w-8" />
+									</TableCell>
+
                                     {/* Start Date */}
 									<TableCell>
 										<Skeleton className="h-4 w-32" />
@@ -331,13 +345,13 @@ export function SectionTable({
 						</>
 					) : isError ? (
 						<TableRow>
-							<TableCell colSpan={10} className="text-center py-8 text-red-500">
+							<TableCell colSpan={11} className="text-center py-8 text-red-500">
 								Error al cargar las secciones
 							</TableCell>
 						</TableRow>
 					) : sections.length === 0 ? (
 						<TableRow>
-							<TableCell colSpan={10} className="text-center py-8 text-gray-500">
+							<TableCell colSpan={11} className="text-center py-8 text-gray-500">
 								No hay secciones disponibles
 							</TableCell>
 						</TableRow>
@@ -353,7 +367,6 @@ export function SectionTable({
 											onClick     = {() => toggleSectionExpansion( section.id )}
 											className   = "p-1 h-8 w-8"
                                             disabled    = { section.sessionsCount === 0 }
-                                            // disabled = { section.sessions.length === 0 }
 										>
 											{ expandedSections.has( section.id )
 												? <ChevronDown className="h-4 w-4" />
@@ -389,6 +402,14 @@ export function SectionTable({
 										<SessionShort sessionCounts={ getSessionCounts( section )} />
 									</TableCell>
 
+                                    <TableCell>
+                                        { section.quota }
+									</TableCell>
+
+                                    <TableCell>
+                                        { section.registered }
+									</TableCell>
+
 									<TableCell>{ section.startDate ? tempoFormat( section.startDate ) : "-" }</TableCell>
 
 									<TableCell>{ section.endDate ? tempoFormat( section.endDate ) : "-" }</TableCell>
@@ -403,20 +424,29 @@ export function SectionTable({
 
 									<TableCell className="text-right">
 										<div className="flex items-center justify-end gap-1.5">
+                                            <Button
+                                                title       = "Editar Sección"
+                                                variant     = "outline"
+												disabled    = { section.isClosed || section.sessionsCount === 0 }
+                                                size        = "icon"
+                                                onClick     = { () =>  handleEditSection( section )}
+                                            >
+                                                <Edit className="h-4 w-4 text-blue-500" />
+                                            </Button> 
                                             {/* ActionButton (Editar/Eliminar) */}
-											<ActionButton
+											{/* <ActionButton
 												editItem        = {() => handleEditSection( section )}
 												deleteItem      = {() => handleDeleteSection( section )}
 												item            = { section }
 												isDisabledEdit  = { section.isClosed }
-											/>
+											/> */}
 
 											{/* ChangeStatusSection */}
-											<ChangeStatusSection 
+											{/* <ChangeStatusSection 
 												section				= { section }
 												selectedSections	= { selectedSections }
 												onDeselectSection	= { handleDeselectSection }
-											/>
+											/> */}
 
 											{/* Dropdown Menu con acciones */}
 											<DropdownMenu>
@@ -431,6 +461,22 @@ export function SectionTable({
 												</DropdownMenuTrigger>
 
 												<DropdownMenuContent align="end">
+                                                    <ChangeStatusSection 
+                                                        section				= { section }
+                                                        selectedSections	= { selectedSections }
+                                                        onDeselectSection   = { handleDeselectSection }
+                                                    />
+
+                                                    <DropdownMenuItem
+														disabled    = { section.isClosed || section.sessionsCount === 0 }
+														onClick     = { () => handleDeleteSection( section )}
+														className   = "cursor-pointer gap-2"
+													>
+                                                        <Trash2 className="h-4 w-4 text-red-500" />
+
+														Eliminar Sección
+													</DropdownMenuItem>
+
 													{/* Ver Planificaciones */}
 													<DropdownMenuItem
 														disabled    = { section.isClosed || section.sessionsCount === 0 }
