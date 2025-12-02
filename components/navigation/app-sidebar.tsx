@@ -3,7 +3,7 @@
 import { useRouter, usePathname }   from "next/navigation";
 import Image                        from "next/image";
 
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Home } from "lucide-react";
 
 import {
 	Sidebar,
@@ -22,6 +22,18 @@ import { Button }           from "@/components/ui/button";
 import { featuresConfig }   from "@/components/home/features-config";
 
 import { useSession } from "@/hooks/use-session";
+
+const SIDEBAR = [
+    {
+        id          : 'home',
+        icon        : Home,
+        title       : 'Inicio',
+        titleShort  : 'Inicio',
+        description : 'Página de inicio',
+        url         : '/'
+    },
+    ...featuresConfig
+]
 
 /**
  * Application sidebar component with navigation menu
@@ -91,7 +103,7 @@ export function AppSidebar() {
 
 					<SidebarGroupContent>
 						<SidebarMenu>
-							{featuresConfig.map( ( item ) => {
+							{SIDEBAR.map( ( item ) => {
 								const Icon      = item.icon;
 								const active    = isActive( item.url );
 								const disabled  = !staff && item.url !== '/';
