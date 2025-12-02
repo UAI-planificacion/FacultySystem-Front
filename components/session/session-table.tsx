@@ -104,7 +104,7 @@ export function SessionTable({
 	return (
 		<>
 			<TableRow>
-				<TableCell colSpan={9} className="p-0">
+				<TableCell colSpan={12} className="p-0">
 					<div className="border-l-4 ml-16">
 						<Table>
 							<TableHeader>
