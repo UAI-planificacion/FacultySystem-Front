@@ -46,7 +46,7 @@ import {
     SessionAssignment,
     SectionAssignment,
     Status,
-    AssignmentData
+    AssignmentData,
 }                                       from '@/types/session-availability.model';
 import { tempoFormat }                  from '@/lib/utils';
 import { KEY_QUERYS }                   from '@/consts/key-queries';
@@ -101,7 +101,6 @@ export default function AssignmentPage(): JSX.Element {
         refetchOnReconnect      : false,
         refetchOnWindowFocus    : false
     });
-
 
     const rows              = useMemo(() => data.data, [ data ]);
     const assignmentType    = useMemo(() => data.type, [ data ]);
@@ -278,11 +277,24 @@ export default function AssignmentPage(): JSX.Element {
         //     return;
         // }
 
-        const worksheet = XLSX.utils.json_to_sheet( rows );
-        const workbook  = XLSX.utils.book_new();
+        const metaData 	= [
+            [ 'type', data.type ],
+            [ 'generatedAt', new Date().toISOString() ]
+        ];
 
-        XLSX.utils.book_append_sheet( workbook, worksheet, 'Sesiones' );
-        XLSX.writeFile( workbook, 'reporte_errores_sesiones.xlsx' );
+        const name = {
+            space     : 'Espacios',
+            professor : 'Profesores',
+            registered: 'Registros'
+        }[data.type];
+
+        const worksheet = XLSX.utils.json_to_sheet( rows );
+        const workbook 	= XLSX.utils.book_new();
+        const metaSheet = XLSX.utils.aoa_to_sheet( metaData );
+
+        XLSX.utils.book_append_sheet( workbook, worksheet, name );
+        XLSX.utils.book_append_sheet( workbook, metaSheet, '_meta' );
+        XLSX.writeFile( workbook, `reporte_errores_${data.type}.xlsx` );
         toast( 'Reporte exportado correctamente ', successToast );
     };
 
@@ -430,7 +442,7 @@ export default function AssignmentPage(): JSX.Element {
                         <Button
                             className   = "gap-2 text-red-500 hover:text-red-600 items-center"
                             variant     = "outline"
-                            disabled    = { !rows.some(( session ) => session.Estado === 'Unavailable' ) }
+                            // disabled    = { !rows.some(( session ) => session.Estado === 'Unavailable' ) }
                             onClick     = { handleExportErrors }
                         >
                             <CircleX className="w-4 h-4" />
