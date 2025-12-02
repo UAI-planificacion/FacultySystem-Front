@@ -2,12 +2,16 @@
 
 import { JSX, useState } from "react";
 
-import { Ban, CircleCheckBig }          from "lucide-react";
+import {
+    Ban,
+    CircleCheckBig,
+    CircleDot
+}                                       from "lucide-react";
 import { useMutation, useQueryClient }  from "@tanstack/react-query";
 import { toast }                        from "sonner";
 
+import { DropdownMenuItem }     from "@/components/ui/dropdown-menu";
 import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
-import { Button }               from "@/components/ui/button";
 
 import { fetchApi, Method }         from "@/services/fetch";
 import { KEY_QUERYS }               from "@/consts/key-queries";
@@ -63,18 +67,32 @@ export function ChangeStatusSection({
 
     return (
         <>
-            <Button
+            <DropdownMenuItem
                 title       = { section.isClosed ? "Abrir Sección" : "Cerrar Sección" }
-                variant     = "outline"
-                size        = "icon"
-                onClick     = { () => setIsOpenAlert( true )}
-                aria-label  = { section.isClosed ? "Abrir sección" : "Cerrar sección" }
+                onClick     = {( e ) => {
+                    e.preventDefault();
+                    setIsOpenAlert( true );
+                }}
+                onSelect    = {( e ) => e.preventDefault()}
+                className   = "cursor-pointer gap-2"
             >
+                <CircleDot className="h-4 w-4" />
+
                 { !section.isClosed
-                    ? <Ban className="h-4 w-4 text-red-500" />
-                    : <CircleCheckBig className="h-4 w-4 text-green-500" />
+                    ? (
+                        <>
+                            <span>Cerrar Sección</span>
+                            <Ban className="h-4 w-4 text-red-500" />
+                        </>
+                    )
+                    : (
+                        <>
+                            <span>Abrir Sección</span>
+                            <CircleCheckBig className="h-4 w-4 text-green-500" />
+                        </>
+                    )
                 }
-            </Button>
+            </DropdownMenuItem>
 
             <DeleteConfirmDialog
                 isOpen      = { isOpenAlert }
