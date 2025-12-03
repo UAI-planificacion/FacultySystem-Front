@@ -68,6 +68,7 @@ const ToggleGroupItem = React.forwardRef<
           variant: context.variant || variant,
           size: context.size || size,
         }),
+        'first:rounded-l-md last:rounded-r-md rounded-none',
         className
       )}
       {...props}
