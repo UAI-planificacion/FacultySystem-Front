@@ -571,17 +571,17 @@ export function RequestSessionForm({
 					</Tabs>
 				)}
 
-				{/* Tabla única compartida con botones integrados */}
-			<SessionDayModuleSelector
-				selectedSessions        = { Object.values( sessionDayModules ).flat() }
-				onToggleDayModule       = { handleToggleDayModule }
-				currentSession          = { currentSession }
-				availableSessions       = { availableSessions }
-				enabled                 = { true }
-				multiple                = { true }
-				onCurrentSessionChange  = { onCurrentSessionChange }
-			/>
-		</CardContent>
+                {/* Tabla única compartida con botones integrados */}
+                <SessionDayModuleSelector
+                    selectedSessions        = { Object.values( sessionDayModules ).flat() }
+                    onToggleDayModule       = { handleToggleDayModule }
+                    currentSession          = { currentSession }
+                    availableSessions       = { availableSessions }
+                    enabled                 = { true }
+                    multiple                = { true }
+                    onCurrentSessionChange  = { onCurrentSessionChange }
+                />
+            </CardContent>
 		</Card>
 	);
 }
