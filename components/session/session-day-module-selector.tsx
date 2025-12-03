@@ -1,6 +1,6 @@
 import { JSX, useState, useCallback, useMemo, useEffect } from "react";
 
-import { MousePointer2, Eraser }    from "lucide-react";
+import { MousePointer2, Eraser, CircleQuestionMark }    from "lucide-react";
 import { useQuery }                 from "@tanstack/react-query";
 
 import {
@@ -10,15 +10,24 @@ import {
 	TableHead,
 	TableHeader,
 	TableRow
-}                   from "@/components/ui/table"
-import { Button }   from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+}                           from "@/components/ui/table"
+import {
+    ToggleGroup,
+    ToggleGroupItem
+}                           from "@/components/ui/toggle-group";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger
+}                           from "@/components/ui/tooltip";
+import { Button }           from "@/components/ui/button";
+import { Skeleton }         from "@/components/ui/skeleton";
+import { sessionLabels }    from "@/components/section/section.config";
 
-import { DayModule, Module }                    from "@/types/request";
-import { KEY_QUERYS }                           from "@/consts/key-queries";
-import { fetchApi }                             from "@/services/fetch";
-import { Session }                              from "@/types/section.model";
-import { sessionLabels, sessionColors }         from "../section/section.config";
+import { DayModule, Module }    from "@/types/request";
+import { KEY_QUERYS }           from "@/consts/key-queries";
+import { fetchApi }             from "@/services/fetch";
+import { Session }              from "@/types/section.model";
 
 interface SessionDayModule {
 	session         : Session;
@@ -60,6 +69,8 @@ export function SessionDayModuleSelector({
 	const getSessionCount = useCallback(( session: Session ): number => {
 		return selectedSessions.filter( s => s.session === session ).length;
 	}, [ selectedSessions ]);
+
+
 	const {
 		data        : modules = [],
 		isLoading   : isLoadingModules,
@@ -304,65 +315,90 @@ export function SessionDayModuleSelector({
 	}
 
 
-	return (
-		<div className="w-full">
-			{/* Botones de selección de sesión (solo si enabled y showSessionButtons) */}
-			{ enabled && showSessionButtons && onCurrentSessionChange && availableSessions.length > 0 && (
-				<div className="space-y-2 mb-4">
-					<p className="text-sm font-medium text-muted-foreground">
-						Primero seleccione el tipo de sesión y luego los días y módulos
-					</p>
-					<div className="flex flex-wrap gap-2">
-						{ availableSessions.map( session => {
-							const isCurrent = currentSession === session;
-							const count     = getSessionCount( session );
-							const label     = sessionButtonLabel 
-								? sessionButtonLabel( session, count )
-								: `${ sessionLabels[session] } (${ count })`;
+    return (
+		<div className="w-full space-y-2">
+            <div className="flex items-center justify-between gap-4">
+			    {/* Botones de selección de sesión (solo si enabled y showSessionButtons) */}
+                { enabled && showSessionButtons && onCurrentSessionChange && availableSessions.length > 0 && (
+                    <div className="flex items-center gap-2">
+                        <ToggleGroup
+                            type            = "single"
+                            value           = { currentSession || undefined }
+                            variant         = "outline"
+                            onValueChange   = {( value ) => {
+                                if ( value ) onCurrentSessionChange( value as Session );
+                            }}
+                        >
+                            { availableSessions.map( session => {
+                                const count = getSessionCount( session );
+                                const label = sessionButtonLabel 
+                                    ? sessionButtonLabel( session, count )
+                                    : `${ sessionLabels[session] } (${ count })`;
 
-							return (
-								<Button
-									key			= { session }
-									type		= "button"
-									variant		= { isCurrent ? 'default' : 'outline' }
-									size		= "sm"
-									onClick		= {() => onCurrentSessionChange( session )}
-									className	= {`${ isCurrent ? sessionColors[session] + ' text-white hover:' + sessionColors[session] : '' }`}
-								>
-									{ label }
-								</Button>
-							);
-						})}
-					</div>
-				</div>
-			)}
+                                return (
+                                    <ToggleGroupItem
+                                        key         = { session }
+                                        value       = { session }
+                                        aria-label  = { sessionLabels[session] }
+                                        className   = "gap-2"
+                                    >
+                                        { label }
+                                    </ToggleGroupItem>
+                                );
+                            })}
+                        </ToggleGroup>
 
-			{/* Botones de modo (solo cuando multiple = true) */}
-			{ multiple && enabled && (
-				<div className="flex gap-2 mb-3">
-					<Button
-						type		= "button"
-						variant		= { selectionMode === 'select' ? 'default' : 'outline' }
-						size		= "sm"
-						onClick		= {() => setSelectionMode( 'select' )}
-						className	= "gap-2"
-					>
-						<MousePointer2 className="h-4 w-4" />
-						Seleccionar
-					</Button>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    variant     = "outline"
+                                    size        = "sm"
+                                    type        = "button"
+                                >
+                                    <CircleQuestionMark className="h-5 w-5"/>
+                                </Button>
+                            </TooltipTrigger>
 
-					<Button
-						type		= "button"
-						variant		= { selectionMode === 'erase' ? 'default' : 'outline' }
-						size		= "sm"
-						onClick		= {() => setSelectionMode( 'erase' )}
-						className	= "gap-2"
-					>
-						<Eraser className="h-4 w-4" />
-						Borrar
-					</Button>
-				</div>
-			)}
+                            <TooltipContent>
+                                <p className="text-sm font-medium text-muted-foreground">
+                                    Primero seleccione el tipo de sesión y luego los días y módulos
+                                </p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </div>
+                )}
+
+                {/* Botones de modo (solo cuando multiple = true) */}
+                { multiple && enabled && (
+                    <ToggleGroup
+                        type            = "single"
+                        value           = { selectionMode }
+                        variant         = "outline"
+                        className       = "justify-start"
+                        onValueChange   = {( value ) => {
+                            if ( value ) setSelectionMode( value as 'select' | 'erase' );
+                        }}
+                    >
+                        <ToggleGroupItem
+                            value       = "select"
+                            aria-label  = "Modo seleccionar"
+                            className   = "gap-2 data-[state=on]:bg-accent"
+                            title       = "Seleccionar"
+                        >
+                            <MousePointer2 className="h-4 w-4" />
+                        </ToggleGroupItem>
+
+                        <ToggleGroupItem
+                            value       = "erase"
+                            aria-label  = "Modo borrar"
+                            className   = "gap-2 data-[state=on]:bg-accent"
+                            title       = "Borrar"
+                        >
+                            <Eraser className="h-4 w-4" />
+                        </ToggleGroupItem>
+                    </ToggleGroup>
+                )}
+            </div>
 
 			<div 
 				className	= "border rounded-lg bg-background relative"
