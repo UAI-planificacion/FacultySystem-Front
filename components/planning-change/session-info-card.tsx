@@ -103,24 +103,32 @@ export function SessionInfoCard({
 								{/* Asignatura */}
 								<div>
 									<span className="font-semibold text-muted-foreground">Asignatura:</span>
-									<p className="mt-1">{ sessionData.section.subject.id } - { sessionData.section.subject.name }</p>
+
+									<p className="mt-1">
+                                        { sessionData.section.subject.id } - { sessionData.section.subject.name }
+                                    </p>
 								</div>
 
 								{/* Profesor */}
 								<div>
 									<span className="font-semibold text-muted-foreground">Profesor:</span>
-									<p className="mt-1">{sessionData.professor.id} - { sessionData.professor.name }</p>
+
+									<span className="mt-1">
+                                        { sessionData.professor ? `${sessionData.professor?.id} - ${ sessionData.professor?.name }` : null }
+                                    </span>
 								</div>
 
 								{/* Fecha */}
 								<div>
 									<span className="font-semibold text-muted-foreground">Fecha reservada:</span>
-									<p className="mt-1">
+
+									<div className="mt-1">
                                         { tempoFormat( sessionData.date ) }
+
                                         <Badge variant="outline" className="font-mono">
 											M{ sessionData.module.code } { sessionData.module.difference || '' }: { sessionData.module.startHour } - { sessionData.module.endHour } { sessionData.module.difference?? '' }
 										</Badge>
-                                    </p>
+                                    </div>
 								</div>
 
 								{/* Espacio */}
