@@ -253,6 +253,20 @@ export function RequestForm({
 		setSelectedSectionId( propSection?.id || request?.section?.id || null );
 	}, [request, isOpen, propSection, facultyId]);
 
+	// Limpiar sessionDayModules cuando cambia la sección
+	useEffect(() => {
+		if ( !request ) {
+			// Solo limpiar en modo creación
+			setSessionDayModules({
+				[Session.C] : [],
+				[Session.A] : [],
+				[Session.T] : [],
+				[Session.L] : [],
+			});
+			setCurrentSession( null );
+		}
+	}, [ selectedSectionId, request ]);
+
 
 	// Manejar envío del formulario
 	function handleSubmit( data: RequestFormValues ): void {
