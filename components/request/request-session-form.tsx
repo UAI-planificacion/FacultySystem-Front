@@ -571,39 +571,17 @@ export function RequestSessionForm({
 					</Tabs>
 				)}
 
-				<div className="space-y-2">
-					<Label>Selecciona la sesión para marcar posibles horarios semanales</Label>
-
-					<div className="flex flex-wrap gap-2">
-						{availableSessions.map( session => {
-							const isCurrent = currentSession === session;
-							const count = sessionDayModules[session].length;
-
-							return (
-								<Button
-									key         = { session }
-									variant     = { isCurrent ? "default" : "outline" }
-									size        = "sm"
-									onClick     = {() => onCurrentSessionChange( session )}
-									className   = {`${ isCurrent ? sessionColors[session] + ' text-white hover:' + sessionColors[session] : '' }`}
-								>
-									{ sessionLabels[session] } ({ count })
-								</Button>
-							);
-						})}
-					</div>
-				</div>
-
-				{/* Tabla única compartida */}
-				<SessionDayModuleSelector
-					selectedSessions    = { Object.values( sessionDayModules ).flat() }
-					onToggleDayModule   = { handleToggleDayModule }
-					currentSession      = { currentSession }
-					availableSessions   = { availableSessions }
-					enabled             = { true }
-					multiple            = { true }
-				/>
-			</CardContent>
+				{/* Tabla única compartida con botones integrados */}
+			<SessionDayModuleSelector
+				selectedSessions        = { Object.values( sessionDayModules ).flat() }
+				onToggleDayModule       = { handleToggleDayModule }
+				currentSession          = { currentSession }
+				availableSessions       = { availableSessions }
+				enabled                 = { true }
+				multiple                = { true }
+				onCurrentSessionChange  = { onCurrentSessionChange }
+			/>
+		</CardContent>
 		</Card>
 	);
 }

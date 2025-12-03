@@ -44,37 +44,19 @@ export function FirstPlanning({
 }: Props ): JSX.Element {
 	return (
 		<div className="space-y-4">
-            <span className="text-sm font-medium">Primero seleccione el tipo de sesión y luego los días y módulos</span>
-			{/* Selector de tipo de sesión */}
-			<div className="flex flex-wrap gap-2">
-				{Object.entries( sessionRequirements ).map(([ session, required ]) => {
-					const sessionKey    = session as Session;
-					const completed     = completedSessions[sessionKey] || 0;
-					const isComplete    = completed === required;
-					const isCurrent     = currentSession === sessionKey;
-
-					return (
-						<Button
-							key         = { sessionKey }
-							variant     = { isCurrent ? "default" : "outline" }
-							size        = "sm"
-							onClick     = {() => onSessionChange( sessionKey )}
-							className   = {`${ isCurrent ? sessionColors[sessionKey] + ' text-white hover:' + sessionColors[sessionKey] : '' }`}
-						>
-							{ sessionLabels[sessionKey] } ({ completed }/{ required })
-							{ isComplete && " ✓" }
-						</Button>
-					);
-				})}
-			</div>
-
-			{/* Selector de dayModules */}
+			{/* Selector de dayModules con botones integrados */}
 			<SessionDayModuleSelector
-				selectedSessions    = { selectedDayModules }
-				onToggleDayModule   = { onToggleDayModule }
-				currentSession      = { currentSession }
-				availableSessions   = { Object.keys( sessionRequirements ) as Session[] }
-				enabled             = { true }
+				selectedSessions        = { selectedDayModules }
+				onToggleDayModule       = { onToggleDayModule }
+				currentSession          = { currentSession }
+				availableSessions       = { Object.keys( sessionRequirements ) as Session[] }
+				enabled                 = { true }
+				onCurrentSessionChange  = { onSessionChange }
+				sessionButtonLabel      = {( session, count ) => {
+					const required      = sessionRequirements[session] || 0;
+					const isComplete    = count === required;
+					return `${ sessionLabels[session] } (${ count }/${ required })${ isComplete ? ' ✓' : '' }`;
+				}}
 			/>
 
 			{/* Mensaje de validación */}

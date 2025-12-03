@@ -347,56 +347,15 @@ export function RequestSessionView({
                                     )}
                                 </div>
 
-                                {isEditingModules && (
-                                    <div className="space-y-2">
-                                        <Label>Selecciona la sesión para marcar posibles horarios semanales</Label>
-
-                                        <div className="flex flex-wrap gap-2">
-                                            {availableSessions.map( session => {
-                                                const isCurrent         = currentSessionForModules === session;
-                                                const requestSession    = data.find( rs => rs.session === session );
-                                                const count             = requestSession
-                                                    ? ( editingSessionDayModules[requestSession.id]?.length || 0 )
-                                                    : 0;
-
-                                                const sessionColors: Record<Session, string> = {
-                                                    [Session.C]	: 'bg-blue-500',
-                                                    [Session.A]	: 'bg-green-500',
-                                                    [Session.T]	: 'bg-orange-500',
-                                                    [Session.L]	: 'bg-purple-500',
-                                                };
-
-                                                const sessionLabels: Record<Session, string> = {
-                                                    [Session.C]	: 'Cátedra',
-                                                    [Session.A]	: 'Ayudantía',
-                                                    [Session.T]	: 'Taller',
-                                                    [Session.L]	: 'Laboratorio',
-                                                };
-
-                                                return (
-                                                    <Button
-                                                        key			= { session }
-                                                        variant		= { isCurrent ? "default" : "outline" }
-                                                        size		= "sm"
-                                                        onClick		= {() => setCurrentSessionForModules( session )}
-                                                        className	= {`${ isCurrent ? sessionColors[session] + ' text-white hover:' + sessionColors[session] : '' }`}
-                                                    >
-                                                        { sessionLabels[session] } ({ count })
-                                                    </Button>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                )}
-
                                 <SessionDayModuleSelector
-                                    selectedSessions	= { selectedSessionDayModules }
-                                    onToggleDayModule	= { handleToggleDayModule }
-                                    currentSession		= { currentSessionForModules }
-                                    availableSessions	= { availableSessions }
-                                    enabled				= { isEditingModules }
-                                    multiple			= { true }
-                                />
+                                selectedSessions        = { selectedSessionDayModules }
+                                onToggleDayModule       = { handleToggleDayModule }
+                                currentSession          = { currentSessionForModules }
+                                availableSessions       = { availableSessions }
+                                enabled                 = { isEditingModules }
+                                multiple                = { true }
+                                onCurrentSessionChange  = { setCurrentSessionForModules }
+                            />    
                             </CardContent>
                         </Card>
                     )}

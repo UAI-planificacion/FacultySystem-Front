@@ -294,7 +294,8 @@ export function SessionInfoRequest({
 										onToggleDayModule   = {() => {}} // No hace nada, solo visualización
 										currentSession      = { null } // No hay sesión actual en modo visualización
 										availableSessions   = { availableSessions }
-										enabled             = { enabled }
+										enabled             = { false } // Modo visualización, sin botones
+										showSessionButtons  = { false } // Ocultar botones de sesión
 									/>
 								</div>
 							)}
