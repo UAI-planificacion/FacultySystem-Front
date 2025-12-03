@@ -55,7 +55,7 @@ export interface OfferSession {
     correctedRegistrants    : number;
     realRegistrants         : number;
     plannedBuilding         : string;
-    professor               : OfferSectionProffesor;
+    professor               : OfferSectionProffesor | null;
     module                  : OfferModule;
     date                    : Date;
     dayId                   : number;
@@ -72,6 +72,7 @@ interface SectionSeccionPlanningChange {
     startDate   : Date;
     endDate     : Date;
     subject     : OfferSectionSubject
+    building    : BuildingEnum | null;
 }
 
 
