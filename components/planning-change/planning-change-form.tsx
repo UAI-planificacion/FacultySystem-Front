@@ -108,7 +108,7 @@ const createPlanningChangeSchema = (
 		if ( data.sessionId && selectedSession ) {
 			// Verificar si hay al menos un cambio
 			const hasSessionNameChange	= data.sessionName !== null && data.sessionName !== selectedSession.name;
-			const hasProfessorChange	= data.professorId !== null && data.professorId !== selectedSession.professor.id;
+			const hasProfessorChange	= data.professorId !== null && data.professorId !== selectedSession.professor?.id;
 			const hasBuildingChange		= data.building !== null;
 			const hasIsEnglishChange	= data.isEnglish !== null && data.isEnglish !== selectedSession.isEnglish;
 			const hasSpaceIdChange		= data.spaceId !== null && data.spaceId !== selectedSession.spaceId;
@@ -385,6 +385,51 @@ export function PlanningChangeForm({
 		}
 	}, [ session, isOpen, planningChange, fetchedPlanningChange, selectedSessionId, form ]);
 
+	// Auto-fill form when session is selected
+	useEffect(() => {
+		// Si ya estamos en modo edición, no auto-rellenar
+		if ( isEditMode ) return;
+
+		// Si no hay sesión seleccionada, limpiar campos
+		if ( !selectedSessionId ) {
+			form.setValue( 'sessionName', null );
+			form.setValue( 'professorId', null );
+			form.setValue( 'building', null );
+			form.setValue( 'spaceId', null );
+			form.setValue( 'spaceType', null );
+			form.setValue( 'spaceSizeId', null );
+			form.setValue( 'isEnglish', false );
+			setRequestDetailModule([]);
+			setFilterMode( 'space' );
+			return;
+		}
+
+		// Esperar a que se cargue la sesión
+		if ( !selectedSession ) return;
+
+		// Auto-rellenar campos del formulario
+		form.setValue( 'sessionName', selectedSession.name );
+		form.setValue( 'professorId', selectedSession.professor?.id || null );
+		form.setValue( 'building', selectedSession.section.building );
+		form.setValue( 'spaceId', selectedSession.spaceId );
+		form.setValue( 'isEnglish', selectedSession.isEnglish );
+
+		// Limpiar campos de tipo y tamaño porque usamos spaceId específico
+		form.setValue( 'spaceType', null );
+		form.setValue( 'spaceSizeId', null );
+
+		// Setear filterMode a 'space' porque tenemos spaceId
+		setFilterMode( 'space' );
+
+		// Auto-marcar el módulo y día en la tabla usando los datos de la sesión
+		const newModule = {
+			day			: selectedSession.dayId.toString(),
+			moduleId	: selectedSession.module.id.toString(),
+		};
+
+		setRequestDetailModule([ newModule ]);
+	}, [ selectedSessionId, selectedSession, isEditMode, form ]);
+
 	// Create mutation
 	const createPlanningChangeMutation = useMutation({
 		mutationFn: async ( values: PlanningChangeFormValues ) => {
@@ -632,12 +677,10 @@ export function PlanningChangeForm({
 
 						{/* Mostrar información de la sesión seleccionada */}
 						{ selectedSessionId && (
-							<>
-								<SessionInfoCard 
-									sessionData	= { selectedSession }
-									isLoading	= { isLoadingSessions || isLoadingFetchedSession }
-								/>
-							</>
+                            <SessionInfoCard 
+                                sessionData	= { selectedSession }
+                                isLoading	= { isLoadingSessions || isLoadingFetchedSession }
+                            />
 						)}
 
 						<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -722,6 +765,7 @@ export function PlanningChangeForm({
 						{ form.watch( 'building' ) && (
 							<div className="space-y-2">
 								<div className={ !!session?.planningChangeId && isLoadingPlanningChange ? 'opacity-50 pointer-events-none' : '' }>
+
 								<SpaceFilterSelector
 									buildingId			= { form.watch( 'building' ) }
 									filterMode			= { filterMode }
