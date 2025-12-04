@@ -10,10 +10,14 @@ import { useRouter }    from 'next/navigation';
 
 import {
     BrushCleaning,
+    FileSpreadsheet,
     Filter,
+    Grid2X2,
     Pencil,
     RefreshCw,
-    Trash
+    SlidersHorizontal,
+    Trash,
+    X
 }                   from 'lucide-react';
 import {
 	useMutation,
@@ -43,12 +47,13 @@ import { SectionTable }             from '@/components/section/section-table';
 import { SessionMassiveUpdateForm } from '@/components/session/session-massive-update-form';
 import { FileForm }                 from '@/components/section/file-form';
 import { DeleteConfirmDialog }      from '@/components/dialog/DeleteConfirmDialog';
+import { SectionMenu }              from '@/components/section/section-menu';
+import { Panel }                    from '@/components/shared/panel';
 
 import { KEY_QUERYS }               from '@/consts/key-queries';
 import { fetchApi, Method }         from '@/services/fetch';
 import { OfferSection }             from '@/types/offer-section.model';
 import { errorToast, successToast } from '@/config/toast/toast.config';
-import { ExcelIcon }                from '@/icons/ExcelIcon';
 
 
 interface Props {
@@ -89,6 +94,7 @@ export function SectionMain({
     const [isDeleteDialogOpen, setIsDeleteDialogOpen]   = useState<boolean>( false );
     const [isFileFormOpen, setIsFileFormOpen]           = useState<boolean>( false );
     const [cleanDialogType, setCleanDialogType]         = useState<number>( 0 ); // 0=cerrado, 1=spaces, 2=professors
+    const [isFiltersPanelOpen, setIsFiltersPanelOpen]   = useState<boolean>( false );
 
     // Function to update URL with filter parameters
     const updateUrlParams = ( filterName: string, values: string[] ) => {
@@ -300,243 +306,216 @@ export function SectionMain({
     return (
         <>
             <div className="w-full mt-4">
-                <div className="flex gap-4">
-                    {/* Table */}
-                    <Card className="flex-1">
-                        <CardContent className="mt-5 overflow-x-auto overflow-y-auto h-[calc(100vh-300px)] w-full">
-                            <SectionTable
-                                sections                    = { filteredAndPaginatedSections.sections }
-                                isLoading                   = { isLoadingSections }
-                                isError                     = { isErrorSections }
-                                selectedSessions            = { selectedSessions }
-                                onSelectedSessionsChange    = { setSelectedSessions }
-                                selectedSections            = { selectedSections }
-                                onSelectedSectionsChange    = { setSelectedSections }
+                {/* Table - Siempre ocupa todo el ancho */}
+                <Card className="w-full">
+                    <CardContent className="mt-5 overflow-x-auto overflow-y-auto h-[calc(100vh-300px)] w-full">
+                        <SectionTable
+                            sections                    = { filteredAndPaginatedSections.sections }
+                            isLoading                   = { isLoadingSections }
+                            isError                     = { isErrorSections }
+                            selectedSessions            = { selectedSessions }
+                            onSelectedSessionsChange    = { setSelectedSessions }
+                            selectedSections            = { selectedSections }
+                            onSelectedSectionsChange    = { setSelectedSections }
+                        />
+                    </CardContent>
+
+                    {/* Pagination */}
+                    { filteredAndPaginatedSections.totalItems > 0 && (
+                        <div className="p-4 border-t">
+                            <DataPagination
+                                currentPage             = { currentPage }
+                                totalPages              = { filteredAndPaginatedSections.totalPages }
+                                totalItems              = { filteredAndPaginatedSections.totalItems }
+                                itemsPerPage            = { itemsPerPage }
+                                onPageChange            = { setCurrentPage }
+                                onItemsPerPageChange    = { setItemsPerPage }
+                                children                = {(
+                                    <div className="hidden lg:flex">
+                                        <SectionMenu
+                                            selectedSessions            = { selectedSessions }
+                                            selectedSections            = { selectedSections }
+                                            handleOpenCleanSpaces       = { handleOpenCleanSpaces }
+                                            handleOpenDeleteSessions    = { handleOpenDeleteSessions }
+                                            setIsEditSection            = { setIsEditSection }
+                                            setIsFileFormOpen           = { setIsFileFormOpen }
+                                            handleOpenCleanProfessors   = { handleOpenCleanProfessors }
+                                            sectionsData                = { sectionsData }
+                                        />
+                                    </div>
+                                )}
                             />
-                        </CardContent>
-
-                        {/* Pagination */}
-                        {filteredAndPaginatedSections.totalItems > 0 && (
-                            <div className="p-4 border-t">
-                                <DataPagination
-                                    currentPage             = { currentPage }
-                                    totalPages              = { filteredAndPaginatedSections.totalPages }
-                                    totalItems              = { filteredAndPaginatedSections.totalItems }
-                                    itemsPerPage            = { itemsPerPage }
-                                    onPageChange            = { setCurrentPage }
-                                    onItemsPerPageChange    = { setItemsPerPage }
-                                />
-                            </div>
-                        )}
-                    </Card>
-
-                    {/* Filters Sidebar */}
-                    <Card className="w-80 flex-shrink-0">
-                        <CardContent className="p-4 h-[calc(100vh-420px)] overflow-y-auto space-y-4">
-                            <div className="flex items-center gap-2">
-                                <Filter className="w-5 h-5" />
-
-                                <h3 className="text-lg font-semibold">Filtros</h3>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="code-filter">Filtrar por Números</Label>
-
-                                <MultiSelectCombobox
-                                    options             = { uniqueCodes.map( code => ({ label: code, value: code }))}
-                                    defaultValues       = { codeFilter }
-                                    placeholder         = "Seleccionar Números"
-                                    onSelectionChange   = {( value ) => {
-                                        const newValues = value as string[];
-                                        setCodeFilter( newValues );
-                                        updateUrlParams( 'code', newValues );
-                                    }}
-                                />
-                            </div>
-
-                            <SpaceSelect
-                                label               = "Filtrar por Espacios"
-                                defaultValues       = { roomFilter }
-                                onSelectionChange   = {( value ) => {
-                                    const newValues = value as string[];
-                                    setRoomFilter(newValues);
-                                    updateUrlParams('room', newValues);
-                                }}
-                            />
-
-                            <DaySelect
-                                label               = "Filtrar por Días"
-                                defaultValues       = { dayFilter }
-                                onSelectionChange   = {( value ) => {
-                                    const newValues = value as string[];
-                                    setDayFilter( newValues );
-                                    updateUrlParams( 'day', newValues );
-                                }}
-                            />
-
-                            <PeriodSelect
-                                label               = "Filtrar por Períodos"
-                                defaultValues       = { periodFilter }
-                                onSelectionChange   = {( value ) => {
-                                    const newValues = value as string[];
-                                    setPeriodFilter( newValues );
-                                    updateUrlParams( 'period', newValues );
-                                }}
-                            />
-
-                            <div className="space-y-2">
-                                <Label htmlFor="status-filter">Filtrar por Estados</Label>
-
-                                <MultiSelectCombobox
-                                    defaultValues       = { statusFilter }
-                                    placeholder         = "Seleccionar estados"
-                                    options             = { stateOptions }
-                                    onSelectionChange   = {( value ) => {
-                                        const newValues = value as string[];
-                                        setStatusFilter( newValues );
-                                        updateUrlParams( 'status', newValues );
-                                    }}
-                                />
-                            </div>
-
-                            <SubjectSelect
-                                label               = "Filtrar por Asignaturas"
-                                defaultValues       = { subjectFilter }
-                                onSelectionChange   = {( value ) => {
-                                    const newValues = value as string[];
-                                    setSubjectFilter( newValues );
-                                    updateUrlParams( 'subject', newValues );
-                                }}
-                            />
-
-                            <SizeSelect
-                                label               = "Filtrar por Tamaños"
-                                defaultValues       = { sizeFilter }
-                                onSelectionChange   = {( value ) => {
-                                    const newValues = value as string[];
-                                    setSizeFilter( newValues );
-                                    updateUrlParams( 'size', newValues );
-                                }}
-                            />
-
-                            <SessionTypeSelect
-                                label               = "Filtrar por Sesiones"
-                                defaultValues       = { sessionFilter }
-                                onSelectionChange   = {( value ) => {
-                                    const newValues = value as string[];
-                                    setSessionFilter( newValues );
-                                    updateUrlParams( 'session', newValues );
-                                }}
-                            />
-
-                            <ModuleSelect
-                                label               = "Filtrar por Módulos"
-                                defaultValues       = { moduleFilter }
-                                onSelectionChange   = {( value ) => {
-                                    const newValues = value as string[];
-                                    setModuleFilter( newValues );
-                                    updateUrlParams( 'module', newValues );
-                                }}
-                            />
-
-                            <ProfessorSelect
-                                label               = "Filtrar por Profesores"
-                                defaultValues       = { professorFilter }
-                                onSelectionChange   = {( value ) => {
-                                    const newValues = value as string[];
-                                    setProfessorFilter( newValues );
-                                    updateUrlParams( 'professor', newValues );
-                                }}
-                            />
-
-                            <Button
-                                variant     = "outline"
-                                className   = "w-full gap-2"
-                                onClick     = {() => {
-                                    setIdsFilter( [] );
-                                    setGroupIdFilter( [] );
-                                    setCodeFilter( [] );
-                                    setRoomFilter( [] );
-                                    setDayFilter( [] );
-                                    setPeriodFilter( [] );
-                                    setStatusFilter( [] );
-                                    setSubjectFilter( [] );
-                                    setSizeFilter( [] );
-                                    setSessionFilter( [] );
-                                    setModuleFilter( [] );
-                                    setProfessorFilter( [] );
-                                    router.push( '/sections' );
-                                }}
-                            >
-                                <BrushCleaning className="w-5 h-5" />
-
-                                Limpiar filtros { activeFiltersCount > 0 && `(${activeFiltersCount})` }
-                            </Button>
-                        </CardContent>
-
-                        <CardFooter className="grid space-y-2">
-                            <div className="flex gap-2">
-                                <Button
-                                    onClick     = { handleOpenCleanProfessors }
-                                    className   = "gap-2 w-full"
-                                    disabled    = { selectedSections.size === 0 }
-                                    variant     = "outline"
-                                    title       = "Limpiar Profesores"
-                                >
-                                    <RefreshCw className="w-5 h-5" />
-
-                                    Profesores
-                                </Button>
-
-                                <Button
-                                    onClick     = { handleOpenCleanSpaces }
-                                    className   = "gap-2 w-full"
-                                    disabled    = { selectedSections.size === 0 }
-                                    variant     = "outline"
-                                    title       = "Limpiar Espacios"
-                                >
-                                    <RefreshCw className="w-5 h-5" />
-
-                                    Espacios
-                                </Button>
-                            </div>
-
-                            <Button
-                                onClick     = {() => setIsFileFormOpen( true )}
-                                className   = "gap-2 w-full bg-green-800 hover:bg-green-900"
-                                disabled    = { sectionsData.length === 0 }
-                                variant     = "secondary"
-                                title       = "Gestionar archivos de sesiones"
-                            >
-                                <ExcelIcon />
-
-                                Gestionar archivos
-                            </Button>
-
-                            <Button
-                                onClick     = { handleOpenDeleteSessions }
-                                className   = "gap-2 w-full"
-                                disabled    = { selectedSessions.size === 0 }
-                                variant     = "destructive"
-                            >
-                                <Trash className="w-4 h-4" />
-
-                                Eliminar sesiones ({ selectedSessions.size })
-                            </Button>
-
-                            <Button
-                                onClick     = {() => setIsEditSection( true )}
-                                className   = "gap-2 w-full"
-                                disabled    = { selectedSessions.size === 0 }
-                            >
-                                <Pencil className="w-4 h-4" />
-
-                                Modificar sesiones ({ selectedSessions.size })
-                            </Button>
-                        </CardFooter>
-                    </Card>
-                </div>
+                        </div>
+                    )}
+                </Card>
             </div>
+
+            {/* Panel de menú de acciones (solo mobile) */}
+            <Panel
+                icon        = { <Grid2X2 className="w-5 h-5" /> }
+                iconPanel   = { <Grid2X2 className="w-5 h-5" /> }
+                title       = "Sección"
+                classname   = "lg:hidden"
+                offsetTop   = { -100 }
+                children    = {
+                    <SectionMenu
+                        selectedSessions            = { selectedSessions }
+                        selectedSections            = { selectedSections }
+                        handleOpenCleanSpaces       = { handleOpenCleanSpaces }
+                        handleOpenDeleteSessions    = { handleOpenDeleteSessions }
+                        setIsEditSection            = { setIsEditSection }
+                        setIsFileFormOpen           = { setIsFileFormOpen }
+                        handleOpenCleanProfessors   = { handleOpenCleanProfessors }
+                        sectionsData                = { sectionsData }
+                        gridCols                    = "grid-cols-1"
+                    />
+                }
+            />
+
+            {/* Panel de filtros */}
+            <Panel
+                count       = { activeFiltersCount }
+                // onToggle    = { setIsFiltersPanelOpen }
+                iconPanel   = { <Filter className="w-5 h-5" /> }
+                offsetTop   = { -450 }
+                title       = "Filtros"
+                children    = { <>
+                    <div className="space-y-2">
+                        <Label htmlFor="code-filter">Filtrar por Números</Label>
+
+                        <MultiSelectCombobox
+                            options             = { uniqueCodes.map( code => ({ label: code, value: code }))}
+                            defaultValues       = { codeFilter }
+                            placeholder         = "Seleccionar Números"
+                            onSelectionChange   = {( value ) => {
+                                const newValues = value as string[];
+                                setCodeFilter( newValues );
+                                updateUrlParams( 'code', newValues );
+                            }}
+                        />
+                    </div>
+
+                    <SpaceSelect
+                        label               = "Filtrar por Espacios"
+                        defaultValues       = { roomFilter }
+                        onSelectionChange   = {( value ) => {
+                            const newValues = value as string[];
+                            setRoomFilter( newValues );
+                            updateUrlParams( 'room', newValues );
+                        }}
+                    />
+
+                    <DaySelect
+                        label               = "Filtrar por Días"
+                        defaultValues       = { dayFilter }
+                        onSelectionChange   = {( value ) => {
+                            const newValues = value as string[];
+                            setDayFilter( newValues );
+                            updateUrlParams( 'day', newValues );
+                        }}
+                    />
+
+                    <PeriodSelect
+                        label               = "Filtrar por Períodos"
+                        defaultValues       = { periodFilter }
+                        onSelectionChange   = {( value ) => {
+                            const newValues = value as string[];
+                            setPeriodFilter( newValues );
+                            updateUrlParams( 'period', newValues );
+                        }}
+                    />
+
+                    <div className="space-y-2">
+                        <Label htmlFor="status-filter">Filtrar por Estados</Label>
+
+                        <MultiSelectCombobox
+                            defaultValues       = { statusFilter }
+                            placeholder         = "Seleccionar estados"
+                            options             = { stateOptions }
+                            onSelectionChange   = {( value ) => {
+                                const newValues = value as string[];
+                                setStatusFilter( newValues );
+                                updateUrlParams( 'status', newValues );
+                            }}
+                        />
+                    </div>
+
+                    <SubjectSelect
+                        label               = "Filtrar por Asignaturas"
+                        defaultValues       = { subjectFilter }
+                        onSelectionChange   = {( value ) => {
+                            const newValues = value as string[];
+                            setSubjectFilter( newValues );
+                            updateUrlParams( 'subject', newValues );
+                        }}
+                    />
+
+                    <SizeSelect
+                        label               = "Filtrar por Tamaños"
+                        defaultValues       = { sizeFilter }
+                        onSelectionChange   = {( value ) => {
+                            const newValues = value as string[];
+                            setSizeFilter( newValues );
+                            updateUrlParams( 'size', newValues );
+                        }}
+                    />
+
+                    <SessionTypeSelect
+                        label               = "Filtrar por Sesiones"
+                        defaultValues       = { sessionFilter }
+                        onSelectionChange   = {( value ) => {
+                            const newValues = value as string[];
+                            setSessionFilter( newValues );
+                            updateUrlParams( 'session', newValues );
+                        }}
+                    />
+
+                    <ModuleSelect
+                        label               = "Filtrar por Módulos"
+                        defaultValues       = { moduleFilter }
+                        onSelectionChange   = {( value ) => {
+                            const newValues = value as string[];
+                            setModuleFilter( newValues );
+                            updateUrlParams( 'module', newValues );
+                        }}
+                    />
+
+                    <ProfessorSelect
+                        label               = "Filtrar por Profesores"
+                        defaultValues       = { professorFilter }
+                        onSelectionChange   = {( value ) => {
+                            const newValues = value as string[];
+                            setProfessorFilter( newValues );
+                            updateUrlParams( 'professor', newValues );
+                        }}
+                    />
+
+                    <Button
+                        variant     = "outline"
+                        className   = "w-full gap-2"
+                        onClick     = {() => {
+                            setIdsFilter( [] );
+                            setGroupIdFilter( [] );
+                            setCodeFilter( [] );
+                            setRoomFilter( [] );
+                            setDayFilter( [] );
+                            setPeriodFilter( [] );
+                            setStatusFilter( [] );
+                            setSubjectFilter( [] );
+                            setSizeFilter( [] );
+                            setSessionFilter( [] );
+                            setModuleFilter( [] );
+                            setProfessorFilter( [] );
+                            router.push( '/sections' );
+                        }}
+                    >
+                        <BrushCleaning className="w-5 h-5" />
+
+                        Limpiar filtros { activeFiltersCount > 0 && `(${activeFiltersCount})` }
+                    </Button>
+                </>
+                }
+            />
 
             <FileForm
                 isOpen  = { isFileFormOpen }
