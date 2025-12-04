@@ -424,7 +424,7 @@ export function SectionTable({
 
 									<TableCell className="text-right">
 										<div className="flex items-center justify-end gap-1.5">
-                                            <Button
+                                            {/* <Button
                                                 title       = "Editar Sección"
                                                 variant     = "outline"
 												disabled    = { section.isClosed || section.sessionsCount === 0 }
@@ -432,24 +432,46 @@ export function SectionTable({
                                                 onClick     = { () =>  handleEditSection( section )}
                                             >
                                                 <Edit className="h-4 w-4 text-blue-500" />
-                                            </Button> 
+                                            </Button>  */}
                                             {/* ActionButton (Editar/Eliminar) */}
-											{/* <ActionButton
+											<ActionButton
 												editItem        = {() => handleEditSection( section )}
 												deleteItem      = {() => handleDeleteSection( section )}
 												item            = { section }
 												isDisabledEdit  = { section.isClosed }
-											/> */}
+											/>
 
 											{/* ChangeStatusSection */}
-											{/* <ChangeStatusSection 
+											<ChangeStatusSection 
 												section				= { section }
 												selectedSections	= { selectedSections }
 												onDeselectSection	= { handleDeselectSection }
-											/> */}
+											/>
+
+                                            <Button
+                                                disabled    = { section.isClosed || section.sessionsCount === 0 }
+                                                onClick     = { () => router.push( `planning-change?sectionId=${ section.id }` )}
+                                                variant="outline"
+                                                size="icon"
+                                            >
+                                                <CalendarClock className="w-4 h-4 mr-2 text-amber-500" />
+                                            </Button>
+
+
+                                            <Button
+                                                disabled    = { section.isClosed || section.sessionsCount === 0 }
+                                                variant="outline"
+                                                size="icon"
+                                                onClick     = { () => {
+                                                    setIsOpenPlanningChange( true );
+                                                    setSelectedSection( section );
+                                                }}
+											>
+												<CalendarClock className="w-4 h-4 mr-2 text-blue-500" />
+											</Button>
 
 											{/* Dropdown Menu con acciones */}
-											<DropdownMenu>
+											{/* <DropdownMenu>
 												<DropdownMenuTrigger asChild>
 													<Button
 														variant = "outline"
@@ -477,7 +499,6 @@ export function SectionTable({
 														Eliminar Sección
 													</DropdownMenuItem>
 
-													{/* Ver Planificaciones */}
 													<DropdownMenuItem
 														disabled    = { section.isClosed || section.sessionsCount === 0 }
 														onClick     = { () => router.push( `planning-change?sectionId=${ section.id }` )}
@@ -487,7 +508,6 @@ export function SectionTable({
 														Ver Planificaciones
 													</DropdownMenuItem>
 
-													{/* Crear Cambio de Planificación */}
 													<DropdownMenuItem
 														disabled    = { section.isClosed || section.sessionsCount === 0 }
 														onClick     = { () => {
@@ -500,7 +520,6 @@ export function SectionTable({
 														Crear Cambio de Planificación
 													</DropdownMenuItem>
 
-													{/* Planificar sesiones o Asignar Sesión */}
 													{ section.sessionsCount === 0 ? (
 														<DropdownMenuItem
 															disabled    = { section.isClosed }
@@ -524,7 +543,7 @@ export function SectionTable({
 														</DropdownMenuItem>
 													)}
 												</DropdownMenuContent>
-											</DropdownMenu>
+											</DropdownMenu> */}
 										</div>
 									</TableCell>
 								</TableRow>
