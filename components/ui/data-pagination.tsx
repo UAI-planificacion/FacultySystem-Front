@@ -25,6 +25,7 @@ interface DataPaginationProps {
     itemsPerPage            : number;
     onPageChange            : ( page: number ) => void;
     onItemsPerPageChange    : ( itemsPerPage: number ) => void;
+    children?                : React.ReactNode;
 }
 
 export function DataPagination({
@@ -34,6 +35,7 @@ export function DataPagination({
     itemsPerPage,
     onPageChange,
     onItemsPerPageChange,
+    children
 }: DataPaginationProps ) {
     const itemsPerPageOptions = [10, 15, 30, 50];
 
@@ -63,6 +65,8 @@ export function DataPagination({
                     </SelectContent>
                 </Select>
             </div>
+
+            { children }
 
             {/* Paginación */}
             {totalPages > 1 && (
