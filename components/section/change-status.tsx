@@ -12,6 +12,7 @@ import { toast }                        from "sonner";
 
 import { DropdownMenuItem }     from "@/components/ui/dropdown-menu";
 import { DeleteConfirmDialog }  from "@/components/dialog/DeleteConfirmDialog";
+import { Button }               from "@/components/ui/button";
 
 import { fetchApi, Method }         from "@/services/fetch";
 import { KEY_QUERYS }               from "@/consts/key-queries";
@@ -67,7 +68,36 @@ export function ChangeStatusSection({
 
     return (
         <>
-            <DropdownMenuItem
+            <Button
+                title       = { section.isClosed ? "Abrir Sección" : "Cerrar Sección" }
+                variant     = "outline"
+                size        = "icon"
+                onSelect    = {( e ) => e.preventDefault()}
+                onClick     = {( e ) => {
+                    e.preventDefault();
+                    setIsOpenAlert( true );
+                }}
+            >
+                {/* <CircleDot className="h-4 w-4" /> */}
+                <Ban className="h-4 w-4 text-red-500" />
+
+                {/* { !section.isClosed
+                    ? (
+                        <>
+                            <span>Cerrar Sección</span>
+                            <Ban className="h-4 w-4 text-red-500" />
+                        </>
+                    )
+                    : (
+                        <>
+                            <span>Abrir Sección</span>
+                            <CircleCheckBig className="h-4 w-4 text-green-500" />
+                        </>
+                    )
+                } */}
+            </Button>
+
+            {/* <DropdownMenuItem
                 title       = { section.isClosed ? "Abrir Sección" : "Cerrar Sección" }
                 onClick     = {( e ) => {
                     e.preventDefault();
@@ -92,7 +122,7 @@ export function ChangeStatusSection({
                         </>
                     )
                 }
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
 
             <DeleteConfirmDialog
                 isOpen      = { isOpenAlert }
