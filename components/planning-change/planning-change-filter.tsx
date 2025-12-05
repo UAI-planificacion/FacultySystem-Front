@@ -9,7 +9,7 @@ import { SectionSelect }	from "@/components/shared/item-select/section-select";
 import { SearchInput }		from "@/components/shared/Search-input";
 import { ViewMode }			from "@/components/shared/view-mode";
 
-import { type ViewMode as ViewModeType }	from "@/hooks/use-view-mode";
+import { type ViewMode as ViewModeType }    from "@/hooks/use-view-mode";
 import { KEY_QUERYS }	                    from "@/consts/key-queries";
 import { type Status }	                    from "@/types/request";
 
