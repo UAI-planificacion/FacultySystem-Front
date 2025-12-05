@@ -78,12 +78,11 @@ export function SectionTable({
 	const queryClient   = useQueryClient();
     const router        = useRouter();
 
-	const [ expandedSections, setExpandedSections ]         = useState<Set<string>>( new Set() );
-	const [ isOpenDelete, setIsOpenDelete ]                 = useState( false );
-	const [ isOpenSessionForm, setIsOpenSessionForm ]       = useState( false );
-	const [ isOpenSectionForm, setIsOpenSectionForm ]       = useState( false );
-	const [ isOpenPlanningChangeForm, setIsOpenPlanningChangeForm ] = useState( false );
-	const [ selectedSection, setSelectedSection ]           = useState<OfferSection | null>( null );
+	const [ expandedSections, setExpandedSections ]     = useState<Set<string>>( new Set() );
+	const [ isOpenDelete, setIsOpenDelete ]             = useState<boolean>( false );
+	const [ isOpenSessionForm, setIsOpenSessionForm ]   = useState<boolean>( false );
+	const [ isOpenSectionForm, setIsOpenSectionForm ]   = useState<boolean>( false );
+	const [ selectedSection, setSelectedSection ]       = useState<OfferSection | null>( null );
 
 	/**
 	 * Deseleccionar una sección específica
@@ -167,7 +166,6 @@ export function SectionTable({
 		onSelectedSectionsChange( newSelectedSections );
 	}, [ sections, selectedSessions, selectedSections, onSelectedSessionsChange, onSelectedSectionsChange ]);
 
-
 	/**
 	 * Check if section is partially selected
 	 */
@@ -180,7 +178,6 @@ export function SectionTable({
 
 		return selectedSessionIds.length > 0 && selectedSessionIds.length < sessionIds.length;
 	}, [ selectedSessions ]);
-
 
 	/**
 	 * Handle session selection (child)
@@ -441,34 +438,33 @@ export function SectionTable({
 												isDisabledEdit  = { section.isClosed }
 											/>
 
-											{/* ChangeStatusSection */}
-											<ChangeStatusSection 
-												section				= { section }
-												selectedSections	= { selectedSections }
-												onDeselectSection	= { handleDeselectSection }
-											/>
-
                                             <Button
                                                 disabled    = { section.isClosed || section.sessionsCount === 0 }
                                                 onClick     = { () => router.push( `planning-change?sectionId=${ section.id }` )}
-                                                variant="outline"
-                                                size="icon"
+                                                variant     = "outline"
+                                                size        = "icon"
                                             >
-                                                <CalendarClock className="w-4 h-4 mr-2 text-amber-500" />
+                                                <CalendarClock className="w-4 h-4 text-amber-500" />
                                             </Button>
-
 
                                             <Button
                                                 disabled    = { section.isClosed || section.sessionsCount === 0 }
-                                                variant="outline"
-                                                size="icon"
+                                                variant     = "outline"
+                                                size        = "icon"
                                                 onClick     = { () => {
                                                     setIsOpenPlanningChange( true );
                                                     setSelectedSection( section );
                                                 }}
 											>
-												<CalendarClock className="w-4 h-4 mr-2 text-blue-500" />
+												<CalendarClock className="w-4 h-4 text-blue-500" />
 											</Button>
+
+                                            {/* ChangeStatusSection */}
+											<ChangeStatusSection 
+												section				= { section }
+												selectedSections	= { selectedSections }
+												onDeselectSection	= { handleDeselectSection }
+											/>
 
 											{/* Dropdown Menu con acciones */}
 											{/* <DropdownMenu>
