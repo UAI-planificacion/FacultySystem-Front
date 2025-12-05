@@ -61,7 +61,7 @@ export function Panel({
             <div
                 ref         = { panelRef }
                 className   = { cn(
-                    "fixed top-1/2 -translate-y-1/2 right-0 max-h-[calc(100vh-100px)] w-full md:w-80 z-50 transition-transform duration-300 ease-in-out",
+                    "fixed top-1/2 -translate-y-1/2 right-0 max-h-[calc(100vh-100px)] w-[95%] ml-4 md:ml-0 md:w-80 z-50 transition-transform duration-300 ease-in-out",
                     isPanelOpen ? 'translate-x-0' : 'translate-x-full'
                 )}
             >
