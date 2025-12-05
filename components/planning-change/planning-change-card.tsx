@@ -17,17 +17,17 @@ import {
 	CardContent,
 	CardHeader,
 	CardTitle
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ShowStatus } from "@/components/shared/status";
-import { ActionButton } from "@/components/shared/action";
+}                           from "@/components/ui/card";
+import { Badge }            from "@/components/ui/badge";
+import { ShowStatus }       from "@/components/shared/status";
+import { ActionButton }     from "@/components/shared/action";
+import { sessionLabels }    from "@/components/section/section.config";
 
 import type {
 	PlanningChange,
 	PlanningChangeAll
-} from "@/types/planning-change.model";
-import { sessionLabels } from "@/components/section/section.config";
-import { tempoFormat } from "@/lib/utils";
+}                       from "@/types/planning-change.model";
+import { tempoFormat }  from "@/lib/utils";
 
 
 export interface Props {
