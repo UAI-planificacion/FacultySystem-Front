@@ -88,7 +88,6 @@ export interface PlanningChangeAll {
     staffCreate     : StaffPlanningChange;
     staffUpdate     : StaffPlanningChange   | null;
     dayModulesId    : number[];
-
     session         : PlanningChangeSession | null;
     section         : PlanningChangeSection | null;
 }
@@ -137,7 +136,7 @@ interface PlanningChangeSave {
 
 export interface PlanningChangeCreate extends PlanningChangeSave {
     staffCreateId   : string;
-    sessionId       : string        | null;
+    sessionId       : string | null;
     sectionId       : string | null;
 }
 
