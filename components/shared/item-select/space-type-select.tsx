@@ -26,7 +26,6 @@ export function SpaceTypeSelect({
     className,
     buildingFilter
 } : SpaceTypeSelectProps ): JSX.Element {
-    
 	// Obtener spaces data para filtrar por building
 	const {
 		spacesData,
