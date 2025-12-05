@@ -1,12 +1,19 @@
 'use client'
 
+import {
+    sessionColors,
+    sessionColorsHover,
+    sessionLabels
+}                   from "@/components/section/section.config";
+import { Badge }    from "@/components/ui/badge";
+
 import { Session } from "@/types/section.model";
-import { sessionColors, sessionColorsHover, sessionLabels } from "../section/section.config";
-import { Badge } from "../ui/badge";
+
 
 interface Props {
     session : Session;
 }
+
 
 export function SessionType({ session }: Props ) {
     return (
