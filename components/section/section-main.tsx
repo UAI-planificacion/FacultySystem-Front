@@ -94,7 +94,6 @@ export function SectionMain({
     const [isDeleteDialogOpen, setIsDeleteDialogOpen]   = useState<boolean>( false );
     const [isFileFormOpen, setIsFileFormOpen]           = useState<boolean>( false );
     const [cleanDialogType, setCleanDialogType]         = useState<number>( 0 ); // 0=cerrado, 1=spaces, 2=professors
-    const [isFiltersPanelOpen, setIsFiltersPanelOpen]   = useState<boolean>( false );
 
     // Function to update URL with filter parameters
     const updateUrlParams = ( filterName: string, values: string[] ) => {
@@ -368,6 +367,7 @@ export function SectionMain({
                         handleOpenCleanProfessors   = { handleOpenCleanProfessors }
                         sectionsData                = { sectionsData }
                         gridCols                    = "grid-cols-1"
+                        isHidden                    = { false }
                     />
                 }
             />
