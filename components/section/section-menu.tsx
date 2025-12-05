@@ -18,6 +18,7 @@ interface Props {
     handleOpenCleanProfessors() : void;
     sectionsData                : OfferSection[];
     gridCols?                   : string;
+    isHidden?                   : boolean;
 }
 
 
@@ -30,8 +31,11 @@ export function SectionMenu({
     setIsFileFormOpen,
     handleOpenCleanProfessors,
     sectionsData,
-    gridCols = 'grid-cols-5'
+    gridCols = 'grid-cols-5',
+    isHidden = true
 }: Props ): JSX.Element {
+    const hidden = isHidden ? 'hidden 2xl:flex' : '';
+
     return (
         <div className={`grid ${gridCols} gap-2`}>
             <Button
@@ -43,7 +47,7 @@ export function SectionMenu({
             >
                 <BrushCleaning className="w-4 h-4" />
 
-                <span className="hidden 2xl:flex">Profesores</span>
+                <span className={`${hidden}`}>Profesores</span>
             </Button>
 
             <Button
@@ -55,7 +59,7 @@ export function SectionMenu({
             >
                 <BrushCleaning className="w-4 h-4" />
 
-                <span className="hidden 2xl:flex">Espacios</span>
+                <span className={`${hidden}`}>Espacios</span>
             </Button>
 
             <Button
@@ -66,7 +70,7 @@ export function SectionMenu({
             >
                 <Trash className="w-4 h-4" />
 
-                <span className="hidden 2xl:flex">Eliminar ({ selectedSessions.size })</span>
+                <span className={`${hidden}`}>Eliminar ({ selectedSessions.size })</span>
             </Button>
 
             <Button
@@ -76,7 +80,7 @@ export function SectionMenu({
             >
                 <Pencil className="w-4 h-4" />
 
-                <span className="hidden 2xl:flex">Modificar ({ selectedSessions.size })</span>
+                <span className={`${hidden}`}>Modificar ({ selectedSessions.size })</span>
             </Button>
 
             <Button
@@ -88,7 +92,7 @@ export function SectionMenu({
             >
                 <FileSpreadsheet className="w-4 h-4" />
 
-                <span className="hidden 2xl:flex">Archivos</span>
+                <span className={`${hidden}`}>Archivos</span>
             </Button>
         </div>
     );
