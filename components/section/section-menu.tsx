@@ -2,7 +2,7 @@
 
 import { JSX } from "react"
 
-import { BrushCleaning, FileSpreadsheet, Pencil, Trash } from "lucide-react"
+import { Ban, BrushCleaning, FileSpreadsheet, Pencil, Trash } from "lucide-react"
 
 import { Button }       from "@/components/ui/button"
 import { OfferSection } from "@/types/offer-section.model"
@@ -13,6 +13,7 @@ interface Props {
     selectedSections            : Set<string>;
     handleOpenCleanSpaces()     : void;
     handleOpenDeleteSessions()  : void;
+    closeOpenSections()         : void;
     setIsEditSection            : ( value: React.SetStateAction<boolean> ) => void;
     setIsFileFormOpen           : ( value: React.SetStateAction<boolean> ) => void;
     handleOpenCleanProfessors() : void;
@@ -27,11 +28,12 @@ export function SectionMenu({
     selectedSections,
     handleOpenCleanSpaces,
     handleOpenDeleteSessions,
+    closeOpenSections,
     setIsEditSection,
     setIsFileFormOpen,
     handleOpenCleanProfessors,
     sectionsData,
-    gridCols = 'grid-cols-5',
+    gridCols = 'grid-cols-6',
     isHidden = true
 }: Props ): JSX.Element {
     const hidden = isHidden ? 'hidden 2xl:flex' : '';
@@ -40,7 +42,7 @@ export function SectionMenu({
         <div className={`grid ${gridCols} gap-2`}>
             <Button
                 onClick     = { handleOpenCleanProfessors }
-                className   = "gap-2 w-full"
+                className   = "gap-2 w-full text-red-500 hover:text-red-600"
                 disabled    = { selectedSections.size === 0 }
                 variant     = "outline"
                 title       = "Limpiar Profesores"
@@ -52,7 +54,7 @@ export function SectionMenu({
 
             <Button
                 onClick     = { handleOpenCleanSpaces }
-                className   = "gap-2 w-full"
+                className   = "gap-2 w-full text-red-500 hover:text-red-600"
                 disabled    = { selectedSections.size === 0 }
                 variant     = "outline"
                 title       = "Limpiar Espacios"
@@ -63,10 +65,22 @@ export function SectionMenu({
             </Button>
 
             <Button
+                onClick     = { closeOpenSections }
+                className   = "gap-2 w-full"
+                title       = "Abrir/Cerrar Secciones"
+                disabled    = { selectedSections.size === 0 }
+            >
+                <Ban className="h-4 w-4 text-red-500" />
+
+                <span className={`${hidden}`}>Abrir/Cerrar ({ selectedSections.size })</span>
+            </Button>
+
+            <Button
                 onClick     = { handleOpenDeleteSessions }
                 className   = "gap-2 w-full"
                 disabled    = { selectedSessions.size === 0 }
                 variant     = "destructive"
+                title       = "Eliminar Secciones"
             >
                 <Trash className="w-4 h-4" />
 
@@ -77,6 +91,7 @@ export function SectionMenu({
                 onClick     = {() => setIsEditSection( true )}
                 className   = "gap-2 w-full"
                 disabled    = { selectedSessions.size === 0 }
+                title       = "Modificar Sesiones"
             >
                 <Pencil className="w-4 h-4" />
 
