@@ -182,6 +182,50 @@ export function RequestSessionForm({
 	}, [ sessionDayModules, onSessionDayModulesChange ]);
 
 
+	// Manejar toggle masivo de dayModules (para seleccionar/deseleccionar todo)
+	const handleBulkToggleDayModule = useCallback(( 
+		session: Session, 
+		items: { dayId: number; moduleId: number; dayModuleId: number }[], 
+		add: boolean 
+	) => {
+		onSessionDayModulesChange({
+			...sessionDayModules,
+			[session]: (() => {
+				const sessionModules = sessionDayModules[session];
+
+				if ( add ) {
+					// Agregar todos los items que no estén ya presentes
+					const newItems = items
+						.filter( item => {
+							// No agregar si ya existe
+							const exists = sessionModules.some( dm => 
+								dm.dayId === item.dayId && dm.moduleId === item.moduleId 
+							);
+							return !exists;
+						})
+						.map( item => ({
+							session,
+							dayModuleId : item.dayModuleId,
+							dayId       : item.dayId,
+							moduleId    : item.moduleId
+						}));
+
+					return [...sessionModules, ...newItems];
+				} else {
+					// Remover todos los items que coincidan
+					const itemsToRemove = new Set(
+						items.map( item => `${item.dayId}-${item.moduleId}` )
+					);
+
+					return sessionModules.filter( dm => 
+						!itemsToRemove.has( `${dm.dayId}-${dm.moduleId}` )
+					);
+				}
+			})()
+		});
+	}, [ sessionDayModules, onSessionDayModulesChange ]);
+
+
 	// Manejar cambio de configuración de sesión
 	const handleSessionConfigChange = useCallback(( session: Session, key: keyof RequestSessionCreate, value: any ) => {
 		onSessionConfigsChange({
@@ -575,6 +619,7 @@ export function RequestSessionForm({
                 <SessionDayModuleSelector
                     selectedSessions        = { Object.values( sessionDayModules ).flat() }
                     onToggleDayModule       = { handleToggleDayModule }
+                    onBulkToggleDayModules  = { handleBulkToggleDayModule }
                     currentSession          = { currentSession }
                     availableSessions       = { availableSessions }
                     enabled                 = { true }
