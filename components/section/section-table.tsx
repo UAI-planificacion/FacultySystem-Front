@@ -443,6 +443,7 @@ export function SectionTable({
                                                 onClick     = { () => router.push( `planning-change?sectionId=${ section.id }` )}
                                                 variant     = "outline"
                                                 size        = "icon"
+                                                title       = "Cambios de Planificación"
                                             >
                                                 <CalendarClock className="w-4 h-4 text-amber-500" />
                                             </Button>
@@ -451,6 +452,7 @@ export function SectionTable({
                                                 disabled    = { section.isClosed || section.sessionsCount === 0 }
                                                 variant     = "outline"
                                                 size        = "icon"
+                                                title       = "Crear Cambio de Planificación"
                                                 onClick     = { () => {
                                                     setIsOpenPlanningChange( true );
                                                     setSelectedSection( section );
@@ -458,6 +460,33 @@ export function SectionTable({
 											>
 												<CalendarClock className="w-4 h-4 text-blue-500" />
 											</Button>
+
+                                            { section.sessionsCount === 0 ? (
+                                                <Button
+                                                    disabled    = { section.isClosed }
+                                                    onClick     = { () => router.push( `sections/${section.id}` )}
+                                                    variant     = "outline"
+                                                    size        = "icon"
+                                                    title       = "Planificar Sesiones"
+                                                >
+                                                    <Album className="w-4 h-4 text-green-500" />
+                                                    {/* Planificar sesiones */}
+                                                </Button>
+                                            ) : (
+                                                <Button
+                                                    disabled    = { section.isClosed }
+                                                    variant     = "outline"
+                                                    size        = "icon"
+                                                    title       = "Asignar Nueva Sesión"
+                                                    onClick     = { () => {
+                                                        setIsOpenSessionForm( true );
+                                                        setSelectedSection( section );
+                                                    }}
+                                                >
+                                                    <Plus className="w-4 h-4" />
+                                                    {/* Asignar Nueva Sesión */}
+                                                </Button>
+                                            )}
 
                                             {/* ChangeStatusSection */}
 											<ChangeStatusSection 
@@ -545,7 +574,7 @@ export function SectionTable({
 								</TableRow>
 
 								{/* Expanded Sessions (Children) */}
-								{expandedSections.has( section.id ) && (
+								{ expandedSections.has( section.id ) && (
 									<SessionTable
 										section                 = { section }
 										selectedSessions        = { selectedSessions }
