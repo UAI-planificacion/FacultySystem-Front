@@ -10,14 +10,8 @@ import { useRouter }    from 'next/navigation';
 
 import {
     BrushCleaning,
-    FileSpreadsheet,
     Filter,
     Grid2X2,
-    Pencil,
-    RefreshCw,
-    SlidersHorizontal,
-    Trash,
-    X
 }                   from 'lucide-react';
 import {
 	useMutation,
@@ -29,7 +23,6 @@ import { toast }    from 'sonner';
 import {
     Card,
     CardContent,
-    CardFooter
 }                                   from '@/components/ui/card';
 import { DataPagination }           from '@/components/ui/data-pagination';
 import { Label }                    from '@/components/ui/label';
@@ -200,7 +193,6 @@ export function SectionMain({
         if ( groupIdFromUrl ) {
             const groupIds = groupIdFromUrl.split( ',' ).filter( Boolean );
             setGroupIdFilter( groupIds );
-            console.log( '🚀 ~ Filtro groupId aplicado desde URL:', groupIds );
         }
     }, [ searchParams ]);
 
@@ -295,12 +287,51 @@ export function SectionMain({
 	 * Confirma y ejecuta la limpieza según el tipo
 	 */
 	function handleConfirmClean(): void {
-		const sectionIds = Array.from( selectedSections );
-		const type = cleanDialogType === 1 ? 'space' : 'professor';
+		const sectionIds    = Array.from( selectedSections );
+		const type          = cleanDialogType === 1 ? 'space' : 'professor';
 
 		cleanMutation.mutate({ ids: sectionIds, type });
 	}
 
+	/**
+	 * API call para cambiar estados de forma masiva
+	 */
+	const changeMassiveStatusApi = async ( sectionIds: string[] ): Promise<void> =>
+		fetchApi<void>({
+			url     : `${KEY_QUERYS.SECTIONS}/changeMassiveStatus/all`,
+			method  : Method.PATCH,
+			body    : { sectionIds }
+		});
+
+	/**
+	 * Mutación para cambiar estados de forma masiva
+	 */
+	const changeMassiveStatusMutation = useMutation<void, Error, string[]>({
+		mutationFn  : changeMassiveStatusApi,
+		onSuccess   : () => {
+			queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
+			setSelectedSections( new Set() );
+			setSelectedSessions( new Set() );
+			toast( 'Estados actualizados correctamente', successToast );
+		},
+		onError: ( mutationError ) => {
+			toast( `Error al actualizar estados: ${mutationError.message}`, errorToast );
+		},
+	});
+
+	/**
+	 * Ejecuta el cambio masivo de estados
+	 */
+	function closeOpenSections(): void {
+		if ( selectedSections.size === 0 ) {
+			toast( 'Debe seleccionar al menos una sección', errorToast );
+
+            return;
+		}
+
+		const sectionIds = Array.from( selectedSections );
+		changeMassiveStatusMutation.mutate( sectionIds );
+	}
 
     return (
         <>
@@ -334,6 +365,7 @@ export function SectionMain({
                                         <SectionMenu
                                             selectedSessions            = { selectedSessions }
                                             selectedSections            = { selectedSections }
+                                            closeOpenSections           = { closeOpenSections }
                                             handleOpenCleanSpaces       = { handleOpenCleanSpaces }
                                             handleOpenDeleteSessions    = { handleOpenDeleteSessions }
                                             setIsEditSection            = { setIsEditSection }
@@ -360,6 +392,7 @@ export function SectionMain({
                     <SectionMenu
                         selectedSessions            = { selectedSessions }
                         selectedSections            = { selectedSections }
+                        closeOpenSections           = { closeOpenSections }
                         handleOpenCleanSpaces       = { handleOpenCleanSpaces }
                         handleOpenDeleteSessions    = { handleOpenDeleteSessions }
                         setIsEditSection            = { setIsEditSection }
