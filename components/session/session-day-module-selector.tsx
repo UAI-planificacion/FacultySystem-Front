@@ -1,7 +1,10 @@
 import { JSX, useState, useCallback, useMemo, useEffect } from "react";
 
-import { MousePointer2, Eraser, CircleQuestionMark }    from "lucide-react";
-import { useQuery }                 from "@tanstack/react-query";
+import {
+    MousePointer2,
+    Eraser,
+}                   from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 import {
 	Table,
@@ -15,19 +18,16 @@ import {
     ToggleGroup,
     ToggleGroupItem
 }                           from "@/components/ui/toggle-group";
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipTrigger
-}                           from "@/components/ui/tooltip";
 import { Button }           from "@/components/ui/button";
 import { Skeleton }         from "@/components/ui/skeleton";
+import { Switch }           from "@/components/ui/switch";
 import { sessionLabels }    from "@/components/section/section.config";
 
 import { DayModule, Module }    from "@/types/request";
 import { KEY_QUERYS }           from "@/consts/key-queries";
 import { fetchApi }             from "@/services/fetch";
 import { Session }              from "@/types/section.model";
+
 
 interface SessionDayModule {
 	session         : Session;
@@ -40,6 +40,7 @@ interface SessionDayModule {
 interface Props {
 	selectedSessions        : SessionDayModule[];
 	onToggleDayModule       : ( session: Session, dayId: number, moduleId: number, dayModuleId: number ) => void;
+	onBulkToggleDayModules? : ( session: Session, items: { dayId: number; moduleId: number; dayModuleId: number }[], add: boolean ) => void;
 	currentSession          : Session | null;
 	availableSessions       : Session[];
 	enabled                 : boolean;
@@ -53,6 +54,7 @@ interface Props {
 export function SessionDayModuleSelector({
 	selectedSessions,
 	onToggleDayModule,
+	onBulkToggleDayModules,
 	currentSession,
 	availableSessions,
 	enabled,
@@ -139,6 +141,66 @@ export function SessionDayModuleSelector({
 	const calculateDayModuleId = useCallback(( dayId: number, moduleId: number ): number => {
         return dayModules.find( dayModule => dayModule.dayId === dayId && dayModule.moduleId === moduleId )?.id || 0;
 	}, [ dayModules ]);
+
+	// Calcular si todos los días/módulos disponibles están seleccionados para una sesión
+	const isAllSelectedForSession = useCallback(( session: Session ): boolean => {
+		const totalAvailable = modulesWithDays.reduce(( total, module ) => {
+			return total + module.days.length;
+		}, 0 );
+
+		const selectedCount = getSessionCount( session );
+		return totalAvailable > 0 && selectedCount === totalAvailable;
+	}, [ modulesWithDays, getSessionCount ]);
+
+	// Seleccionar todos los días/módulos para una sesión específica
+	const handleSelectAllForSession = useCallback(( session: Session, selectAll: boolean ): void => {
+		if ( !enabled ) return;
+
+		// Si existe onBulkToggleDayModules, usarlo para mejor performance
+		if ( onBulkToggleDayModules ) {
+			const items: { dayId: number; moduleId: number; dayModuleId: number }[] = [];
+
+			modulesWithDays.forEach( module => {
+				module.days.forEach( dayId => {
+					const sessionsInCell = getSessionsForDayModule( dayId, module.id.toString() );
+					const isSessionInCell = sessionsInCell.includes( session );
+					const dayModuleId = calculateDayModuleId( dayId, module.id );
+
+					// Si selectAll = true, agregar si no está
+					if ( selectAll && !isSessionInCell ) {
+						items.push({ dayId, moduleId: module.id, dayModuleId });
+					}
+
+					// Si selectAll = false, quitar si está
+					if ( !selectAll && isSessionInCell ) {
+						items.push({ dayId, moduleId: module.id, dayModuleId });
+					}
+				});
+			});
+
+			// Hacer una sola llamada con todos los items
+			if ( items.length > 0 ) {
+				onBulkToggleDayModules( session, items, selectAll );
+			}
+		} else {
+			// Fallback: llamar onToggleDayModule una por una (no recomendado)
+			modulesWithDays.forEach( module => {
+				module.days.forEach( dayId => {
+					const sessionsInCell = getSessionsForDayModule( dayId, module.id.toString() );
+					const isSessionInCell = sessionsInCell.includes( session );
+					const dayModuleId = calculateDayModuleId( dayId, module.id );
+
+					if ( selectAll && !isSessionInCell ) {
+						onToggleDayModule( session, dayId, module.id, dayModuleId );
+					}
+
+					if ( !selectAll && isSessionInCell ) {
+						onToggleDayModule( session, dayId, module.id, dayModuleId );
+					}
+				});
+			});
+		}
+	}, [ enabled, modulesWithDays, getSessionsForDayModule, calculateDayModuleId, onToggleDayModule, onBulkToggleDayModules ]);
 
 
 	const handleCellClick = useCallback(( dayId: number, moduleId: number ): void => {
@@ -331,9 +393,8 @@ export function SessionDayModuleSelector({
                         >
                             { availableSessions.map( session => {
                                 const count = getSessionCount( session );
-                                const label = sessionButtonLabel 
-                                    ? sessionButtonLabel( session, count )
-                                    : `${ sessionLabels[session] } (${ count })`;
+                                const label = sessionButtonLabel ? sessionButtonLabel( session, count ) : `${ sessionLabels[session] } (${ count })`;
+                                const isAllSelected = isAllSelectedForSession( session );
 
                                 return (
                                     <ToggleGroupItem
@@ -343,28 +404,22 @@ export function SessionDayModuleSelector({
                                         className   = "gap-2"
                                     >
                                         { label }
+
+                                        { multiple && (
+                                            <Switch
+                                                id              = { `select-all-${session}` }
+                                                checked         = { isAllSelected }
+                                                onCheckedChange = {( checked ) => handleSelectAllForSession( session, checked )}
+                                                disabled        = { !enabled }
+                                                aria-label      = { `${ isAllSelected ? 'Deseleccionar': 'Seleccionar' } todo para ${sessionLabels[session]}` }
+                                                title           = { `${ isAllSelected ? 'Deseleccionar': 'Seleccionar' } todo` }
+                                                onClick         = {( e ) => e.stopPropagation()}
+                                            />
+                                        )}
                                     </ToggleGroupItem>
                                 );
                             })}
                         </ToggleGroup>
-
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button
-                                    variant     = "outline"
-                                    size        = "sm"
-                                    type        = "button"
-                                >
-                                    <CircleQuestionMark className="h-5 w-5"/>
-                                </Button>
-                            </TooltipTrigger>
-
-                            <TooltipContent>
-                                <p className="text-sm font-medium text-muted-foreground">
-                                    Primero seleccione el tipo de sesión y luego los días y módulos
-                                </p>
-                            </TooltipContent>
-                        </Tooltip>
                     </div>
                 )}
 
