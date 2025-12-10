@@ -127,10 +127,13 @@ export function SectionTable({
 	const isSectionFullySelected = useCallback(( section: OfferSection ): boolean => {
 		const sessionIds = section.sessions.ids || [];
 
-		if ( sessionIds.length === 0 ) return false;
+		// Si no tiene sesiones, verificar si la sección está seleccionada
+		if ( sessionIds.length === 0 ) {
+			return selectedSections.has( section.id );
+		}
 
 		return sessionIds.every( id => selectedSessions.has( id ));
-	}, [ selectedSessions ]);
+	}, [ selectedSessions, selectedSections ]);
 
 	/**
 	 * Handle section selection (parent)
@@ -172,6 +175,7 @@ export function SectionTable({
 	const isSectionPartiallySelected = useCallback(( section: OfferSection ): boolean => {
 		const sessionIds = section.sessions.ids || [];
 
+		// Si no tiene sesiones, no puede estar parcialmente seleccionada
 		if ( sessionIds.length === 0 ) return false;
 
 		const selectedSessionIds = sessionIds.filter( id => selectedSessions.has( id ));
@@ -383,7 +387,8 @@ export function SectionTable({
 											}
 											onCheckedChange = {( checked ) => handleSectionSelection( section.id, checked )}
 											aria-label      = "Seleccionar sección"
-											disabled        = { section.isClosed || section.sessionsCount === 0 }
+											// disabled        = { section.isClosed || section.sessionsCount === 0 }
+											disabled        = { section.isClosed }
 										/>
 									</TableCell>
 
