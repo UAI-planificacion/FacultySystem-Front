@@ -25,7 +25,7 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle
-}                                   from '@/components/ui/dialog';
+}                               from '@/components/ui/dialog';
 import {
     Form,
     FormControl,
@@ -33,20 +33,19 @@ import {
     FormItem,
     FormLabel,
     FormMessage
-}                                   from '@/components/ui/form';
+}                               from '@/components/ui/form';
 import {
     Card,
     CardContent,
     CardHeader
-}                                   from '@/components/ui/card';
-import { Button }                   from '@/components/ui/button';
-import { SpaceSelect }              from '@/components/shared/item-select/space-select';
-import { ProfessorSelect }          from '@/components/shared/item-select/professor-select';
-import { RequestDetailModuleDays }  from '@/components/request-detail/request-detail-module-days';
-import { CalendarSelect }           from '@/components/ui/calendar-select';
-import { Switch }                   from '@/components/ui/switch';
-import { PlanningChangeForm }       from '@/components/planning-change/planning-change-form';
-import { SessionFormFields }        from '@/components/session/session-form-fields';
+}                               from '@/components/ui/card';
+import { Button }               from '@/components/ui/button';
+import { SpaceSelect }          from '@/components/shared/item-select/space-select';
+import { ProfessorSelect }      from '@/components/shared/item-select/professor-select';
+import { SessionModuleDays }    from '@/components/session/session-module-days';
+import { CalendarSelect }       from '@/components/ui/calendar-select';
+import { Switch }               from '@/components/ui/switch';
+import { PlanningChangeForm }   from '@/components/planning-change/planning-change-form';
 
 import {
     CreateSessionRequest,
@@ -115,7 +114,7 @@ export function SessionForm({
     onSuccess
 }: Props ) {
     const queryClient                                       = useQueryClient();
-    const [ sessionRequired, setSessionRequired ]           = useState<boolean>( false );
+    // const [ sessionRequired, setSessionRequired ]           = useState<boolean>( false );
     const [ dayModuleRequired, setDayModuleRequired ]       = useState<boolean>( false );
     const [ selectedDayModuleId, setSelectedDayModuleId ]   = useState<number | null>( null );
     const [ showCalendar, setShowCalendar ]                 = useState<boolean>( false );
@@ -172,7 +171,7 @@ export function SessionForm({
             form.reset();
         }
 
-        setSessionRequired( false );
+        // setSessionRequired( false );
         setShowCalendar( false );
         setShouldFetchDates( false );
 
@@ -365,10 +364,10 @@ export function SessionForm({
 
 
     function onSubmit( data: FormData ): void {
-        if ( !data.name ) {
-            setSessionRequired( true );
-            return;
-        }
+        // if ( !data.name ) {
+        //     // setSessionRequired( true );
+        //     return;
+        // }
 
         // Validar que se haya seleccionado un dayModuleId
         if ( !selectedDayModuleId ) {
@@ -563,7 +562,7 @@ export function SessionForm({
 
                         { isUpdateDateSpace && <>
                             <div className="space-y-2">
-                                <RequestDetailModuleDays
+                                <SessionModuleDays
                                     requestDetailModule = { moduleDaySelections.map( item => ({ day: item.day, moduleId: item.moduleId })) }
                                     enabled             = { isOpen }
                                     onModuleToggle      = { handleModuleToggle }
