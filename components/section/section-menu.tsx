@@ -67,12 +67,12 @@ export function SectionMenu({
             <Button
                 onClick     = { closeOpenSections }
                 className   = "gap-2 w-full"
-                title       = "Abrir/Cerrar Secciones"
+                title       = "Cerrar Secciones"
                 disabled    = { selectedSections.size === 0 }
             >
                 <Ban className="h-4 w-4 text-red-500" />
 
-                <span className={`${hidden}`}>Abrir/Cerrar ({ selectedSections.size })</span>
+                <span className={`${hidden}`}>Cerrar ({ selectedSections.size })</span>
             </Button>
 
             <Button
