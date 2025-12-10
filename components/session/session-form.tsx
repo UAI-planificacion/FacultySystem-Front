@@ -46,6 +46,7 @@ import { SessionModuleDays }    from '@/components/session/session-module-days';
 import { CalendarSelect }       from '@/components/ui/calendar-select';
 import { Switch }               from '@/components/ui/switch';
 import { PlanningChangeForm }   from '@/components/planning-change/planning-change-form';
+import { SessionTypeSelector }  from '@/components/shared/session-type-selector';
 
 import {
     CreateSessionRequest,
@@ -72,33 +73,14 @@ interface Props {
 
 
 const formSchema = z.object({
-    name                    : z.nativeEnum( Session ).nullable().optional(),
+    name                    : z.nativeEnum( Session ),
     spaceId                 : z.string().nullable().optional(),
     isEnglish               : z.boolean().nullable().optional(),
-    chairsAvailable         : z.number().nullable().optional(),
-    correctedRegistrants    : z.number().nullable().optional(),
-    realRegistrants         : z.number().nullable().optional(),
-    plannedBuilding         : z.string().nullable().optional(),
     professorId             : z.string().nullable().optional(),
     date                    : z.date().nullable().optional(),
 }).superRefine(( data, ctx ) => {
-    // Validar que spaceId sea requerido
-    if ( !data.spaceId || data.spaceId.trim() === '' ) {
-        ctx.addIssue({
-            code    : z.ZodIssueCode.custom,
-            message : 'El espacio es requerido',
-            path    : ['spaceId']
-        });
-    }
-
-    // Validar que date sea requerido
-    if ( !data.date ) {
-        ctx.addIssue({
-            code    : z.ZodIssueCode.custom,
-            message : 'La fecha es requerida',
-            path    : ['date']
-        });
-    }
+    // El espacio y la fecha son opcionales
+    // No se requieren validaciones adicionales
 });
 
 
@@ -114,7 +96,6 @@ export function SessionForm({
     onSuccess
 }: Props ) {
     const queryClient                                       = useQueryClient();
-    // const [ sessionRequired, setSessionRequired ]           = useState<boolean>( false );
     const [ dayModuleRequired, setDayModuleRequired ]       = useState<boolean>( false );
     const [ selectedDayModuleId, setSelectedDayModuleId ]   = useState<number | null>( null );
     const [ showCalendar, setShowCalendar ]                 = useState<boolean>( false );
@@ -127,13 +108,9 @@ export function SessionForm({
     const form = useForm<FormData>({
         resolver    : zodResolver( formSchema ),
         defaultValues: {
-            name                    : session?.name                 || null,
+            name                    : session?.name                 ,
             spaceId                 : session?.spaceId              || null,
             isEnglish               : session?.isEnglish            || false,
-            correctedRegistrants    : session?.correctedRegistrants || null,
-            realRegistrants         : session?.realRegistrants      || null,
-            plannedBuilding         : session?.plannedBuilding      || null,
-            chairsAvailable         : session?.chairsAvailable      || null,
             professorId             : session?.professor?.id        || null,
             date                    : session?.date ? new Date( session.date ) : null,
         }
@@ -143,15 +120,11 @@ export function SessionForm({
     useEffect(() => {
         if ( session ) {
             form.reset({
-                name                    : session.name,
-                spaceId                 : session.spaceId,
-                isEnglish               : session.isEnglish,
-                correctedRegistrants    : session.correctedRegistrants,
-                realRegistrants         : session.realRegistrants,
-                plannedBuilding         : session.plannedBuilding,
-                chairsAvailable         : session.chairsAvailable,
-                professorId             : session.professor?.id,
-                date                    : session.date ? new Date( session.date ) : null
+                name        : session.name,
+                spaceId     : session.spaceId,
+                isEnglish   : session.isEnglish,
+                professorId : session.professor?.id,
+                date        : session.date ? new Date( session.date ) : null
             });
 
             // Marcar el módulo-día por defecto si existe
@@ -181,19 +154,19 @@ export function SessionForm({
     }, [ session, form, isOpen ]);
 
 
-    const {
-        data : dayModulesData,
-        isLoading,
-        isError,
-    } = useQuery({
-        queryKey    : [ KEY_QUERYS.MODULES, 'dayModule' ],
-        queryFn     : () => fetchApi<DayModule[]>({ url: 'modules/dayModule' }),
-        enabled     : isOpen
-    });
+    // const {
+    //     data : dayModulesData,
+    //     isLoading,
+    //     isError,
+    // } = useQuery({
+    //     queryKey    : [ KEY_QUERYS.MODULES, 'dayModule' ],
+    //     queryFn     : () => fetchApi<DayModule[]>({ url: 'modules/dayModule' }),
+    //     enabled     : isOpen
+    // });
 
 
     // TanStack Query para obtener fechas disponibles
-    const spaceId = form.watch( 'spaceId' );
+    // const spaceId = form.watch( 'spaceId' );
 
 
     const {
@@ -353,8 +326,8 @@ export function SessionForm({
 
 
     const handleFetchAvailableDates = () => {
-        if ( !section?.id || !selectedDayModuleId || !spaceId ) {
-            toast( 'Debe seleccionar un módulo-día y un espacio', errorToast );
+        if ( !section?.id || !selectedDayModuleId ) {
+            toast( 'Debe seleccionar un módulo-día', errorToast );
             return;
         }
 
@@ -376,21 +349,21 @@ export function SessionForm({
             return;
         }
 
-        if ( isLoading ) return;
+        // if ( isLoading ) return;
 
-        if ( isError ) {
-            toast( 'Error al cargar los días y los módulos', errorToast );
-            return;
-        }
+        // if ( isError ) {
+        //     toast( 'Error al cargar los días y los módulos', errorToast );
+        //     return;
+        // }
 
         const {
             name,
             spaceId,
             isEnglish,
-            correctedRegistrants,
-            realRegistrants,
-            plannedBuilding,
-            chairsAvailable,
+            // correctedRegistrants,
+            // realRegistrants,
+            // plannedBuilding,
+            // chairsAvailable,
             professorId,
             date
         } = data;
@@ -400,13 +373,13 @@ export function SessionForm({
             // dayModuleId : selectedDayModuleId,
             // ...(spaceId && { spaceId }),
             // ...(isEnglish !== null && isEnglish !== undefined && { isEnglish }),
-            ...(correctedRegistrants && { correctedRegistrants }),
-            ...(realRegistrants && { realRegistrants }),
-            ...(plannedBuilding && { plannedBuilding }),
-            ...(chairsAvailable && { chairsAvailable }),
-            ...(professorId && { professorId }),
+            // ...( correctedRegistrants && { correctedRegistrants }),
+            // ...( realRegistrants && { realRegistrants }),
+            // ...( plannedBuilding && { plannedBuilding }),
+            // ...( chairsAvailable && { chairsAvailable }),
+            ...( professorId && { professorId }),
             // ...(dayModuleId && { dayModuleId }),
-            ...(date && { date }),
+            ...( date && { date }),
         };
 
         console.log('🚀 ~ file: session-form.tsx:377 ~ sessionData:', sessionData)
@@ -504,7 +477,6 @@ export function SessionForm({
                                 <CardHeader className="py-1 px-5 border-b grid grid-cols-4 gap-4 items-center">
                                     <span className="font-medium">Espacio</span>
                                     <span className="font-medium">Profesor</span>
-
                                     <span className="font-medium">Fecha</span>
 
                                     <div className="flex items-center gap-2 justify-between">
@@ -521,10 +493,10 @@ export function SessionForm({
                                 </CardHeader>
 
                                 <CardContent className="py-3 px-5 grid grid-cols-4 gap-4">
-                                    <span>{ session?.spaceId }</span>
-                                    {/* <span>{ session?.professor.name }</span> */}
+                                    <span>{ session?.spaceId ?? '-' }</span>
+                                    <span>{ session?.professor?.name ?? '-' }</span>
                                     <span>{ session?.date && tempoFormat( session?.date )  }</span>
-                                    <span>{ session?.module.name }</span>
+                                    <span>{ session?.module?.name ?? '-' }</span>
                                 </CardContent>
                             </Card>
                         }
@@ -533,12 +505,28 @@ export function SessionForm({
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit( onSubmit )} className="space-y-4">
-                        {/* <SessionFormFields
-                            control         = { form.control }
-                            sessionRequired = { sessionRequired }
-                            onSessionChange = {() => setSessionRequired( false )}
-                            showSessionType = { true }
-                        /> */}
+                        <FormField
+                            control	= { form.control }
+                            name	= "name"
+                            render	= {({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Tipo de Sesión</FormLabel>
+
+                                    <FormControl>
+                                        <SessionTypeSelector
+                                            multiple		= { false }
+                                            value			= { field.value }
+                                            onValueChange	= { field.onChange }
+                                            defaultValue	= { field.value }
+                                            allowDeselect	= { true }
+                                            isShort         = { false }
+                                        />
+                                    </FormControl>
+
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
                         {/* Is English Field */}
                         <FormField
@@ -663,7 +651,7 @@ export function SessionForm({
                                     type        = "button"
                                     onClick     = { handleFetchAvailableDates }
                                     className   = "w-full gap-2"
-                                    disabled    = { !selectedDayModuleId || !spaceId || isLoadingDates }
+                                    disabled    = { !selectedDayModuleId || isLoadingDates }
                                 >
                                     <Calendar className="h-4 w-4" />
                                     { isLoadingDates ? 'Buscando...' : 'Buscar fechas disponibles' }
