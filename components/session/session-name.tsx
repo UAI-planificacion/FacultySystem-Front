@@ -27,13 +27,13 @@ export function SessionName({
         <Badge
             variant     = "secondary"
             className   = { `${sessionColors[session]} ${sessionColorsHover[session]} text-white` }
-            title       = { isShort ?  `${ count } ${sessionLabels[session]}` : undefined }
+            title       = { isShort ? `${ count } ${sessionLabels[session]}` : undefined }
         >
-            { hideCount ?
-                session :
-                isShort ?
-                    `${ count }${session}` :
-                    sessionLabels[session]
+            { hideCount
+                ? session
+                : isShort
+                    ? `${ count }${session}`
+                    : sessionLabels[session]
             }
         </Badge>
     );

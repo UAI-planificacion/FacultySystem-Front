@@ -21,21 +21,6 @@ interface Props {
 
 }
 
-
-// interface MultiSelectProps {
-// 	multiple		: true;
-// 	value			: Session[];
-// 	onValueChange	: ( value: Session[] ) => void;
-// 	defaultValue?	: Session[];
-// 	allowDeselect?	: boolean;
-// 	className?		: string;
-//     isShort?        : boolean;
-// }
-
-
-// type Props = SingleSelectProps | MultiSelectProps;
-
-
 /**
  * SessionTypeSelector Component
  * 
@@ -55,16 +40,6 @@ export function SessionTypeSelector({
 		className = "w-full",
 		isShort = true
 }: Props ): JSX.Element {
-	// const {
-	// 	multiple = false,
-	// 	value,
-	// 	onValueChange,
-	// 	defaultValue,
-	// 	allowDeselect = true,
-	// 	className = "w-full",
-	// 	isShort = false
-	// } = props;
-
 	// Memoizar el valor del toggle group
 	const toggleValue = useMemo(() => {
 		if ( multiple ) {
