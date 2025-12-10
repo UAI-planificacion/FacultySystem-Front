@@ -320,10 +320,10 @@ export function RequestForm({
 
 			// Validar que todas las sesiones tengan al menos un filtro de espacio seleccionado
 			const sessionsWithoutSpaceFilter = availableSessions.filter( session => {
-				const config = sessionConfigs[session];
-				const hasSpaceId = config?.spaceId !== null && config?.spaceId !== undefined;
-				const hasSpaceType = config?.spaceType !== null && config?.spaceType !== undefined;
-				const hasSpaceSizeId = config?.spaceSizeId !== null && config?.spaceSizeId !== undefined;
+				const config            = sessionConfigs[session];
+				const hasSpaceId        = config?.spaceId       !== null && config?.spaceId     !== undefined;
+				const hasSpaceType      = config?.spaceType     !== null && config?.spaceType   !== undefined;
+				const hasSpaceSizeId    = config?.spaceSizeId   !== null && config?.spaceSizeId !== undefined;
 
 				return !hasSpaceId && !hasSpaceType && !hasSpaceSizeId;
 			});
@@ -424,42 +424,93 @@ export function RequestForm({
 					</div>
 				</DialogHeader>
 
-                    <Form {...form}>
-                        <form onSubmit={ form.handleSubmit( handleSubmit )} className="space-y-4">
-                            <div className="grid grid-cols-1 gap-4">
-                                {/* Faculty Select - Solo cuando facultyId es undefined */}
-                                { !facultyId && !request && (
-                                    <FormField
-                                        control = { form.control }
-                                        name    = "facultyId"
-                                        render  = {({ field }) => (
-                                            <FormItem>
-                                                <FacultySelect
-                                                    label               = "Facultad"
-                                                    placeholder         = "Seleccionar facultad"
-                                                    onSelectionChange   = {( value ) => field.onChange( value as string )}
-                                                    defaultValues       = { field.value ? [ field.value ] : [] }
-                                                    multiple            = { false }
-                                                />
-
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                )}
-
-                                {/* Title */}
+                <Form {...form}>
+                    <form onSubmit={ form.handleSubmit( handleSubmit )} className="space-y-4">
+                        <div className="grid grid-cols-1 gap-4">
+                            {/* Faculty Select - Solo cuando facultyId es undefined */}
+                            { !facultyId && !request && (
                                 <FormField
                                     control = { form.control }
-                                    name    = "title"
+                                    name    = "facultyId"
                                     render  = {({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Título</FormLabel>
+                                            <FacultySelect
+                                                label               = "Facultad"
+                                                placeholder         = "Seleccionar facultad"
+                                                onSelectionChange   = {( value ) => field.onChange( value as string )}
+                                                defaultValues       = { field.value ? [ field.value ] : [] }
+                                                multiple            = { false }
+                                            />
+
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            )}
+
+                            {/* Title */}
+                            <FormField
+                                control = { form.control }
+                                name    = "title"
+                                render  = {({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Título</FormLabel>
+
+                                        <FormControl>
+                                            <Input
+                                                placeholder="Ingrese el título de la solicitud"
+                                                {...field}
+                                            />
+                                        </FormControl>
+
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            {/* Section Select */}
+                            { !request?.section
+                                ? <FormField
+                                    control = { form.control }
+                                    name    = "sectionId"
+                                    render  = {({ field }) => (
+                                        <FormItem>
+                                            <SectionSelect
+                                                label               = "Sección"
+                                                multiple            = { false }
+                                                placeholder         = "Seleccionar sección"
+                                                defaultValues       = { field.value }
+                                                disabled            = { !!propSection || !!request }
+                                                onSelectionChange   = {( value ) => {
+                                                    const sectionId = typeof value === 'string' ? value : undefined;
+                                                    field.onChange( sectionId );
+                                                    setSelectedSectionId( sectionId || null );
+                                                }}
+                                            />
+
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                : <RequestSectionInfo section={ request.section } />
+                            }
+
+                            {/* Status */}
+                            { request &&
+                                <FormField
+                                    control = { form.control }
+                                    name    = "status"
+                                    render  = {({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Estado</FormLabel>
 
                                             <FormControl>
-                                                <Input
-                                                    placeholder="Ingrese el título de la solicitud"
-                                                    {...field}
+                                                <ChangeStatus
+                                                    value           = { field.value }
+                                                    onValueChange   = { field.onChange }
+                                                    defaultValue    = { field.value }
+                                                    multiple        = { false }
                                                 />
                                             </FormControl>
 
@@ -467,128 +518,77 @@ export function RequestForm({
                                         </FormItem>
                                     )}
                                 />
+                            }
 
-                                {/* Section Select */}
-                                { !request?.section
-                                    ? <FormField
-                                        control = { form.control }
-                                        name    = "sectionId"
-                                        render  = {({ field }) => (
-                                            <FormItem>
-                                                <SectionSelect
-                                                    label               = "Sección"
-                                                    multiple            = { false }
-                                                    placeholder         = "Seleccionar sección"
-                                                    defaultValues       = { field.value }
-                                                    disabled            = { !!propSection || !!request }
-                                                    onSelectionChange   = {( value ) => {
-                                                        const sectionId = typeof value === 'string' ? value : undefined;
-                                                        field.onChange( sectionId );
-                                                        setSelectedSectionId( sectionId || null );
-                                                    }}
-                                                />
+                            {/* Request Sessions - Solo para creación */}
+                            { !request && section && availableSessions.length > 0 && (
+                                <RequestSessionForm
+                                    availableSessions           = { availableSessions }
+                                    sessionDayModules           = { sessionDayModules }
+                                    sessionConfigs              = { sessionConfigs }
+                                    sessionBuildings            = { sessionBuildings }
+                                    sessionFilterMode           = { sessionFilterMode }
+                                    currentSession              = { currentSession }
+                                    onSessionDayModulesChange   = { setSessionDayModules }
+                                    onSessionConfigsChange      = { setSessionConfigs }
+                                    onSessionBuildingsChange    = { setSessionBuildings }
+                                    onSessionFilterModeChange   = { setSessionFilterMode }
+                                    onCurrentSessionChange      = { setCurrentSession }
+                                />
+                            )}
 
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
+                            { request && <>
+                                {/* Staff Create - Readonly */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <FormLabel>Creado por</FormLabel>
 
-                                    : <RequestSectionInfo section={ request.section } />
-                                }
-
-                                {/* Status */}
-                                { request &&
-                                    <FormField
-                                        control = { form.control }
-                                        name    = "status"
-                                        render  = {({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Estado</FormLabel>
-
-                                                <FormControl>
-                                                    <ChangeStatus
-                                                        value           = { field.value }
-                                                        onValueChange   = { field.onChange }
-                                                        defaultValue    = { field.value }
-                                                        multiple        = { false }
-                                                    />
-                                                </FormControl>
-
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                }
-
-                                {/* Request Sessions - Solo para creación */}
-                                { !request && section && availableSessions.length > 0 && (
-									<RequestSessionForm
-										availableSessions           = { availableSessions }
-										sessionDayModules           = { sessionDayModules }
-										sessionConfigs              = { sessionConfigs }
-										sessionBuildings            = { sessionBuildings }
-										sessionFilterMode           = { sessionFilterMode }
-										currentSession              = { currentSession }
-										onSessionDayModulesChange   = { setSessionDayModules }
-										onSessionConfigsChange      = { setSessionConfigs }
-										onSessionBuildingsChange    = { setSessionBuildings }
-										onSessionFilterModeChange   = { setSessionFilterMode }
-										onCurrentSessionChange      = { setCurrentSession }
-									/>
-								)}
-
-                                { request && <>
-                                    {/* Staff Create - Readonly */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <FormLabel>Creado por</FormLabel>
-
-                                            <Input
-                                                value = { request?.staffCreate?.name || '-' }
-                                                readOnly
-                                                disabled
-                                            />
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <FormLabel>Última actualización por</FormLabel>
-
-                                            <Input
-                                                value = { request?.staffUpdate?.name || '-' }
-                                                readOnly
-                                                disabled
-                                            />
-                                        </div>
+                                        <Input
+                                            value = { request?.staffCreate?.name || '-' }
+                                            readOnly
+                                            disabled
+                                        />
                                     </div>
 
-                                    {/* Staff Update - Readonly */}
-                                    <ShowDateAt
-                                        createdAt = { request?.createdAt }
-                                        updatedAt = { request?.updatedAt }
-                                    />
-                                </>
-                                }
-                            </div>
+                                    <div className="space-y-2">
+                                        <FormLabel>Última actualización por</FormLabel>
 
-                            <div className="flex justify-between space-x-4 pt-4 border-t">
-                                <Button
-                                    type    = "button"
-                                    variant = "outline"
-                                    onClick = { handleClose }
-                                >
-                                    Cancelar
-                                </Button>
+                                        <Input
+                                            value = { request?.staffUpdate?.name || '-' }
+                                            readOnly
+                                            disabled
+                                        />
+                                    </div>
+                                </div>
 
-                                <Button
-                                    type        = "submit"
-                                    disabled    = { isLoadingStaff || createRequestMutation.isPending || updateRequestMutation.isPending }
-                                >
-                                    { ( isLoadingStaff || createRequestMutation.isPending || updateRequestMutation.isPending ) && <LoaderMini /> }
-                                    { isLoadingStaff ? 'Cargando...' : ( request ? 'Guardar cambios' : 'Crear solicitud' )}
-                                </Button>
-                            </div>
-                        </form>
-                    </Form>
+                                {/* Staff Update - Readonly */}
+                                <ShowDateAt
+                                    createdAt = { request?.createdAt }
+                                    updatedAt = { request?.updatedAt }
+                                />
+                            </>
+                            }
+                        </div>
+
+                        <div className="flex justify-between space-x-4 pt-4 border-t">
+                            <Button
+                                type    = "button"
+                                variant = "outline"
+                                onClick = { handleClose }
+                            >
+                                Cancelar
+                            </Button>
+
+                            <Button
+                                type        = "submit"
+                                disabled    = { isLoadingStaff || createRequestMutation.isPending || updateRequestMutation.isPending }
+                            >
+                                { ( isLoadingStaff || createRequestMutation.isPending || updateRequestMutation.isPending ) && <LoaderMini /> }
+                                { isLoadingStaff ? 'Cargando...' : ( request ? 'Guardar cambios' : 'Crear solicitud' )}
+                            </Button>
+                        </div>
+                    </form>
+                </Form>
 			</DialogContent>
 		</Dialog>
 	);
