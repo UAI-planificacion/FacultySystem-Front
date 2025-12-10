@@ -471,14 +471,14 @@ export function SessionDayModuleSelector({
 						<Table>
 							<TableHeader>
 								<TableRow>
-									<TableHead className="w-[7.85rem] px-3 border-r bg-background">
+									<TableHead className="w-32 px-3 border-r bg-background">
 										Módulos
 									</TableHead>
 
 									{availableDays.map(( day ) => (
 										<TableHead
 											key         = { day.id }
-											className   = "text-center w-20 min-w-20 px-2 whitespace-nowrap bg-background"
+											className   = "text-center w-20 min-w-20 px-2 whitespace-nowrap bg-background border-r"
 										>
 											{ day.name }
 										</TableHead>
@@ -518,7 +518,7 @@ export function SessionDayModuleSelector({
                                     return (
                                         <TableCell
                                             key         = { `${ module.id }-${ day.id }` }
-                                            className   = {`text-center w-20 min-w-20 p-0 transition-colors overflow-hidden ${
+                                            className   = {`text-center w-20 min-w-20 p-0 transition-colors overflow-hidden border-r-2 ${
                                                 isModuleAvailableOnDay 
                                                     ? ( canSelect ? 'hover:bg-zinc-200/50 dark:hover:bg-zinc-800 cursor-pointer' : 'cursor-not-allowed opacity-70' )
                                                     : 'bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-50'
