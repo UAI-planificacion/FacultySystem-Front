@@ -11,8 +11,9 @@ export type Type    = 'space' | 'professor' | 'registered';
 
 
 export interface AssignmentData {
-    type : Type;
-    data : SessionAvailabilityResult[];
+    type        : Type;
+    data        : SessionAvailabilityResult[];
+    sections?   : SectionResult[];
 }
 
 
@@ -33,7 +34,7 @@ export interface SessionAvailabilityResult {
     TipoSesion          : string;
     Cupos               : number;
     Inscritos?          : number | null;
-    InscritosActuales?   : number | null;
+    InscritosActuales?  : number | null;
     Profesor            : string | null;
     ProfesorActual?     : string | null;
     Espacio             : string | null;
@@ -42,6 +43,24 @@ export interface SessionAvailabilityResult {
     Estado?             : Status;
     Detalle?            : string;
 }
+
+
+export interface SectionResult {
+    SectionId           : string;
+    SSEC                : string;
+    NombreAsignatura    : string;
+    Periodo             : string;
+    TipoPeriodo         : string;
+    Edificio            : string;
+    TipoEspacio         : string;
+    TamanoEspacio       : string;
+    Cupos               : number;
+    Inscritos           : number;
+
+    Estado?             : Status;
+    Detalle?            : string;
+}
+
 
 
 export interface SessionAssignmentCache {
