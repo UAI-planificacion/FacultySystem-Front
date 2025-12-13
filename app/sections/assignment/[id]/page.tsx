@@ -41,12 +41,18 @@ import { Button }       from '@/components/ui/button';
 import { SessionName }  from '@/components/session/session-name';
 import { FileForm }     from '@/components/section/file-form';
 import { ActiveBadge }  from '@/components/shared/active';
+import {
+    Tabs,
+    TabsList,
+    TabsTrigger,
+}                       from '@/components/ui/tabs';
 
 import {
     SessionAssignment,
     SectionAssignment,
     Status,
     AssignmentData,
+    SectionResult
 }                                       from '@/types/session-availability.model';
 import { tempoFormat }                  from '@/lib/utils';
 import { KEY_QUERYS }                   from '@/consts/key-queries';
@@ -91,6 +97,7 @@ export default function AssignmentPage(): JSX.Element {
     const id            = params.id as string;
 
     const [ isUploadDialogOpen, setIsUploadDialogOpen ] = useState<boolean>( false );
+    const [ activeTab, setActiveTab ] = useState<'sections' | 'sessions'>( 'sections' );
 
 
     const { data = { type: 'space' as const, data: [] } } = useQuery<AssignmentData>({
@@ -103,6 +110,7 @@ export default function AssignmentPage(): JSX.Element {
     });
 
     const rows              = useMemo(() => data.data, [ data ]);
+    const sections          = useMemo(() => data.sections ?? [], [ data ]);
     const assignmentType    = useMemo(() => data.type, [ data ]);
 
 
@@ -234,7 +242,7 @@ export default function AssignmentPage(): JSX.Element {
                 body    : assignments
             });
         },
-        onSuccess: ( updatedSections, assignments ) => {
+        onSuccess: ( _, assignments ) => {
             // Actualizar AssignmentData local para remover las filas asignadas
             queryClient.setQueryData<AssignmentData>( [ KEY_QUERYS.SESSIONS, 'assignment', id ], ( currentData ) => {
                 if ( !currentData ) {
@@ -251,20 +259,20 @@ export default function AssignmentPage(): JSX.Element {
 
             // Invalidar caché de sections
             queryClient.invalidateQueries({ 
-                queryKey        : [ KEY_QUERYS.SECTIONS ],
-                refetchType     : 'active'
+                queryKey    : [ KEY_QUERYS.SECTIONS ],
+                refetchType : 'active'
             });
 
             // Invalidar todas las sessions
             queryClient.invalidateQueries({ 
-                queryKey        : [ KEY_QUERYS.SESSIONS ],
-                refetchType     : 'active'
+                queryKey    : [ KEY_QUERYS.SESSIONS ],
+                refetchType : 'active'
             });
 
-            toast( 'Registros asignados correctamente ', successToast );
+            toast( 'Registros asignados correctamente', successToast );
         },
         onError: ( mutationError ) => {
-            toast( `Error al asignar registros: ${mutationError.message}`, errorToast );
+            toast( `Error al asignar registros: ${ mutationError.message }`, errorToast );
         }
     });
 
@@ -282,18 +290,31 @@ export default function AssignmentPage(): JSX.Element {
             [ 'generatedAt', new Date().toISOString() ]
         ];
 
-        const name = {
-            space     : 'Espacios',
-            professor : 'Profesores',
-            registered: 'Registros'
-        }[data.type];
-
-        const worksheet = XLSX.utils.json_to_sheet( rows );
         const workbook 	= XLSX.utils.book_new();
         const metaSheet = XLSX.utils.aoa_to_sheet( metaData );
 
-        XLSX.utils.book_append_sheet( workbook, worksheet, name );
-        XLSX.utils.book_append_sheet( workbook, metaSheet, '_meta' );
+        if ( assignmentType === 'registered' ) {
+            // Para tipo registered: crear dos tabs (Secciones y Sesiones)
+            const sectionsSheet = XLSX.utils.json_to_sheet( sections );
+            const sessionsSheet = XLSX.utils.json_to_sheet( rows );
+
+            XLSX.utils.book_append_sheet( workbook, sectionsSheet, 'Secciones' );
+            XLSX.utils.book_append_sheet( workbook, sessionsSheet, 'Sesiones' );
+            XLSX.utils.book_append_sheet( workbook, metaSheet, '_meta' );
+        } else {
+            // Para space y professor: mantener comportamiento actual
+            const name = {
+                space     : 'Espacios',
+                professor : 'Profesores',
+                registered: 'Registros'
+            }[data.type];
+
+            const worksheet = XLSX.utils.json_to_sheet( rows );
+
+            XLSX.utils.book_append_sheet( workbook, worksheet, name );
+            XLSX.utils.book_append_sheet( workbook, metaSheet, '_meta' );
+        }
+
         XLSX.writeFile( workbook, `reporte_errores_${data.type}.xlsx` );
         toast( 'Reporte exportado correctamente ', successToast );
     };
@@ -338,103 +359,183 @@ export default function AssignmentPage(): JSX.Element {
 
 
     return (
-        <PageLayout title = "Validación de Sesiones">
+        <PageLayout 
+            title="Validación de Sesiones"
+            actions={
+                assignmentType === 'registered' ? (
+                    <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'sections' | 'sessions')}>
+                        <TabsList>
+                            <TabsTrigger value="sections">Secciones</TabsTrigger>
+                            <TabsTrigger value="sessions">Sesiones</TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+                ) : undefined
+            }
+        >
             <Card>
-                <CardContent className = "p-0">
-                    <Table>
-                        <TableHeader className = "sticky top-0 z-10 bg-background">
-                            <TableRow>
-                                <TableHead className = "w-[150px]">SSEC</TableHead>
-                                <TableHead className = "w-[180px]">Sesión</TableHead>
-                                <TableHead className = "w-[180px]">Fecha</TableHead>
-                                <TableHead className = "w-[180px]">Módulo</TableHead>
-                                
-                                { assignmentType === 'registered' ? (
-                                    <>
-                                        <TableHead className = "w-[180px]">Profesor</TableHead>
-                                        <TableHead className = "w-[180px]">Espacio</TableHead>
-                                        <TableHead className = "w-[120px]">Registrados</TableHead>
-                                        <TableHead className = "w-[150px]">Sillas Disponibles</TableHead>
-                                    </>
-                                ) : (
-                                    <TableHead className = "w-[220px]">
-                                        { assignmentType === 'space' ? 'Espacio' : assignmentType === 'professor' ? 'Profesor' : 'Espacio/Profesor' }
-                                    </TableHead>
-                                )}
-                                
-                                <TableHead className = "w-[170px]">Estado</TableHead>
-                                <TableHead className = "w-[320px]">Mensaje</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                    </Table>
-
-                    <ScrollArea className = "h-[calc(100vh-350px)]">
-                        <Table>
-                            <TableBody>
-                                { rows.length === 0 ? (
+                <CardContent className="p-0">
+                    { assignmentType === 'registered' && activeTab === 'sections' ? (
+                        // Tabla de Secciones
+                        <>
+                            <Table>
+                                <TableHeader className="sticky top-0 z-10 bg-background">
                                     <TableRow>
-                                        <TableCell colSpan = { assignmentType === 'registered' ? 10 : 7 } className = "py-6 text-center text-muted-foreground">
-                                            No hay resultados. Sube un archivo para ver la validación.
-                                        </TableCell>
+                                        <TableHead className="w-[150px]">SSEC</TableHead>
+                                        {/* <TableHead className="w-[250px]">Nombre Asignatura</TableHead> */}
+                                        <TableHead className="w-[120px]">Periodo</TableHead>
+                                        <TableHead className="w-[150px]">Tipo Periodo</TableHead>
+                                        <TableHead className="w-[120px]">Edificio</TableHead>
+                                        <TableHead className="w-[150px]">Tipo Espacio</TableHead>
+                                        <TableHead className="w-[150px]">Tamaño Espacio</TableHead>
+                                        <TableHead className="w-[100px]">Cupos</TableHead>
+                                        <TableHead className="w-[100px]">Inscritos</TableHead>
+                                        <TableHead className="w-[170px]">Estado</TableHead>
+                                        <TableHead className="w-[320px]">Detalle</TableHead>
                                     </TableRow>
-                                ) : (
-                                    rows.map(( session ) => (
-                                        <TableRow key = { session.SesionId }>
-                                            <TableCell className="w-[150px]">{ session.SSEC }</TableCell>
+                                </TableHeader>
+                            </Table>
 
-                                            <TableCell className="w-[180px]">
-                                                <SessionName session={ session.TipoSesion as Session } />
-                                            </TableCell>
-
-                                            <TableCell className="w-[180px]">{ tempoFormat( session.Fecha )}</TableCell>
-
-                                            <TableCell className="w-[180px]">{ session.Modulo }</TableCell>
-
-                                            { assignmentType === 'registered' ? (
-                                                <>
-                                                    <TableCell className="w-[180px]">{ session.Profesor || '-' }</TableCell>
-                                                    <TableCell className="w-[180px]">{ session.Espacio || '-' }</TableCell>
-                                                    <TableCell className="w-[120px]">{ session.Inscritos ?? '-' }</TableCell>
-                                                    <TableCell className="w-[150px]">{ session.SillasDisponibles ?? '-' }</TableCell>
-                                                </>
-                                            ) : (
-                                                <TableCell className="w-[220px]">
-                                                    { assignmentType === 'space' ? ( session.Espacio || '-' ) : ( session.Profesor || '-' )}
+                            <ScrollArea className="h-[calc(100vh-350px)]">
+                                <Table>
+                                    <TableBody>
+                                        { sections.length === 0 ? (
+                                            <TableRow>
+                                                <TableCell
+                                                    colSpan     = { 11 }
+                                                    className   = "py-6 text-center text-muted-foreground"
+                                                >
+                                                    No hay secciones disponibles.
                                                 </TableCell>
-                                            )}
+                                            </TableRow>
+                                        ) : (
+                                            sections.map(( section ) => (
+                                                <TableRow key={ section.SectionId }>
+                                                    <TableCell className="w-[150px]">{ section.SSEC }</TableCell>
+                                                    {/* <TableCell className="w-[250px]">{ section.NombreAsignatura }</TableCell> */}
+                                                    <TableCell className="w-[120px]">{ section.Periodo }</TableCell>
+                                                    <TableCell className="w-[150px]">{ section.TipoPeriodo }</TableCell>
+                                                    <TableCell className="w-[120px]">{ section.Edificio }</TableCell>
+                                                    <TableCell className="w-[150px]">{ section.TipoEspacio }</TableCell>
+                                                    <TableCell className="w-[150px]">{ section.TamanoEspacio }</TableCell>
+                                                    <TableCell className="w-[100px]">{ section.Cupos }</TableCell>
+                                                    <TableCell className="w-[100px]">{ section.Inscritos }</TableCell>
+                                                    <TableCell className="w-[170px]">
+                                                        <ActiveBadge
+                                                            isActive        = { section.Estado === 'Available' }
+                                                            activeText      = "Válido"
+                                                            inactiveText    = "No válido"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="w-[320px]">{ section.Detalle ?? '-' }</TableCell>
+                                                </TableRow>
+                                            ))
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </ScrollArea>
+                        </>
+                    ) : (
+                        // Tabla de Sesiones (original)
+                        <>
+                            <Table>
+                                <TableHeader className="sticky top-0 z-10 bg-background">
+                                    <TableRow>
+                                        <TableHead className="w-[150px]">SSEC</TableHead>
+                                        <TableHead className="w-[180px]">Sesión</TableHead>
+                                        <TableHead className="w-[180px]">Fecha</TableHead>
+                                        <TableHead className="w-[180px]">Módulo</TableHead>
+                                        
+                                        { assignmentType === 'registered' ? (
+                                            <>
+                                                <TableHead className="w-[180px]">Profesor</TableHead>
+                                                <TableHead className="w-[180px]">Espacio</TableHead>
+                                                <TableHead className="w-[120px]">Registrados</TableHead>
+                                                <TableHead className="w-[150px]">Sillas Disponibles</TableHead>
+                                            </>
+                                        ) : (
+                                            <TableHead className="w-[220px]">
+                                                { assignmentType === 'space' ? 'Espacio' : assignmentType === 'professor' ? 'Profesor' : 'Espacio/Profesor' }
+                                            </TableHead>
+                                        )}
+                                        
+                                        <TableHead className="w-[170px]">Estado</TableHead>
+                                        <TableHead className="w-[320px]">Mensaje</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                            </Table>
 
-                                            <TableCell className="w-[170px]">
-                                                { assignmentType === 'space' ? (
-                                                    (() => {
-                                                        const IconComponent = statusIcon[session.Estado!];
-                                                        const iconColor     = statusIconColor[session.Estado!];
+                            <ScrollArea className="h-[calc(100vh-350px)]">
+                                <Table>
+                                    <TableBody>
+                                        { rows.length === 0 ? (
+                                            <TableRow>
+                                                <TableCell
+                                                    colSpan     = { assignmentType === 'registered' ? 10 : 7 }
+                                                    className   = "py-6 text-center text-muted-foreground"
+                                                >
+                                                    No hay resultados. Sube un archivo para ver la validación.
+                                                </TableCell>
+                                            </TableRow>
+                                        ) : (
+                                            rows.map(( session ) => (
+                                                <TableRow key={ session.SesionId }>
+                                                    <TableCell className="w-[150px]">{ session.SSEC }</TableCell>
 
-                                                        return (
-                                                            <div className="flex items-center">
-                                                                <IconComponent className={`${iconColor} w-4 h-4 mr-2`} />
+                                                    <TableCell className="w-[180px]">
+                                                        <SessionName session={ session.TipoSesion as Session } />
+                                                    </TableCell>
 
-                                                                <Badge className={`${statusStyles[session.Estado!]} text-white flex items-center`}>
-                                                                    { statusLabels[ session.Estado! ]}
-                                                                </Badge>
-                                                            </div>
-                                                        );
-                                                    })()
-                                                ) : (
-                                                    <ActiveBadge
-                                                        isActive        = { session.Estado === 'Available' }
-                                                        activeText      = { assignmentType === 'professor' ? 'Disponible' : 'Válido' }
-                                                        inactiveText    = { assignmentType === 'professor' ? 'No disponible' : 'No válido' }
-                                                    />
-                                                )}
-                                            </TableCell>
+                                                    <TableCell className="w-[180px]">{ tempoFormat( session.Fecha )}</TableCell>
 
-                                            <TableCell className="w-[320px]">{ session.Detalle }</TableCell>
-                                        </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </ScrollArea>
+                                                    <TableCell className="w-[180px]">{ session.Modulo }</TableCell>
+
+                                                    { assignmentType === 'registered' ? (
+                                                        <>
+                                                            <TableCell className="w-[180px]">{ session.Profesor || '-' }</TableCell>
+                                                            <TableCell className="w-[180px]">{ session.Espacio || '-' }</TableCell>
+                                                            <TableCell className="w-[120px]">{ session.Inscritos ?? '-' }</TableCell>
+                                                            <TableCell className="w-[150px]">{ session.SillasDisponibles ?? '-' }</TableCell>
+                                                        </>
+                                                    ) : (
+                                                        <TableCell className="w-[220px]">
+                                                            { assignmentType === 'space' ? ( session.Espacio || '-' ) : ( session.Profesor || '-' )}
+                                                        </TableCell>
+                                                    )}
+
+                                                    <TableCell className="w-[170px]">
+                                                        { assignmentType === 'space' ? (
+                                                            (() => {
+                                                                const IconComponent = statusIcon[session.Estado!];
+                                                                const iconColor     = statusIconColor[session.Estado!];
+
+                                                                return (
+                                                                    <div className="flex items-center">
+                                                                        <IconComponent className={`${iconColor} w-4 h-4 mr-2`} />
+
+                                                                        <Badge className={`${statusStyles[session.Estado!]} text-white flex items-center`}>
+                                                                            { statusLabels[ session.Estado! ]}
+                                                                        </Badge>
+                                                                    </div>
+                                                                );
+                                                            })()
+                                                        ) : (
+                                                            <ActiveBadge
+                                                                isActive        = { session.Estado === 'Available' }
+                                                                activeText      = { assignmentType === 'professor' ? 'Disponible' : 'Válido' }
+                                                                inactiveText    = { assignmentType === 'professor' ? 'No disponible' : 'No válido' }
+                                                            />
+                                                        )}
+                                                    </TableCell>
+
+                                                    <TableCell className="w-[320px]">{ session.Detalle }</TableCell>
+                                                </TableRow>
+                                            ))
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </ScrollArea>
+                        </>
+                    )}
                 </CardContent>
 
                 <CardFooter className="border-t pt-6 flex justify-between gap-4">
