@@ -73,14 +73,11 @@ interface Props {
 
 
 const formSchema = z.object({
-    name                    : z.nativeEnum( Session ),
-    spaceId                 : z.string().nullable().optional(),
-    isEnglish               : z.boolean().nullable().optional(),
-    professorId             : z.string().nullable().optional(),
-    date                    : z.date().nullable().optional(),
-}).superRefine(( data, ctx ) => {
-    // El espacio y la fecha son opcionales
-    // No se requieren validaciones adicionales
+    name        : z.nativeEnum( Session ),
+    spaceId     : z.string().nullable().optional(),
+    isEnglish   : z.boolean().nullable().optional(),
+    professorId : z.string().nullable().optional(),
+    date        : z.date().nullable().optional(),
 });
 
 
@@ -108,11 +105,11 @@ export function SessionForm({
     const form = useForm<FormData>({
         resolver    : zodResolver( formSchema ),
         defaultValues: {
-            name                    : session?.name                 ,
-            spaceId                 : session?.spaceId              || null,
-            isEnglish               : session?.isEnglish            || false,
-            professorId             : session?.professor?.id        || null,
-            date                    : session?.date ? new Date( session.date ) : null,
+            name        : session?.name,
+            spaceId     : session?.spaceId          || null,
+            isEnglish   : session?.isEnglish        || false,
+            professorId : session?.professor?.id    || null,
+            date        : session?.date ? new Date( session.date ) : null,
         }
     });
 
@@ -192,8 +189,8 @@ export function SessionForm({
         const currentProfessorId    = form.watch( 'professorId' );
         const currentSessionId      = session.id;
 
-        // Si no hay los datos necesarios, deshabilitar calendario
-        if ( !currentSpaceId || !currentProfessorId || !selectedDayModuleId ) {
+        // Si no hay día/módulo seleccionado, deshabilitar calendario
+        if ( !selectedDayModuleId ) {
             setShowCalendar( false );
             return;
         }
@@ -240,6 +237,7 @@ export function SessionForm({
         }
 
         if ( !isLoadingDates && availableDates ) {
+            console.log( '***********availableDates', availableDates );
             if ( availableDates.length === 0 ) {
                 toast( 'No hay fechas disponibles. Prueba con otro espacio y/o profesor.', errorToast );
                 setShowCalendar( false );
@@ -273,6 +271,7 @@ export function SessionForm({
         mutationFn: createSessionApi,
         onSuccess: ( createdSession ) => {
             queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
+            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SESSIONS, section?.id] });
 
             onSave( createdSession );
             onClose();
@@ -287,6 +286,7 @@ export function SessionForm({
         mutationFn: updateSessionApi,
         onSuccess: ( updatedSession ) => {
             queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SECTIONS] });
+            queryClient.invalidateQueries({ queryKey: [KEY_QUERYS.SESSIONS, section?.id] });
 
             onSave( updatedSession );
             onClose();
@@ -326,8 +326,8 @@ export function SessionForm({
 
 
     const handleFetchAvailableDates = () => {
-        if ( !section?.id || !selectedDayModuleId ) {
-            toast( 'Debe seleccionar un módulo-día', errorToast );
+        if ( !selectedDayModuleId ) {
+            toast( 'Debe seleccionar un día/módulo de la tabla.', errorToast );
             return;
         }
 
