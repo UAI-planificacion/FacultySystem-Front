@@ -56,6 +56,7 @@ export interface SectionResult {
     TamanoEspacio       : string;
     Cupos               : number;
     Inscritos           : number;
+    InscritosActuales   : number | null;
 
     Estado?             : Status;
     Detalle?            : string;
