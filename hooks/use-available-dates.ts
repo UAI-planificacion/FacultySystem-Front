@@ -5,7 +5,7 @@ import { KEY_QUERYS }       from '@/consts/key-queries';
 
 
 interface Props {
-	sessionId?       : string | null;
+	sessionId?      : string | null;
     sectionId?      : string | null;
 	dayModuleId     : number | null;
 	spaceId         : string | null;
@@ -25,12 +25,12 @@ export function useAvailableDates({
     enabled = true
 }: Props ) {
 	return useQuery({
-		queryKey    : [ KEY_QUERYS.AVAILABLE_DATES, (sessionId || sectionId), dayModuleId, spaceId, professorId ],
+		queryKey    : [ KEY_QUERYS.AVAILABLE_DATES, ( sessionId || sectionId ), dayModuleId, spaceId, professorId ],
 		queryFn     : async () => {
 			const dates = await fetchApi<string[]>({
-                method : Method.POST,
-                url : `sessions/availables`,
-                body : {
+                method  : Method.POST,
+                url     : `sessions/availables`,
+                body    : {
                     sessionId,
                     sectionId,
                     dayModuleId,
@@ -43,7 +43,7 @@ export function useAvailableDates({
 
 			return dates.map( dateStr => new Date( dateStr ));
 		},
-		enabled     : enabled && !!dayModuleId && !!spaceId && ( !!sessionId || !!sectionId ),
+		enabled     : enabled && !!dayModuleId && ( !!sessionId || !!sectionId ),
 		staleTime   : 1000 * 60 * 5, // 5 minutes
 	});
 }
