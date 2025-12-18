@@ -8,7 +8,7 @@ import * as z           from 'zod';
 
 import {
     useMutation,
-    useQuery,
+    // useQuery,
     useQueryClient
 }                   from '@tanstack/react-query';
 import {
@@ -58,7 +58,7 @@ import { errorToast, successToast }     from '@/config/toast/toast.config';
 import { cn, tempoFormat }              from '@/lib/utils';
 import { useAvailableDates }            from '@/hooks/use-available-dates';
 import { Session }                      from '@/types/section.model';
-import { DayModule }                    from '@/types/day-module.model';
+// import { DayModule }                    from '@/types/day-module.model';
 import { OfferSection, OfferSession }   from '@/types/offer-section.model';
 
 
