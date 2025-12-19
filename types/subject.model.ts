@@ -17,7 +17,7 @@ interface BaseSubject {
     tutoringSession : number;
     laboratory      : number;
     quota           : number | null;
-    faculty         : Faculty;
+    // faculty         : Faculty;
 }
 
 
@@ -35,6 +35,7 @@ export interface Subject extends BaseSubject {
     updateAt    : Date      | string;
     offersCount : number;
     grade       : Grade | null;
+    faculty     : Faculty;
 }
 
 
