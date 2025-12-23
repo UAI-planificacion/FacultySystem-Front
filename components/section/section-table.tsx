@@ -263,19 +263,19 @@ export function SectionTable({
 	return (
 		<>
 			<Table className="min-w-full">
-				<TableHeader>
+				<TableHeader className="dark:hover:bg-black rounded-full">
 					<TableRow>
-						<TableHead className="w-0"></TableHead>
-						<TableHead className="w-10"></TableHead>
-						<TableHead>SSEC</TableHead>
-						<TableHead>Período</TableHead>
-						<TableHead>Sesiones</TableHead>
-						<TableHead>Cupos</TableHead>
-						<TableHead>Registrados</TableHead>
-						<TableHead>Fecha Inicio</TableHead>
-						<TableHead>Fecha Fin</TableHead>
-						<TableHead>Estado</TableHead>
-						<TableHead className="text-right">Acciones</TableHead>
+						<TableHead className="w-0 font-semibold"></TableHead>
+						<TableHead className="w-10 font-semibold"></TableHead>
+						<TableHead className="font-semibold">SSEC</TableHead>
+						<TableHead className="font-semibold">Período</TableHead>
+						<TableHead className="font-semibold">Sesiones</TableHead>
+						<TableHead className="font-semibold">Cupos</TableHead>
+						<TableHead className="font-semibold">Registrados</TableHead>
+						<TableHead className="font-semibold">Fecha Inicio</TableHead>
+						<TableHead className="font-semibold">Fecha Fin</TableHead>
+						<TableHead className="font-semibold">Estado</TableHead>
+						<TableHead className="text-right font-semibold">Acciones</TableHead>
 					</TableRow>
 				</TableHeader>
 
