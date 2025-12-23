@@ -19,13 +19,13 @@ import {
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-}							                from "@/components/ui/dialog";
+}							    from "@/components/ui/dialog";
 import {
 	Tabs,
 	TabsContent,
 	TabsList,
 	TabsTrigger,
-}							                from "@/components/ui/tabs";
+}							    from "@/components/ui/tabs";
 import {
 	Form,
 	FormControl,
@@ -33,22 +33,25 @@ import {
 	FormItem,
 	FormLabel,
 	FormMessage,
-}							                from "@/components/ui/form";
-import { SpaceFilterSelector, FilterMode }  from "@/components/shared/space-filter-selector";
-import { Button }			                from "@/components/ui/button";
-import { Switch }			                from "@/components/ui/switch";
-import { Textarea }			                from "@/components/ui/textarea";
-import { Label }			                from "@/components/ui/label";
-import { Input }			                from "@/components/ui/input";
-import { ProfessorSelect }	                from "@/components/shared/item-select/professor-select";
-import { HeadquartersSelect }               from "@/components/shared/item-select/headquarters-select";
-import { MultiSelectCombobox }              from "@/components/shared/Combobox";
-import { SessionInfoCard }	                from "@/components/planning-change/session-info-card";
-import { CommentSection }	                from "@/components/comment/comment-section";
-import { SessionModuleDays }                from "@/components/session/session-module-days";
-import { sessionLabels }                    from "@/components/section/section.config";
-import { ChangeStatus }                     from "@/components/shared/change-status";
-import { SessionTypeSelector }              from "@/components/shared/session-type-selector";
+}							    from "@/components/ui/form";
+import {
+    SpaceFilterSelector,
+    FilterMode
+}                               from "@/components/shared/space-filter-selector";
+import { Button }			    from "@/components/ui/button";
+import { Switch }			    from "@/components/ui/switch";
+import { Textarea }			    from "@/components/ui/textarea";
+import { Label }			    from "@/components/ui/label";
+import { Input }			    from "@/components/ui/input";
+import { ProfessorSelect }	    from "@/components/shared/item-select/professor-select";
+import { HeadquartersSelect }   from "@/components/shared/item-select/headquarters-select";
+import { MultiSelectCombobox }  from "@/components/shared/Combobox";
+import { SessionInfoCard }	    from "@/components/planning-change/session-info-card";
+import { CommentSection }	    from "@/components/comment/comment-section";
+import { sessionLabels }        from "@/components/section/section.config";
+import { SessionTypeSelector }  from "@/components/shared/session-type-selector";
+import { SessionModuleDays }    from "@/components/session/session-module-days";
+import { ChangeStatus }         from "@/components/shared/change-status";
 
 import {
     PlanningChange,
@@ -135,62 +138,64 @@ const createPlanningChangeSchema = (
 		}
 
 		// Validación cuando NO se selecciona una sesión (modo creación)
-		if ( !data.sessionId ) {
-			// sessionName es requerido
-			if ( !data.sessionName ) {
-				ctx.addIssue({
-					code	: z.ZodIssueCode.custom,
-					message	: "El tipo de sesión es requerido cuando se crea una nueva sesión",
-					path	: ["sessionName"],
-				});
-			}
+		// if ( !data.sessionId ) {
+        if ( data.sessionName ) return;
 
-			// building es requerido
-			if ( !data.building ) {
-				ctx.addIssue({
-					code	: z.ZodIssueCode.custom,
-					message	: "El edificio es requerido cuando se crea una nueva sesión",
-					path	: ["building"],
-				});
-			}
+        // sessionName es requerido
+        if ( !data.sessionName ) {
+            ctx.addIssue({
+                code	: z.ZodIssueCode.custom,
+                message	: "El tipo de sesión es requerido cuando se crea una nueva sesión",
+                path	: ["sessionName"],
+            });
+        }
 
-			// dayModulesId debe tener al menos 1
-			if ( data.dayModulesId.length === 0 ) {
-				ctx.addIssue({
-					code	: z.ZodIssueCode.custom,
-					message	: "Debe seleccionar al menos un módulo cuando se crea una nueva sesión",
-					path	: ["dayModulesId"],
-				});
-			}
+        // building es requerido
+        if ( !data.building ) {
+            ctx.addIssue({
+                code	: z.ZodIssueCode.custom,
+                message	: "El edificio es requerido cuando se crea una nueva sesión",
+                path	: ["building"],
+            });
+        }
 
-			// Espacios: Validar según filterMode
-			if ( filterMode === 'space' ) {
-				// Modo espacio específico: spaceId es requerido
-				if ( !data.spaceId ) {
-					ctx.addIssue({
-						code	: z.ZodIssueCode.custom,
-						message	: "Debe seleccionar un espacio específico",
-						path	: ["spaceId"],
-					});
-				}
-			} else {
-				// Modo tipo/tamaño: al menos uno debe estar seleccionado
-				const hasSpaceTypeOrSize = data.spaceType !== null || data.spaceSizeId !== null;
-				if ( !hasSpaceTypeOrSize ) {
-					ctx.addIssue({
-						code	: z.ZodIssueCode.custom,
-						message	: "Debe seleccionar un tipo de espacio y/o tamaño",
-						path	: ["spaceType"],
-					});
-				}
-			}
-		}
+        // dayModulesId debe tener al menos 1
+        if ( data.dayModulesId.length === 0 ) {
+            ctx.addIssue({
+                code	: z.ZodIssueCode.custom,
+                message	: "Debe seleccionar al menos un módulo cuando se crea una nueva sesión",
+                path	: ["dayModulesId"],
+            });
+        }
+
+        // Espacios: Validar según filterMode
+        if ( filterMode === 'space' ) {
+            // Modo espacio específico: spaceId es requerido
+            if ( !data.spaceId ) {
+                ctx.addIssue({
+                    code	: z.ZodIssueCode.custom,
+                    message	: "Debe seleccionar un espacio específico",
+                    path	: ["spaceId"],
+                });
+            }
+        } else {
+            // Modo tipo/tamaño: al menos uno debe estar seleccionado
+            const hasSpaceTypeOrSize = data.spaceType !== null || data.spaceSizeId !== null;
+
+            if ( !hasSpaceTypeOrSize ) {
+                ctx.addIssue({
+                    code	: z.ZodIssueCode.custom,
+                    message	: "Debe seleccionar un tipo de espacio y/o tamaño",
+                    path	: ["spaceType"],
+                });
+            }
+        }
+		// }
 	});
 }
 
 
 type PlanningChangeFormValues = z.infer<typeof basePlanningChangeSchema>;
-
 type Tab = 'form' | 'comments';
 
 
@@ -207,14 +212,14 @@ export function PlanningChangeForm({
 	const {
         staff,
         isLoading: isLoadingStaff
-    }                   = useSession();
-	const queryClient   = useQueryClient();
+    } = useSession();
 
-	const [ tab, setTab ]                                   = useState<Tab>( defaultTab );
-	const [ requestDetailModule, setRequestDetailModule ]   = useState<Array<{ id?: string; day: string; moduleId: string }>>([]);
-	const [ selectedSessionId, setSelectedSessionId ]       = useState<string | null>( null );
-	const [ filterMode, setFilterMode ]                     = useState<FilterMode>( 'space' );
-	const [ isEditMode, setIsEditMode ]                     = useState<boolean>( !!planningChange );
+    const queryClient = useQueryClient();
+
+	const [ tab, setTab ]                               = useState<Tab>( defaultTab );
+	const [ selectedSessionId, setSelectedSessionId ]   = useState<string | null>( null );
+	const [ filterMode, setFilterMode ]                 = useState<FilterMode>( 'space' );
+	const [ isEditMode, setIsEditMode ]                 = useState<boolean>( !!planningChange );
 
 	// Fetch sessions from section
 	const {
@@ -320,13 +325,6 @@ export function PlanningChangeForm({
 			const determinedFilterMode: FilterMode = currentPlanningChange.spaceId ? 'space' : 'type-size';
 			setFilterMode( determinedFilterMode );
 
-			// Convert dayModulesId to requestDetailModule format
-			const modules = currentPlanningChange.dayModulesId.map( id => ({
-				day			: id.toString(),
-				moduleId	: id.toString()
-			}));
-
-			setRequestDetailModule( modules );
 			setSelectedSessionId( null );
             setTab( 'form' );
 
@@ -349,7 +347,6 @@ export function PlanningChangeForm({
 			});
 		} else {
 			setIsEditMode( false );
-			setRequestDetailModule([]);
 			setSelectedSessionId( null );
 			setFilterMode( 'space' );
 			form.reset({
@@ -399,7 +396,7 @@ export function PlanningChangeForm({
 			form.setValue( 'spaceType', null );
 			form.setValue( 'spaceSizeId', null );
 			form.setValue( 'isEnglish', false );
-			setRequestDetailModule([]);
+			form.setValue( 'dayModulesId', [] );
 			setFilterMode( 'space' );
 			return;
 		}
@@ -421,13 +418,8 @@ export function PlanningChangeForm({
 		// Setear filterMode a 'space' porque tenemos spaceId
 		setFilterMode( 'space' );
 
-		// Auto-marcar el módulo y día en la tabla usando los datos de la sesión
-		const newModule = {
-			day			: selectedSession.dayId.toString(),
-			moduleId	: selectedSession.module.id.toString(),
-		};
-
-		setRequestDetailModule([ newModule ]);
+		// Auto-marcar el módulo y día en la tabla usando el dayModuleId de la sesión
+		form.setValue( 'dayModulesId', [ selectedSession.dayModuleId ] );
 	}, [ selectedSessionId, selectedSession, isEditMode, form ]);
 
 	// Create mutation
@@ -459,8 +451,9 @@ export function PlanningChangeForm({
 			});
 		},
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.PLANNING_CHANGE ] });
-			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.SECTIONS ] });
+			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.PLANNING_CHANGE ]});
+			// queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.SECTIONS ]});
+			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.SESSIONS, section?.id ]});
 
 			updateFacultyTotal( queryClient, staff!.facultyId!, true, 'totalPlanningChanges' );
 
@@ -506,7 +499,10 @@ export function PlanningChangeForm({
 			});
 		},
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.PLANNING_CHANGE ] });
+			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.PLANNING_CHANGE ]});
+			// queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.SECTIONS ]});
+			queryClient.invalidateQueries({ queryKey: [ KEY_QUERYS.SESSIONS, section?.id ]});
+
 			toast( 'Cambio de planificación actualizado exitosamente', successToast );
 			onSuccess();
 		},
@@ -548,21 +544,9 @@ export function PlanningChangeForm({
 
 
 
-	const handleModuleToggle = useCallback(( day: string, moduleId: string, isChecked: boolean ) => {
-		setRequestDetailModule( prev => {
-			if ( isChecked ) {
-				return [...prev, { day, moduleId }];
-			} else {
-				return prev.filter( item => !( item.day === day && item.moduleId === moduleId ));
-			}
-		});
-	}, []);
-
-	// Update dayModulesId when requestDetailModule changes
-	useEffect(() => {
-		const dayModuleIds = requestDetailModule.map( item => parseInt( item.moduleId ));
+	const handleDayModuleIdsChange = useCallback(( dayModuleIds: number[] ) => {
 		form.setValue( 'dayModulesId', dayModuleIds );
-	}, [ requestDetailModule, form ]);
+	}, [ form ]);
 
 
 	return (
@@ -599,309 +583,308 @@ export function PlanningChangeForm({
 					<TabsContent value="form" className={ cn( "space-y-4", isEditMode ? 'mt-4' : '' ) }>
 						<Form {...form}>
 							<form onSubmit={ form.handleSubmit( onSubmit ) } className="space-y-4">
-						{/* Título */}
-						<FormField
-							control	= { form.control }
-							name	= "title"
-							render	= {({ field }) => (
-								<FormItem>
-									<FormLabel>Título *</FormLabel>
+                                {/* Título */}
+                                <FormField
+                                    control	= { form.control }
+                                    name	= "title"
+                                    render	= {({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Título *</FormLabel>
 
-									<FormControl>
-										<Input
-											placeholder	= "Título del cambio de planificación"
-											disabled	= { !!session?.planningChangeId && isLoadingPlanningChange }
-											{...field}
-										/>
-									</FormControl>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder	= "Título del cambio de planificación"
+                                                    disabled	= { !!session?.planningChangeId && isLoadingPlanningChange }
+                                                    {...field}
+                                                />
+                                            </FormControl>
 
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
 
-                        {/* Status (solo en modo edición) */}
-                        { isEditMode && (
-                            <FormField
-                                control	= { form.control }
-                                name	= "status"
-                                render	= {({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Estado</FormLabel>
+                                {/* Status (solo en modo edición) */}
+                                { isEditMode && (
+                                    <FormField
+                                        control	= { form.control }
+                                        name	= "status"
+                                        render	= {({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Estado</FormLabel>
 
-                                        <FormControl>
-                                            <ChangeStatus
-												multiple		= { false }
-                                                value           = { field.value || Status.PENDING }
-                                                onValueChange   = { field.onChange }
-                                                defaultValue    = { field.value }
-                                                className		= { !!session?.planningChangeId && isLoadingPlanningChange ? 'opacity-50 pointer-events-none' : '' }
-                                            />
-                                        </FormControl>
+                                                <FormControl>
+                                                    <ChangeStatus
+                                                        multiple		= { false }
+                                                        value           = { field.value || Status.PENDING }
+                                                        onValueChange   = { field.onChange }
+                                                        defaultValue    = { field.value }
+                                                        className		= { !!session?.planningChangeId && isLoadingPlanningChange ? 'opacity-50 pointer-events-none' : '' }
+                                                    />
+                                                </FormControl>
 
-                                        <FormMessage />
-                                    </FormItem>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
                                 )}
-                            />
-                        )}
 
-						{/* Selección de Sesión (solo en modo creación) */}
-						{( !isEditMode && !session ) && (
-							<FormField
-								control	= { form.control }
-								name	= "sessionId"
-								render	= {({ field }) => (
-									<FormItem>
-										<Label>Sesión (opcional - seleccionar solo para modificar)</Label>
+                                {/* Selección de Sesión (solo en modo creación) */}
+                                {( !isEditMode && !session ) && (
+                                    <FormField
+                                        control	= { form.control }
+                                        name	= "sessionId"
+                                        render	= {({ field }) => (
+                                            <FormItem>
+                                                <Label>Sesión (opcional - seleccionar solo para modificar)</Label>
 
-										<MultiSelectCombobox
-											options				= { sectionSessionOptions }
-											defaultValues		= { field.value || undefined }
-											onSelectionChange	= {( value ) => {
-												const sessionId = typeof value === 'string' ? value : undefined;
-												field.onChange( sessionId || null );
-												setSelectedSessionId( sessionId || null );
-											}}
-											placeholder			= "Seleccionar sesión existente (dejar vacío para crear nueva)"
-											disabled			= { isLoadingSessions }
-											isLoading			= { isLoadingSessions }
-											multiple			= { false }
-											required			= { false }
-										/>
+                                                <MultiSelectCombobox
+                                                    options				= { sectionSessionOptions }
+                                                    defaultValues		= { field.value || undefined }
+                                                    onSelectionChange	= {( value ) => {
+                                                        const sessionId = typeof value === 'string' ? value : undefined;
+                                                        field.onChange( sessionId || null );
+                                                        setSelectedSessionId( sessionId || null );
+                                                    }}
+                                                    placeholder = "Seleccionar sesión existente (dejar vacío para crear nueva)"
+                                                    disabled    = { isLoadingSessions }
+                                                    isLoading   = { isLoadingSessions }
+                                                    multiple    = { false }
+                                                    required    = { false }
+                                                />
 
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-						)}
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
 
-						{/* Mostrar información de la sesión seleccionada */}
-						{ selectedSessionId && (
-                            <SessionInfoCard 
-                                sessionData	= { selectedSession }
-                                isLoading	= { isLoadingSessions || isLoadingFetchedSession }
-                            />
-						)}
+                                {/* Mostrar información de la sesión seleccionada */}
+                                { selectedSessionId && (
+                                    <SessionInfoCard 
+                                        sessionData	= { selectedSession }
+                                        isLoading	= { isLoadingSessions || isLoadingFetchedSession }
+                                    />
+                                )}
 
-						<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {/* Tipo de Sesión */}
-							<FormField
-								control	= { form.control }
-								name	= "sessionName"
-								render	= {({ field }) => (
-									<FormItem>
-										<FormLabel>Tipo de Sesión</FormLabel>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    {/* Tipo de Sesión */}
+                                    <FormField
+                                        control	= { form.control }
+                                        name	= "sessionName"
+                                        render	= {({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Tipo de Sesión</FormLabel>
 
-										<FormControl>
-											<SessionTypeSelector
-												multiple		= { false }
-												value			= { field.value }
-												onValueChange	= { field.onChange }
-												defaultValue	= { field.value }
-												allowDeselect	= { true }
-												className		= { !!session?.planningChangeId && isLoadingPlanningChange ? 'opacity-50 pointer-events-none' : 'w-full' }
-											/>
-										</FormControl>
+                                                <FormControl>
+                                                    <SessionTypeSelector
+                                                        multiple		= { false }
+                                                        value			= { field.value }
+                                                        onValueChange	= { field.onChange }
+                                                        defaultValue	= { field.value }
+                                                        allowDeselect	= { true }
+                                                        className		= { !!session?.planningChangeId && isLoadingPlanningChange ? 'opacity-50 pointer-events-none' : 'w-full' }
+                                                    />
+                                                </FormControl>
 
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-							{/* Profesor */}
-							<FormField
-								control	= { form.control }
-								name	= "professorId"
-								render	= {({ field }) => (
-									<FormItem>
-										<FormLabel>Profesor</FormLabel>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    {/* Profesor */}
+                                    <FormField
+                                        control	= { form.control }
+                                        name	= "professorId"
+                                        render	= {({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Profesor</FormLabel>
 
-										<FormControl>
-											<ProfessorSelect
-												multiple			= { false }
-												placeholder			= "Seleccionar profesor"
-												defaultValues		= { field.value || undefined }
-												disabled			= { !!session?.planningChangeId && isLoadingPlanningChange }
-												onSelectionChange	= {( value ) => {
-													const professorId = typeof value === 'string' ? value : null;
-													field.onChange( professorId );
-												}}
-											/>
-										</FormControl>
+                                                <FormControl>
+                                                    <ProfessorSelect
+                                                        multiple			= { false }
+                                                        placeholder			= "Seleccionar profesor"
+                                                        defaultValues		= { field.value || undefined }
+                                                        disabled			= { !!session?.planningChangeId && isLoadingPlanningChange }
+                                                        onSelectionChange	= {( value ) => {
+                                                            const professorId = typeof value === 'string' ? value : null;
+                                                            field.onChange( professorId );
+                                                        }}
+                                                    />
+                                                </FormControl>
 
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
 
-							{/* Edificio */}
-							<FormField
-								control	= { form.control }
-								name	= "building"
-								render	= {({ field }) => (
-									<FormItem>
-										<FormLabel>Edificio</FormLabel>
+                                    {/* Edificio */}
+                                    <FormField
+                                        control	= { form.control }
+                                        name	= "building"
+                                        render	= {({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Edificio</FormLabel>
 
-										<FormControl>
-											<HeadquartersSelect
-												multiple			= { false }
-												placeholder			= "Seleccionar edificio"
-												defaultValues		= { field.value || undefined }
-												disabled			= { !!session?.planningChangeId && isLoadingPlanningChange }
-												onSelectionChange	= {( value ) => {
-													const buildingId = typeof value === 'string' ? value : null;
-													field.onChange( buildingId );
-													handleBuildingChange( buildingId );
-												}}
-											/>
-										</FormControl>
+                                                <FormControl>
+                                                    <HeadquartersSelect
+                                                        multiple			= { false }
+                                                        placeholder			= "Seleccionar edificio"
+                                                        defaultValues		= { field.value || undefined }
+                                                        disabled			= { !!session?.planningChangeId && isLoadingPlanningChange }
+                                                        onSelectionChange	= {( value ) => {
+                                                            const buildingId = typeof value === 'string' ? value : null;
+                                                            field.onChange( buildingId );
+                                                            handleBuildingChange( buildingId );
+                                                        }}
+                                                    />
+                                                </FormControl>
 
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-						</div>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
 
-						{/* Selector de filtros de espacio */}
-						{ form.watch( 'building' ) && (
-							<div className="space-y-2">
-								<div className={ !!session?.planningChangeId && isLoadingPlanningChange ? 'opacity-50 pointer-events-none' : '' }>
+                                {/* Selector de filtros de espacio */}
+                                { form.watch( 'building' ) && (
+                                    <div className="space-y-2">
+                                        <div className={ !!session?.planningChangeId && isLoadingPlanningChange ? 'opacity-50 pointer-events-none' : '' }>
+                                            <SpaceFilterSelector
+                                                buildingId			= { form.watch( 'building' ) }
+                                                filterMode			= { filterMode }
+                                                spaceId				= { form.watch( 'spaceId' ) }
+                                                spaceType			= { form.watch( 'spaceType' ) }
+                                                spaceSizeId			= { form.watch( 'spaceSizeId' ) }
+                                                onFilterModeChange	= {( mode ) => setFilterMode( mode )}
+                                                onSpaceIdChange		= {( spaceId ) => form.setValue( 'spaceId', typeof spaceId === 'string' ? spaceId : null )}
+                                                onSpaceTypeChange	= {( spaceType ) => form.setValue( 'spaceType', spaceType )}
+                                                onSpaceSizeIdChange	= {( spaceSizeId ) => form.setValue( 'spaceSizeId', spaceSizeId )}
+                                            />
+                                        </div>
 
-								<SpaceFilterSelector
-									buildingId			= { form.watch( 'building' ) }
-									filterMode			= { filterMode }
-									spaceId				= { form.watch( 'spaceId' ) }
-									spaceType			= { form.watch( 'spaceType' ) }
-									spaceSizeId			= { form.watch( 'spaceSizeId' ) }
-									onFilterModeChange	= {( mode ) => setFilterMode( mode )}
-									onSpaceIdChange		= {( spaceId ) => form.setValue( 'spaceId', typeof spaceId === 'string' ? spaceId : null )}
-									onSpaceTypeChange	= {( spaceType ) => form.setValue( 'spaceType', spaceType )}
-									onSpaceSizeIdChange	= {( spaceSizeId ) => form.setValue( 'spaceSizeId', spaceSizeId )}
-								/>
-							</div>
-								
-								{/* Mostrar errores de espacios */}
-								{ ( form.formState.errors.spaceId || form.formState.errors.spaceType ) && (
-									<p className="text-sm font-medium text-destructive">
-										{ String( form.formState.errors.spaceId?.message || form.formState.errors.spaceType?.message || '' ) }
-									</p>
-								)}
-							</div>
-						)}
+                                        {/* Mostrar errores de espacios */}
+                                        { ( form.formState.errors.spaceId || form.formState.errors.spaceType ) && (
+                                            <p className="text-sm font-medium text-destructive">
+                                                { String( form.formState.errors.spaceId?.message || form.formState.errors.spaceType?.message || '' ) }
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
 
-						{/* Switches */}
-						<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-							<FormField
-								control	= { form.control }
-								name	= "isEnglish"
-								render	= {({ field }) => (
-									<FormItem>
-										<div className="flex items-center justify-between rounded-lg border p-3">
-											<Label htmlFor="isEnglish" className="cursor-pointer">
-												En inglés
-											</Label>
+                                {/* Switches */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                    <FormField
+                                        control	= { form.control }
+                                        name	= "isEnglish"
+                                        render	= {({ field }) => (
+                                            <FormItem>
+                                                <div className="flex items-center justify-between rounded-lg border p-3">
+                                                    <Label htmlFor="isEnglish" className="cursor-pointer">
+                                                        En inglés
+                                                    </Label>
 
-											<FormControl>
-												<Switch
-													id				= "isEnglish"
-													checked			= { field.value || false }
-													onCheckedChange	= { field.onChange }
-													disabled		= { !!session?.planningChangeId && isLoadingPlanningChange }
-												/>
-											</FormControl>
-										</div>
-									</FormItem>
-								)}
-							/>
+                                                    <FormControl>
+                                                        <Switch
+                                                            id				= "isEnglish"
+                                                            checked			= { field.value || false }
+                                                            onCheckedChange	= { field.onChange }
+                                                            disabled		= { !!session?.planningChangeId && isLoadingPlanningChange }
+                                                        />
+                                                    </FormControl>
+                                                </div>
+                                            </FormItem>
+                                        )}
+                                    />
 
-							<FormField
-								control	= { form.control }
-								name	= "isConsecutive"
-								render	= {({ field }) => (
-									<FormItem>
-										<div className="flex items-center justify-between rounded-lg border p-3">
-											<Label htmlFor="isConsecutive" className="cursor-pointer">
-												Consecutivo
-											</Label>
+                                    <FormField
+                                        control	= { form.control }
+                                        name	= "isConsecutive"
+                                        render	= {({ field }) => (
+                                            <FormItem>
+                                                <div className="flex items-center justify-between rounded-lg border p-3">
+                                                    <Label htmlFor="isConsecutive" className="cursor-pointer">
+                                                        Consecutivo
+                                                    </Label>
 
-											<FormControl>
-												<Switch
-													id				= "isConsecutive"
-													checked			= { field.value || false }
-													onCheckedChange	= { field.onChange }
-													disabled		= { !!session?.planningChangeId && isLoadingPlanningChange }
-												/>
-											</FormControl>
-										</div>
-									</FormItem>
-								)}
-							/>
+                                                    <FormControl>
+                                                        <Switch
+                                                            id				= "isConsecutive"
+                                                            checked			= { field.value || false }
+                                                            onCheckedChange	= { field.onChange }
+                                                            disabled		= { !!session?.planningChangeId && isLoadingPlanningChange }
+                                                        />
+                                                    </FormControl>
+                                                </div>
+                                            </FormItem>
+                                        )}
+                                    />
 
-							<FormField
-								control	= { form.control }
-								name	= "inAfternoon"
-								render	= {({ field }) => (
-									<FormItem>
-										<div className="flex items-center justify-between rounded-lg border p-3">
-											<Label htmlFor="inAfternoon" className="cursor-pointer">
-												En la tarde
-											</Label>
+                                    <FormField
+                                        control	= { form.control }
+                                        name	= "inAfternoon"
+                                        render	= {({ field }) => (
+                                            <FormItem>
+                                                <div className="flex items-center justify-between rounded-lg border p-3">
+                                                    <Label htmlFor="inAfternoon" className="cursor-pointer">
+                                                        En la tarde
+                                                    </Label>
 
-											<FormControl>
-												<Switch
-													id				= "inAfternoon"
-													checked			= { field.value || false }
-													onCheckedChange	= { field.onChange }
-													disabled		= { !!session?.planningChangeId && isLoadingPlanningChange }
-												/>
-											</FormControl>
-										</div>
-									</FormItem>
-								)}
-							/>
-						</div>
+                                                    <FormControl>
+                                                        <Switch
+                                                            id				= "inAfternoon"
+                                                            checked			= { field.value || false }
+                                                            onCheckedChange	= { field.onChange }
+                                                            disabled		= { !!session?.planningChangeId && isLoadingPlanningChange }
+                                                        />
+                                                    </FormControl>
+                                                </div>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
 
-						{/* Descripción */}
-						<FormField
-							control	= { form.control }
-							name	= "description"
-							render	= {({ field }) => (
-								<FormItem>
-									<FormLabel>Descripción</FormLabel>
+                                {/* Descripción */}
+                                <FormField
+                                    control	= { form.control }
+                                    name	= "description"
+                                    render	= {({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Descripción</FormLabel>
 
-									<FormControl>
-										<Textarea
-											placeholder	= "Descripción opcional del cambio"
-											value		= { field.value || '' }
-											onChange	= { field.onChange }
-											disabled	= { !!session?.planningChangeId && isLoadingPlanningChange }
-                                            className   = "max-h-36"
-										/>
-									</FormControl>
+                                            <FormControl>
+                                                <Textarea
+                                                    placeholder	= "Descripción opcional del cambio"
+                                                    value		= { field.value || '' }
+                                                    onChange	= { field.onChange }
+                                                    disabled	= { !!session?.planningChangeId && isLoadingPlanningChange }
+                                                    className   = "max-h-36"
+                                                />
+                                            </FormControl>
 
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
 
-						{/* Módulos y Días */}
-						<div className="space-y-2">
-							<Label>Módulos y Días *</Label>
+                                {/* Módulos y Días */}
+                                <div className="space-y-2">
+                                    <Label>Módulos y Días *</Label>
 
-							<div className={ !!session?.planningChangeId && isLoadingPlanningChange ? 'opacity-50 pointer-events-none' : '' }>
-								<SessionModuleDays
-									requestDetailModule	= { requestDetailModule }
-									onModuleToggle		= { handleModuleToggle }
-									enabled				= { true }
-									multiple			= { true }
-								/>
-							</div>
+                                    <div className={ !!session?.planningChangeId && isLoadingPlanningChange ? 'opacity-50 pointer-events-none' : '' }>
+                                        <SessionModuleDays
+                                            dayModuleIds		= { form.watch( 'dayModulesId' ) }
+                                            onDayModuleIdsChange= { handleDayModuleIdsChange }
+                                            enabled				= { true }
+                                            multiple			= { true }
+                                        />
+                                    </div>
 
-							{ form.formState.errors.dayModulesId && (
-								<p className="text-sm font-medium text-destructive">
-									{ String( form.formState.errors.dayModulesId.message || '' ) }
-								</p>
-							)}
-						</div>
+                                    { form.formState.errors.dayModulesId && (
+                                        <p className="text-sm font-medium text-destructive">
+                                            { String( form.formState.errors.dayModulesId.message || '' ) }
+                                        </p>
+                                    )}
+                                </div>
 
 								<DialogFooter className="flex justify-between border-t pt-4">
 									<Button
