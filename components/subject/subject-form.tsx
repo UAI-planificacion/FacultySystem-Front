@@ -227,7 +227,8 @@ export function SubjectForm({
 				...data,
 				facultyId: data.facultyId || facultyId
 			};
-			createSubjectMutation.mutate( createData as CreateSubject );
+
+            createSubjectMutation.mutate( createData as CreateSubject );
 		}
 	};
 
