@@ -459,8 +459,8 @@ export function SectionTable({
                                                 size        = "icon"
                                                 title       = "Crear Cambio de Planificación"
                                                 onClick     = { () => {
-                                                    setIsOpenPlanningChange( true );
                                                     setSelectedSection( section );
+                                                    setIsOpenPlanningChange( true );
                                                 }}
 											>
 												<CalendarClock className="w-4 h-4 text-blue-500" />
