@@ -305,18 +305,21 @@ function CommentItem( {
 	 * Get the author information from comment
 	 */
 	const getAuthorInfo = () => {
-		if ( comment.staff.role !== Role.ADMIN ) {
+        const staffInfo = {
+			name    : comment.staff.name,
+			email   : comment.staff.email,
+		};
+
+        if ( comment.staff.role !== Role.ADMIN ) {
 			return {
-				name    : comment.staff.name,
-				email   : comment.staff.email,
-				type    : "staff" as const
+				...staffInfo,
+				type: "staff" as const
 			};
 		}
 
 		return {
-			name    : comment.staff.name,
-			email   : comment.staff.email,
-			type    : "admin" as const
+			...staffInfo,
+			type: "admin" as const
 		};
 	};
 
