@@ -8,23 +8,22 @@ import {
 	Popover,
 	PopoverContent,
 	PopoverTrigger,
-} from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+}                       from '@/components/ui/popover';
+import { Button }       from '@/components/ui/button';
+import { Badge }        from '@/components/ui/badge';
+import { ScrollArea }   from '@/components/ui/scroll-area';
 
-import { Notification } from '@/types/notification';
+import { Notification }     from '@/types/notification';
 import { EnumAction, Type } from '@/types/emit-event';
 import { useNotifications } from '@/hooks/use-notifications';
-import { Comment } from '@/types/comment.model';
+import { Comment }          from '@/types/comment.model';
 
 
 interface NotificationItemProps {
-	notification    : Notification;
+	notification        : Notification;
 	onNotificationClick : ( notification: Notification ) => void;
-	onMarkAsRead    : ( notificationId: string ) => void;
+	onMarkAsRead          : ( notificationId: string ) => void;
 }
-
 
 /**
  * Component for individual notification item
