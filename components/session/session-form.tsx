@@ -96,7 +96,6 @@ export function SessionForm({
     const [ dayModuleRequired, setDayModuleRequired ]       = useState<boolean>( false );
     const [ selectedDayModuleId, setSelectedDayModuleId ]   = useState<number | null>( null );
     const [ showCalendar, setShowCalendar ]                 = useState<boolean>( false );
-    const [ moduleDaySelections, setModuleDaySelections ]   = useState<{ day: string; moduleId: string }[]>([]);
     const [ shouldFetchDates, setShouldFetchDates ]         = useState<boolean>( false );
     const [ isUpdateDateSpace, setIsUpdateDateSpace  ]      = useState<boolean>( false );
     const [ isPlanningChangeOpen, setIsPlanningChangeOpen ] = useState<boolean>( false );
@@ -125,18 +124,12 @@ export function SessionForm({
             });
 
             // Marcar el módulo-día por defecto si existe
-            if ( session.dayId && session.module?.id ) {
-                setModuleDaySelections([{
-                    day         : session.dayId.toString(),
-                    moduleId    : session.module.id.toString()
-                }]);
+            if ( session.dayModuleId ) {
                 setSelectedDayModuleId( session.dayModuleId );
             } else {
-                setModuleDaySelections([]);
                 setSelectedDayModuleId( null );
             }
         } else {
-            setModuleDaySelections([]);
             setSelectedDayModuleId( null );
             form.reset();
         }
@@ -300,14 +293,22 @@ export function SessionForm({
     });
 
 
-    const handleModuleToggle = useCallback(( day: string, moduleId: string, isChecked: boolean ) => {
-        setModuleDaySelections( prev => {
-            if ( isChecked ) {
-                return [{ day, moduleId }];
-            }
-            return prev.filter( item => !( item.day === day && item.moduleId === moduleId ));
-        });
-    }, []);
+    const handleDayModuleIdsChange = useCallback(( dayModuleIds: number[] ) => {
+        // Como multiple es false, solo habrá 0 o 1 elemento
+        const dayModuleId = dayModuleIds.length > 0 ? dayModuleIds[0] : null;
+        
+        setSelectedDayModuleId( dayModuleId );
+        setShouldFetchDates( false );
+
+        if ( dayModuleId ) {
+            setDayModuleRequired( false );
+        }
+
+        if ( !dayModuleId ) {
+            setShowCalendar( false );
+            form.setValue( 'date', null );
+        }
+    }, [ form ]);
 
 
     const handleDayModuleSelect = useCallback(( dayModuleId: number | null ) => {
@@ -551,11 +552,11 @@ export function SessionForm({
                         { isUpdateDateSpace && <>
                             <div className="space-y-2">
                                 <SessionModuleDays
-                                    requestDetailModule = { moduleDaySelections.map( item => ({ day: item.day, moduleId: item.moduleId })) }
-                                    enabled             = { isOpen }
-                                    onModuleToggle      = { handleModuleToggle }
-                                    multiple            = { false }
-                                    onDayModuleSelect   = { handleDayModuleSelect }
+                                    dayModuleIds            = { selectedDayModuleId ? [selectedDayModuleId] : [] }
+                                    onDayModuleIdsChange    = { handleDayModuleIdsChange }
+                                    enabled                 = { isOpen }
+                                    multiple                = { false }
+                                    onDayModuleSelect       = { handleDayModuleSelect }
                                 />
 
                                 {/* Mostrar error de dayModuleId */}
