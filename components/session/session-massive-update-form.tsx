@@ -33,7 +33,6 @@ import {
 }                                   from '@/components/ui/card';
 import { Button }                   from '@/components/ui/button';
 import { Switch }                   from '@/components/ui/switch';
-import { SessionFormFields }        from '@/components/session/session-form-fields';
 import { SpaceSelect }              from '@/components/shared/item-select/space-select';
 import { ProfessorSelect }          from '@/components/shared/item-select/professor-select';
 
