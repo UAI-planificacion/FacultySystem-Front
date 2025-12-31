@@ -188,7 +188,7 @@ export function SessionTable({
 
 										<TableCell>{ session.spaceId ?? '-' }</TableCell>
 
-										<TableCell title={ `${session.professor?.id} - ${session.professor?.name}` }>
+										<TableCell title={ `${session.professor ? `${session.professor.id} - ${session.professor.name}` : '' }` }>
 											{ session.professor?.name ?? '-' }
 										</TableCell>
 
