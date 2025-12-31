@@ -45,7 +45,8 @@ export function SessionModuleDays({
 		enabled,
 	});
 
-	const {
+
+    const {
 		data        : dayModules = [],
 		isLoading   : isLoadingDayModules,
 		isError     : isErrorDayModules,
