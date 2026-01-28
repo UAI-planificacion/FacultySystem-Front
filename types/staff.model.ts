@@ -24,12 +24,11 @@ export interface Staff extends BaseStaff {
 
 export interface CreateStaff extends BaseStaff {
     facultyId   : string;
-    isActive?    : boolean;
+    isActive?   : boolean;
 }
 
 
 export interface UpdateStaff extends Partial<BaseStaff> {
-    id : string;
+    id          : string;
     isActive    : boolean;
-
 }
