@@ -2,7 +2,6 @@
 
 import { JSX }          from "react";
 import Image            from "next/image";
-import { useRouter }    from "next/navigation";
 
 import {
     DropdownMenu,
@@ -16,17 +15,12 @@ import { Button }   from "@/components/ui/button";
 
 import { MicrosoftIcon }    from "@/icons/microsoft";
 import LoaderMini           from "@/icons/LoaderMini";
-
-import {
-    signIn,
-    signOut
-}                       from "@/config/better-auth/auth-client";
-import { useSession }   from "@/hooks/use-session";
+import { signIn,signOut }   from "@/config/better-auth/auth-client";
+import { useSession }       from "@/hooks/use-session";
 
 
 export function Login(): JSX.Element {
-    const router                = useRouter();
-    const { data, isLoading }   = useSession();
+    const { data, isLoading } = useSession();
 
     return (
         <>
